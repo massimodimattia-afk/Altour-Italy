@@ -2,19 +2,17 @@ import { createClient } from '@supabase/supabase-js'
 
 // Workaround per l'errore "Property 'env' does not exist on type 'ImportMeta'"
 // In futuro, assicurati che il file src/vite-env.d.ts esista e sia configurato correttamente.
-export const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL
-export const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY
+export const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || ''
+export const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || ''
 
-// Validazione
-if (!supabaseUrl) {
-  throw new Error('❌ VITE_SUPABASE_URL non definita nel file .env')
-}
-if (!supabaseAnonKey) {
-  throw new Error('❌ VITE_SUPABASE_ANON_KEY non definita nel file .env')
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
+
+if (!isSupabaseConfigured) {
+  console.warn('⚠️ Supabase non configurato: VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY necessarie')
 }
 
 // Crea il client Supabase
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder', {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -22,10 +20,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
-console.log('✅ Supabase client creato per:', supabaseUrl.split('//')[1]?.split('.')[0] + '...')
+if (isSupabaseConfigured) {
+  console.log('✅ Supabase client creato per:', supabaseUrl.split('//')[1]?.split('.')[0] + '...')
+}
 
 // Precarica lo schema della tabella 'contatti'
 ;(async function warmUpSchema() {
+  if (!isSupabaseConfigured) return
   try {
     const { error } = await supabase
       .from('contatti')
