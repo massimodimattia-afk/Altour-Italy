@@ -15,30 +15,39 @@ export interface Database {
           created_at: string
           titolo: string
           descrizione: string | null
+          descrizione_estesa: string | null
           prezzo: number
           durata: string | null
           immagine_url: string | null
+          gallery_urls: string[] | null
           categoria: string | null
+          attrezzatura_consigliata: string | null
         }
         Insert: {
           id?: string
           created_at?: string
           titolo: string
           descrizione?: string | null
+          descrizione_estesa?: string | null
           prezzo: number
           durata?: string | null
           immagine_url?: string | null
+          gallery_urls?: string[] | null
           categoria?: string | null
+          attrezzatura_consigliata?: string | null
         }
         Update: {
           id?: string
           created_at?: string
           titolo?: string
           descrizione?: string | null
+          descrizione_estesa?: string | null
           prezzo?: number
           durata?: string | null
           immagine_url?: string | null
+          gallery_urls?: string[] | null
           categoria?: string | null
+          attrezzatura_consigliata?: string | null
         }
       }
       escursioni: {
@@ -48,10 +57,14 @@ export interface Database {
           data: string
           titolo: string
           descrizione: string | null
+          descrizione_estesa: string | null
           prezzo: number
           difficolta: string | null
           posti_disponibili: number
           immagine_url: string | null
+          gallery_urls: string[] | null
+          durata: string | null
+          attrezzatura_consigliata: string | null
         }
         Insert: {
           id?: string
@@ -59,10 +72,14 @@ export interface Database {
           data: string
           titolo: string
           descrizione?: string | null
+          descrizione_estesa?: string | null
           prezzo: number
           difficolta?: string | null
           posti_disponibili: number
           immagine_url?: string | null
+          gallery_urls?: string[] | null
+          durata?: string | null
+          attrezzatura_consigliata?: string | null
         }
         Update: {
           id?: string
@@ -70,10 +87,14 @@ export interface Database {
           data?: string
           titolo?: string
           descrizione?: string | null
+          descrizione_estesa?: string | null
           prezzo?: number
           difficolta?: string | null
           posti_disponibili?: number
           immagine_url?: string | null
+          gallery_urls?: string[] | null
+          durata?: string | null
+          attrezzatura_consigliata?: string | null
         }
       }
     }
