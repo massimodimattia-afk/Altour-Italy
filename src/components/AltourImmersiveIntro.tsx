@@ -2,10 +2,16 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- CONFIGURAZIONE COSTANTI ---
-// Mobile: IMG_20220904_150440.jpg
-const MOBILE_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150440.jpg";
-// Desktop: IMG_20220904_150458 (1).webp (usiamo la versione ottimizzata che è già in uso nella home)
+// Mobile: Immagine Supabase (Verticale)
+const MOBILE_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/intro-mobile.webp";
+// Desktop: Immagine Supabase (Landscape)
 const DESKTOP_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp";
+
+/* 
+// NOTE: Se vuoi usare le tue immagini personali, caricale su Supabase Storage nel bucket 'Images' e usa questi URL:
+// const MOBILE_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150440.jpg";
+// const DESKTOP_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp";
+*/
 
 interface AltourImmersiveIntroProps {
   onComplete: () => void;
@@ -40,12 +46,12 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
       {isVisible && (
         <motion.div
           key="intro-container"
-          className="fixed inset-0 z-[100] overflow-hidden bg-brand-stone"
+          className="fixed inset-0 z-[9999] overflow-hidden bg-brand-stone"
           initial={{ opacity: 1 }}
           exit={
             isMobile
-              ? { scale: 1.5, opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } } // EFFETTO MOBILE: Scale Reveal
-              : { y: "-100%", transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] } }      // EFFETTO DESKTOP: Sipario Verticale (bezier custom per 'anticipate' feel)
+              ? { opacity: 0, scale: 1.1, transition: { duration: 0.8, ease: "easeInOut" } } // EFFETTO MOBILE: Fade Out con leggero scale (più fluido)
+              : { y: "-100%", transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] } }      // EFFETTO DESKTOP: Sipario Verticale
           }
         >
           {/* --- IMMAGINE DI SFONDO (KEN BURNS) --- */}
@@ -56,10 +62,18 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
             <motion.img
               src={MOBILE_IMAGE_URL}
               alt="Altour Intro Mobile"
-              className="w-full h-full object-cover object-right block md:hidden"
-              initial={{ scale: 1.1 }}
-              animate={{ scale: 1 }}
+              className="w-full h-full object-cover object-center block md:hidden"
+              initial={{ scale: 1 }}
+              animate={{ scale: 1.05 }} // Zoom leggerissimo
               transition={{ duration: 3.5, ease: "easeOut" }}
+              loading="eager"
+              // @ts-ignore
+              fetchPriority="high"
+              onError={(e) => {
+                console.error("Errore caricamento immagine mobile:", e);
+                // Fallback all'immagine desktop se quella mobile fallisce
+                e.currentTarget.src = DESKTOP_IMAGE_URL; 
+              }}
             />
 
             {/* Versione Desktop */}
@@ -70,10 +84,13 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
               initial={{ scale: 1.1 }}
               animate={{ scale: 1 }}
               transition={{ duration: 3.5, ease: "easeOut" }}
+              loading="eager"
+              // @ts-ignore
+              fetchPriority="high"
             />
 
             {/* Overlay Scuro */}
-            <div className="absolute inset-0 bg-black/30 opacity-70" />
+            <div className={`absolute inset-0 ${isMobile ? 'bg-black/20' : 'bg-black/40'}`} />
           </div>
 
           {/* --- CONTENUTO BRANDING --- */}

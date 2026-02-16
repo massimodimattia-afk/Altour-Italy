@@ -64,42 +64,54 @@ export default function BookingModal({ isOpen, onClose, title }: BookingModalPro
 
     setIsSubmitting(true);
 
+    // Preparazione dati puliti (NO ID, NO undefined)
+    const payload = {
+      nome: (formData.nome || '').trim(),
+      email: (formData.email || '').trim(),
+      messaggio: (formData.messaggio || '').trim() || null,
+      attivita: (title || 'Prenotazione').trim()
+    };
+
+    console.log('📤 Tentativo invio payload:', payload);
+
     try {
-      // Inserimento dati: solo i campi necessari, gli altri hanno default su Supabase
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('contatti')
-        .insert([
-          {
-            nome: formData.nome.trim(),
-            email: formData.email.trim(),
-            messaggio: formData.messaggio.trim() || null, // se vuoto → NULL
-            attivita: title || 'Attività non specificata'
-          }
-        ]);
+        .insert([payload]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ ERRORE SUPABASE DETTAGLIATO:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw error;
+      }
 
-      // Successo
+      console.log('✅ Inserimento riuscito:', data);
+      
       setSent(true);
       setFormData({ nome: '', email: '', messaggio: '' });
 
-      // Dopo 3 secondi chiudi la modale
       setTimeout(() => {
         setSent(false);
         onClose();
       }, 3000);
     } catch (error: any) {
-      console.error('Errore durante l\'invio:', error);
-      // Messaggio amichevole per l'utente
+      console.error('❌ Eccezione catch:', error);
+      
+      let userMessage = 'Si è verificato un errore durante l\'invio. Riprova più tardi.';
+      
       if (
         error.message?.includes('relation') || 
         error.message?.includes('does not exist') ||
         error.message?.includes('Could not find the table')
       ) {
-        alert('⚠️ Problema API: La tabella "contatti" non è accessibile.\n\nPotrebbe essere un problema di CACHE o PERMESSI.\n\nEsegui lo script "fix_permissions.sql" su Supabase per risolvere.');
-      } else {
-        alert(`Errore: ${error.message || 'Impossibile inviare la richiesta'}`);
+        userMessage = '⚠️ Errore Database: La tabella "contatti" non è accessibile. Esegui lo script SQL di reset.';
       }
+
+      alert(`${userMessage}\n\nErrore tecnico: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }

@@ -1,9 +1,9 @@
-/// <reference path="./types.d.ts" />
 // Edge Function: contact-email
 // Invia email a info.altouritaly@gmail.com tramite Resend all'inserimento di un contatto
 // Nota: NON inserire chiavi in repo. Configura le env su Supabase:
 // RESEND_API_KEY, RESEND_FROM, RESEND_TO
 
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 
 declare const Deno: { env: { get(name: string): string | undefined } } | undefined
