@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, MapPin, Tool, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { X, Calendar, Clock, ChevronLeft, ChevronRight, TrendingUp, Info } from 'lucide-react';
 import { useState } from 'react';
 
 interface Activity {
@@ -142,7 +142,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
                 {activity.attrezzatura_consigliata && (
                   <div className="mt-8 p-6 bg-brand-glacier rounded-2xl border border-stone-100">
                     <h4 className="text-xs font-black uppercase tracking-widest text-brand-sky mb-3 flex items-center gap-2">
-                      <Tool size={14} /> Attrezzatura Consigliata
+                      <Info size={14} /> Attrezzatura Consigliata
                     </h4>
                     <p className="text-stone-500 text-sm italic">
                       {activity.attrezzatura_consigliata}
