@@ -65,6 +65,7 @@ export interface Database {
           gallery_urls: string[] | null
           durata: string | null
           attrezzatura_consigliata: string | null
+          categoria: 'giornata' | 'multi_giorno' | null
         }
         Insert: {
           id?: string
