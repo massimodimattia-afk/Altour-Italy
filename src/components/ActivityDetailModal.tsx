@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, ChevronLeft, ChevronRight, TrendingUp, Info } from 'lucide-react';
+import { X, Calendar, Clock, ChevronLeft, ChevronRight, TrendingUp, Info, Briefcase as Backpack } from 'lucide-react';
 import { useState } from 'react';
 
 interface Activity {
@@ -13,6 +13,7 @@ interface Activity {
   difficolta?: string | null;
   durata?: string | null;
   attrezzatura_consigliata?: string | null;
+  attrezzatura?: string | null;
   data?: string;
 }
 
@@ -142,11 +143,27 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
                 {activity.attrezzatura_consigliata && (
                   <div className="mt-8 p-6 bg-brand-glacier rounded-2xl border border-stone-100">
                     <h4 className="text-xs font-black uppercase tracking-widest text-brand-sky mb-3 flex items-center gap-2">
-                      <Info size={14} /> Attrezzatura Consigliata
+                      <Info size={14} /> Nota Importante
                     </h4>
                     <p className="text-stone-500 text-sm italic">
                       {activity.attrezzatura_consigliata}
                     </p>
+                  </div>
+                )}
+
+                {activity.attrezzatura && (
+                  <div className="mt-8 p-6 bg-stone-50 rounded-2xl border border-stone-100">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-brand-stone mb-4 flex items-center gap-2">
+                      <Backpack size={16} className="text-brand-sky" /> Equipaggiamento Consigliato
+                    </h4>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
+                      {activity.attrezzatura.split(',').map((item, index) => (
+                        <li key={index} className="text-stone-600 text-sm flex items-start gap-2">
+                          <span className="text-brand-sky mt-1">•</span>
+                          <span className="font-medium">{item.trim()}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>

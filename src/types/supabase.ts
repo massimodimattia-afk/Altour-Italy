@@ -65,6 +65,7 @@ export interface Database {
           gallery_urls: string[] | null
           durata: string | null
           attrezzatura_consigliata: string | null
+          attrezzatura: string | null
           categoria: 'giornata' | 'multi_giorno' | null
         }
         Insert: {
@@ -81,6 +82,8 @@ export interface Database {
           gallery_urls?: string[] | null
           durata?: string | null
           attrezzatura_consigliata?: string | null
+          attrezzatura?: string | null
+          categoria?: 'giornata' | 'multi_giorno' | null
         }
         Update: {
           id?: string
@@ -96,6 +99,8 @@ export interface Database {
           gallery_urls?: string[] | null
           durata?: string | null
           attrezzatura_consigliata?: string | null
+          attrezzatura?: string | null
+          categoria?: 'giornata' | 'multi_giorno' | null
         }
       }
     }
