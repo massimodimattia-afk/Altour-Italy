@@ -103,7 +103,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       <section className="max-w-6xl mx-auto px-4 py-20">
         <div className="flex justify-between items-end mb-10">
           <div>
-            <h2 className="text-3xl font-black text-stone-900 uppercase tracking-tight">Prossime Uscite</h2>
+            <h2 className="text-3xl font-black text-stone-900 uppercase tracking-tight">Scegli l'ispirazione, noi organizziamo</h2>
             <div className="h-1.5 w-16 bg-brand-sky mt-3" />
           </div>
           <button 

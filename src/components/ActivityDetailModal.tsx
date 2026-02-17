@@ -114,12 +114,10 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
                   {activity.titolo}
                 </h2>
                 <div className="flex flex-wrap gap-4 text-xs font-black uppercase tracking-widest text-stone-400">
-                  {activity.data && (
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-brand-sky" />
-                      {new Date(activity.data).toLocaleDateString('it-IT')}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-brand-sky" />
+                    Su richiesta
+                  </div>
                   {activity.durata && (
                     <div className="flex items-center gap-2">
                       <Clock size={14} className="text-brand-sky" />
@@ -180,7 +178,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
                   }}
                   className="flex-grow bg-brand-sky hover:bg-brand-stone text-white px-8 py-5 rounded-2xl font-black uppercase text-sm tracking-widest transition-all duration-300 shadow-xl shadow-brand-sky/20 flex items-center justify-center gap-3 active:scale-95"
                 >
-                  Prenota Ora
+                  Richiedi Info
                   <TrendingUp size={20} />
                 </button>
               </div>

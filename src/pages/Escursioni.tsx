@@ -117,7 +117,7 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
                 <div className="p-8 md:p-10 flex flex-col flex-grow">
                   <div className="flex items-center gap-2 text-brand-sky font-black text-[10px] uppercase tracking-widest mb-4">
                     <Calendar size={14} />
-                    {esc.data ? new Date(esc.data).toLocaleDateString('it-IT') : 'Data da definire'}
+                    Su richiesta
                   </div>
                   <h2 className="text-2xl font-black mb-6 text-brand-stone uppercase tracking-tight leading-tight group-hover:text-brand-sky transition-colors">
                     {esc.titolo}
@@ -137,7 +137,7 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
                       onClick={() => onBookingClick(esc.titolo)}
                       className="flex-[2] bg-brand-sky text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-brand-stone transition-all shadow-xl shadow-brand-sky/20 active:scale-95"
                     >
-                      Prenota
+                      Richiedi Info
                     </button>
                   </div>
                 </div>

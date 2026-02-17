@@ -58,13 +58,13 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                     onClick={() => openDetails(corso)}
                     className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-brand-stone hover:text-white transition-all"
                   >
-                    Info
+                    Dettagli
                   </button>
                   <button 
                     onClick={() => onBookingClick(corso.titolo)}
                     className="flex-[2] bg-brand-stone text-white py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-brand-sky transition-all active:scale-95"
                   >
-                    Prenota
+                    Richiedi Info
                   </button>
                 </div>
               </div>
