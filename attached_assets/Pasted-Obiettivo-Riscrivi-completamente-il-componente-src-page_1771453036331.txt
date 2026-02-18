@@ -1,0 +1,29 @@
+Obiettivo: Riscrivi completamente il componente src/pages/Tessera.tsx per trasformarlo in un "Passaporto Digitale" d'élite. La logica di accesso tramite codice e il sistema di riscatto attività tramite Supabase sono corretti, ma l'interfaccia deve diventare un'esperienza visiva coinvolgente e meno scarna.
+
+Specifiche grafiche e di layout:
+
+Hero Section Immersiva: Inserisci in alto una sezione Hero con un'immagine a tutta larghezza (usa un URL di Unsplash con tema montagna/nebbia/hiking) e un overlay scuro. Il titolo deve essere "Il Tuo Passaporto delle Vette" con un sottotitolo dinamico che indica lo stato attuale dell'utente.
+
+Card del Passaporto Estetica: La card che contiene il nome dell'utente e gli slot deve apparire come un oggetto fisico (effetto carta ruvida o neumorfismo delicato). Usa bordi arrotondati ampi (rounded-[3rem]) e ombre profonde ma morbide.
+
+Slot come "Timbri": Gli slot non devono essere semplici quadrati. Rendili simili a degli spazi per timbri postali. Quando una vetta viene riscattata, l'icona Footprints deve apparire con un'animazione di "pressione" (scale-up e rotazione casuale) per simulare un timbro reale.
+
+Scelta Colore Singola: Nel processo di riscatto, permetti la scelta di un solo colore tra una tavolozza di 10 colori "terra" (es. Terra di Siena, Verde Bosco, Blu Abisso, Grigio Roccia).
+
+Sistema di Gamification Avanzato:
+
+Barra Livello Protagónica: Sotto la Hero e sopra la card, inserisci una sezione "Grado Esploratore". Mostra una barra di progresso XP animata (usa Framer Motion) che si riempie in base ai punti.
+
+Meccanismo Livelli: Definisci 4 livelli basati sulle vette completate (es: 0-2 Vette: "Camminatore della Domenica"; 3-5: "Esploratore dei Sentieri"; 6-9: "Guida Alpina"; 10+: "Leggenda delle Vette"). Mostra un badge circolare o un'icona speciale (es. Medal o Crown) accanto al nome dell'utente che cambia in base al livello.
+
+Contatore Statistiche: Aggiungi una piccola sezione orizzontale con tre statistiche chiave: "Vette Conquistate", "XP Totali", "Prossimo Grado".
+
+Dettagli Tecnici:
+
+Usa Framer Motion per ogni transizione (soprattutto per l'apertura del modale di riscatto e per l'apparizione del "timbro" nello slot).
+
+Metti l'intera pagina in un contenitore con sfondo color "crema/pietra" (#f5f2ed) per far risaltare il bianco della card.
+
+Assicurati che l'import di supabase e la gestione dello stato (userTessera, pendingActivity) rimangano coerenti con la logica esistente.
+
+Usa icone di lucide-react.
