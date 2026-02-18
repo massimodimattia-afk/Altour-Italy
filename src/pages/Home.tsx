@@ -1,10 +1,7 @@
-// cSpell:disable
 import { useEffect, useState } from 'react';
 import { Calendar, Award, TrendingUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import EscursioneCard from '../components/EscursioneCard';
-import CorsoCard from '../components/CorsoCard';
-import { hikeImage, courseImage } from '../lib/imageUtils';
+import ActivityDetailModal from '../components/ActivityDetailModal';
 
 interface HomeProps {
   onNavigate: (page: string) => void;
@@ -15,13 +12,14 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [featuredHikes, setFeaturedHikes] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const today = new Date().toISOString().split('T')[0];
       try {
-        const { data: hikes } = await supabase.from('escursioni').select('*').gte('data', today).order('data', { ascending: true }).limit(4);
+        const { data: hikes } = await supabase.from('escursioni').select('*').order('data', { ascending: true }).limit(4);
         const { data: crs } = await supabase.from('corsi').select('*').limit(4);
         if (hikes) setFeaturedHikes(hikes);
         if (crs) setCourses(crs);
@@ -33,27 +31,12 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
     loadData();
   }, []);
 
+  const openDetails = (activity: any) => {
+    setSelectedActivity(activity);
+    setIsDetailOpen(true);
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-white text-brand-stone font-bold uppercase tracking-widest text-xs">Caricamento...</div>;
-
-  const hikePlaceholders = Array.from({ length: Math.max(0, 4 - featuredHikes.length) }).map((_, i) => ({
-    id: `ph-hike-${i}`,
-    titolo: 'Prossimamente',
-    descrizione: 'Nuove esperienze in arrivo',
-    data: null,
-    difficolta: 'E',
-    prezzo: 0,
-    immagine_url: hikeImage('Prossimamente'),
-  }));
-
-  const coursePlaceholders = Array.from({ length: Math.max(0, 4 - courses.length) }).map((_, i) => ({
-    id: `ph-course-${i}`,
-    titolo: 'Prossimamente',
-    descrizione: 'Nuovi corsi in arrivo',
-    durata: 'TBD',
-    prezzo: 0,
-    immagine_url: courseImage('Prossimamente', 'In preparazione'),
-    categoria: 'In preparazione',
-  }));
 
   return (
     <div className="min-h-screen bg-stone-100">
@@ -114,9 +97,38 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {[...featuredHikes, ...hikePlaceholders].map(h => (
-            <EscursioneCard key={h.id} escursione={h} onBook={() => onBookingClick(h.titolo)} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {featuredHikes.map((esc) => (
+            <div key={esc.id} className="bg-white rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500">
+              <div className="h-56 bg-stone-200 relative overflow-hidden">
+                {esc.immagine_url && <img src={esc.immagine_url} alt={esc.titolo} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />}
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter text-brand-stone">
+                  {esc.difficolta}
+                </div>
+              </div>
+              <div className="p-8 flex flex-col flex-grow">
+                <p className="text-brand-sky font-bold text-xs uppercase mb-2">
+                  <Calendar size={12} className="inline mr-1" /> Su richiesta
+                </p>
+                <h2 className="text-xl font-black mb-6 text-brand-stone uppercase line-clamp-2">{esc.titolo}</h2>
+                <p className="text-stone-500 text-sm mb-6 line-clamp-3 font-medium flex-grow">{esc.descrizione}</p>
+                
+                <div className="flex gap-3 mt-auto">
+                  <button 
+                    onClick={() => openDetails(esc)}
+                    className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-brand-stone hover:text-white transition-all"
+                  >
+                    Info
+                  </button>
+                  <button 
+                    onClick={() => onBookingClick(esc.titolo)}
+                    className="flex-[2] bg-brand-sky text-white py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-brand-stone transition-all shadow-lg shadow-brand-sky/20"
+                  >
+                    Richiedi Info
+                  </button>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </section>
@@ -129,17 +141,52 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             <h2 className="text-4xl font-black uppercase tracking-tight">Accademia Outdoor</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[...courses, ...coursePlaceholders].map(corso => (
-              <CorsoCard
-                key={corso.id}
-                corso={corso}
-                onBook={() => onBookingClick(corso.titolo)}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {courses.map((corso) => (
+              <div key={corso.id} className="bg-white rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500">
+                <div className="h-48 bg-stone-200 relative overflow-hidden">
+                  {corso.immagine_url && <img src={corso.immagine_url} alt={corso.titolo} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />}
+                  <div className="absolute top-4 left-4 bg-brand-stone text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                    {corso.categoria}
+                  </div>
+                </div>
+                <div className="p-8 flex flex-col flex-grow text-brand-stone">
+                  <h2 className="text-xl font-black mb-4 uppercase line-clamp-2">{corso.titolo}</h2>
+                  <p className="text-stone-500 text-sm mb-6 line-clamp-3 font-medium flex-grow">{corso.descrizione}</p>
+                  
+                  <div className="mt-auto pt-6 border-t border-stone-100 flex flex-col gap-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-stone-400 font-bold text-[10px] uppercase tracking-widest">{corso.durata}</span>
+                      <span className="text-2xl font-black text-brand-sky">€{corso.prezzo}</span>
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={() => openDetails(corso)}
+                        className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-brand-stone hover:text-white transition-all"
+                      >
+                        Info
+                      </button>
+                      <button 
+                        onClick={() => onBookingClick(corso.titolo)}
+                        className="flex-[2] bg-brand-stone text-white py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-brand-sky transition-all active:scale-95"
+                      >
+                        Richiedi Info
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
+
+      <ActivityDetailModal 
+        activity={selectedActivity}
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        onBook={onBookingClick}
+      />
     </div>
   );
 }
