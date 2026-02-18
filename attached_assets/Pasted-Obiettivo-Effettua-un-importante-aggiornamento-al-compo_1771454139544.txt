@@ -1,0 +1,35 @@
+Obiettivo: Effettua un importante aggiornamento al componente src/pages/Tessera.tsx e aggiungi una funzionalità commerciale in src/pages/Home.tsx.
+
+1. Refactoring Grafico e Logico della Tessera (Tessera.tsx):
+
+Header & Centratura: Cambia il titolo principale in "Passaport Altour". Centra perfettamente sia il titolo che l'etichetta del grado (es. "Camminatore della Domenica") all'interno della pagina. Assicurati che il layout sia pulito e arioso.
+
+Sistema a 8 Slot & Multi-Tessera: - Limita la visualizzazione della card a 8 slot totali.
+
+Implementa la logica di "Paginazione delle Tessere": se un utente ha completato più di 8 attività, deve poter visualizzare una "Nuova Tessera" (es. tramite uno swipe o un tasto "Vedi tessera successiva").
+
+Se l'utente ha ad esempio 10 attività, mostrerà una tessera piena (8/8) e una seconda tessera con 2 slot occupati.
+
+Diario delle Attività: Sotto la sezione della tessera grafica, reinserisci una sezione "Diario delle Vette". Deve essere una lista cronologica (o basata sull'ordine di riscatto) che mostri: Titolo dell'attività, data di riscatto (se disponibile) e il colore del timbro scelto. Usa uno stile minimalista ed elegante.
+
+2. Sistema Voucher Digitali (Reward System):
+
+Logica Voucher: Implementa un sistema che riconosca il completamento di una tessera (ogni 8 attività). Al raggiungimento di 8, 16, 24 attività, deve apparire una sezione "I Tuoi Premi" che mostra un Voucher Digitale da 10€ sbloccato.
+
+UI Voucher: Il voucher deve avere un design accattivante (stile coupon) con un codice generato o un pulsante "Riscatta ora" che dia istruzioni su come usarlo.
+
+3. Aggiornamento Home Page (Home.tsx):
+
+Gift Voucher Card: Inserisci nella Home (preferibilmente dopo la sezione hero o tra le anteprime) una sezione dedicata chiamata "Regala un'Esperienza Altour".
+
+Funzionalità: Aggiungi un pulsante "Regala Voucher" che permetta all'utente di selezionare un taglio a scelta (es. 25€, 50€, 100€ o importo libero) e che apra un piccolo form o reindirizzi a un sistema di pagamento/contatto per completare il regalo.
+
+Dettagli Tecnici Finali:
+
+Mantieni l'integrazione con Supabase per il recupero e l'aggiornamento dei dati dell'utente.
+
+Usa Framer Motion per rendere fluido il passaggio tra le tessere (se l'utente ne ha più di una).
+
+Assicurati che l'icona del "timbro" (Footprints) sia centrata e ben visibile negli slot.
+
+Mantieni il design coerente con l'estetica "Premium" (colori crema/pietra, font mono per i codici, angoli molto arrotondati).

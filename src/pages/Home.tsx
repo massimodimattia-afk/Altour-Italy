@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Calendar, Award, TrendingUp } from 'lucide-react';
+import { Calendar, Award, TrendingUp, Gift } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import ActivityDetailModal from '../components/ActivityDetailModal';
 
@@ -79,6 +79,38 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             <Calendar size={18} />
             <span>Prenota un'esperienza</span>
           </button>
+        </div>
+      </section>
+
+      {/* SEZIONE GIFT VOUCHER */}
+      <section className="max-w-6xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-[3rem] p-10 md:p-16 border border-stone-100 shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-sky/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:scale-110 transition-transform duration-700" />
+          
+          <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+            <div className="w-24 h-24 bg-brand-stone rounded-3xl flex items-center justify-center shadow-xl group-hover:rotate-12 transition-transform duration-500">
+              <Gift size={48} className="text-brand-sky" />
+            </div>
+            
+            <div className="flex-grow text-center md:text-left">
+              <h2 className="text-3xl md:text-4xl font-black text-brand-stone uppercase tracking-tight mb-4">
+                Regala un'Esperienza Altour
+              </h2>
+              <p className="text-stone-500 font-medium max-w-xl mb-0">
+                L'avventura è il regalo più prezioso. Scegli un voucher prepagato e lascia che siano loro a scegliere la prossima vetta da conquistare.
+              </p>
+            </div>
+            
+            <div className="flex flex-col gap-3 w-full md:w-auto min-w-[200px]">
+              <button 
+                onClick={() => onBookingClick('Richiesta Gift Voucher')}
+                className="bg-brand-stone text-white px-8 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-brand-sky transition-all shadow-xl shadow-stone-200 flex items-center justify-center gap-3"
+              >
+                Regala Voucher <TrendingUp size={16} />
+              </button>
+              <p className="text-[10px] text-stone-300 font-black uppercase tracking-widest text-center">Tagli da 25€, 50€, 100€</p>
+            </div>
+          </div>
         </div>
       </section>
 
