@@ -22,7 +22,7 @@ const SLOTS_PER_PAGE = 8;
 
 const IconaScarpone = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M4 15l2 0 3-6 4 2 3-1 2 2v4H4z"/><path d="M9 9l1.5-3.5"/><path d="M12 11l1-3"/><path d="M15 10l.5-2"/><path d="M4 15c0 2 1.5 4 4 4h8c2 0 4-2 4-4"/>
+    <path d="M4 15l2 0 3-6 4 2 3-1 2 2v4H4z" fill="currentColor" fillOpacity="0.2"/><path d="M9 9l1.5-3.5"/><path d="M12 11l1-3"/><path d="M15 10l.5-2"/><path d="M4 15c0 2 1.5 4 4 4h8c2 0 4-2 4-4"/>
   </svg>
 );
 
@@ -197,7 +197,7 @@ export default function Tessera() {
               <currentLevel.icon size={16} className={currentLevel.color} />
               <span className="text-[10px] font-black uppercase tracking-widest text-white">{currentLevel.label}</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-tight drop-shadow-xl">Passaporto <br /> Altour</h1>
+            <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-tight drop-shadow-xl">I TUOI SCARPONI <br /> ALTOUR</h1>
           </motion.div>
         </div>
       </div>
@@ -241,11 +241,13 @@ export default function Tessera() {
                   return (
                     <div key={i} className="aspect-square rounded-2xl border-2 border-dashed border-stone-100 bg-stone-50/50 flex items-center justify-center relative overflow-hidden group">
                       {esc ? (
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1, rotate: idx * 45 }} className="animate-shine p-1">
-                          <IconaScarpone size={28} style={{ color: esc.colore }} />
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1, rotate: idx * 45 }} className="animate-shine p-1 flex flex-col items-center justify-center">
+                          <IconaScarpone size={56} style={{ color: esc.colore }} className="drop-shadow-md" />
                         </motion.div>
                       ) : (
-                        <IconaScarpone size={24} className="text-stone-200 opacity-20" />
+                        <div className="flex flex-col items-center justify-center">
+                          <IconaScarpone size={48} className="text-stone-400 opacity-10" />
+                        </div>
                       )}
                     </div>
                   );
