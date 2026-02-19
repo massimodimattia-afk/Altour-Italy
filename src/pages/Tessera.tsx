@@ -7,10 +7,6 @@ import {
   Zap,
   LogOut,
   Plus,
-  Footprints,
-  Medal,
-  Crown,
-  Trophy,
   Star,
   ChevronRight,
   ChevronLeft,
@@ -23,6 +19,12 @@ import { supabase } from "../lib/supabase";
 
 const STORAGE_KEY = "altour_session_v4";
 const SLOTS_PER_PAGE = 8;
+
+const IconaScarpone = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 15l2 0 3-6 4 2 3-1 2 2v4H4z"/><path d="M9 9l1.5-3.5"/><path d="M12 11l1-3"/><path d="M15 10l.5-2"/><path d="M4 15c0 2 1.5 4 4 4h8c2 0 4-2 4-4"/>
+  </svg>
+);
 
 const EARTH_PALETTE = [
   { name: "Terra di Siena", hex: "#A0522D" },
@@ -38,10 +40,10 @@ const EARTH_PALETTE = [
 ];
 
 const LEVELS = [
-  { min: 0, max: 2, label: "Camminatore della Domenica", icon: Footprints, color: "text-stone-400" },
-  { min: 3, max: 5, label: "Esploratore dei Sentieri", icon: Medal, color: "text-brand-sky" },
-  { min: 6, max: 9, label: "Guida Alpina", icon: Crown, color: "text-amber-500" },
-  { min: 10, max: 999, label: "Leggenda delle Vette", icon: Trophy, color: "text-brand-stone" },
+  { min: 0, max: 8, label: "Camminatore della Domenica", icon: IconaScarpone, color: "text-stone-300" },
+  { min: 9, max: 16, label: "Esploratore dei Sentieri", icon: IconaScarpone, color: "text-sky-400" },
+  { min: 17, max: 24, label: "Guida Alpina", icon: IconaScarpone, color: "text-amber-500" },
+  { min: 25, max: 999, label: "Leggenda delle Vette", icon: IconaScarpone, color: "text-brand-stone" },
 ];
 
 export default function Tessera() {
@@ -70,18 +72,22 @@ export default function Tessera() {
     if (data) {
       setUserTessera(data);
       localStorage.setItem(STORAGE_KEY, data.codice_tessera);
-      // Auto-set to last page
       const count = data.escursioni_completate?.length || 0;
       setCurrentPage(Math.floor(count / SLOTS_PER_PAGE));
     }
     setLoading(false);
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.reload();
+  };
+
   const vetteCount = userTessera?.escursioni_completate?.length || 0;
   const currentLevel = LEVELS.find(l => vetteCount >= l.min && vetteCount <= l.max) || LEVELS[0];
   const nextLevel = LEVELS[LEVELS.indexOf(currentLevel) + 1] || null;
   const progressToNext = nextLevel ? ((vetteCount - currentLevel.min) / (nextLevel.min - currentLevel.min)) * 100 : 100;
-
   const totalPages = Math.max(1, Math.ceil((vetteCount + 1) / SLOTS_PER_PAGE));
   const vouchersCount = Math.floor(vetteCount / 8);
 
@@ -98,10 +104,8 @@ export default function Tessera() {
       return;
     }
 
-    const giaFatta = userTessera?.escursioni_completate?.some(
-      (e: any) => e.titolo === attivita.titolo,
-    );
-    if (giaFatta) {
+    const alreadyDone = userTessera?.escursioni_completate?.some((e: any) => e.titolo === attivita.titolo);
+    if (alreadyDone) {
       setError("Vetta già conquistata!");
       return;
     }
@@ -111,39 +115,22 @@ export default function Tessera() {
   };
 
   const saveVetta = async (selectedHex: string) => {
-    if (!userTessera || !pendingActivity) return;
-
-    const listaAtuale = Array.isArray(userTessera.escursioni_completate)
-      ? userTessera.escursioni_completate
-      : [];
-
-    const updatedList = [
-      ...listaAtuale,
-      { titolo: pendingActivity.titolo, colore: selectedHex, data: new Date().toISOString() },
-    ];
+    const listaAttuale = Array.isArray(userTessera.escursioni_completate) ? userTessera.escursioni_completate : [];
+    const updatedList = [...listaAttuale, { titolo: pendingActivity.titolo, colore: selectedHex, data: new Date().toISOString() }];
 
     const { data, error: upError } = await supabase
       .from("tessere")
-      .update({
-        escursioni_completate: updatedList,
-        punti: (userTessera.punti || 0) + 100,
-      })
+      .update({ escursioni_completate: updatedList, punti: (userTessera.punti || 0) + 100 })
       .eq("id", userTessera.id)
       .select();
 
-    if (upError) return;
-
-    if (data && data.length > 0) {
+    if (!upError && data) {
       setUserTessera(data[0]);
       setShowRedeem(false);
       setRedeemStep("INPUT");
       setInputCodice("");
       setCurrentPage(Math.floor(updatedList.length / SLOTS_PER_PAGE));
-      confetti({
-        particleCount: 150,
-        colors: [selectedHex, "#ffffff"],
-        origin: { y: 0.7 },
-      });
+      confetti({ particleCount: 150, colors: [selectedHex, "#ffffff"], origin: { y: 0.7 } });
     }
   };
 
@@ -157,343 +144,189 @@ export default function Tessera() {
   if (!userTessera) {
     return (
       <div className="min-h-screen bg-[#f5f2ed] flex items-center justify-center p-6 text-center">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm border border-stone-100"
-        >
-          <div className="w-20 h-20 bg-stone-50 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
-            <Footprints size={40} className="text-stone-300" />
-          </div>
-          <h2 className="text-3xl font-black uppercase mb-2 tracking-tighter text-brand-stone">
-            Benvenuto
-          </h2>
-          <p className="text-stone-400 text-xs font-bold uppercase tracking-widest mb-8">
-            Inserisci il codice passaporto
-          </p>
+        <div className="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm border border-stone-100">
+          <IconaScarpone size={48} className="text-stone-200 mx-auto mb-6" />
+          <h2 className="text-2xl font-black uppercase mb-8 text-brand-stone">Accedi al Passaporto</h2>
           <input
-            className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-2xl font-black mb-6 uppercase outline-none focus:border-brand-sky transition-all"
+            className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-xl font-black mb-6 uppercase outline-none focus:border-brand-sky"
             placeholder="ALT-XXX"
             value={inputCodice}
             onChange={(e) => setInputCodice(e.target.value)}
           />
-          <button
-            onClick={() => fetchUser(inputCodice)}
-            className="w-full bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-brand-sky transition-all active:scale-95 shadow-xl shadow-stone-200"
-          >
-            Sblocca Accesso
-          </button>
-        </motion.div>
+          <button onClick={() => fetchUser(inputCodice)} className="w-full bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest">Sblocca</button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f2ed] pb-24 text-stone-800 font-sans">
-      {/* Header Centralizzato */}
-      <section className="pt-20 pb-12 px-6 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-5xl md:text-6xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-4">
-            Passaport Altour
-          </h1>
-          <div className="inline-flex items-center gap-3 bg-white px-6 py-2 rounded-full shadow-sm border border-stone-100">
-            <currentLevel.icon size={18} className={currentLevel.color} />
-            <span className="text-xs font-black uppercase tracking-widest text-stone-500">
-              {currentLevel.label}
-            </span>
-          </div>
-        </motion.div>
+    <div className="min-h-screen bg-[#f5f2ed] pb-24 text-stone-800">
+      <style>{`
+        @keyframes shine {
+          0% { left: -100%; }
+          100% { left: 100%; }
+        }
+        .animate-shine {
+          position: relative;
+          overflow: hidden;
+        }
+        .animate-shine::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 50%;
+          height: 100%;
+          background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+          animation: shine 3s infinite;
+        }
+      `}</style>
 
-        <button
-          onClick={() => {
-            localStorage.clear();
-            window.location.reload();
-          }}
-          className="absolute top-8 right-8 text-stone-300 hover:text-brand-stone transition-colors"
-        >
-          <LogOut size={24} />
+      {/* HERO SECTION */}
+      <div className="relative h-[50vh] min-h-[400px] w-full overflow-hidden mb-12">
+        <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2070&auto=format&fit=crop" className="absolute inset-0 w-full h-full object-cover" alt="Hero" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-[#f5f2ed]" />
+
+        <button onClick={handleLogout} className="absolute top-8 right-8 p-3 bg-white/10 backdrop-blur-md rounded-full text-white z-50 border border-white/20 hover:bg-white/20 transition-all">
+          <LogOut size={20} />
         </button>
-      </section>
 
-      <div className="max-w-xl mx-auto px-6 relative z-10">
-        {/* Grado Esploratore & Barra XP */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-stone-100 mb-8"
-        >
-          <div className="flex items-center justify-between mb-6 text-center">
-            <div className="w-full">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                 <Zap size={14} className="text-brand-sky" />
-                 <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">
-                   Progresso Esperienza
-                 </span>
-              </div>
-              <div className="flex items-center justify-center gap-4">
-                 <span className="text-xs font-bold text-stone-400 uppercase">{vetteCount} Vette</span>
-                 <div className="flex-grow max-w-[150px] relative h-2 bg-stone-100 rounded-full overflow-hidden shadow-inner">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progressToNext}%` }}
-                      className="absolute inset-y-0 left-0 bg-brand-sky"
-                    />
-                 </div>
-                 {nextLevel && (
-                    <span className="text-xs font-bold text-brand-sky uppercase">-{nextLevel.min - vetteCount} alla prossima</span>
-                 )}
-              </div>
+        <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 mb-4">
+              <currentLevel.icon size={16} className={currentLevel.color} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-white">{currentLevel.label}</span>
             </div>
+            <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-tight drop-shadow-xl">Passaporto <br /> Altour</h1>
+          </motion.div>
+        </div>
+      </div>
+
+      <div className="max-w-xl mx-auto px-6 -mt-20 relative z-30 text-center">
+        {/* PROGRESS BAR */}
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-stone-100 mb-8">
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-2 mb-3">
+              <Zap size={14} className="text-sky-400 fill-sky-400" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Progresso Esperienza</span>
+            </div>
+            <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden mb-2">
+              <motion.div initial={{ width: 0 }} animate={{ width: `${progressToNext}%` }} className="h-full bg-sky-400" />
+            </div>
+            <span className="text-[10px] font-bold text-stone-400 uppercase">{vetteCount} Scarponi Conquistati</span>
           </div>
-        </motion.div>
-
-        {/* Card Passaporto con Paginazione */}
-        <div className="relative mb-8">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={currentPage}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-[3rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-stone-50 relative overflow-hidden"
-              style={{ 
-                backgroundImage: "url('https://www.transparenttextures.com/patterns/paper.png')",
-                backgroundColor: "#fff"
-              }}
-            >
-              {/* Filigrana */}
-              <div className="absolute -top-10 -right-10 opacity-[0.03] rotate-12 pointer-events-none">
-                <Footprints size={300} />
-              </div>
-
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-12">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <ShieldCheck className="text-brand-sky" size={16} />
-                      <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">
-                        Tessera {currentPage + 1} / {totalPages}
-                      </span>
-                    </div>
-                    <h2 className="text-3xl font-black uppercase leading-tight text-brand-stone tracking-tighter">
-                      {userTessera.nome_escursionista}
-                    </h2>
-                    <p className="text-stone-300 text-[10px] font-mono uppercase mt-1 tracking-widest">
-                      ID: {userTessera.codice_tessera}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <div className="w-16 h-16 bg-stone-50 rounded-2xl flex items-center justify-center border-2 border-stone-100 shadow-inner">
-                      {vetteCount >= 8 * (currentPage + 1) ? <Crown size={32} className="text-amber-500" /> : <Star size={32} className="text-stone-200" />}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Griglia 8 Slot */}
-                <div className="grid grid-cols-4 gap-4 md:gap-6">
-                  {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
-                    const globalIndex = currentPage * SLOTS_PER_PAGE + i;
-                    const esc = userTessera.escursioni_completate?.[globalIndex];
-                    return (
-                      <div
-                        key={i}
-                        className="aspect-square rounded-3xl flex items-center justify-center border-2 border-dashed border-stone-200 bg-stone-50/50 relative group"
-                      >
-                        {esc ? (
-                          <motion.div
-                            initial={{ scale: 2, opacity: 0, rotate: -20 }}
-                            animate={{ scale: 1, opacity: 1, rotate: Math.random() * 20 - 10 }}
-                            className="flex flex-col items-center justify-center w-full h-full"
-                          >
-                            <Footprints
-                              size={32}
-                              style={{ color: esc.colore }}
-                              strokeWidth={3}
-                              className="drop-shadow-[2px_2px_2px_rgba(0,0,0,0.1)]"
-                            />
-                          </motion.div>
-                        ) : (
-                          <Footprints size={24} className="text-stone-100" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Controlli Paginazione */}
-          {totalPages > 1 && (
-            <div className="flex justify-center gap-4 mt-6">
-              <button 
-                disabled={currentPage === 0}
-                onClick={() => setCurrentPage(p => p - 1)}
-                className="p-3 bg-white rounded-2xl shadow-sm border border-stone-100 disabled:opacity-30 transition-all hover:bg-stone-50"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button 
-                disabled={currentPage === totalPages - 1}
-                onClick={() => setCurrentPage(p => p + 1)}
-                className="p-3 bg-white rounded-2xl shadow-sm border border-stone-100 disabled:opacity-30 transition-all hover:bg-stone-50"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Premi / Voucher Digitali */}
-        {vouchersCount > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-stone-400 mb-4 text-center">I Tuoi Premi</h3>
-            <div className="space-y-4">
-              {Array.from({ length: vouchersCount }).map((_, i) => (
-                <div key={i} className="bg-white p-6 rounded-[2rem] border-2 border-dashed border-brand-sky/30 flex items-center justify-between relative overflow-hidden group">
-                  <div className="absolute -right-4 -bottom-4 text-brand-sky/5 group-hover:scale-110 transition-transform">
-                    <Gift size={120} />
+        {/* PASSPORT CARD */}
+        <AnimatePresence mode="wait">
+          <motion.div key={currentPage} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white rounded-[3rem] p-10 shadow-2xl border border-stone-50 relative overflow-hidden mb-6" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/paper.png')" }}>
+            <div className="relative z-10">
+              <div className="flex justify-between items-start mb-12">
+                <div className="text-left">
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShieldCheck size={14} className="text-sky-400" />
+                    <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Tessera {currentPage + 1} / {totalPages}</span>
                   </div>
-                  <div className="relative z-10">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-brand-sky block mb-1">Voucher Sbloccato</span>
-                    <h4 className="text-2xl font-black text-brand-stone">SCONTO 10€</h4>
-                    <p className="text-[10px] font-bold text-stone-400 uppercase mt-1">Valido per la prossima escursione</p>
-                  </div>
-                  <div className="relative z-10 text-right">
-                    <div className="bg-stone-50 px-4 py-2 rounded-xl font-mono text-sm font-black border border-stone-100 mb-2">
-                      ALTOUR-{10 + i}V
-                    </div>
-                    <button className="text-[10px] font-black uppercase tracking-widest text-brand-sky hover:underline">Riscatta ora</button>
-                  </div>
+                  <h2 className="text-3xl font-black uppercase tracking-tighter text-brand-stone">{userTessera.nome_escursionista}</h2>
                 </div>
-              ))}
+                <div className="w-16 h-16 bg-stone-50 rounded-2xl flex items-center justify-center border-2 border-stone-100">
+                  {vetteCount >= 8 * (currentPage + 1) ? <IconaScarpone size={32} className="text-amber-500" /> : <Star size={32} className="text-stone-200" />}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-4">
+                {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
+                  const idx = currentPage * SLOTS_PER_PAGE + i;
+                  const esc = userTessera.escursioni_completate?.[idx];
+                  return (
+                    <div key={i} className="aspect-square rounded-2xl border-2 border-dashed border-stone-100 bg-stone-50/50 flex items-center justify-center relative overflow-hidden group">
+                      {esc ? (
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1, rotate: idx * 45 }} className="animate-shine p-1">
+                          <IconaScarpone size={28} style={{ color: esc.colore }} />
+                        </motion.div>
+                      ) : (
+                        <IconaScarpone size={24} className="text-stone-200 opacity-20" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
+        </AnimatePresence>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-4 mb-10">
+            <button disabled={currentPage === 0} onClick={() => setCurrentPage(p => p - 1)} className="p-3 bg-white rounded-xl shadow-sm border border-stone-100 disabled:opacity-30"><ChevronLeft size={20} /></button>
+            <button disabled={currentPage === totalPages - 1} onClick={() => setCurrentPage(p => p + 1)} className="p-3 bg-white rounded-xl shadow-sm border border-stone-100 disabled:opacity-30"><ChevronRight size={20} /></button>
+          </div>
         )}
 
-        {/* Diario delle Vette */}
+        {/* VOUCHERS */}
+        {vouchersCount > 0 && (
+          <div className="mb-12">
+            <h3 className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-4">I Tuoi Voucher</h3>
+            {Array.from({ length: vouchersCount }).map((_, i) => (
+              <div key={i} className="bg-white p-6 rounded-[2rem] border-2 border-dashed border-sky-200 flex items-center justify-between mb-4">
+                <div className="text-left">
+                  <h4 className="text-xl font-black text-brand-stone">SCONTO 10€</h4>
+                  <p className="text-[10px] font-bold text-stone-400 uppercase">Codice: ALTOUR-{10 + i}V</p>
+                </div>
+                <Gift className="text-sky-200" size={32} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* DIARIO */}
         <div className="mb-12">
-          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-stone-400 mb-6 text-center">Diario delle Vette</h3>
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-stone-100 space-y-6">
-            {userTessera.escursioni_completate && userTessera.escursioni_completate.length > 0 ? (
+          <h3 className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-6">Cronologia dei Passi</h3>
+          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-stone-50 space-y-6 text-left">
+            {userTessera.escursioni_completate?.length > 0 ? (
               [...userTessera.escursioni_completate].reverse().map((esc: any, i: number) => (
-                <div key={i} className="flex items-center justify-between group">
+                <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: `${esc.colore}15` }}>
-                      <Footprints size={18} style={{ color: esc.colore }} />
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${esc.colore}15` }}>
+                      <IconaScarpone size={18} style={{ color: esc.colore }} />
                     </div>
                     <div>
-                      <h4 className="text-sm font-black uppercase text-brand-stone leading-none mb-1 group-hover:text-brand-sky transition-colors">{esc.titolo}</h4>
-                      <p className="text-[10px] font-bold text-stone-300 uppercase tracking-widest flex items-center gap-1">
-                        <Calendar size={10} /> {new Date(esc.data).toLocaleDateString('it-IT')}
-                      </p>
+                      <h4 className="text-sm font-black uppercase text-brand-stone">{esc.titolo}</h4>
+                      <div className="flex items-center gap-1 text-stone-300 text-[9px] font-bold uppercase tracking-widest">
+                        <Calendar size={10} /> {new Date(esc.data).toLocaleDateString("it-IT")}
+                      </div>
                     </div>
                   </div>
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: esc.colore }} />
                 </div>
               ))
             ) : (
-              <p className="text-center text-stone-300 text-[10px] font-black uppercase py-8 tracking-widest">Nessun timbro ancora</p>
+              <p className="text-center text-stone-200 text-xs py-4 font-black uppercase tracking-widest">Inizia la tua avventura</p>
             )}
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            setRedeemStep("INPUT");
-            setShowRedeem(true);
-          }}
-          className="w-full bg-brand-stone text-white py-6 rounded-3xl font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-4 hover:bg-brand-sky transition-all active:scale-95 shadow-2xl shadow-stone-300"
-        >
-          <Plus size={20} /> Riscatta Nuova Vetta
-        </button>
+        <button onClick={() => { setRedeemStep("INPUT"); setShowRedeem(true); }} className="w-full bg-brand-stone text-white py-6 rounded-3xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 shadow-2xl transition-all hover:bg-brand-sky active:scale-95"><Plus size={20} /> Riscatta Scarpone</button>
       </div>
 
-      {/* Modal Riscatto */}
       <AnimatePresence>
         {showRedeem && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowRedeem(false)}
-              className="absolute inset-0 bg-brand-stone/80 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white p-10 rounded-[3rem] w-full max-w-sm relative text-center shadow-2xl border border-white/20"
-            >
-              <button
-                onClick={() => setShowRedeem(false)}
-                className="absolute top-8 right-8 text-stone-300 hover:text-brand-stone transition-colors"
-              >
-                <X size={28} />
-              </button>
-
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="bg-white p-10 rounded-[3rem] w-full max-w-sm relative text-center shadow-2xl">
+              <button onClick={() => setShowRedeem(false)} className="absolute top-6 right-6 text-stone-300"><X size={24} /></button>
               {redeemStep === "INPUT" ? (
                 <>
-                  <div className="w-16 h-16 bg-brand-glacier rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Star size={32} className="text-brand-sky" />
-                  </div>
-                  <h3 className="text-2xl font-black uppercase mb-2 tracking-tighter text-brand-stone">
-                    Codice Riscatto
-                  </h3>
-                  <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-8">
-                    Inserisci il codice segreto ricevuto dalla guida
-                  </p>
-                  <input
-                    autoFocus
-                    className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-3xl font-black mb-4 uppercase outline-none focus:border-brand-sky transition-all"
-                    placeholder="****"
-                    value={inputCodice}
-                    onChange={(e) => setInputCodice(e.target.value)}
-                  />
-                  {error && (
-                    <p className="text-red-500 text-[10px] font-black uppercase mb-6 tracking-widest">
-                      {error}
-                    </p>
-                  )}
-                  <button
-                    onClick={verifyCode}
-                    className="w-full bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs hover:bg-brand-sky transition-all shadow-xl shadow-stone-200"
-                  >
-                    Verifica Codice
-                  </button>
+                  <h3 className="text-2xl font-black uppercase mb-6 text-brand-stone tracking-tighter">Inserisci Codice</h3>
+                  <input autoFocus className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-3xl font-black mb-4 uppercase outline-none focus:border-brand-sky" placeholder="****" value={inputCodice} onChange={(e) => setInputCodice(e.target.value)} />
+                  {error && <p className="text-red-500 text-[10px] font-black uppercase mb-4">{error}</p>}
+                  <button onClick={verifyCode} className="w-full bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-brand-sky">Verifica</button>
                 </>
               ) : (
                 <>
-                  <h3 className="text-2xl font-black uppercase mb-2 tracking-tighter text-brand-stone">
-                    Sigillo Personale
-                  </h3>
-                  <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest mb-8">
-                    Scegli la tonalità del tuo timbro
-                  </p>
-                  <div className="grid grid-cols-5 gap-3 mb-10">
-                    {EARTH_PALETTE.map((color) => (
-                      <button
-                        key={color.hex}
-                        onClick={() => saveVetta(color.hex)}
-                        className="aspect-square rounded-xl flex items-center justify-center border-4 border-white shadow-md hover:scale-110 transition-transform"
-                        style={{ backgroundColor: color.hex }}
-                        title={color.name}
-                      >
-                        <Footprints className="text-white/20" size={14} />
-                      </button>
+                  <h3 className="text-2xl font-black uppercase mb-6 text-brand-stone tracking-tighter">Scegli il Colore</h3>
+                  <div className="grid grid-cols-5 gap-3 mb-8">
+                    {EARTH_PALETTE.map((c) => (
+                      <button key={c.hex} onClick={() => saveVetta(c.hex)} className="aspect-square rounded-xl border-4 border-white shadow-md hover:scale-110 transition-transform" style={{ backgroundColor: c.hex }} />
                     ))}
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-stone-400">
-                    <ChevronRight size={16} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Seleziona per confermare</span>
                   </div>
                 </>
               )}
