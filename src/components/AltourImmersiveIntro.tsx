@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // --- CONFIGURAZIONE COSTANTI ---
 // Mobile: Immagine Supabase (Verticale)
-const MOBILE_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/intro-mobile.webp";
+const MOBILE_IMAGE_URL =
+  "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/intro-mobile.webp";
 // Desktop: Immagine Supabase (Landscape)
-const DESKTOP_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp";
+const DESKTOP_IMAGE_URL =
+  "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp";
 
 /* 
 // NOTE: Se vuoi usare le tue immagini personali, caricale su Supabase Storage nel bucket 'Images' e usa questi URL:
@@ -17,7 +19,9 @@ interface AltourImmersiveIntroProps {
   onComplete: () => void;
 }
 
-export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntroProps) {
+export default function AltourImmersiveIntro({
+  onComplete,
+}: AltourImmersiveIntroProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -25,8 +29,8 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Timer per gestire la durata dell'intro (3.5s)
@@ -39,10 +43,7 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
   }, []);
 
   return (
-    <AnimatePresence 
-      mode="wait" 
-      onExitComplete={onComplete}
-    >
+    <AnimatePresence mode="wait" onExitComplete={onComplete}>
       {isVisible && (
         <motion.div
           key="intro-container"
@@ -50,14 +51,21 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
           initial={{ opacity: 1 }}
           exit={
             isMobile
-              ? { opacity: 0, scale: 1.1, transition: { duration: 0.8, ease: "easeInOut" } } // EFFETTO MOBILE: Fade Out con leggero scale (più fluido)
-              : { y: "-100%", transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] } }      // EFFETTO DESKTOP: Sipario Verticale
+              ? {
+                  opacity: 0,
+                  scale: 1.1,
+                  transition: { duration: 0.8, ease: "easeInOut" },
+                } // EFFETTO MOBILE: Fade Out con leggero scale (più fluido)
+              : {
+                  y: "-100%",
+                  transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] },
+                } // EFFETTO DESKTOP: Sipario Verticale
           }
         >
           {/* --- IMMAGINE DI SFONDO (KEN BURNS) --- */}
           <div className="absolute inset-0 w-full h-full">
             {/* Immobile Wrapper per gestire il caricamento condizionale senza layout shift */}
-            
+
             {/* Versione Mobile */}
             <motion.img
               src={MOBILE_IMAGE_URL}
@@ -72,7 +80,7 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
               onError={(e) => {
                 console.error("Errore caricamento immagine mobile:", e);
                 // Fallback all'immagine desktop se quella mobile fallisce
-                e.currentTarget.src = DESKTOP_IMAGE_URL; 
+                e.currentTarget.src = DESKTOP_IMAGE_URL;
               }}
             />
 
@@ -90,7 +98,9 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
             />
 
             {/* Overlay Scuro */}
-            <div className={`absolute inset-0 ${isMobile ? 'bg-black/20' : 'bg-black/40'}`} />
+            <div
+              className={`absolute inset-0 ${isMobile ? "bg-black/20" : "bg-black/20"}`}
+            />
           </div>
 
           {/* --- CONTENUTO BRANDING --- */}
@@ -104,18 +114,18 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
             >
               {/* Logo (Immagine o Testo Styled) */}
               <div className="relative mb-4">
-                 <img 
-                   src="/altour-logo.png" 
-                   alt="Logo" 
-                   className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-2xl shadow-2xl border border-white/20 mb-6"
-                 />
+                <img
+                  src="/altour-logo.png"
+                  alt="Logo"
+                  className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-2xl shadow-2xl border border-white/20 mb-6"
+                />
               </div>
 
               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter drop-shadow-xl mb-2">
                 Altour
               </h1>
-              <p className="text-sm md:text-lg font-bold uppercase tracking-[0.5em] text-stone-200 opacity-90">
-                Italy Explorer
+              <p className="text-sm md:text-xl font-bold uppercase tracking-[0.5em] text-stone-200 opacity-90">
+                Italy
               </p>
             </motion.div>
           </div>
