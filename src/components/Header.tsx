@@ -16,14 +16,14 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
     { id: "tessera", label: "La Mia Tessera" },
   ];
 
-  // Funzione per gestire il click su mobile: cambia pagina e chiude il menu
   const handleMobileClick = (id: string) => {
     onNavigate(id);
     setIsMenuOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-brand-stone/95 backdrop-blur-md border-b border-white/10 shadow-lg">
+    // CAMBIO COLORE: bg-[#2a2723] come il footer
+    <header className="sticky top-0 z-50 bg-[#2a2723] backdrop-blur-md border-b border-white/5 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo e Nome */}
         <div
@@ -32,15 +32,15 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
         >
           <img
             src="/altour-logo.png"
-            className="h-10 w-auto rounded-lg shadow-sm"
+            className="h-10 w-auto rounded-lg shadow-sm border border-white/10"
             alt="Logo"
           />
-          <span className="text-white font-black tracking-tighter text-lg group-hover:text-brand-sky transition-colors">
+          <span className="text-white font-black tracking-tighter text-lh group-hover:text-brand-sky transition-colors">
             Altour italy
           </span>
         </div>
 
-        {/* Menu Desktop (Visibile da tablet in su) */}
+        {/* Menu Desktop */}
         <nav className="hidden md:flex items-center gap-8">
           {navItems.map((item) => (
             <button
@@ -61,7 +61,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
           ))}
         </nav>
 
-        {/* Pulsante Hamburger (Solo Mobile) */}
+        {/* Pulsante Hamburger */}
         <button
           className="md:hidden text-white p-2 hover:bg-white/5 rounded-lg transition-colors"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -71,11 +71,11 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
         </button>
       </div>
 
-      {/* Menu Mobile Dropdown con Animazione Premium */}
+      {/* Menu Mobile Dropdown - UNIFORMATO AL COLORE FOOTER */}
       <div
         className={`
-        md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-brand-stone/98
-        ${isMenuOpen ? "max-h-[300px] opacity-100 border-t border-white/10" : "max-h-0 opacity-0"}
+        md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-[#2a2723]
+        ${isMenuOpen ? "max-h-[300px] opacity-100 border-t border-white/5" : "max-h-0 opacity-0"}
       `}
       >
         <div className="flex flex-col p-6 gap-5">

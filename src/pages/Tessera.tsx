@@ -1,4 +1,3 @@
-// src/pages/Tessera.tsx
 import { useEffect, useState, useMemo } from "react";
 import {
   X,
@@ -241,21 +240,19 @@ export default function Tessera() {
       </div>
     );
 
-  const { count, currentLevel, totalPages, vouchersCount } = stats!;
+  const { currentLevel, totalPages, vouchersCount } = stats!;
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] pb-20 text-stone-800">
-      {/* HERO CON GRADIENTE COERENTE ALLA HOME */}
-      <div className="relative h-[25vh] md:h-[30vh] w-full flex items-center justify-center text-center overflow-hidden">
+      {/* HERO SECTION */}
+      <div className="relative h-[28vh] md:h-[32vh] w-full flex items-center justify-center text-center overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-center"
           alt="header bg"
         />
-        {/* Overlay Gradiente: da scuro a colore sfondo pagina */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#f5f2ed]" />
 
-        {/* Logout fisso in alto a destra, più piccolo su mobile */}
         <button
           onClick={handleLogout}
           className="absolute top-4 right-4 md:top-6 md:right-6 p-2 md:p-3 bg-black/20 backdrop-blur-md rounded-full text-white border border-white/10 z-50"
@@ -263,21 +260,30 @@ export default function Tessera() {
           <LogOut size={18} className="md:w-5 md:h-5" />
         </button>
 
-        <div className="relative z-20 px-4">
-          <div className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md px-5 py-3 rounded-full border border-white/10 mb-2">
-            <IconaScarponeCustom size={30} color="#ffffff" isActive={true} />
-            <span className="text-[12px] font-black uppercase text-white tracking-tighter">
-              {currentLevel.label}
-            </span>
-          </div>
+        <div className="relative z-20 px-4 flex flex-col items-center">
           <h1 className="text-3xl md:text-4xl font-black text-white uppercase drop-shadow-md">
             Passaporto Altour
           </h1>
+          <p className="text-white/80 font-bold tracking-[0.3em] text-[10px] md:text-xs uppercase mt-1 mb-4">
+            Cod. {userTessera.codice_tessera}
+          </p>
+
+          {/* Badge riposizionato sotto il numero tessera */}
+          <div className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+            <IconaScarponeCustom
+              size={18}
+              color={currentLevel.color}
+              isActive={true}
+            />
+            <span className="text-[10px] font-black uppercase text-white tracking-tight">
+              {currentLevel.label}
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="max-w-xl mx-auto px-4 md:px-6 -mt-8 relative z-30">
-        {/* TESSERA OTTIMIZZATA MOBILE */}
+        {/* TESSERA */}
         <div className="bg-white rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-8 shadow-2xl border border-white/50">
           <div className="flex justify-between items-start mb-6">
             <div className="max-w-[70%]">
@@ -292,7 +298,8 @@ export default function Tessera() {
               </h2>
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-stone-50 rounded-xl flex items-center justify-center border border-stone-100">
-              {count >= 8 * (currentPage + 1) ? (
+              {userTessera.escursioni_completate?.length >=
+              8 * (currentPage + 1) ? (
                 <Star size={24} className="text-amber-400 fill-amber-400" />
               ) : (
                 <Star size={24} className="text-stone-200" />
@@ -300,7 +307,6 @@ export default function Tessera() {
             </div>
           </div>
 
-          {/* Griglia scarponi: gap ridotto su mobile */}
           <div className="grid grid-cols-4 gap-2 md:gap-4 mb-6">
             {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
               const idx = currentPage * SLOTS_PER_PAGE + i;
@@ -310,18 +316,11 @@ export default function Tessera() {
                   key={i}
                   className="aspect-square rounded-xl md:rounded-2xl border-2 border-dashed border-stone-50 bg-stone-50/30 flex items-center justify-center"
                 >
-                  {esc ? (
-                    <IconaScarponeCustom
-                      size={window.innerWidth < 768 ? 45 : 65}
-                      color={esc.colore}
-                      isActive={true}
-                    />
-                  ) : (
-                    <IconaScarponeCustom
-                      size={window.innerWidth < 768 ? 45 : 65}
-                      isActive={false}
-                    />
-                  )}
+                  <IconaScarponeCustom
+                    size={window.innerWidth < 768 ? 50 : 70}
+                    color={esc?.colore || "#d6d3d1"}
+                    isActive={!!esc}
+                  />
                 </div>
               );
             })}
@@ -331,32 +330,32 @@ export default function Tessera() {
             <button
               disabled={currentPage === 0}
               onClick={() => setCurrentPage((p) => p - 1)}
-              className="p-2 disabled:opacity-20"
+              className="p-2 disabled:opacity-20 hover:bg-stone-50 rounded-full transition-colors"
             >
               <ChevronLeft size={20} />
             </button>
-            <span className="text-[9px] md:text-[10px] font-black uppercase text-stone-300">
+            <span className="text-[9px] md:text-[10px] font-black uppercase text-stone-300 tracking-widest">
               Pagina {currentPage + 1} / {totalPages}
             </span>
             <button
               disabled={currentPage >= totalPages - 1}
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="p-2 disabled:opacity-20"
+              className="p-2 disabled:opacity-20 hover:bg-stone-50 rounded-full transition-colors"
             >
               <ChevronRight size={20} />
             </button>
           </div>
         </div>
 
-        {/* Pulsante riscatta: più compatto su mobile */}
+        {/* Pulsante Riscatta in Azzurro */}
         <button
           onClick={() => {
             setRedeemStep("INPUT");
             setShowRedeem(true);
           }}
-          className="w-full mt-4 md:mt-6 bg-stone-900 text-white py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+          className="w-full mt-4 md:mt-6 bg-[#0ea5e9] text-white py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-sky-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:bg-[#0284c7]"
         >
-          <Plus size={20} strokeWidth={3} />{" "}
+          <Plus size={20} strokeWidth={3} />
           <span className="text-sm md:text-base">Riscatta Scarpone</span>
         </button>
 
@@ -379,32 +378,40 @@ export default function Tessera() {
           </div>
         )}
 
-        {/* CRONOLOGIA COMPATTA */}
+        {/* CRONOLOGIA */}
         <div className="mt-8 space-y-3 mb-8">
           <h3 className="text-center text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
-            Cronologia
+            Cronologia Recente
           </h3>
-          <div className="bg-white/60 rounded-[2rem] p-4 md:p-6 border border-white/50">
+          <div className="bg-white/60 rounded-[2rem] p-4 md:p-6 border border-white/50 shadow-inner">
             {userTessera.escursioni_completate?.length > 0 ? (
               [...userTessera.escursioni_completate]
                 .reverse()
-                .slice(0, 3)
+                .slice(0, 4)
                 .map((esc, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between py-3 border-b last:border-0 border-stone-50"
+                    className="group relative flex items-center justify-between py-3 border-b last:border-0 border-stone-50/50"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <IconaScarponeCustom
                         size={20}
                         color={esc.colore}
                         isActive={true}
                       />
-                      <span className="text-[10px] md:text-xs font-black uppercase text-stone-700 truncate max-w-[120px]">
-                        {esc.titolo}
-                      </span>
+                      <div className="relative flex-1 min-w-0">
+                        <span className="block text-[10px] md:text-xs font-black uppercase text-stone-700 truncate cursor-help">
+                          {esc.titolo}
+                        </span>
+                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block group-active:block z-[60] pointer-events-none">
+                          <div className="bg-stone-900 text-white text-[9px] font-bold uppercase py-2 px-3 rounded-xl shadow-2xl whitespace-nowrap border border-white/10">
+                            {esc.titolo}
+                            <div className="absolute top-full left-4 border-[6px] border-transparent border-t-stone-900"></div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-[8px] font-bold text-stone-300 uppercase">
+                    <span className="text-[8px] font-bold text-stone-300 uppercase ml-3 flex-shrink-0">
                       {new Date(esc.data).toLocaleDateString()}
                     </span>
                   </div>
@@ -418,18 +425,19 @@ export default function Tessera() {
         </div>
       </div>
 
-      {/* MODALE OTTIMIZZATO */}
+      {/* MODALE RISCATTO */}
       <AnimatePresence>
         {showRedeem && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 backdrop-blur-md bg-black/40">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white p-8 md:p-10 rounded-[2.5rem] w-full max-w-sm text-center relative shadow-2xl"
             >
               <button
                 onClick={() => setShowRedeem(false)}
-                className="absolute top-5 right-5 text-stone-300"
+                className="absolute top-5 right-5 text-stone-300 hover:text-stone-500"
               >
                 <X size={24} />
               </button>
@@ -440,7 +448,7 @@ export default function Tessera() {
                     Codice Vetta
                   </h3>
                   <input
-                    className="w-full bg-stone-50 border-2 border-stone-100 p-4 rounded-xl text-center text-2xl font-black uppercase"
+                    className="w-full bg-stone-50 border-2 border-stone-100 p-4 rounded-xl text-center text-2xl font-black uppercase outline-none focus:border-stone-200 transition-colors"
                     placeholder="****"
                     value={redeemCode}
                     onChange={(e) => setRedeemCode(e.target.value)}
@@ -461,14 +469,14 @@ export default function Tessera() {
                 <>
                   <h3 className="text-xl font-black uppercase mb-1">Colore</h3>
                   <p className="text-[9px] font-bold text-stone-400 uppercase mb-6 tracking-widest">
-                    Scegli la tonalità
+                    Scegli la tonalità della tua conquista
                   </p>
                   <div className="grid grid-cols-4 gap-3 mb-6">
                     {EARTH_PALETTE.map((c) => (
                       <button
                         key={c.hex}
                         onClick={() => saveVetta(c.hex)}
-                        className="aspect-square rounded-xl border-2 border-stone-50 shadow-sm active:scale-90 transition-transform bg-stone-50 flex items-center justify-center"
+                        className="aspect-square rounded-xl border-2 border-stone-50 shadow-sm active:scale-90 hover:border-stone-200 transition-all bg-stone-50 flex items-center justify-center"
                       >
                         <IconaScarponeCustom
                           size={32}
@@ -479,7 +487,9 @@ export default function Tessera() {
                     ))}
                   </div>
                   {isSaving && (
-                    <Loader2 className="animate-spin mx-auto text-stone-900" />
+                    <div className="flex justify-center">
+                      <Loader2 className="animate-spin text-stone-900" />
+                    </div>
                   )}
                 </>
               )}
