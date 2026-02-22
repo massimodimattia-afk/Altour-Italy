@@ -1,27 +1,34 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Database } from '../types/supabase';
-import ActivityDetailModal from '../components/ActivityDetailModal';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Navigation } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { Database } from "../types/supabase";
+import ActivityDetailModal from "../components/ActivityDetailModal";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, Navigation } from "lucide-react";
 
-type Escursione = Database['public']['Tables']['escursioni']['Row'];
+type Escursione = Database["public"]["Tables"]["escursioni"]["Row"];
 
 interface EscursioniPageProps {
   onNavigate: (page: string) => void;
   onBookingClick: (title: string) => void;
 }
 
-export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) {
+export default function EscursioniPage({
+  onBookingClick,
+}: EscursioniPageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedActivity, setSelectedActivity] = useState<Escursione | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Escursione | null>(
+    null,
+  );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'giornata' | 'multi_giorno'>('giornata');
+  const [activeTab, setActiveTab] = useState<"giornata" | "tour">("giornata");
 
   useEffect(() => {
     async function fetchEscursioni() {
-      const { data } = await supabase.from('escursioni').select('*').order('data', { ascending: true });
+      const { data } = await supabase
+        .from("escursioni")
+        .select("*")
+        .order("data", { ascending: true });
       if (data) setEscursioni(data);
       setLoading(false);
     }
@@ -33,9 +40,16 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
     setIsDetailOpen(true);
   };
 
-  const filteredEscursioni = escursioni.filter(esc => esc.categoria === activeTab);
+  const filteredEscursioni = escursioni.filter(
+    (esc) => esc.categoria === activeTab,
+  );
 
-  if (loading) return <div className="p-10 text-center text-stone-400 font-bold uppercase tracking-widest text-sm">Caricamento in corso...</div>;
+  if (loading)
+    return (
+      <div className="p-10 text-center text-stone-400 font-bold uppercase tracking-widest text-sm">
+        Caricamento in corso...
+      </div>
+    );
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -52,12 +66,14 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
         {/* Tab Switcher */}
         <div className="bg-brand-glacier p-2 rounded-2xl flex gap-1 border border-stone-100 self-start">
           <button
-            onClick={() => setActiveTab('giornata')}
+            onClick={() => setActiveTab("giornata")}
             className={`relative px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-              activeTab === 'giornata' ? 'text-white' : 'text-stone-400 hover:text-brand-stone'
+              activeTab === "giornata"
+                ? "text-white"
+                : "text-stone-400 hover:text-brand-stone"
             }`}
           >
-            {activeTab === 'giornata' && (
+            {activeTab === "giornata" && (
               <motion.div
                 layoutId="tab-bg"
                 className="absolute inset-0 bg-brand-stone rounded-xl shadow-lg"
@@ -67,19 +83,21 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
             <span className="relative z-10">Esperienze in Giornata</span>
           </button>
           <button
-            onClick={() => setActiveTab('multi_giorno')}
+            onClick={() => setActiveTab("tour")}
             className={`relative px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-              activeTab === 'multi_giorno' ? 'text-white' : 'text-stone-400 hover:text-brand-stone'
+              activeTab === "tour"
+                ? "text-white"
+                : "text-stone-400 hover:text-brand-stone"
             }`}
           >
-            {activeTab === 'multi_giorno' && (
+            {activeTab === "tour" && (
               <motion.div
                 layoutId="tab-bg"
                 className="absolute inset-0 bg-brand-stone rounded-xl shadow-lg"
                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
             )}
-            <span className="relative z-10">Tour Multi-giorno</span>
+            <span className="relative z-10">Tour</span>
           </button>
         </div>
       </div>
@@ -95,13 +113,16 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
         >
           {filteredEscursioni.length > 0 ? (
             filteredEscursioni.map((esc) => (
-              <div key={esc.id} className="bg-white rounded-[2.5rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500">
+              <div
+                key={esc.id}
+                className="bg-white rounded-[2.5rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500"
+              >
                 <div className="h-64 bg-stone-200 relative overflow-hidden">
                   {esc.immagine_url && (
-                    <img 
-                      src={esc.immagine_url} 
-                      alt={esc.titolo} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                    <img
+                      src={esc.immagine_url}
+                      alt={esc.titolo}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     />
                   )}
                   <div className="absolute top-6 right-6 flex flex-col gap-2 items-end">
@@ -110,7 +131,7 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
                     </div>
                     <div className="bg-brand-sky px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter text-white shadow-sm flex items-center gap-2">
                       <Navigation size={10} />
-                      {esc.categoria === 'giornata' ? 'Giornata' : 'Multi-day'}
+                      {esc.categoria === "giornata" ? "Giornata" : "Multi-day"}
                     </div>
                   </div>
                 </div>
@@ -125,15 +146,15 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
                   <p className="text-stone-500 text-sm mb-8 line-clamp-3 font-medium flex-grow leading-relaxed">
                     {esc.descrizione}
                   </p>
-                  
+
                   <div className="flex gap-3 mt-auto pt-8 border-t border-stone-50">
-                    <button 
+                    <button
                       onClick={() => openDetails(esc)}
                       className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-brand-stone hover:text-white transition-all active:scale-95"
                     >
                       Dettagli
                     </button>
-                    <button 
+                    <button
                       onClick={() => onBookingClick(esc.titolo)}
                       className="flex-[2] bg-brand-sky text-white py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-brand-stone transition-all shadow-xl shadow-brand-sky/20 active:scale-95"
                     >
@@ -150,10 +171,13 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
                   Nessuna avventura in programma?
                 </h3>
                 <p className="text-stone-500 font-medium mb-8">
-                  Non abbiamo ancora caricato tour per questa categoria, ma possiamo organizzarne uno su misura per te.
+                  Non abbiamo ancora caricato tour per questa categoria, ma
+                  possiamo organizzarne uno su misura per te.
                 </p>
                 <button
-                  onClick={() => onBookingClick('Richiesta Tour Personalizzato')}
+                  onClick={() =>
+                    onBookingClick("Richiesta Tour Personalizzato")
+                  }
                   className="bg-brand-stone text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-brand-sky transition-all shadow-lg"
                 >
                   Richiedi un tour personalizzato
@@ -164,7 +188,7 @@ export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) 
         </motion.div>
       </AnimatePresence>
 
-      <ActivityDetailModal 
+      <ActivityDetailModal
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}

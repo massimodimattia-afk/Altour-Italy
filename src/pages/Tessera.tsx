@@ -1,5 +1,5 @@
 // src/pages/Tessera.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   X,
   Loader2,
@@ -12,16 +12,34 @@ import {
   ChevronLeft,
   Calendar,
   Gift,
-  Footprints, // impronte, simbolo di cammino/escursione
+  Footprints,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 
+// --- INTERFACCE TYPESCRIPT ---
+interface EscursioneCompletata {
+  titolo: string;
+  colore: string;
+  data: string;
+}
+
+interface UserTessera {
+  id: string;
+  codice_tessera: string;
+  nome_escursionista: string;
+  escursioni_completate: EscursioneCompletata[];
+  punti: number;
+}
+
+interface AttivitaDaRiscattare {
+  titolo: string;
+}
+
+// --- COSTANTI ---
 const STORAGE_KEY = "altour_session_v4";
 const SLOTS_PER_PAGE = 8;
-
-// IconaScarpone ora è l'icona Footprints di Lucide
 const IconaScarpone = Footprints;
 
 const EARTH_PALETTE = [
@@ -69,84 +87,148 @@ const LEVELS = [
 ];
 
 export default function Tessera() {
+  // Stati di caricamento
   const [loading, setLoading] = useState(true);
-  const [userTessera, setUserTessera] = useState<any>(null);
-  const [inputCodice, setInputCodice] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Dati utente
+  const [userTessera, setUserTessera] = useState<UserTessera | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Stati per i form e modali
+  const [loginCode, setLoginCode] = useState("");
+  const [loginError, setLoginError] = useState("");
+
   const [showRedeem, setShowRedeem] = useState(false);
   const [redeemStep, setRedeemStep] = useState<"INPUT" | "COLOR">("INPUT");
-  const [pendingActivity, setPendingActivity] = useState<any>(null);
-  const [error, setError] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
+  const [redeemCode, setRedeemCode] = useState("");
+  const [redeemError, setRedeemError] = useState("");
+  const [pendingActivity, setPendingActivity] =
+    useState<AttivitaDaRiscattare | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) fetchUser(saved);
-    else setLoading(false);
+    if (saved) {
+      fetchUser(saved);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
+  // --- LOGICA DI ACCESSO ---
   async function fetchUser(codice: string) {
+    if (!codice.trim()) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("tessere")
-      .select("*")
-      .eq("codice_tessera", codice.toUpperCase())
-      .single();
-    if (data) {
-      setUserTessera(data);
-      localStorage.setItem(STORAGE_KEY, data.codice_tessera);
-      const count = data.escursioni_completate?.length || 0;
-      setCurrentPage(Math.floor(count / SLOTS_PER_PAGE));
+    setLoginError("");
+
+    try {
+      const { data, error } = await supabase
+        .from("tessere")
+        .select("*")
+        .eq("codice_tessera", codice.toUpperCase().trim())
+        .single();
+
+      if (error || !data) {
+        setLoginError("Codice tessera non trovato. Verifica e riprova.");
+      } else {
+        setUserTessera(data as UserTessera);
+        localStorage.setItem(STORAGE_KEY, data.codice_tessera);
+
+        // Calcola la pagina iniziale basata sulle escursioni esistenti
+        const count = data.escursioni_completate?.length || 0;
+        setCurrentPage(Math.floor(count / SLOTS_PER_PAGE));
+      }
+    } catch (e) {
+      setLoginError("Errore di connessione. Riprova più tardi.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    setUserTessera(null);
+    setLoginCode("");
     localStorage.removeItem(STORAGE_KEY);
-    window.location.reload();
+    await supabase.auth.signOut();
   };
 
-  const vetteCount = userTessera?.escursioni_completate?.length || 0;
-  const currentLevel =
-    LEVELS.find((l) => vetteCount >= l.min && vetteCount <= l.max) || LEVELS[0];
-  const nextLevel = LEVELS[LEVELS.indexOf(currentLevel) + 1] || null;
-  const progressToNext = nextLevel
-    ? ((vetteCount - currentLevel.min) / (nextLevel.min - currentLevel.min)) *
-      100
-    : 100;
-  const totalPages = Math.max(1, Math.ceil((vetteCount + 1) / SLOTS_PER_PAGE));
-  const vouchersCount = Math.floor(vetteCount / 8);
+  // --- STATI DERIVATI E OTTIMIZZATI CON USEMEMO ---
+  const stats = useMemo(() => {
+    if (!userTessera) return null;
 
-  const verifyCode = async () => {
-    setError("");
-    const { data: attivita, error: dbErr } = await supabase
-      .from("escursioni")
-      .select("titolo")
-      .eq("codice_riscatto", inputCodice.toUpperCase().trim())
-      .single();
+    const vetteCount = userTessera.escursioni_completate?.length || 0;
+    const currentLevel =
+      LEVELS.find((l) => vetteCount >= l.min && vetteCount <= l.max) ||
+      LEVELS[0];
+    const nextLevel = LEVELS[LEVELS.indexOf(currentLevel) + 1] || null;
+    const progressToNext = nextLevel
+      ? ((vetteCount - currentLevel.min) / (nextLevel.min - currentLevel.min)) *
+        100
+      : 100;
 
-    if (dbErr || !attivita) {
-      setError("Codice non valido.");
-      return;
-    }
-
-    const alreadyDone = userTessera?.escursioni_completate?.some(
-      (e: any) => e.titolo === attivita.titolo,
+    const totalPages = Math.max(
+      1,
+      Math.ceil((vetteCount + 1) / SLOTS_PER_PAGE),
     );
-    if (alreadyDone) {
-      setError("Vetta già conquistata!");
-      return;
-    }
+    const vouchersCount = Math.floor(vetteCount / 8);
 
-    setPendingActivity(attivita);
-    setRedeemStep("COLOR");
+    return {
+      vetteCount,
+      currentLevel,
+      nextLevel,
+      progressToNext,
+      totalPages,
+      vouchersCount,
+    };
+  }, [userTessera]);
+
+  // --- LOGICA DI RISCATTO ---
+  const verifyCode = async () => {
+    if (!redeemCode.trim()) return;
+    setRedeemError("");
+    setLoading(true);
+
+    try {
+      const { data: attivita, error: dbErr } = await supabase
+        .from("escursioni")
+        .select("titolo")
+        .eq("codice_riscatto", redeemCode.toUpperCase().trim())
+        .single();
+
+      if (dbErr || !attivita) {
+        setRedeemError("Codice non valido.");
+        setLoading(false);
+        return;
+      }
+
+      const alreadyDone = userTessera?.escursioni_completate?.some(
+        (e: EscursioneCompletata) => e.titolo === attivita.titolo,
+      );
+
+      if (alreadyDone) {
+        setRedeemError("Vetta già conquistata!");
+        setLoading(false);
+        return;
+      }
+
+      setPendingActivity(attivita as AttivitaDaRiscattare);
+      setRedeemStep("COLOR");
+    } catch (e) {
+      setRedeemError("Si è verificato un errore. Riprova.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveVetta = async (selectedHex: string) => {
+    if (!userTessera || !pendingActivity || isSaving) return;
+    setIsSaving(true);
+
     const listaAttuale = Array.isArray(userTessera.escursioni_completate)
       ? userTessera.escursioni_completate
       : [];
-    const updatedList = [
+
+    const updatedList: EscursioneCompletata[] = [
       ...listaAttuale,
       {
         titolo: pendingActivity.titolo,
@@ -165,26 +247,39 @@ export default function Tessera() {
       .select();
 
     if (!upError && data) {
-      setUserTessera(data[0]);
+      setUserTessera(data[0] as UserTessera);
       setShowRedeem(false);
+
+      // Resetta stato del modale
       setRedeemStep("INPUT");
-      setInputCodice("");
+      setRedeemCode("");
+      setPendingActivity(null);
+
+      // Aggiorna la pagina per mostrare l'ultimo inserimento
       setCurrentPage(Math.floor(updatedList.length / SLOTS_PER_PAGE));
+
       confetti({
         particleCount: 150,
         colors: [selectedHex, "#ffffff"],
         origin: { y: 0.7 },
       });
+    } else {
+      setRedeemError("Errore durante il salvataggio.");
     }
+
+    setIsSaving(false);
   };
 
-  if (loading)
+  // --- RENDER DEL CARICAMENTO ---
+  if (loading && !userTessera && !showRedeem) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed]">
-        <Loader2 className="animate-spin text-stone-300" />
+        <Loader2 className="animate-spin text-stone-300 w-8 h-8" />
       </div>
     );
+  }
 
+  // --- RENDER DEL LOGIN ---
   if (!userTessera) {
     return (
       <div className="min-h-screen bg-[#f5f2ed] flex items-center justify-center p-6 text-center">
@@ -194,22 +289,44 @@ export default function Tessera() {
             Accedi al Passaporto
           </h2>
           <input
-            className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-xl font-black mb-6 uppercase outline-none focus:border-brand-sky"
+            className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-xl font-black mb-2 uppercase outline-none focus:border-brand-sky"
             placeholder="ALT-XXX"
-            value={inputCodice}
-            onChange={(e) => setInputCodice(e.target.value)}
+            value={loginCode}
+            onChange={(e) => setLoginCode(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && fetchUser(loginCode)}
           />
+          {loginError && (
+            <p className="text-red-500 text-[10px] font-black uppercase mb-4 mt-2">
+              {loginError}
+            </p>
+          )}
           <button
-            onClick={() => fetchUser(inputCodice)}
-            className="w-full bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest"
+            onClick={() => fetchUser(loginCode)}
+            disabled={loading || !loginCode}
+            className="w-full mt-4 bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Sblocca
+            {loading ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              "Sblocca"
+            )}
           </button>
         </div>
       </div>
     );
   }
 
+  // Per evitare errori TypeScript siccome abbiamo garantito che stats non è null qui
+  if (!stats) return null;
+  const {
+    vetteCount,
+    currentLevel,
+    progressToNext,
+    totalPages,
+    vouchersCount,
+  } = stats;
+
+  // --- RENDER DELLA DASHBOARD PRINCIPALE ---
   return (
     <div className="min-h-screen bg-[#f5f2ed] pb-24 text-stone-800">
       <style>{`
@@ -261,7 +378,7 @@ export default function Tessera() {
               </span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-tight drop-shadow-xl">
-              I TUOI SCARPONI <br /> ALTOUR
+              La tua tessera <br /> ALTOUR
             </h1>
           </motion.div>
         </div>
@@ -368,14 +485,14 @@ export default function Tessera() {
             <button
               disabled={currentPage === 0}
               onClick={() => setCurrentPage((p) => p - 1)}
-              className="p-3 bg-white rounded-xl shadow-sm border border-stone-100 disabled:opacity-30"
+              className="p-3 bg-white rounded-xl shadow-sm border border-stone-100 disabled:opacity-30 transition-opacity"
             >
               <ChevronLeft size={20} />
             </button>
             <button
               disabled={currentPage === totalPages - 1}
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="p-3 bg-white rounded-xl shadow-sm border border-stone-100 disabled:opacity-30"
+              className="p-3 bg-white rounded-xl shadow-sm border border-stone-100 disabled:opacity-30 transition-opacity"
             >
               <ChevronRight size={20} />
             </button>
@@ -416,7 +533,7 @@ export default function Tessera() {
             {userTessera.escursioni_completate?.length > 0 ? (
               [...userTessera.escursioni_completate]
                 .reverse()
-                .map((esc: any, i: number) => (
+                .map((esc: EscursioneCompletata, i: number) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div
@@ -448,9 +565,12 @@ export default function Tessera() {
           </div>
         </div>
 
+        {/* REDEEM FAB BUTTON */}
         <button
           onClick={() => {
             setRedeemStep("INPUT");
+            setRedeemCode("");
+            setRedeemError("");
             setShowRedeem(true);
           }}
           className="w-full bg-brand-stone text-white py-6 rounded-3xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 shadow-2xl transition-all hover:bg-brand-sky active:scale-95"
@@ -459,6 +579,7 @@ export default function Tessera() {
         </button>
       </div>
 
+      {/* MODAL RISCATTO */}
       <AnimatePresence>
         {showRedeem && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40">
@@ -469,11 +590,13 @@ export default function Tessera() {
               className="bg-white p-10 rounded-[3rem] w-full max-w-sm relative text-center shadow-2xl"
             >
               <button
-                onClick={() => setShowRedeem(false)}
-                className="absolute top-6 right-6 text-stone-300"
+                onClick={() => !isSaving && setShowRedeem(false)}
+                className="absolute top-6 right-6 text-stone-300 hover:text-stone-500 transition-colors"
+                disabled={isSaving}
               >
                 <X size={24} />
               </button>
+
               {redeemStep === "INPUT" ? (
                 <>
                   <h3 className="text-2xl font-black uppercase mb-6 text-brand-stone tracking-tighter">
@@ -481,21 +604,27 @@ export default function Tessera() {
                   </h3>
                   <input
                     autoFocus
-                    className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-3xl font-black mb-4 uppercase outline-none focus:border-brand-sky"
+                    className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-3xl font-black mb-2 uppercase outline-none focus:border-brand-sky"
                     placeholder="****"
-                    value={inputCodice}
-                    onChange={(e) => setInputCodice(e.target.value)}
+                    value={redeemCode}
+                    onChange={(e) => setRedeemCode(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && verifyCode()}
                   />
-                  {error && (
-                    <p className="text-red-500 text-[10px] font-black uppercase mb-4">
-                      {error}
+                  {redeemError && (
+                    <p className="text-red-500 text-[10px] font-black uppercase mb-4 mt-2">
+                      {redeemError}
                     </p>
                   )}
                   <button
                     onClick={verifyCode}
-                    className="w-full bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-brand-sky"
+                    disabled={loading || !redeemCode}
+                    className="w-full mt-4 bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-brand-sky disabled:opacity-50 flex items-center justify-center"
                   >
-                    Verifica
+                    {loading ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      "Verifica"
+                    )}
                   </button>
                 </>
               ) : (
@@ -508,11 +637,21 @@ export default function Tessera() {
                       <button
                         key={c.hex}
                         onClick={() => saveVetta(c.hex)}
-                        className="aspect-square rounded-xl border-4 border-white shadow-md hover:scale-110 transition-transform"
+                        disabled={isSaving}
+                        className={`aspect-square rounded-xl border-4 border-white shadow-md transition-transform ${isSaving ? "opacity-50 cursor-not-allowed" : "hover:scale-110"}`}
                         style={{ backgroundColor: c.hex }}
+                        title={c.name}
                       />
                     ))}
                   </div>
+                  {isSaving && (
+                    <div className="flex justify-center mt-4">
+                      <Loader2
+                        className="animate-spin text-brand-sky"
+                        size={24}
+                      />
+                    </div>
+                  )}
                 </>
               )}
             </motion.div>
