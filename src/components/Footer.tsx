@@ -6,16 +6,17 @@ export default function Footer() {
     <footer className="bg-[#2a2723] text-stone-200 mt-auto border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
-          {/* Brand Story - Logo con Bounce */}
+          {/* Brand Story - Logo Ingrandito con Bordi Rotondi */}
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
-            <div className="flex items-center mb-5">
+            <div className="flex items-center mb-6">
               <motion.img
-                whileHover={{ scale: 1.1, rotate: 2 }}
-                whileTap={{ scale: 0.9, rotate: -2 }}
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                whileTap={{ scale: 0.95, rotate: -2 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 src="/altour-logo.png"
                 alt="Altour Italy"
-                className="h-10 md:h-12 w-auto object-contain rounded-xl border border-white/10 shadow-lg cursor-pointer"
+                // Dimensioni aumentate, bordo arrotondato pronunciato e ombra profonda
+                className="h-20 md:h-24 w-auto object-contain rounded-[1.5rem] border border-white/10 shadow-2xl bg-white/5 p-1 cursor-pointer"
               />
             </div>
             <p className="text-sm leading-relaxed text-stone-400 max-w-xs">
@@ -70,7 +71,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Sezione Finale: Ripristinato Made with */}
+        {/* Sezione Finale: Made with */}
         <div className="border-t border-white/5 mt-12 pt-8 text-center flex flex-col gap-4">
           <p className="text-[10px] text-stone-500 uppercase tracking-[0.2em] font-medium">
             &copy; {new Date().getFullYear()} Altour Italy. Non solo trekking.

@@ -203,40 +203,61 @@ export default function Tessera() {
   if (loading && !userTessera)
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed]">
-        <Loader2 className="animate-spin" />
+        <Loader2 className="animate-spin text-brand-stone" />
       </div>
     );
 
   if (!userTessera)
     return (
-      <div className="min-h-screen bg-[#f5f2ed] flex items-center justify-center p-6">
-        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl w-full max-w-sm text-center">
-          <IconaScarponeCustom
-            size={64}
-            isActive={false}
-            className="mx-auto mb-6"
-          />
-          <h2 className="text-xl md:text-2xl font-black uppercase mb-6 md:mb-8">
-            Accesso
-          </h2>
-          <input
-            className="w-full bg-stone-50 border-2 p-4 md:p-5 rounded-2xl text-center font-black uppercase outline-none"
-            placeholder="ALT-XXX"
-            value={loginCode}
-            onChange={(e) => setLoginCode(e.target.value)}
-          />
-          {loginError && (
-            <p className="text-red-500 text-[10px] mt-2 font-black uppercase">
-              {loginError}
+      <div className="min-h-screen bg-[#f5f2ed] flex items-center justify-center p-6 relative overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-brand-sky/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-stone-400/5 rounded-full blur-3xl" />
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-10 md:p-12 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] w-full max-w-sm text-center relative border border-white/50 backdrop-blur-sm"
+        >
+          <div className="flex justify-center mb-8">
+            <motion.img
+              whileHover={{ scale: 1.05, rotate: 2 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              src="/altour-logo.png"
+              alt="Altour Italy"
+              className="h-24 w-auto object-contain rounded-2xl p-1"
+            />
+          </div>
+
+          <div className="space-y-2 mb-8">
+            <h2 className="text-2xl font-black uppercase tracking-tighter text-stone-800">
+              Passaporto Altour
+            </h2>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">
+              Inserisci il tuo codice escursionista
             </p>
-          )}
-          <button
-            onClick={() => fetchUser(loginCode)}
-            className="w-full mt-6 bg-stone-800 text-white py-4 md:py-5 rounded-2xl font-black uppercase active:scale-95 transition-transform"
-          >
-            Entra
-          </button>
-        </div>
+          </div>
+
+          <div className="space-y-4">
+            <input
+              className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center font-black uppercase outline-none focus:border-brand-sky focus:bg-white transition-all text-lg tracking-widest placeholder:text-stone-300 shadow-inner"
+              placeholder="ALT-XXX"
+              value={loginCode}
+              onChange={(e) => setLoginCode(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && fetchUser(loginCode)}
+            />
+            {loginError && (
+              <p className="text-red-500 text-[10px] font-black uppercase py-2 bg-red-50 rounded-lg">
+                {loginError}
+              </p>
+            )}
+            <button
+              onClick={() => fetchUser(loginCode)}
+              className="w-full mt-2 bg-stone-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg hover:bg-stone-700"
+            >
+              Accedi al Passaporto
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
 
@@ -268,7 +289,6 @@ export default function Tessera() {
             Cod. {userTessera.codice_tessera}
           </p>
 
-          {/* Badge riposizionato sotto il numero tessera */}
           <div className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
             <IconaScarponeCustom
               size={18}
@@ -347,7 +367,7 @@ export default function Tessera() {
           </div>
         </div>
 
-        {/* Pulsante Riscatta in Azzurro */}
+        {/* Pulsante Riscatta */}
         <button
           onClick={() => {
             setRedeemStep("INPUT");
@@ -425,7 +445,7 @@ export default function Tessera() {
         </div>
       </div>
 
-      {/* MODALE RISCATTO */}
+      {/* MODALE RISCATTO OTTIMIZZATA */}
       <AnimatePresence>
         {showRedeem && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 backdrop-blur-md bg-black/40">
@@ -433,53 +453,65 @@ export default function Tessera() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white p-8 md:p-10 rounded-[2.5rem] w-full max-w-sm text-center relative shadow-2xl"
+              className="bg-white p-8 md:p-12 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)] w-full max-w-sm text-center relative border border-stone-100"
             >
               <button
                 onClick={() => setShowRedeem(false)}
-                className="absolute top-5 right-5 text-stone-300 hover:text-stone-500"
+                className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-300 hover:text-stone-800 transition-colors"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
 
               {redeemStep === "INPUT" ? (
                 <>
-                  <h3 className="text-xl font-black uppercase mb-6">
-                    Codice Vetta
-                  </h3>
+                  <div className="mb-8">
+                    <div className="inline-flex p-3 bg-brand-sky/10 rounded-2xl mb-4">
+                      <Plus className="text-brand-sky" size={24} />
+                    </div>
+                    <h3 className="text-2xl font-black uppercase tracking-tighter">
+                      Codice scarpone
+                    </h3>
+                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">
+                      Inserisci il codice ricevuto in cima
+                    </p>
+                  </div>
                   <input
-                    className="w-full bg-stone-50 border-2 border-stone-100 p-4 rounded-xl text-center text-2xl font-black uppercase outline-none focus:border-stone-200 transition-colors"
+                    className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-2xl font-black uppercase outline-none focus:border-brand-sky transition-all shadow-inner"
                     placeholder="****"
                     value={redeemCode}
                     onChange={(e) => setRedeemCode(e.target.value)}
                   />
                   {redeemError && (
-                    <p className="text-red-500 text-[9px] font-black mt-3 uppercase">
+                    <p className="text-red-500 text-[10px] font-black mt-3 uppercase py-2 bg-red-50 rounded-lg">
                       {redeemError}
                     </p>
                   )}
                   <button
                     onClick={verifyCode}
-                    className="w-full mt-6 bg-stone-900 text-white py-4 rounded-xl font-black uppercase active:scale-95 transition-all"
+                    className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-stone-200"
                   >
-                    Verifica
+                    Verifica Codice
                   </button>
                 </>
               ) : (
                 <>
-                  <h3 className="text-xl font-black uppercase mb-1">Colore</h3>
-                  <p className="text-[9px] font-bold text-stone-400 uppercase mb-6 tracking-widest">
-                    Scegli la tonalità della tua conquista
-                  </p>
-                  <div className="grid grid-cols-4 gap-3 mb-6">
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-black uppercase tracking-tighter">
+                      Colora la Vetta
+                    </h3>
+                    <p className="text-[10px] font-bold text-stone-400 uppercase mb-2 tracking-widest mt-1">
+                      Scegli il colore del tuo scarpone
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4 mb-8">
                     {EARTH_PALETTE.map((c) => (
                       <button
                         key={c.hex}
                         onClick={() => saveVetta(c.hex)}
-                        className="aspect-square rounded-xl border-2 border-stone-50 shadow-sm active:scale-90 hover:border-stone-200 transition-all bg-stone-50 flex items-center justify-center"
+                        className="aspect-square rounded-2xl border-2 border-transparent hover:border-brand-sky active:scale-90 transition-all bg-stone-50 flex items-center justify-center p-2 shadow-sm"
                       >
                         <IconaScarponeCustom
-                          size={32}
+                          size={40}
                           color={c.hex}
                           isActive={true}
                         />
@@ -488,7 +520,7 @@ export default function Tessera() {
                   </div>
                   {isSaving && (
                     <div className="flex justify-center">
-                      <Loader2 className="animate-spin text-stone-900" />
+                      <Loader2 className="animate-spin text-brand-sky w-8 h-8" />
                     </div>
                   )}
                 </>
