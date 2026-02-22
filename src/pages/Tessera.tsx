@@ -253,12 +253,12 @@ export default function Tessera() {
 
         <button
           onClick={handleLogout}
-          className="absolute top-6 right-6 p-3 bg-black/30 backdrop-blur-md rounded-full text-white hover:bg-black/50 transition-all z-50 border border-white/10"
+          className="absolute top-4 right-4 md:top-6 md:right-6 p-2 md:p-3 bg-black/30 backdrop-blur-md rounded-full text-white hover:bg-black/50 transition-all z-50 border border-white/10"
         >
-          <LogOut size={20} />
+          <LogOut size={18} className="md:w-5 md:h-5" />
         </button>
 
-        <div className="relative z-20">
+        <div className="relative z-20 mt-4 md:mt-0">
           <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 mb-3">
             {/* Icona nel badge: sempre attiva e bianca */}
             <IconaScarponeCustom size={24} color="#ffffff" isActive={true} />
@@ -272,9 +272,9 @@ export default function Tessera() {
         </div>
       </div>
 
-      <div className="max-w-xl mx-auto px-6 -mt-10 relative z-30">
+      <div className="max-w-xl mx-auto px-4 md:px-6 -mt-10 relative z-30">
         {/* TESSERA */}
-        <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-stone-50">
+        <div className="bg-white rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-8 shadow-2xl border border-stone-50">
           <div className="flex justify-between items-start mb-8">
             <div>
               <div className="flex items-center gap-1 mb-1 text-sky-500">
