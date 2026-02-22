@@ -4,7 +4,6 @@ import {
   X,
   Loader2,
   ShieldCheck,
-  Zap,
   LogOut,
   Plus,
   Star,
@@ -12,13 +11,53 @@ import {
   ChevronLeft,
   Calendar,
   Gift,
-  Footprints,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 
-// --- INTERFACCE TYPESCRIPT ---
+// --- NUOVO COMPONENTE ICONA (Approccio "Colora le Linee") ---
+const IconaScarpone = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 15l2 0 3-6 4 2 3-1 2 2v4H4z" fill="currentColor" fillOpacity="0.2"/><path d="M9 9l1.5-3.5"/><path d="M12 11l1-3"/><path d="M15 10l.5-2"/><path d="M4 15c0 2 1.5 4 4 4h8c2 0 4-2 4-4"/>
+  </svg>
+);
+
+const IconaScarponeCustom = ({
+  size = 24,
+  color = "#d6d3d1", // Colore di default (grigio chiaro)
+  isActive = false, // Determina se è sbiadito o colorato
+  className = "",
+}: {
+  size?: number;
+  color?: string;
+  isActive?: boolean;
+  className?: string;
+}) => {
+  // Stile base comune a entrambi gli stati
+  const baseStyle = {
+    width: size,
+    height: size,
+    transition: "all 0.3s ease-in-out", // Transizione fluida
+  };
+
+  if (isActive) {
+    // --- STATO ATTIVO: Colora le linee usando il componente SVG ---
+    return (
+      <div className={`flex-shrink-0 flex items-center justify-center ${className}`} style={baseStyle}>
+        <IconaScarpone size={size} className="drop-shadow-md" style={{ color }} />
+      </div>
+    );
+  } else {
+    // --- STATO INATTIVO: Icona SVG sbiadita ---
+    return (
+      <div className={`flex-shrink-0 flex items-center justify-center ${className}`} style={baseStyle}>
+        <IconaScarpone size={size} className="text-stone-400 opacity-10" />
+      </div>
+    );
+  }
+};
+
 interface EscursioneCompletata {
   titolo: string;
   colore: string;
@@ -33,595 +72,405 @@ interface UserTessera {
   punti: number;
 }
 
-interface AttivitaDaRiscattare {
-  titolo: string;
-}
-
-// --- COSTANTI ---
-const STORAGE_KEY = "altour_session_v4";
 const SLOTS_PER_PAGE = 8;
-const IconaScarpone = Footprints;
-
+// Palette colori leggermente più vibrante per le linee
 const EARTH_PALETTE = [
-  { name: "Terra di Siena", hex: "#A0522D" },
-  { name: "Verde Bosco", hex: "#228B22" },
-  { name: "Blu Abisso", hex: "#000080" },
-  { name: "Grigio Roccia", hex: "#708090" },
-  { name: "Ocra", hex: "#CC7722" },
-  { name: "Argilla", hex: "#B66A50" },
-  { name: "Muschio", hex: "#4A5D23" },
-  { name: "Fango", hex: "#706552" },
-  { name: "Ardesia", hex: "#2F4F4F" },
-  { name: "Sabbia", hex: "#C2B280" },
+  { name: "Siena", hex: "#C0623D" },
+  { name: "Bosco", hex: "#2E9B2E" },
+  { name: "Abisso", hex: "#101090" },
+  { name: "Roccia", hex: "#8090A0" },
+  { name: "Ocra", hex: "#DD8833" },
+  { name: "Sky", hex: "#0ea5e9" },
+  { name: "Sunset", hex: "#f59e0b" },
+  { name: "Viola", hex: "#8b5cf6" },
 ];
 
 const LEVELS = [
-  {
-    min: 0,
-    max: 8,
-    label: "Camminatore della Domenica",
-    icon: IconaScarpone,
-    color: "text-stone-300",
-  },
-  {
-    min: 9,
-    max: 16,
-    label: "Esploratore dei Sentieri",
-    icon: IconaScarpone,
-    color: "text-sky-400",
-  },
-  {
-    min: 17,
-    max: 24,
-    label: "Guida Alpina",
-    icon: IconaScarpone,
-    color: "text-amber-500",
-  },
-  {
-    min: 25,
-    max: 999,
-    label: "Leggenda delle Vette",
-    icon: IconaScarpone,
-    color: "text-brand-stone",
-  },
+  { min: 0, max: 16, label: "Camminatore della domenica", color: "#d6d3d1" },
+  { min: 17, max: 32, label: "Camminatore apprendista", color: "#38bdf8" },
+  { min: 33, max: 50, label: "Trekker esperto", color: "#f59e0b" },
+  { min: 51, max: 999, label: "Leggenda del CAI", color: "#44403c" },
 ];
 
 export default function Tessera() {
-  // Stati di caricamento
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Dati utente
   const [userTessera, setUserTessera] = useState<UserTessera | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
-
-  // Stati per i form e modali
   const [loginCode, setLoginCode] = useState("");
   const [loginError, setLoginError] = useState("");
-
   const [showRedeem, setShowRedeem] = useState(false);
   const [redeemStep, setRedeemStep] = useState<"INPUT" | "COLOR">("INPUT");
   const [redeemCode, setRedeemCode] = useState("");
   const [redeemError, setRedeemError] = useState("");
-  const [pendingActivity, setPendingActivity] =
-    useState<AttivitaDaRiscattare | null>(null);
+  const [pendingActivity, setPendingActivity] = useState<{
+    titolo: string;
+  } | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      fetchUser(saved);
-    } else {
-      setLoading(false);
-    }
+    const saved = localStorage.getItem("altour_session_v4");
+    if (saved) fetchUser(saved);
+    else setLoading(false);
   }, []);
 
-  // --- LOGICA DI ACCESSO ---
   async function fetchUser(codice: string) {
-    if (!codice.trim()) return;
     setLoading(true);
     setLoginError("");
-
-    try {
-      const { data, error } = await supabase
-        .from("tessere")
-        .select("*")
-        .eq("codice_tessera", codice.toUpperCase().trim())
-        .single();
-
-      if (error || !data) {
-        setLoginError("Codice tessera non trovato. Verifica e riprova.");
-      } else {
-        setUserTessera(data as UserTessera);
-        localStorage.setItem(STORAGE_KEY, data.codice_tessera);
-
-        // Calcola la pagina iniziale basata sulle escursioni esistenti
-        const count = data.escursioni_completate?.length || 0;
-        setCurrentPage(Math.floor(count / SLOTS_PER_PAGE));
-      }
-    } catch (e) {
-      setLoginError("Errore di connessione. Riprova più tardi.");
-    } finally {
+    const { data, error } = await supabase
+      .from("tessere")
+      .select("*")
+      .eq("codice_tessera", codice.toUpperCase().trim())
+      .single();
+    if (error || !data) {
+      setLoginError("Codice non trovato.");
+      setLoading(false);
+    } else {
+      setUserTessera(data as UserTessera);
+      localStorage.setItem("altour_session_v4", data.codice_tessera);
+      setCurrentPage(
+        Math.floor((data.escursioni_completate?.length || 0) / SLOTS_PER_PAGE),
+      );
       setLoading(false);
     }
   }
 
-  const handleLogout = async () => {
-    setUserTessera(null);
-    setLoginCode("");
-    localStorage.removeItem(STORAGE_KEY);
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.removeItem("altour_session_v4");
+    window.location.reload();
   };
 
-  // --- STATI DERIVATI E OTTIMIZZATI CON USEMEMO ---
-  const stats = useMemo(() => {
-    if (!userTessera) return null;
-
-    const vetteCount = userTessera.escursioni_completate?.length || 0;
-    const currentLevel =
-      LEVELS.find((l) => vetteCount >= l.min && vetteCount <= l.max) ||
-      LEVELS[0];
-    const nextLevel = LEVELS[LEVELS.indexOf(currentLevel) + 1] || null;
-    const progressToNext = nextLevel
-      ? ((vetteCount - currentLevel.min) / (nextLevel.min - currentLevel.min)) *
-        100
-      : 100;
-
-    const totalPages = Math.max(
-      1,
-      Math.ceil((vetteCount + 1) / SLOTS_PER_PAGE),
-    );
-    const vouchersCount = Math.floor(vetteCount / 8);
-
-    return {
-      vetteCount,
-      currentLevel,
-      nextLevel,
-      progressToNext,
-      totalPages,
-      vouchersCount,
-    };
-  }, [userTessera]);
-
-  // --- LOGICA DI RISCATTO ---
   const verifyCode = async () => {
     if (!redeemCode.trim()) return;
-    setRedeemError("");
     setLoading(true);
-
-    try {
-      const { data: attivita, error: dbErr } = await supabase
-        .from("escursioni")
-        .select("titolo")
-        .eq("codice_riscatto", redeemCode.toUpperCase().trim())
-        .single();
-
-      if (dbErr || !attivita) {
-        setRedeemError("Codice non valido.");
-        setLoading(false);
-        return;
-      }
-
-      const alreadyDone = userTessera?.escursioni_completate?.some(
-        (e: EscursioneCompletata) => e.titolo === attivita.titolo,
-      );
-
-      if (alreadyDone) {
-        setRedeemError("Vetta già conquistata!");
-        setLoading(false);
-        return;
-      }
-
-      setPendingActivity(attivita as AttivitaDaRiscattare);
+    setRedeemError("");
+    const { data, error } = await supabase
+      .from("escursioni")
+      .select("titolo")
+      .eq("codice_riscatto", redeemCode.toUpperCase().trim())
+      .single();
+    if (error || !data) {
+      setRedeemError("Codice non valido.");
+      setLoading(false);
+    } else {
+      setPendingActivity(data);
       setRedeemStep("COLOR");
-    } catch (e) {
-      setRedeemError("Si è verificato un errore. Riprova.");
-    } finally {
       setLoading(false);
     }
   };
 
   const saveVetta = async (selectedHex: string) => {
-    if (!userTessera || !pendingActivity || isSaving) return;
+    if (!userTessera || !pendingActivity) return;
     setIsSaving(true);
-
-    const listaAttuale = Array.isArray(userTessera.escursioni_completate)
-      ? userTessera.escursioni_completate
-      : [];
-
-    const updatedList: EscursioneCompletata[] = [
-      ...listaAttuale,
+    const updatedList = [
+      ...(userTessera.escursioni_completate || []),
       {
         titolo: pendingActivity.titolo,
         colore: selectedHex,
         data: new Date().toISOString(),
       },
     ];
-
-    const { data, error: upError } = await supabase
+    const { data } = await supabase
       .from("tessere")
-      .update({
-        escursioni_completate: updatedList,
-        punti: (userTessera.punti || 0) + 100,
-      })
+      .update({ escursioni_completate: updatedList })
       .eq("id", userTessera.id)
       .select();
-
-    if (!upError && data) {
-      setUserTessera(data[0] as UserTessera);
+    if (data) {
+      setUserTessera(data[0]);
       setShowRedeem(false);
-
-      // Resetta stato del modale
-      setRedeemStep("INPUT");
       setRedeemCode("");
-      setPendingActivity(null);
-
-      // Aggiorna la pagina per mostrare l'ultimo inserimento
-      setCurrentPage(Math.floor(updatedList.length / SLOTS_PER_PAGE));
-
+      setRedeemStep("INPUT");
       confetti({
         particleCount: 150,
         colors: [selectedHex, "#ffffff"],
-        origin: { y: 0.7 },
+        spread: 70,
+        origin: { y: 0.6 },
       });
-    } else {
-      setRedeemError("Errore durante il salvataggio.");
     }
-
     setIsSaving(false);
   };
 
-  // --- RENDER DEL CARICAMENTO ---
-  if (loading && !userTessera && !showRedeem) {
+  const stats = useMemo(() => {
+    if (!userTessera) return null;
+    const count = userTessera.escursioni_completate?.length || 0;
+    const currentLevel =
+      LEVELS.find((l) => count >= l.min && count <= l.max) || LEVELS[0];
+    const totalPages = Math.max(1, Math.ceil((count + 1) / SLOTS_PER_PAGE));
+    const vouchersCount = Math.floor(count / 8);
+    return { count, currentLevel, totalPages, vouchersCount };
+  }, [userTessera]);
+
+  if (loading && !userTessera)
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed]">
-        <Loader2 className="animate-spin text-stone-300 w-8 h-8" />
+        <Loader2 className="animate-spin" />
       </div>
     );
-  }
 
-  // --- RENDER DEL LOGIN ---
-  if (!userTessera) {
+  if (!userTessera)
     return (
-      <div className="min-h-screen bg-[#f5f2ed] flex items-center justify-center p-6 text-center">
-        <div className="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm border border-stone-100">
-          <IconaScarpone size={48} className="text-stone-200 mx-auto mb-6" />
-          <h2 className="text-2xl font-black uppercase mb-8 text-brand-stone">
-            Accedi al Passaporto
-          </h2>
+      <div className="min-h-screen bg-[#f5f2ed] flex items-center justify-center p-6">
+        <div className="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm text-center">
+          <IconaScarponeCustom
+            size={64}
+            isActive={false}
+            className="mx-auto mb-6"
+          />
+          <h2 className="text-2xl font-black uppercase mb-8">Accesso</h2>
           <input
-            className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-xl font-black mb-2 uppercase outline-none focus:border-brand-sky"
+            className="w-full bg-stone-50 border-2 p-5 rounded-2xl text-center font-black uppercase"
             placeholder="ALT-XXX"
             value={loginCode}
             onChange={(e) => setLoginCode(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && fetchUser(loginCode)}
           />
           {loginError && (
-            <p className="text-red-500 text-[10px] font-black uppercase mb-4 mt-2">
+            <p className="text-red-500 text-[10px] mt-2 font-black uppercase">
               {loginError}
             </p>
           )}
           <button
             onClick={() => fetchUser(loginCode)}
-            disabled={loading || !loginCode}
-            className="w-full mt-4 bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full mt-6 bg-stone-800 text-white py-5 rounded-2xl font-black uppercase"
           >
-            {loading ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : (
-              "Sblocca"
-            )}
+            Entra
           </button>
         </div>
       </div>
     );
-  }
 
-  // Per evitare errori TypeScript siccome abbiamo garantito che stats non è null qui
-  if (!stats) return null;
-  const {
-    vetteCount,
-    currentLevel,
-    progressToNext,
-    totalPages,
-    vouchersCount,
-  } = stats;
+  const { count, currentLevel, totalPages, vouchersCount } = stats!;
 
-  // --- RENDER DELLA DASHBOARD PRINCIPALE ---
   return (
-    <div className="min-h-screen bg-[#f5f2ed] pb-24 text-stone-800">
-      <style>{`
-        @keyframes shine {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-        .animate-shine {
-          position: relative;
-          overflow: hidden;
-        }
-        .animate-shine::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 50%;
-          height: 100%;
-          background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-          animation: shine 3s infinite;
-        }
-      `}</style>
-
-      {/* HERO SECTION */}
-      <div className="relative h-[50vh] min-h-[400px] w-full overflow-hidden mb-12">
+    <div className="min-h-screen bg-[#f5f2ed] pb-20 text-stone-800">
+      {/* HEADER CON LOGOUT FISSO IN ALTO A DESTRA */}
+      <div className="relative h-[30vh] w-full flex items-center justify-center text-center">
         <img
-          src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2070&auto=format&fit=crop"
-          className="absolute inset-0 w-full h-full object-cover"
-          alt="Hero"
+          src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          alt="header bg"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-[#f5f2ed]" />
+        {/* GRADIENTE IDENTICO ALLA HOME */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/5 via-[65%] to-[#f5f2ed] to-[98%]" />
 
         <button
           onClick={handleLogout}
-          className="absolute top-8 right-8 p-3 bg-white/10 backdrop-blur-md rounded-full text-white z-50 border border-white/20 hover:bg-white/20 transition-all"
+          className="absolute top-6 right-6 p-3 bg-black/30 backdrop-blur-md rounded-full text-white hover:bg-black/50 transition-all z-50 border border-white/10"
         >
           <LogOut size={20} />
         </button>
 
-        <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 mb-4">
-              <currentLevel.icon size={16} className={currentLevel.color} />
-              <span className="text-[10px] font-black uppercase tracking-widest text-white">
-                {currentLevel.label}
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-tight drop-shadow-xl">
-              La tua tessera <br /> ALTOUR
-            </h1>
-          </motion.div>
+        <div className="relative z-20">
+          <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 mb-3">
+            {/* Icona nel badge: sempre attiva e bianca */}
+            <IconaScarponeCustom size={24} color="#ffffff" isActive={true} />
+            <span className="text-[10px] font-black uppercase text-white">
+              {currentLevel.label}
+            </span>
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-lg leading-tight">
+            I TUOI SCARPONI <br /> ALTOUR
+          </h1>
         </div>
       </div>
 
-      <div className="max-w-xl mx-auto px-6 -mt-20 relative z-30 text-center">
-        {/* PROGRESS BAR */}
-        <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-stone-100 mb-8">
-          <div className="flex flex-col items-center">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap size={14} className="text-sky-400 fill-sky-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">
-                Progresso Esperienza
-              </span>
+      <div className="max-w-xl mx-auto px-6 -mt-10 relative z-30">
+        {/* TESSERA */}
+        <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-stone-50">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <div className="flex items-center gap-1 mb-1 text-sky-500">
+                <ShieldCheck size={14} />
+                <span className="text-[9px] font-black uppercase">
+                  Escursionista Ufficiale
+                </span>
+              </div>
+              <h2 className="text-2xl font-black uppercase truncate max-w-[200px]">
+                {userTessera.nome_escursionista}
+              </h2>
             </div>
-            <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden mb-2">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${progressToNext}%` }}
-                className="h-full bg-sky-400"
-              />
+            <div className="w-14 h-14 bg-stone-50 rounded-2xl flex items-center justify-center border border-stone-100">
+              {count >= 8 * (currentPage + 1) ? (
+                <Star
+                  size={28}
+                  className="text-amber-400 fill-amber-400 animate-pulse"
+                />
+              ) : (
+                <Star size={28} className="text-stone-200" />
+              )}
             </div>
-            <span className="text-[10px] font-bold text-stone-400 uppercase">
-              {vetteCount} Scarponi Conquistati
-            </span>
           </div>
-        </div>
 
-        {/* PASSPORT CARD */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="bg-white rounded-[3rem] p-10 shadow-2xl border border-stone-50 relative overflow-hidden mb-6"
-            style={{
-              backgroundImage:
-                "url('https://www.transparenttextures.com/patterns/paper.png')",
-            }}
-          >
-            <div className="relative z-10">
-              <div className="flex justify-between items-start mb-12">
-                <div className="text-left">
-                  <div className="flex items-center gap-2 mb-1">
-                    <ShieldCheck size={14} className="text-sky-400" />
-                    <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">
-                      Tessera {currentPage + 1} / {totalPages}
-                    </span>
-                  </div>
-                  <h2 className="text-3xl font-black uppercase tracking-tighter text-brand-stone">
-                    {userTessera.nome_escursionista}
-                  </h2>
-                </div>
-                <div className="w-16 h-16 bg-stone-50 rounded-2xl flex items-center justify-center border-2 border-stone-100">
-                  {vetteCount >= 8 * (currentPage + 1) ? (
-                    <IconaScarpone size={32} className="text-amber-500" />
+          {/* GRIGLIA SCARPONI */}
+          <div className="grid grid-cols-4 gap-4 mb-8">
+            {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
+              const idx = currentPage * SLOTS_PER_PAGE + i;
+              const esc = userTessera.escursioni_completate?.[idx];
+              return (
+                <div
+                  key={i}
+                  className="aspect-square rounded-2xl border-2 border-dashed border-stone-100 bg-stone-50/50 flex items-center justify-center relative"
+                >
+                  {esc ? (
+                    // --- SCARPONE ATTIVO (Colorato) ---
+                    // Usiamo motion.div per un leggero effetto "pop" all'apparizione
+                    <motion.div
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                      }}
+                      className="animate-shine p-1 flex flex-col items-center justify-center"
+                    >
+                      <IconaScarponeCustom
+                        size={56}
+                        color={esc.colore}
+                        isActive={true}
+                      />
+                    </motion.div>
                   ) : (
-                    <Star size={32} className="text-stone-200" />
+                    // --- SCARPONE INATTIVO (Sbiadito) ---
+                    <div className="flex flex-col items-center justify-center">
+                      <IconaScarponeCustom size={48} isActive={false} />
+                    </div>
                   )}
                 </div>
-              </div>
+              );
+            })}
+          </div>
 
-              <div className="grid grid-cols-4 gap-4">
-                {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
-                  const idx = currentPage * SLOTS_PER_PAGE + i;
-                  const esc = userTessera.escursioni_completate?.[idx];
-                  return (
-                    <div
-                      key={i}
-                      className="aspect-square rounded-2xl border-2 border-dashed border-stone-100 bg-stone-50/50 flex items-center justify-center relative overflow-hidden group"
-                    >
-                      {esc ? (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="animate-shine p-1 flex flex-col items-center justify-center"
-                        >
-                          <IconaScarpone
-                            size={56}
-                            style={{ color: esc.colore }}
-                            className="drop-shadow-md"
-                          />
-                        </motion.div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center">
-                          <IconaScarpone
-                            size={48}
-                            className="text-stone-400 opacity-10"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* PAGINATION */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-4 mb-10">
+          <div className="flex justify-between items-center border-t border-stone-50 pt-6">
             <button
               disabled={currentPage === 0}
               onClick={() => setCurrentPage((p) => p - 1)}
-              className="p-3 bg-white rounded-xl shadow-sm border border-stone-100 disabled:opacity-30 transition-opacity"
+              className="p-2 disabled:opacity-30 hover:bg-stone-50 rounded-full transition-colors"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={24} />
             </button>
+            <span className="text-[10px] font-black uppercase text-stone-400">
+              Pagina {currentPage + 1} / {totalPages}
+            </span>
             <button
-              disabled={currentPage === totalPages - 1}
+              disabled={currentPage >= totalPages - 1}
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="p-3 bg-white rounded-xl shadow-sm border border-stone-100 disabled:opacity-30 transition-opacity"
+              className="p-2 disabled:opacity-30 hover:bg-stone-50 rounded-full transition-colors"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={24} />
             </button>
           </div>
-        )}
+        </div>
+
+        {/* PULSANTE RISCATTA SOTTO LA TESSERA */}
+        <button
+          onClick={() => {
+            setRedeemStep("INPUT");
+            setShowRedeem(true);
+          }}
+          className="w-full mt-6 bg-stone-900 hover:bg-black text-white py-6 rounded-[2.5rem] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95"
+        >
+          <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
+        </button>
 
         {/* VOUCHERS */}
         {vouchersCount > 0 && (
-          <div className="mb-12">
-            <h3 className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-4">
-              I Tuoi Voucher
-            </h3>
-            {Array.from({ length: vouchersCount }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-white p-6 rounded-[2rem] border-2 border-dashed border-sky-200 flex items-center justify-between mb-4"
-              >
-                <div className="text-left">
-                  <h4 className="text-xl font-black text-brand-stone">
-                    SCONTO 10€
-                  </h4>
-                  <p className="text-[10px] font-bold text-stone-400 uppercase">
-                    Codice: ALTOUR-{10 + i}V
-                  </p>
-                </div>
-                <Gift className="text-sky-200" size={32} />
-              </div>
-            ))}
+          <div className="mt-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-dashed border-amber-200 p-6 rounded-[2.5rem] flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[10px] font-black uppercase text-amber-600 italic mb-1">
+                Premio Sbloccato!
+              </p>
+              <h4 className="text-xl font-black uppercase text-stone-800">
+                Hai {vouchersCount} Voucher
+              </h4>
+            </div>
+            <div className="bg-white p-3 rounded-full shadow-md animate-bounce">
+              <Gift className="text-amber-500" size={28} />
+            </div>
           </div>
         )}
 
-        {/* DIARIO */}
-        <div className="mb-12">
-          <h3 className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 mb-6">
-            Cronologia dei Passi
+        {/* CRONOLOGIA */}
+        <div className="mt-12 space-y-4 mb-8">
+          <h3 className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
+            Ultime Vette
           </h3>
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-stone-50 space-y-6 text-left">
+          <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-stone-50">
             {userTessera.escursioni_completate?.length > 0 ? (
               [...userTessera.escursioni_completate]
                 .reverse()
-                .map((esc: EscursioneCompletata, i: number) => (
-                  <div key={i} className="flex items-center justify-between">
+                .slice(0, 3)
+                .map((esc, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between py-4 border-b last:border-0 border-stone-100"
+                  >
                     <div className="flex items-center gap-4">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: `${esc.colore}15` }}
-                      >
-                        <IconaScarpone
-                          size={18}
-                          style={{ color: esc.colore }}
-                        />
-                      </div>
+                      {/* Icona piccola colorata nella cronologia */}
+                      <IconaScarponeCustom
+                        size={40}
+                        color={esc.colore}
+                        isActive={true}
+                      />
                       <div>
-                        <h4 className="text-sm font-black uppercase text-brand-stone">
+                        <h4 className="text-sm font-black uppercase text-stone-800">
                           {esc.titolo}
                         </h4>
-                        <div className="flex items-center gap-1 text-stone-300 text-[9px] font-bold uppercase tracking-widest">
+                        <div className="flex items-center gap-1 text-[9px] font-bold text-stone-400 uppercase mt-1">
                           <Calendar size={10} />{" "}
-                          {new Date(esc.data).toLocaleDateString("it-IT")}
+                          {new Date(esc.data).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
                   </div>
                 ))
             ) : (
-              <p className="text-center text-stone-200 text-xs py-4 font-black uppercase tracking-widest">
-                Inizia la tua avventura
+              <p className="text-center text-xs text-stone-300 font-bold uppercase py-4">
+                Ancora nessun passo...
               </p>
             )}
           </div>
         </div>
-
-        {/* REDEEM FAB BUTTON */}
-        <button
-          onClick={() => {
-            setRedeemStep("INPUT");
-            setRedeemCode("");
-            setRedeemError("");
-            setShowRedeem(true);
-          }}
-          className="w-full bg-brand-stone text-white py-6 rounded-3xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-3 shadow-2xl transition-all hover:bg-brand-sky active:scale-95"
-        >
-          <Plus size={20} /> Riscatta Scarpone
-        </button>
       </div>
 
-      {/* MODAL RISCATTO */}
+      {/* MODALE RISCATTO */}
       <AnimatePresence>
         {showRedeem && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white p-10 rounded-[3rem] w-full max-w-sm relative text-center shadow-2xl"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white p-10 rounded-[3rem] w-full max-w-sm text-center relative shadow-2xl"
             >
               <button
-                onClick={() => !isSaving && setShowRedeem(false)}
-                className="absolute top-6 right-6 text-stone-300 hover:text-stone-500 transition-colors"
-                disabled={isSaving}
+                onClick={() => setShowRedeem(false)}
+                className="absolute top-6 right-6 text-stone-300 hover:text-stone-800 transition-colors"
               >
                 <X size={24} />
               </button>
 
               {redeemStep === "INPUT" ? (
                 <>
-                  <h3 className="text-2xl font-black uppercase mb-6 text-brand-stone tracking-tighter">
-                    Inserisci Codice
+                  <h3 className="text-2xl font-black uppercase mb-8 text-stone-800">
+                    Codice Vetta
                   </h3>
                   <input
-                    autoFocus
-                    className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-3xl font-black mb-2 uppercase outline-none focus:border-brand-sky"
+                    className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-3xl font-black uppercase outline-none focus:border-stone-900 transition-colors"
                     placeholder="****"
                     value={redeemCode}
                     onChange={(e) => setRedeemCode(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && verifyCode()}
                   />
                   {redeemError && (
-                    <p className="text-red-500 text-[10px] font-black uppercase mb-4 mt-2">
+                    <p className="text-red-500 text-[10px] font-black mt-4 uppercase bg-red-50 py-2 rounded-lg">
                       {redeemError}
                     </p>
                   )}
                   <button
                     onClick={verifyCode}
                     disabled={loading || !redeemCode}
-                    className="w-full mt-4 bg-brand-stone text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-brand-sky disabled:opacity-50 flex items-center justify-center"
+                    className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center"
                   >
                     {loading ? (
-                      <Loader2 className="animate-spin" size={20} />
+                      <Loader2 className="animate-spin" />
                     ) : (
                       "Verifica"
                     )}
@@ -629,26 +478,33 @@ export default function Tessera() {
                 </>
               ) : (
                 <>
-                  <h3 className="text-2xl font-black uppercase mb-6 text-brand-stone tracking-tighter">
-                    Scegli il Colore
+                  <h3 className="text-2xl font-black uppercase mb-2 text-stone-800">
+                    Scegli Colore
                   </h3>
-                  <div className="grid grid-cols-5 gap-3 mb-8">
+                  <p className="text-xs font-bold text-stone-400 uppercase mb-8">
+                    Colora le linee del tuo scarpone
+                  </p>
+                  <div className="grid grid-cols-4 gap-4 mb-8">
                     {EARTH_PALETTE.map((c) => (
+                      // Anteprima nel modale: Icona attiva con il colore specifico
                       <button
                         key={c.hex}
                         onClick={() => saveVetta(c.hex)}
-                        disabled={isSaving}
-                        className={`aspect-square rounded-xl border-4 border-white shadow-md transition-transform ${isSaving ? "opacity-50 cursor-not-allowed" : "hover:scale-110"}`}
-                        style={{ backgroundColor: c.hex }}
-                        title={c.name}
-                      />
+                        className="aspect-square rounded-2xl border-2 border-stone-100 shadow-sm hover:scale-110 transition-transform hover:shadow-md overflow-hidden flex items-center justify-center bg-stone-50"
+                      >
+                        <IconaScarponeCustom
+                          size={40}
+                          color={c.hex}
+                          isActive={true}
+                        />
+                      </button>
                     ))}
                   </div>
                   {isSaving && (
-                    <div className="flex justify-center mt-4">
+                    <div className="flex justify-center">
                       <Loader2
-                        className="animate-spin text-brand-sky"
-                        size={24}
+                        className="animate-spin text-stone-900"
+                        size={32}
                       />
                     </div>
                   )}
