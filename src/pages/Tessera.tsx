@@ -9,24 +9,16 @@ import {
   Star,
   ChevronRight,
   ChevronLeft,
-  Calendar,
   Gift,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 
-// --- NUOVO COMPONENTE ICONA (Approccio "Colora le Linee") ---
-const IconaScarpone = ({ size = 24, className = "" }: { size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M4 15l2 0 3-6 4 2 3-1 2 2v4H4z" fill="currentColor" fillOpacity="0.2"/><path d="M9 9l1.5-3.5"/><path d="M12 11l1-3"/><path d="M15 10l.5-2"/><path d="M4 15c0 2 1.5 4 4 4h8c2 0 4-2 4-4"/>
-  </svg>
-);
-
 const IconaScarponeCustom = ({
   size = 24,
-  color = "#d6d3d1", // Colore di default (grigio chiaro)
-  isActive = false, // Determina se è sbiadito o colorato
+  color = "#d6d3d1",
+  isActive = false,
   className = "",
 }: {
   size?: number;
@@ -34,26 +26,42 @@ const IconaScarponeCustom = ({
   isActive?: boolean;
   className?: string;
 }) => {
-  // Stile base comune a entrambi gli stati
   const baseStyle = {
     width: size,
     height: size,
-    transition: "all 0.3s ease-in-out", // Transizione fluida
+    transition: "all 0.3s ease-in-out",
   };
 
   if (isActive) {
-    // --- STATO ATTIVO: Colora le linee usando il componente SVG ---
     return (
-      <div className={`flex-shrink-0 flex items-center justify-center ${className}`} style={baseStyle}>
-        <IconaScarpone size={size} className="drop-shadow-md" style={{ color }} />
-      </div>
+      <div
+        className={`flex-shrink-0 ${className}`}
+        style={{
+          ...baseStyle,
+          backgroundColor: color,
+          maskImage: "url('/scarpone.png')",
+          WebkitMaskImage: "url('/scarpone.png')",
+          maskRepeat: "no-repeat",
+          WebkitMaskRepeat: "no-repeat",
+          maskPosition: "center",
+          WebkitMaskPosition: "center",
+          maskSize: "contain",
+          WebkitMaskSize: "contain",
+          filter: `drop-shadow(0px 2px 3px ${color}40)`,
+        }}
+      />
     );
   } else {
-    // --- STATO INATTIVO: Icona SVG sbiadita ---
     return (
-      <div className={`flex-shrink-0 flex items-center justify-center ${className}`} style={baseStyle}>
-        <IconaScarpone size={size} className="text-stone-400 opacity-10" />
-      </div>
+      <img
+        src="/scarpone.png"
+        alt="scarpone"
+        className={`flex-shrink-0 ${className}`}
+        style={{
+          ...baseStyle,
+          filter: "grayscale(100%) opacity(0.2)",
+        }}
+      />
     );
   }
 };
@@ -73,7 +81,6 @@ interface UserTessera {
 }
 
 const SLOTS_PER_PAGE = 8;
-// Palette colori leggermente più vibrante per le linee
 const EARTH_PALETTE = [
   { name: "Siena", hex: "#C0623D" },
   { name: "Bosco", hex: "#2E9B2E" },
@@ -87,9 +94,9 @@ const EARTH_PALETTE = [
 
 const LEVELS = [
   { min: 0, max: 16, label: "Camminatore della domenica", color: "#d6d3d1" },
-  { min: 17, max: 32, label: "Camminatore apprendista", color: "#38bdf8" },
-  { min: 33, max: 50, label: "Trekker esperto", color: "#f59e0b" },
-  { min: 51, max: 999, label: "Leggenda del CAI", color: "#44403c" },
+  { min: 17, max: 50, label: "Esploratore", color: "#38bdf8" },
+  { min: 51, max: 100, label: "Guida", color: "#f59e0b" },
+  { min: 100, max: 999, label: "Leggenda", color: "#44403c" },
 ];
 
 export default function Tessera() {
@@ -179,12 +186,7 @@ export default function Tessera() {
       setShowRedeem(false);
       setRedeemCode("");
       setRedeemStep("INPUT");
-      confetti({
-        particleCount: 150,
-        colors: [selectedHex, "#ffffff"],
-        spread: 70,
-        origin: { y: 0.6 },
-      });
+      confetti({ particleCount: 150, colors: [selectedHex, "#ffffff"] });
     }
     setIsSaving(false);
   };
@@ -209,15 +211,17 @@ export default function Tessera() {
   if (!userTessera)
     return (
       <div className="min-h-screen bg-[#f5f2ed] flex items-center justify-center p-6">
-        <div className="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm text-center">
+        <div className="bg-white p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl w-full max-w-sm text-center">
           <IconaScarponeCustom
             size={64}
             isActive={false}
             className="mx-auto mb-6"
           />
-          <h2 className="text-2xl font-black uppercase mb-8">Accesso</h2>
+          <h2 className="text-xl md:text-2xl font-black uppercase mb-6 md:mb-8">
+            Accesso
+          </h2>
           <input
-            className="w-full bg-stone-50 border-2 p-5 rounded-2xl text-center font-black uppercase"
+            className="w-full bg-stone-50 border-2 p-4 md:p-5 rounded-2xl text-center font-black uppercase outline-none"
             placeholder="ALT-XXX"
             value={loginCode}
             onChange={(e) => setLoginCode(e.target.value)}
@@ -229,7 +233,7 @@ export default function Tessera() {
           )}
           <button
             onClick={() => fetchUser(loginCode)}
-            className="w-full mt-6 bg-stone-800 text-white py-5 rounded-2xl font-black uppercase"
+            className="w-full mt-6 bg-stone-800 text-white py-4 md:py-5 rounded-2xl font-black uppercase active:scale-95 transition-transform"
           >
             Entra
           </button>
@@ -241,159 +245,146 @@ export default function Tessera() {
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] pb-20 text-stone-800">
-      {/* HEADER CON LOGOUT FISSO IN ALTO A DESTRA */}
-      <div className="relative h-[30vh] w-full flex items-center justify-center text-center">
+      {/* HERO CON GRADIENTE COERENTE ALLA HOME */}
+      <div className="relative h-[25vh] md:h-[30vh] w-full flex items-center justify-center text-center overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="absolute inset-0 w-full h-full object-cover"
           alt="header bg"
         />
-        {/* GRADIENTE IDENTICO ALLA HOME */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/5 via-[65%] to-[#f5f2ed] to-[98%]" />
+        {/* Overlay Gradiente: da scuro a colore sfondo pagina */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#f5f2ed]" />
 
+        {/* Logout fisso in alto a destra, più piccolo su mobile */}
         <button
           onClick={handleLogout}
-          className="absolute top-4 right-4 md:top-6 md:right-6 p-2 md:p-3 bg-black/30 backdrop-blur-md rounded-full text-white hover:bg-black/50 transition-all z-50 border border-white/10"
+          className="absolute top-4 right-4 md:top-6 md:right-6 p-2 md:p-3 bg-black/20 backdrop-blur-md rounded-full text-white border border-white/10 z-50"
         >
           <LogOut size={18} className="md:w-5 md:h-5" />
         </button>
 
-        <div className="relative z-20 mt-4 md:mt-0">
-          <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 mb-3">
-            {/* Icona nel badge: sempre attiva e bianca */}
-            <IconaScarponeCustom size={24} color="#ffffff" isActive={true} />
-            <span className="text-[10px] font-black uppercase text-white">
+        <div className="relative z-20 px-4">
+          <div className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md px-5 py-3 rounded-full border border-white/10 mb-2">
+            <IconaScarponeCustom size={30} color="#ffffff" isActive={true} />
+            <span className="text-[12px] font-black uppercase text-white tracking-tighter">
               {currentLevel.label}
             </span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-lg leading-tight">
-            I TUOI SCARPONI <br /> ALTOUR
+          <h1 className="text-3xl md:text-4xl font-black text-white uppercase drop-shadow-md">
+            Passaporto Altour
           </h1>
         </div>
       </div>
 
-      <div className="max-w-xl mx-auto px-4 md:px-6 -mt-10 relative z-30">
-        {/* TESSERA */}
-        <div className="bg-white rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-8 shadow-2xl border border-stone-50">
-          <div className="flex justify-between items-start mb-8">
-            <div>
-              <div className="flex items-center gap-1 mb-1 text-sky-500">
-                <ShieldCheck size={14} />
-                <span className="text-[9px] font-black uppercase">
-                  Escursionista Ufficiale
+      <div className="max-w-xl mx-auto px-4 md:px-6 -mt-8 relative z-30">
+        {/* TESSERA OTTIMIZZATA MOBILE */}
+        <div className="bg-white rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-8 shadow-2xl border border-white/50">
+          <div className="flex justify-between items-start mb-6">
+            <div className="max-w-[70%]">
+              <div className="flex items-center gap-1 mb-0.5 text-sky-500">
+                <ShieldCheck size={12} />
+                <span className="text-[8px] md:text-[9px] font-black uppercase">
+                  Escursionista Verificato
                 </span>
               </div>
-              <h2 className="text-2xl font-black uppercase truncate max-w-[200px]">
+              <h2 className="text-xl md:text-2xl font-black uppercase truncate leading-tight">
                 {userTessera.nome_escursionista}
               </h2>
             </div>
-            <div className="w-14 h-14 bg-stone-50 rounded-2xl flex items-center justify-center border border-stone-100">
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-stone-50 rounded-xl flex items-center justify-center border border-stone-100">
               {count >= 8 * (currentPage + 1) ? (
-                <Star
-                  size={28}
-                  className="text-amber-400 fill-amber-400 animate-pulse"
-                />
+                <Star size={24} className="text-amber-400 fill-amber-400" />
               ) : (
-                <Star size={28} className="text-stone-200" />
+                <Star size={24} className="text-stone-200" />
               )}
             </div>
           </div>
 
-          {/* GRIGLIA SCARPONI */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          {/* Griglia scarponi: gap ridotto su mobile */}
+          <div className="grid grid-cols-4 gap-2 md:gap-4 mb-6">
             {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
               const idx = currentPage * SLOTS_PER_PAGE + i;
               const esc = userTessera.escursioni_completate?.[idx];
               return (
                 <div
                   key={i}
-                  className="aspect-square rounded-2xl border-2 border-dashed border-stone-100 bg-stone-50/50 flex items-center justify-center relative"
+                  className="aspect-square rounded-xl md:rounded-2xl border-2 border-dashed border-stone-50 bg-stone-50/30 flex items-center justify-center"
                 >
                   {esc ? (
-                    // --- SCARPONE ATTIVO (Colorato) ---
-                    // Usiamo motion.div per un leggero effetto "pop" all'apparizione
-                    <motion.div
-                      initial={{ scale: 0.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 20,
-                      }}
-                      className="animate-shine p-1 flex flex-col items-center justify-center"
-                    >
-                      <IconaScarponeCustom
-                        size={56}
-                        color={esc.colore}
-                        isActive={true}
-                      />
-                    </motion.div>
+                    <IconaScarponeCustom
+                      size={window.innerWidth < 768 ? 45 : 65}
+                      color={esc.colore}
+                      isActive={true}
+                    />
                   ) : (
-                    // --- SCARPONE INATTIVO (Sbiadito) ---
-                    <div className="flex flex-col items-center justify-center">
-                      <IconaScarponeCustom size={48} isActive={false} />
-                    </div>
+                    <IconaScarponeCustom
+                      size={window.innerWidth < 768 ? 45 : 65}
+                      isActive={false}
+                    />
                   )}
                 </div>
               );
             })}
           </div>
 
-          <div className="flex justify-between items-center border-t border-stone-50 pt-6">
+          <div className="flex justify-between items-center border-t border-stone-50 pt-4 md:pt-6">
             <button
               disabled={currentPage === 0}
               onClick={() => setCurrentPage((p) => p - 1)}
-              className="p-2 disabled:opacity-30 hover:bg-stone-50 rounded-full transition-colors"
+              className="p-2 disabled:opacity-20"
             >
-              <ChevronLeft size={24} />
+              <ChevronLeft size={20} />
             </button>
-            <span className="text-[10px] font-black uppercase text-stone-400">
+            <span className="text-[9px] md:text-[10px] font-black uppercase text-stone-300">
               Pagina {currentPage + 1} / {totalPages}
             </span>
             <button
               disabled={currentPage >= totalPages - 1}
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="p-2 disabled:opacity-30 hover:bg-stone-50 rounded-full transition-colors"
+              className="p-2 disabled:opacity-20"
             >
-              <ChevronRight size={24} />
+              <ChevronRight size={20} />
             </button>
           </div>
         </div>
 
-        {/* PULSANTE RISCATTA SOTTO LA TESSERA */}
+        {/* Pulsante riscatta: più compatto su mobile */}
         <button
           onClick={() => {
             setRedeemStep("INPUT");
             setShowRedeem(true);
           }}
-          className="w-full mt-6 bg-stone-900 hover:bg-black text-white py-6 rounded-[2.5rem] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 transition-all active:scale-95"
+          className="w-full mt-4 md:mt-6 bg-stone-900 text-white py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
         >
-          <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
+          <Plus size={20} strokeWidth={3} />{" "}
+          <span className="text-sm md:text-base">Riscatta Scarpone</span>
         </button>
 
-        {/* VOUCHERS */}
+        {/* VOUCHER */}
         {vouchersCount > 0 && (
-          <div className="mt-6 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-dashed border-amber-200 p-6 rounded-[2.5rem] flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-[10px] font-black uppercase text-amber-600 italic mb-1">
-                Premio Sbloccato!
-              </p>
-              <h4 className="text-xl font-black uppercase text-stone-800">
-                Hai {vouchersCount} Voucher
-              </h4>
-            </div>
-            <div className="bg-white p-3 rounded-full shadow-md animate-bounce">
-              <Gift className="text-amber-500" size={28} />
+          <div className="mt-4 md:mt-6 bg-amber-50/50 border-2 border-dashed border-amber-100 p-4 md:p-6 rounded-[2rem] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white rounded-full shadow-sm text-amber-500">
+                <Gift size={20} />
+              </div>
+              <div>
+                <p className="text-[8px] md:text-[10px] font-black uppercase text-amber-600">
+                  Premio Sbloccato
+                </p>
+                <h4 className="text-sm md:text-lg font-black uppercase">
+                  {vouchersCount} Voucher disponibili
+                </h4>
+              </div>
             </div>
           </div>
         )}
 
-        {/* CRONOLOGIA */}
-        <div className="mt-12 space-y-4 mb-8">
-          <h3 className="text-center text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
-            Ultime Vette
+        {/* CRONOLOGIA COMPATTA */}
+        <div className="mt-8 space-y-3 mb-8">
+          <h3 className="text-center text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
+            Cronologia
           </h3>
-          <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-stone-50">
+          <div className="bg-white/60 rounded-[2rem] p-4 md:p-6 border border-white/50">
             {userTessera.escursioni_completate?.length > 0 ? (
               [...userTessera.escursioni_completate]
                 .reverse()
@@ -401,99 +392,86 @@ export default function Tessera() {
                 .map((esc, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between py-4 border-b last:border-0 border-stone-100"
+                    className="flex items-center justify-between py-3 border-b last:border-0 border-stone-50"
                   >
-                    <div className="flex items-center gap-4">
-                      {/* Icona piccola colorata nella cronologia */}
+                    <div className="flex items-center gap-3">
                       <IconaScarponeCustom
-                        size={40}
+                        size={20}
                         color={esc.colore}
                         isActive={true}
                       />
-                      <div>
-                        <h4 className="text-sm font-black uppercase text-stone-800">
-                          {esc.titolo}
-                        </h4>
-                        <div className="flex items-center gap-1 text-[9px] font-bold text-stone-400 uppercase mt-1">
-                          <Calendar size={10} />{" "}
-                          {new Date(esc.data).toLocaleDateString()}
-                        </div>
-                      </div>
+                      <span className="text-[10px] md:text-xs font-black uppercase text-stone-700 truncate max-w-[120px]">
+                        {esc.titolo}
+                      </span>
                     </div>
+                    <span className="text-[8px] font-bold text-stone-300 uppercase">
+                      {new Date(esc.data).toLocaleDateString()}
+                    </span>
                   </div>
                 ))
             ) : (
-              <p className="text-center text-xs text-stone-300 font-bold uppercase py-4">
-                Ancora nessun passo...
+              <p className="text-center text-[9px] text-stone-300 font-bold uppercase">
+                Inizia il cammino!
               </p>
             )}
           </div>
         </div>
       </div>
 
-      {/* MODALE RISCATTO */}
+      {/* MODALE OTTIMIZZATO */}
       <AnimatePresence>
         {showRedeem && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/40">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 backdrop-blur-md bg-black/40">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white p-10 rounded-[3rem] w-full max-w-sm text-center relative shadow-2xl"
+              className="bg-white p-8 md:p-10 rounded-[2.5rem] w-full max-w-sm text-center relative shadow-2xl"
             >
               <button
                 onClick={() => setShowRedeem(false)}
-                className="absolute top-6 right-6 text-stone-300 hover:text-stone-800 transition-colors"
+                className="absolute top-5 right-5 text-stone-300"
               >
                 <X size={24} />
               </button>
 
               {redeemStep === "INPUT" ? (
                 <>
-                  <h3 className="text-2xl font-black uppercase mb-8 text-stone-800">
+                  <h3 className="text-xl font-black uppercase mb-6">
                     Codice Vetta
                   </h3>
                   <input
-                    className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-3xl font-black uppercase outline-none focus:border-stone-900 transition-colors"
+                    className="w-full bg-stone-50 border-2 border-stone-100 p-4 rounded-xl text-center text-2xl font-black uppercase"
                     placeholder="****"
                     value={redeemCode}
                     onChange={(e) => setRedeemCode(e.target.value)}
                   />
                   {redeemError && (
-                    <p className="text-red-500 text-[10px] font-black mt-4 uppercase bg-red-50 py-2 rounded-lg">
+                    <p className="text-red-500 text-[9px] font-black mt-3 uppercase">
                       {redeemError}
                     </p>
                   )}
                   <button
                     onClick={verifyCode}
-                    disabled={loading || !redeemCode}
-                    className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center"
+                    className="w-full mt-6 bg-stone-900 text-white py-4 rounded-xl font-black uppercase active:scale-95 transition-all"
                   >
-                    {loading ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      "Verifica"
-                    )}
+                    Verifica
                   </button>
                 </>
               ) : (
                 <>
-                  <h3 className="text-2xl font-black uppercase mb-2 text-stone-800">
-                    Scegli Colore
-                  </h3>
-                  <p className="text-xs font-bold text-stone-400 uppercase mb-8">
-                    Colora le linee del tuo scarpone
+                  <h3 className="text-xl font-black uppercase mb-1">Colore</h3>
+                  <p className="text-[9px] font-bold text-stone-400 uppercase mb-6 tracking-widest">
+                    Scegli la tonalità
                   </p>
-                  <div className="grid grid-cols-4 gap-4 mb-8">
+                  <div className="grid grid-cols-4 gap-3 mb-6">
                     {EARTH_PALETTE.map((c) => (
-                      // Anteprima nel modale: Icona attiva con il colore specifico
                       <button
                         key={c.hex}
                         onClick={() => saveVetta(c.hex)}
-                        className="aspect-square rounded-2xl border-2 border-stone-100 shadow-sm hover:scale-110 transition-transform hover:shadow-md overflow-hidden flex items-center justify-center bg-stone-50"
+                        className="aspect-square rounded-xl border-2 border-stone-50 shadow-sm active:scale-90 transition-transform bg-stone-50 flex items-center justify-center"
                       >
                         <IconaScarponeCustom
-                          size={40}
+                          size={32}
                           color={c.hex}
                           isActive={true}
                         />
@@ -501,12 +479,7 @@ export default function Tessera() {
                     ))}
                   </div>
                   {isSaving && (
-                    <div className="flex justify-center">
-                      <Loader2
-                        className="animate-spin text-stone-900"
-                        size={32}
-                      />
-                    </div>
+                    <Loader2 className="animate-spin mx-auto text-stone-900" />
                   )}
                 </>
               )}

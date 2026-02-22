@@ -51,17 +51,17 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   return (
     <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
       {/* 1. HERO SECTION - MOBILE OPTIMIZED */}
-      <section className="relative h-[80vh] md:h-[85vh] flex items-center justify-center py-10 px-4 overflow-hidden">
+      <section className="relative h-[60vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp"
-            className="w-full h-full object-cover object-[85%_center] md:object-center brightness-[0.85] contrast-[1.02] transition-transform duration-[20s] scale-105"
+            className="w-full h-full object-cover object-[center_20%] brightness-[0.85] contrast-[1.02] transition-transform duration-[20s] scale-105"
             alt="Dolomiti Altour Italy"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 via-[65%] to-[#f5f2ed]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/5 via-[70%] to-[#f5f2ed] to-[98%]" />
         </div>
 
-        <div className="relative z-10 text-center max-w-3xl w-full">
+        <div className="relative z-10 text-center max-w-3xl w-full px-2">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
