@@ -76,7 +76,7 @@ export default function AltourImmersiveIntro({
               transition={{ duration: 3.5, ease: "easeOut" }}
               loading="eager"
               // @ts-ignore
-              fetchPriority="high"
+              fetchpriority="high"
               onError={(e) => {
                 console.error("Errore caricamento immagine mobile:", e);
                 // Fallback all'immagine desktop se quella mobile fallisce
@@ -94,7 +94,7 @@ export default function AltourImmersiveIntro({
               transition={{ duration: 3.5, ease: "easeOut" }}
               loading="eager"
               // @ts-ignore
-              fetchPriority="high"
+              fetchpriority="high"
             />
 
             {/* Overlay Scuro */}
