@@ -98,9 +98,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           </motion.p>
 
           <div className="flex flex-col items-center gap-4">
-            <p className="text-white/60 text-[9px] font-bold uppercase tracking-[0.2em]">
-              Disponibili anche per tour privati e su misura
-            </p>
+            <p className="text-white/60 text-[9px] font-bold uppercase tracking-[0.2em]"></p>
             <button
               onClick={() => onBookingClick("Informazioni Generali")}
               className="bg-brand-sky hover:bg-white hover:text-brand-sky text-white px-8 md:px-10 py-3.5 md:py-4 rounded-full font-black uppercase text-xs tracking-[0.1em] transition-all flex items-center gap-2 mx-auto shadow-[0_10px_20px_rgba(14,165,233,0.3)] hover:scale-105 active:scale-95"
