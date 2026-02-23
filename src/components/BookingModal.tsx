@@ -7,12 +7,14 @@ interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  initialMessage?: string; // Nuova prop
 }
 
 export default function BookingModal({
   isOpen,
   onClose,
   title,
+  initialMessage = "", // Default vuoto
 }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
@@ -22,7 +24,16 @@ export default function BookingModal({
     messaggio: "",
   });
 
-  // Gestione Scroll Body
+  // Aggiorna il form quando la modale si apre (per i voucher)
+  useEffect(() => {
+    if (isOpen) {
+      setFormData((prev) => ({
+        ...prev,
+        messaggio: initialMessage || "",
+      }));
+    }
+  }, [isOpen, initialMessage]);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -32,7 +43,6 @@ export default function BookingModal({
     };
   }, [isOpen]);
 
-  // Gestione tasto ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isSubmitting) {
@@ -78,10 +88,8 @@ export default function BookingModal({
     try {
       const { error } = await supabase.from("contatti").insert([payload]);
       if (error) throw error;
-
       setSent(true);
       setFormData({ nome: "", email: "", messaggio: "" });
-
       setTimeout(() => {
         setSent(false);
         onClose();
@@ -97,7 +105,6 @@ export default function BookingModal({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* OVERLAY - Coerente con lo sfondo crema del sito */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -106,7 +113,6 @@ export default function BookingModal({
             className="absolute inset-0 bg-stone-200/60 backdrop-blur-md"
           />
 
-          {/* CONTENITORE MODALE */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -114,13 +120,11 @@ export default function BookingModal({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-[0_40px_120px_rgba(28,25,23,0.15)] overflow-hidden border border-white"
           >
-            {/* INTESTAZIONE LIGHT (STILE ALTOUR) */}
             <div className="bg-[#f5f2ed] p-8 md:p-10 relative border-b border-stone-100">
               <button
                 onClick={onClose}
                 className="absolute top-6 right-6 p-2 text-stone-400 hover:text-brand-stone hover:bg-stone-200/50 rounded-full transition-all"
                 disabled={isSubmitting}
-                aria-label="Chiudi"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -128,7 +132,6 @@ export default function BookingModal({
               <motion.div
                 initial={{ x: -10, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
               >
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-[1px] w-6 bg-brand-sky" />
@@ -142,20 +145,15 @@ export default function BookingModal({
               </motion.div>
             </div>
 
-            {/* CORPO DEL FORM */}
             <div className="p-8 md:p-10 bg-white">
               <AnimatePresence mode="wait">
                 {!sent ? (
                   <motion.form
                     key="form"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
                     onSubmit={handleSubmit}
                     className="space-y-5"
                   >
                     <div className="space-y-4">
-                      {/* Campo Nome */}
                       <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
                           Nome Completo
@@ -169,8 +167,6 @@ export default function BookingModal({
                           className="w-full p-5 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-xs text-brand-stone transition-all outline-none"
                         />
                       </div>
-
-                      {/* Campo Email */}
                       <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
                           Email di Contatto
@@ -185,34 +181,27 @@ export default function BookingModal({
                           className="w-full p-5 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-xs text-brand-stone transition-all outline-none"
                         />
                       </div>
-
-                      {/* Campo Messaggio */}
                       <div className="space-y-1.5">
                         <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
-                          Note (Opzionale)
+                          Note / Importo Voucher
                         </label>
                         <textarea
                           name="messaggio"
                           value={formData.messaggio}
                           onChange={handleChange}
-                          placeholder="Scrivi qui le tue domande o richieste particolari..."
+                          placeholder="Scrivi qui..."
                           rows={3}
                           className="w-full p-5 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-xs text-brand-stone resize-none transition-all outline-none"
                         />
                       </div>
                     </div>
-
-                    {/* Bottone Invio Uniformato */}
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-4 transition-all shadow-[0_15px_30px_rgba(14,165,233,0.25)] active:scale-95 mt-4"
+                      className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-4 transition-all shadow-[0_15px_30px_rgba(14,165,233,0.25)] active:scale-95"
                     >
                       {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Invio in corso...</span>
-                        </>
+                        <Loader2 className="w-5 h-5 animate-spin" />
                       ) : (
                         <>
                           <span>Invia Richiesta</span>
@@ -222,7 +211,6 @@ export default function BookingModal({
                     </button>
                   </motion.form>
                 ) : (
-                  /* STATO DI SUCCESSO */
                   <motion.div
                     key="success"
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -236,9 +224,7 @@ export default function BookingModal({
                       Richiesta Inviata
                     </h2>
                     <p className="text-stone-500 font-medium text-sm">
-                      Grazie per averci contattato.
-                      <br />
-                      Ti risponderemo entro 24 ore.
+                      Grazie. Ti risponderemo entro 24 ore.
                     </p>
                   </motion.div>
                 )}
