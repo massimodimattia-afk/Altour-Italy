@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, Send, CheckCircle2, Loader2 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import React, { useState, useEffect } from "react";
+import { X, Send, CheckCircle2, Loader2 } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -8,54 +9,58 @@ interface BookingModalProps {
   title: string;
 }
 
-export default function BookingModal({ isOpen, onClose, title }: BookingModalProps) {
+export default function BookingModal({
+  isOpen,
+  onClose,
+  title,
+}: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    messaggio: ''
+    nome: "",
+    email: "",
+    messaggio: "",
   });
 
-  // Blocca lo scroll del body quando la modale è aperta
+  // Gestione Scroll Body
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isOpen]);
 
-  // Chiudi con tasto ESC (solo se non sta inviando)
+  // Gestione tasto ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !isSubmitting) {
+      if (e.key === "Escape" && !isSubmitting) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
   }, [isSubmitting, onClose]);
 
-  if (!isOpen) return null;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const validateForm = (): string | null => {
-    if (!formData.nome.trim()) return 'Il nome è obbligatorio';
-    if (!formData.email.trim()) return 'L\'email è obbligatoria';
+    if (!formData.nome.trim()) return "Il nome è obbligatorio";
+    if (!formData.email.trim()) return "L'email è obbligatoria";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) return 'Inserisci un indirizzo email valido';
+    if (!emailRegex.test(formData.email))
+      return "Inserisci un indirizzo email valido";
     return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const validationError = validateForm();
     if (validationError) {
       alert(validationError);
@@ -63,147 +68,185 @@ export default function BookingModal({ isOpen, onClose, title }: BookingModalPro
     }
 
     setIsSubmitting(true);
-
-    // Preparazione dati puliti (NO ID, NO undefined)
     const payload = {
-      nome: (formData.nome || '').trim(),
-      email: (formData.email || '').trim(),
-      messaggio: (formData.messaggio || '').trim() || null,
-      attivita: (title || 'Prenotazione').trim()
+      nome: (formData.nome || "").trim(),
+      email: (formData.email || "").trim(),
+      messaggio: (formData.messaggio || "").trim() || null,
+      attivita: (title || "Prenotazione").trim(),
     };
 
-    console.log('📤 Tentativo invio payload:', payload);
-
     try {
-      const { data, error } = await supabase
-        .from('contatti')
-        .insert([payload]);
+      const { error } = await supabase.from("contatti").insert([payload]);
+      if (error) throw error;
 
-      if (error) {
-        console.error('❌ ERRORE SUPABASE DETTAGLIATO:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        });
-        throw error;
-      }
-
-      console.log('✅ Inserimento riuscito:', data);
-      
       setSent(true);
-      setFormData({ nome: '', email: '', messaggio: '' });
+      setFormData({ nome: "", email: "", messaggio: "" });
 
       setTimeout(() => {
         setSent(false);
         onClose();
-      }, 3000);
+      }, 3500);
     } catch (error: any) {
-      console.error('❌ Eccezione catch:', error);
-      
-      let userMessage = 'Si è verificato un errore durante l\'invio. Riprova più tardi.';
-      
-      if (
-        error.message?.includes('relation') || 
-        error.message?.includes('does not exist') ||
-        error.message?.includes('Could not find the table')
-      ) {
-        userMessage = '⚠️ Errore Database: La tabella "contatti" non è accessibile. Esegui lo script SQL di reset.';
-      }
-
-      alert(`${userMessage}\n\nErrore tecnico: ${error.message}`);
+      alert(`Si è verificato un errore: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-stone/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-lg rounded-[3xl] p-8 md:p-12 relative shadow-2xl overflow-hidden border border-white/20">
-        {/* Pulsante di chiusura */}
-        <button
-          onClick={onClose}
-          className="absolute top-8 right-8 text-stone-400 hover:text-brand-stone transition-colors"
-          disabled={isSubmitting}
-          aria-label="Chiudi"
-        >
-          <X className="w-8 h-8" />
-        </button>
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* OVERLAY - Coerente con lo sfondo crema del sito */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={!isSubmitting ? onClose : undefined}
+            className="absolute inset-0 bg-stone-200/60 backdrop-blur-md"
+          />
 
-        {!sent ? (
-          /* Stato modulo di invio */
-          <div className="animate-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-3xl font-black text-brand-stone mb-2 uppercase tracking-tighter">
-              Richiedi Info
-            </h2>
-            <p className="text-stone-500 mb-10 font-medium leading-tight">
-              Stai scrivendo per:<br />
-              <span className="text-brand-sky font-bold uppercase">{title}</span>
-            </p>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                required
-                name="nome"
-                value={formData.nome}
-                onChange={handleChange}
-                placeholder="IL TUO NOME"
-                className="w-full p-5 bg-stone-50 rounded-2xl border-none focus:ring-2 focus:ring-brand-sky font-bold text-xs uppercase tracking-widest text-brand-stone transition-all"
-              />
-
-              <input
-                required
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                type="email"
-                placeholder="LA TUA EMAIL"
-                className="w-full p-5 bg-stone-50 rounded-2xl border-none focus:ring-2 focus:ring-brand-sky font-bold text-xs uppercase tracking-widest text-brand-stone transition-all"
-              />
-
-              <textarea
-                name="messaggio"
-                value={formData.messaggio}
-                onChange={handleChange}
-                placeholder="MESSAGGIO O DOMANDE (OPZIONALE)"
-                rows={4}
-                className="w-full p-5 bg-stone-50 rounded-2xl border-none focus:ring-2 focus:ring-brand-sky font-bold text-xs uppercase tracking-widest text-brand-stone resize-none transition-all"
-              />
-
+          {/* CONTENITORE MODALE */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 40 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 40 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-[0_40px_120px_rgba(28,25,23,0.15)] overflow-hidden border border-white"
+          >
+            {/* INTESTAZIONE LIGHT (STILE ALTOUR) */}
+            <div className="bg-[#f5f2ed] p-8 md:p-10 relative border-b border-stone-100">
               <button
-                type="submit"
+                onClick={onClose}
+                className="absolute top-6 right-6 p-2 text-stone-400 hover:text-brand-stone hover:bg-stone-200/50 rounded-full transition-all"
                 disabled={isSubmitting}
-                className="w-full bg-brand-sky hover:bg-brand-stone disabled:bg-stone-300 text-white py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-xs flex items-center justify-center gap-4 transition-all shadow-xl shadow-brand-sky/30 active:scale-95"
+                aria-label="Chiudi"
               >
-                {isSubmitting ? (
-                  <>
-                    <span>Invio...</span>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  </>
-                ) : (
-                  <>
-                    <span>Invia Richiesta</span>
-                    <Send className="w-4 h-4" />
-                  </>
-                )}
+                <X className="w-6 h-6" />
               </button>
-            </form>
-          </div>
-        ) : (
-          /* Stato di successo */
-          <div className="py-12 text-center animate-in zoom-in duration-500">
-            <div className="bg-emerald-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
-              <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+
+              <motion.div
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-[1px] w-6 bg-brand-sky" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky">
+                    Contatto Diretto
+                  </span>
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter leading-tight text-brand-stone">
+                  {title}
+                </h2>
+              </motion.div>
             </div>
-            <h2 className="text-3xl font-black text-brand-stone mb-4 uppercase tracking-tighter">
-              Ottimo lavoro!
-            </h2>
-            <p className="text-stone-500 font-medium px-4">
-              La tua richiesta è stata inviata. Ti risponderemo a breve!
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+
+            {/* CORPO DEL FORM */}
+            <div className="p-8 md:p-10 bg-white">
+              <AnimatePresence mode="wait">
+                {!sent ? (
+                  <motion.form
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    onSubmit={handleSubmit}
+                    className="space-y-5"
+                  >
+                    <div className="space-y-4">
+                      {/* Campo Nome */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
+                          Nome Completo
+                        </label>
+                        <input
+                          required
+                          name="nome"
+                          value={formData.nome}
+                          onChange={handleChange}
+                          placeholder="es. Mario Rossi"
+                          className="w-full p-5 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-xs text-brand-stone transition-all outline-none"
+                        />
+                      </div>
+
+                      {/* Campo Email */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
+                          Email di Contatto
+                        </label>
+                        <input
+                          required
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          type="email"
+                          placeholder="mario@esempio.it"
+                          className="w-full p-5 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-xs text-brand-stone transition-all outline-none"
+                        />
+                      </div>
+
+                      {/* Campo Messaggio */}
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
+                          Note (Opzionale)
+                        </label>
+                        <textarea
+                          name="messaggio"
+                          value={formData.messaggio}
+                          onChange={handleChange}
+                          placeholder="Scrivi qui le tue domande o richieste particolari..."
+                          rows={3}
+                          className="w-full p-5 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-xs text-brand-stone resize-none transition-all outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bottone Invio Uniformato */}
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-4 transition-all shadow-[0_15px_30px_rgba(14,165,233,0.25)] active:scale-95 mt-4"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Invio in corso...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Invia Richiesta</span>
+                          <Send className="w-4 h-4" />
+                        </>
+                      )}
+                    </button>
+                  </motion.form>
+                ) : (
+                  /* STATO DI SUCCESSO */
+                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="py-12 text-center"
+                  >
+                    <div className="bg-emerald-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                    </div>
+                    <h2 className="text-2xl font-black text-brand-stone mb-2 uppercase tracking-tighter">
+                      Richiesta Inviata
+                    </h2>
+                    <p className="text-stone-500 font-medium text-sm">
+                      Grazie per averci contattato.
+                      <br />
+                      Ti risponderemo entro 24 ore.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

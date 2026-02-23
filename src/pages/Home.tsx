@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar, Award, TrendingUp, Gift } from "lucide-react";
+import { Calendar, TrendingUp, Gift, Star, Sparkles, Send } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion } from "framer-motion";
@@ -50,7 +50,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
-      {/* 1. HERO SECTION - MOBILE OPTIMIZED */}
+      {/* 1. HERO SECTION */}
       <section className="relative h-[60vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
         <div className="absolute inset-0">
           <img
@@ -97,13 +97,18 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             Escursioni e Tour in natura dal 2016
           </motion.p>
 
-          <button
-            onClick={() => onBookingClick("Informazioni Generali")}
-            className="bg-brand-sky hover:bg-white hover:text-brand-sky text-white px-8 md:px-10 py-3.5 md:py-4 rounded-full font-black uppercase text-xs tracking-[0.1em] transition-all flex items-center gap-2 mx-auto shadow-xl active:scale-95"
-          >
-            <Calendar size={16} />
-            <span>Prenota un'esperienza</span>
-          </button>
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-white/60 text-[9px] font-bold uppercase tracking-[0.2em]">
+              Disponibili anche per tour privati e su misura
+            </p>
+            <button
+              onClick={() => onBookingClick("Informazioni Generali")}
+              className="bg-brand-sky hover:bg-white hover:text-brand-sky text-white px-8 md:px-10 py-3.5 md:py-4 rounded-full font-black uppercase text-xs tracking-[0.1em] transition-all flex items-center gap-2 mx-auto shadow-[0_10px_20px_rgba(14,165,233,0.3)] hover:scale-105 active:scale-95"
+            >
+              <Calendar size={16} />
+              <span>Prenota un'esperienza</span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -153,16 +158,17 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow leading-relaxed">
                   {esc.descrizione}
                 </p>
+
                 <div className="flex gap-2 md:gap-3">
                   <button
                     onClick={() => openDetails(esc)}
-                    className="flex-1 border-2 border-brand-stone text-brand-stone py-3 md:py-4 rounded-xl font-bold uppercase text-[9px] tracking-wider"
+                    className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
                   >
                     Info
                   </button>
                   <button
                     onClick={() => onBookingClick(esc.titolo)}
-                    className="flex-[1.5] bg-brand-sky text-white py-3 md:py-4 rounded-xl font-bold uppercase text-[9px] tracking-wider shadow-md"
+                    className="flex-[1.5] bg-brand-sky text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-[0_10px_20px_rgba(14,165,233,0.2)] hover:bg-[#0284c7] transition-all active:scale-95"
                   >
                     Prenota
                   </button>
@@ -173,54 +179,65 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 3. VOUCHER SECTION - ANIMATA */}
-      <section className="max-w-4xl mx-auto px-4 py-12 md:py-16 relative z-20">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="bg-white/90 backdrop-blur-md rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-10 border border-stone-200/60 shadow-xl relative overflow-hidden group"
-        >
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 md:h-12 bg-brand-sky rounded-r-full group-hover:h-full transition-all duration-500" />
-
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-10 relative z-10">
-            <div className="hidden md:flex flex-shrink-0">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-[#f5f2ed] rounded-2xl flex items-center justify-center text-brand-sky group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
-                <Gift size={32} strokeWidth={1.5} />
-              </div>
+      {/* 3. TAILOR-MADE SECTION (COMPATTA) */}
+      <section className="max-w-5xl mx-auto px-4 py-8">
+        <div className="relative bg-white rounded-[2rem] border border-stone-100 shadow-sm overflow-hidden group">
+          <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10 text-center md:text-left">
+            <div className="w-20 h-20 md:w-24 md:h-24 bg-[#f5f2ed] rounded-3xl flex items-center justify-center text-brand-sky shrink-0">
+              <TrendingUp size={40} strokeWidth={1.5} />
             </div>
 
-            <div className="flex-grow text-center md:text-left">
-              <h2 className="text-lg md:text-2xl font-black text-brand-stone uppercase tracking-tight">
-                Voucher Altour
+            <div className="flex-grow">
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-2 block">
+                Progetti Personalizzati
+              </span>
+              <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
+                Avventura{" "}
+                <span className="text-brand-sky italic font-light tracking-normal">
+                  su misura.
+                </span>
               </h2>
-              <p className="text-stone-500 text-xs md:text-base font-medium mt-1">
-                Regala un'esperienza autentica a chi ami.
+              <p className="text-stone-500 text-xs md:text-sm font-medium max-w-lg leading-relaxed">
+                Hai un'idea specifica? Progettiamo tour privati, team building
+                ed eventi unici tracciando la rotta insieme a te.
               </p>
             </div>
 
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => onBookingClick("Richiesta Gift Voucher")}
-              className="w-full md:w-auto bg-brand-stone text-white px-8 py-3.5 md:py-4 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg hover:bg-brand-sky transition-colors duration-300"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onBookingClick("Esperienza su Misura")}
+              className="bg-brand-stone text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg hover:bg-brand-sky transition-all flex items-center gap-3 shrink-0"
             >
-              Regala ora
+              <span>Contattaci</span>
+              <Send size={14} />
             </motion.button>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* 4. ACCADEMIA SECTION */}
       <section className="bg-stone-100 py-12 md:py-20 text-brand-stone">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-10 md:mb-16">
-            <Award className="w-10 h-10 md:w-12 md:h-12 text-brand-sky mx-auto mb-3" />
-            <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight">
-              Accademia Altour
-            </h2>
-            <div className="h-1 w-16 bg-brand-sky mx-auto mt-3" />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex flex-col items-center"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-[1px] w-8 md:w-12 bg-brand-sky" />
+                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-brand-sky">
+                  Professional Training
+                </span>
+                <div className="h-[1px] w-8 md:w-12 bg-brand-sky" />
+              </div>
+              <h2 className="text-4xl md:text-5xl font-light uppercase tracking-tighter leading-none text-brand-stone">
+                Accademia <span className="font-black">Altour</span>
+                <span className="text-brand-sky">.</span>
+              </h2>
+            </motion.div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -233,7 +250,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   {corso.immagine_url && (
                     <img
                       src={corso.immagine_url}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-duration-700"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       alt={corso.titolo}
                     />
                   )}
@@ -245,38 +262,108 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   <h3 className="text-lg md:text-xl font-black mb-3 uppercase line-clamp-2 leading-snug">
                     {corso.titolo}
                   </h3>
-                  <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-2 md:line-clamp-3 font-medium leading-relaxed">
+                  <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-2 font-medium leading-relaxed">
                     {corso.descrizione}
                   </p>
-                  <div className="mt-auto pt-4 border-t border-stone-100">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-stone-400 font-bold text-[9px] uppercase tracking-widest">
-                        {corso.durata}
-                      </span>
-                      <span className="text-xl md:text-2xl font-black text-brand-sky">
-                        €{corso.prezzo}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 md:gap-3">
-                      <button
-                        onClick={() => openDetails(corso)}
-                        className="flex-1 border-2 border-brand-stone py-3 rounded-xl font-bold uppercase text-[9px] tracking-widest"
-                      >
-                        Scopri
-                      </button>
-                      <button
-                        onClick={() => onBookingClick(corso.titolo)}
-                        className="flex-[1.5] bg-brand-stone text-white py-3 rounded-xl font-bold uppercase text-[9px] tracking-widest"
-                      >
-                        Iscriviti
-                      </button>
-                    </div>
+                  <div className="mt-auto pt-4 border-t border-stone-100 flex gap-2 md:gap-3">
+                    <button
+                      onClick={() => openDetails(corso)}
+                      className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+                    >
+                      Scopri
+                    </button>
+                    <button
+                      onClick={() => onBookingClick(corso.titolo)}
+                      className="flex-[1.5] bg-brand-stone text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-[0_10px_20px_rgba(28,25,23,0.2)] hover:bg-stone-700 transition-all active:scale-95"
+                    >
+                      Iscriviti
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
+      </section>
+
+      {/* 5. VOUCHER SECTION - UNIFORMATA AL TAILOR MADE */}
+      <section className="max-w-5xl mx-auto px-4 py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          onMouseMove={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            e.currentTarget.style.setProperty("--x", `${x}px`);
+            e.currentTarget.style.setProperty("--y", `${y}px`);
+          }}
+          className="relative group cursor-pointer"
+          onClick={() => onBookingClick("Richiesta Gift Voucher")}
+        >
+          {/* Effetto Glow di profondità */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky to-brand-stone rounded-[2.5rem] blur opacity-5 group-hover:opacity-20 transition duration-1000" />
+
+          <div className="relative bg-white rounded-[2.5rem] p-8 md:p-12 border border-stone-100 shadow-xl overflow-hidden flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            {/* Glow Dinamico al passaggio del mouse */}
+            <div
+              className="pointer-events-none absolute inset-0 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{
+                background: `radial-gradient(200px circle at var(--x) var(--y), rgba(14, 165, 233, 0.1), transparent 80%)`,
+              }}
+            />
+
+            {/* Icona Box - Identica a Tailor Made */}
+            <div className="relative shrink-0">
+              <div className="w-24 h-24 md:w-28 md:h-28 bg-[#f5f2ed] rounded-[2rem] flex items-center justify-center text-brand-sky group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                <Gift size={48} strokeWidth={1.2} />
+              </div>
+              <motion.div
+                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.8, 0.3] }}
+                transition={{ repeat: Infinity, duration: 4 }}
+                className="absolute -top-2 -right-2 text-brand-sky"
+              >
+                <Sparkles size={24} />
+              </motion.div>
+            </div>
+
+            {/* Testi - Identici per gerarchia e font */}
+            <div className="flex-grow text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+                <Star size={10} className="text-brand-sky fill-brand-sky" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky block">
+                  Gift Experience
+                </span>
+                <Star size={10} className="text-brand-sky fill-brand-sky" />
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-4">
+                Voucher{" "}
+                <span className="text-brand-sky italic font-light tracking-normal uppercase">
+                  Regalo.
+                </span>
+              </h2>
+              <p className="text-stone-500 text-xs md:text-sm font-medium max-w-lg leading-relaxed">
+                Non regalare semplici oggetti, regala ricordi indimenticabili.
+              </p>
+            </div>
+
+            {/* Pulsante - Identico per dimensioni e stile */}
+            <div className="w-full md:w-auto shrink-0 z-10">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full md:w-auto bg-brand-stone text-white px-10 py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-lg group-hover:bg-brand-sky transition-all flex items-center justify-center gap-3"
+              >
+                Regala ora
+                <TrendingUp
+                  size={16}
+                  className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"
+                />
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       <ActivityDetailModal
