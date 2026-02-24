@@ -24,8 +24,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // Tagli predefiniti per i voucher
-  const presetVouchers = [10, 20, 50, 100];
+  // --- TAGLI AGGIORNATI ---
+  const presetVouchers = [10, 20, 60, 100, 200, 300];
 
   useEffect(() => {
     async function loadData() {
@@ -118,7 +118,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   icon: <Shield size={18} />,
                 },
                 {
-                  value: "800+",
+                  value: "00+",
                   label: "Escursionisti Soddisfatti",
                   icon: <Users size={18} />,
                 },
@@ -320,7 +320,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 5. VOUCHER SECTION CON TAGLI PREDEFINITI */}
+      {/* 5. VOUCHER SECTION AGGIORNATA */}
       <section className="max-w-5xl mx-auto px-4 py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -363,7 +363,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 text-center lg:text-left">
                   Scegli il taglio:
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-2">
                   {presetVouchers.map((amount) => (
                     <button
                       key={amount}
