@@ -118,7 +118,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   icon: <Shield size={18} />,
                 },
                 {
-                  value: "00+",
+                  value: "800+",
                   label: "Escursionisti Soddisfatti",
                   icon: <Users size={18} />,
                 },
@@ -308,9 +308,9 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                     </button>
                     <button
                       onClick={() => onBookingClick(corso.titolo)}
-                      className="flex-[1.5] bg-brand-stone text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-lg hover:bg-stone-700 transition-all"
+                      className="flex-[1.5] bg-brand-sky text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-[0_10px_20px_rgba(14,165,233,0.25)] hover:bg-[#0284c7] transition-all"
                     >
-                      Iscriviti
+                      Prenota
                     </button>
                   </div>
                 </div>
