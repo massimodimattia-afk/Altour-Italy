@@ -24,7 +24,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // --- TAGLI AGGIORNATI ---
+  // Tagli voucher richiesti
   const presetVouchers = [10, 20, 60, 100, 200, 300];
 
   useEffect(() => {
@@ -61,8 +61,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
-      {/* 1. HERO SECTION */}
-      <section className="relative h-[75vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
+      {/* 1. HERO SECTION & OPTIMIZED TRUST BAR */}
+      <section className="relative h-[80vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp"
@@ -81,68 +81,54 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             <div className="absolute -inset-8 bg-white/5 rounded-full blur-3xl opacity-40" />
             <img
               src="/altour-logo.png"
-              className="relative w-28 h-28 md:w-44 md:h-44 mx-auto rounded-[2.5rem] shadow-2xl border border-white/10 object-cover"
+              className="relative w-20 h-20 md:w-44 md:h-44 mx-auto rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-white/10 object-cover"
               alt="Logo Altour"
             />
           </motion.div>
 
-          <div className="flex flex-col items-center mb-12">
+          <div className="flex flex-col items-center mb-10 md:mb-12">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-6xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-2xl leading-none"
+              className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-2xl leading-none"
             >
               Altour
             </motion.h1>
-            <p className="text-sm md:text-2xl font-bold uppercase tracking-[0.5em] text-stone-200 opacity-90 mt-2">
+            <p className="text-[10px] md:text-2xl font-bold uppercase tracking-[0.5em] text-stone-200 opacity-90 mt-2">
               Italy
             </p>
           </div>
 
+          {/* TRUST BAR - MOBILE OPTIMIZED (Orizzontale su mobile) */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white/10 backdrop-blur-xl py-4 md:py-6 px-4 md:px-8 rounded-[2rem] md:rounded-full border border-white/20 shadow-2xl mx-auto max-w-4xl"
+            className="bg-white/10 backdrop-blur-xl py-4 md:py-6 px-2 md:px-8 rounded-[1.5rem] md:rounded-full border border-white/20 shadow-2xl mx-auto max-w-4xl"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 md:gap-y-0 divide-y md:divide-y-0 md:divide-x divide-white/10">
+            <div className="grid grid-cols-3 gap-0 divide-x divide-white/10">
               {[
                 {
                   value: "10 anni",
-                  label: "Di Esperienza",
-                  icon: <TrendingUp size={18} />,
+                  label: "Exp.",
+                  icon: <TrendingUp size={14} />,
                 },
-                {
-                  value: "AIGAE",
-                  label: "Guide Certificate",
-                  icon: <Shield size={18} />,
-                },
-                {
-                  value: "800+",
-                  label: "Escursionisti Soddisfatti",
-                  icon: <Users size={18} />,
-                },
+                { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
+                { value: "800+", label: "Clienti", icon: <Users size={14} /> },
               ].map((stat, index) => (
                 <div
-                  key={stat.label}
-                  className="px-4 md:px-6 flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4"
+                  key={index}
+                  className="flex flex-col items-center justify-center px-1"
                 >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.6 + index * 0.1, type: "spring" }}
-                    className="flex-shrink-0 w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-brand-sky"
-                  >
+                  <div className="text-brand-sky mb-1 md:hidden">
                     {stat.icon}
-                  </motion.div>
-                  <div className="text-center md:text-left pt-2 md:pt-0">
-                    <p className="text-xl md:text-2xl font-black text-white leading-none mb-1">
-                      {stat.value}
-                    </p>
-                    <p className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-stone-300 font-bold">
-                      {stat.label}
-                    </p>
                   </div>
+                  <p className="text-xs md:text-2xl font-black text-white leading-none">
+                    {stat.value}
+                  </p>
+                  <p className="text-[7px] md:text-[10px] uppercase tracking-widest text-stone-300 font-bold mt-1">
+                    {stat.label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -220,8 +206,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       <section className="max-w-5xl mx-auto px-4 py-8">
         <div className="relative bg-white rounded-[2rem] border border-stone-100 shadow-sm overflow-hidden group">
           <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10 text-center md:text-left">
-            <div className="w-20 h-20 md:w-24 md:h-24 bg-[#f5f2ed] rounded-3xl flex items-center justify-center text-brand-sky shrink-0">
-              <TrendingUp size={40} strokeWidth={1.5} />
+            <div className="w-16 h-16 md:w-24 md:h-24 bg-[#f5f2ed] rounded-2xl md:rounded-3xl flex items-center justify-center text-brand-sky shrink-0">
+              <TrendingUp size={32} strokeWidth={1.5} />
             </div>
             <div className="flex-grow">
               <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-2 block">
@@ -234,15 +220,15 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 </span>
               </h2>
               <p className="text-stone-500 text-xs md:text-sm font-medium max-w-lg leading-relaxed">
-                Hai un'idea specifica? Progettiamo tour privati, team building
-                ed eventi unici tracciando la rotta insieme a te.
+                Hai un'idea specifica? Progettiamo tour privati e team building
+                tracciando la rotta insieme a te.
               </p>
             </div>
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => onBookingClick("Esperienza su Misura")}
-              className="bg-brand-stone text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg hover:bg-brand-sky transition-all flex items-center gap-3 shrink-0"
+              className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-3 shrink-0"
             >
               <span>Contattaci</span>
               <Send size={14} />
@@ -251,7 +237,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 4. ACCADEMIA SECTION */}
+      {/* 4. ACCADEMIA SECTION (Ottimizzata per uniformità pulsanti) */}
       <section className="bg-stone-100 py-12 md:py-20 text-brand-stone">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-10 md:mb-16">
@@ -320,71 +306,71 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 5. VOUCHER SECTION AGGIORNATA */}
-      <section className="max-w-5xl mx-auto px-4 py-20">
+      {/* 5. VOUCHER SECTION - MOBILE OPTIMIZED (Compact grid) */}
+      <section className="max-w-5xl mx-auto px-4 py-12 md:py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="relative group"
         >
-          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky to-brand-stone rounded-[2.5rem] blur opacity-5 group-hover:opacity-20 transition duration-1000" />
-          <div className="relative bg-white rounded-[2.5rem] p-8 md:p-12 border border-stone-100 shadow-xl overflow-hidden">
+          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky to-brand-stone rounded-[2rem] md:rounded-[2.5rem] blur opacity-5" />
+          <div className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-stone-100 shadow-xl overflow-hidden">
             <div className="flex flex-col lg:flex-row items-center gap-8 md:gap-12">
-              <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8 flex-grow text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 flex-grow text-center md:text-left">
                 <div className="shrink-0">
-                  <div className="w-24 h-24 md:w-28 md:h-28 bg-[#f5f2ed] rounded-[2rem] flex items-center justify-center text-brand-sky group-hover:scale-110 transition-all duration-500">
-                    <Gift size={48} strokeWidth={1.2} />
+                  <div className="w-16 h-16 md:w-28 md:h-28 bg-[#f5f2ed] rounded-2xl md:rounded-[2rem] flex items-center justify-center text-brand-sky">
+                    <Gift size={32} className="md:w-12 md:h-12" />
                   </div>
                 </div>
                 <div>
-                  <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
-                    <Star size={10} className="text-brand-sky fill-brand-sky" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky block">
+                  <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                    <Star size={8} className="text-brand-sky fill-brand-sky" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky">
                       Gift Experience
                     </span>
-                    <Star size={10} className="text-brand-sky fill-brand-sky" />
+                    <Star size={8} className="text-brand-sky fill-brand-sky" />
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-4">
+                  <h2 className="text-2xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
                     Voucher{" "}
-                    <span className="text-brand-sky italic font-light tracking-normal uppercase">
+                    <span className="text-brand-sky italic font-light tracking-normal">
                       Regalo.
                     </span>
                   </h2>
-                  <p className="text-stone-500 text-xs md:text-sm font-medium max-w-lg leading-relaxed">
-                    Scegli l'importo e regala un'emozione. Il destinatario
-                    riceverà un voucher utilizzabile per tutte le nostre
-                    attività.
+                  <p className="text-stone-500 text-[11px] md:text-sm font-medium max-w-lg leading-relaxed">
+                    Scegli l'importo e regala un'emozione utilizzabile per tutte
+                    le nostre attività.
                   </p>
                 </div>
               </div>
 
-              <div className="w-full lg:w-72 shrink-0 space-y-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 text-center lg:text-left">
-                  Scegli il taglio:
+              <div className="w-full lg:w-80 shrink-0 space-y-3">
+                <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-stone-400 text-center lg:text-left">
+                  Tagli disponibili:
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 gap-2">
+                {/* Griglia 3 colonne su mobile per salvare spazio */}
+                <div className="grid grid-cols-3 lg:grid-cols-2 gap-2">
                   {presetVouchers.map((amount) => (
                     <button
                       key={amount}
                       onClick={() =>
                         onBookingClick(`Voucher Regalo da ${amount}€`)
                       }
-                      className="py-4 rounded-xl border-2 border-stone-50 bg-stone-50 text-brand-stone font-black text-xs hover:border-brand-sky hover:text-brand-sky hover:bg-white transition-all active:scale-95"
+                      className="py-3 md:py-4 rounded-xl border-2 border-stone-50 bg-stone-50 text-brand-stone font-black text-[10px] md:text-xs hover:border-brand-sky hover:text-brand-sky hover:bg-white transition-all active:scale-95"
                     >
                       {amount}€
                     </button>
                   ))}
                 </div>
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() =>
                     onBookingClick("Richiesta Gift Voucher Personalizzato")
                   }
-                  className="w-full bg-brand-stone text-white py-5 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] shadow-lg group-hover:bg-brand-sky transition-all flex items-center justify-center gap-3"
+                  className="w-full bg-brand-stone text-white py-4 md:py-5 rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2"
                 >
-                  Personalizza <TrendingUp size={16} />
+                  Personalizza <TrendingUp size={14} />
                 </motion.button>
               </div>
             </div>
