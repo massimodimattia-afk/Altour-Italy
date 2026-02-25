@@ -1,24 +1,30 @@
 {
   "name": "Altour Italy",
   "short_name": "Altour",
-  "description": "Escursioni e formazione outdoor in montagna - Altour Italy",
+  "description": "Escursioni e formazione outdoor - Altour Italy",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1c1917",
-  "theme_color": "#047857",
+  "theme_color": "#0ea5e7",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/altour-logo.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/altour-logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/altour-logo.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
