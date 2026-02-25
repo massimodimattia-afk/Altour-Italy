@@ -82,20 +82,24 @@ export default function EscursioniPage({
         .select("*")
         .order("data", { ascending: true });
       if (data) setEscursioni(data);
-      setTimeout(() => setLoading(false), 800);
+      // FIX: rimosso setTimeout artificiale da 800ms — lo skeleton è già presente
+      setLoading(false);
     }
     fetchEscursioni();
   }, []);
 
   const handleAnswer = (option: string) => {
-    // Salviamo l'array aggiornato in una variabile locale per usarlo subito
     const newAnswers = [...answers, option];
 
     if (currentQuestion < quizQuestions.length - 1) {
       setAnswers(newAnswers);
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      // --- IL VERO ALGORITMO DI MATCHING ---
+      // FIX: guard — se non ci sono escursioni non crashare
+      if (escursioni.length === 0) {
+        setQuizStep("intro");
+        return;
+      }
 
       let bestMatch = escursioni[0];
       let maxScore = -1;
@@ -120,11 +124,9 @@ export default function EscursioniPage({
           score += 3;
         if (tempoScelto === "Tour" && cat === "tour") score += 3;
 
-        // 3. (Opzionale) Aggiungiamo un pizzico di randomizzazione (da 0 a 0.9)
-        // per variare il risultato se ci sono più escursioni con lo stesso punteggio massimo
+        // 3. Randomizzazione lieve per variare risultati a parità di punteggio
         score += Math.random();
 
-        // Troviamo l'escursione con il punteggio più alto
         if (score > maxScore) {
           maxScore = score;
           bestMatch = esc;
@@ -136,8 +138,11 @@ export default function EscursioniPage({
     }
   };
 
+  // FIX: filtro case-insensitive — Supabase può restituire "Giornata" o "giornata"
   const filteredEscursioni = escursioni.filter((esc) =>
-    activeFilter === "tutte" ? true : esc.categoria === activeFilter,
+    activeFilter === "tutte"
+      ? true
+      : esc.categoria?.toLowerCase() === activeFilter.toLowerCase(),
   );
   const visibleEscursioni = filteredEscursioni.slice(0, visibleCount);
 
@@ -266,7 +271,7 @@ export default function EscursioniPage({
         </div>
       )}
 
-      {/* --- QUIZ BOX (REINSERITO) --- */}
+      {/* --- QUIZ BOX --- */}
       <section className="max-w-4xl mx-auto mt-32 relative px-2">
         <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
         <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
@@ -386,10 +391,12 @@ export default function EscursioniPage({
                       >
                         Visualizza
                       </button>
+                      {/* FIX: reset anche answers[] al "Rifai il test" */}
                       <button
                         onClick={() => {
                           setQuizStep("intro");
                           setCurrentQuestion(0);
+                          setAnswers([]);
                         }}
                         className="text-stone-400 font-black uppercase text-[9px] py-2 flex items-center justify-center gap-2"
                       >

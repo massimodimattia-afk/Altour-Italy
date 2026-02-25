@@ -1,6 +1,15 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, ChevronLeft, ChevronRight, TrendingUp, Info, Briefcase as Backpack } from 'lucide-react';
-import { useState } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  X,
+  Calendar,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  Info,
+  Briefcase as Backpack,
+} from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface Activity {
   id: string;
@@ -24,20 +33,45 @@ interface ActivityDetailModalProps {
   onBook: (title: string) => void;
 }
 
-export default function ActivityDetailModal({ activity, isOpen, onClose, onBook }: ActivityDetailModalProps) {
+const IMG_FALLBACK = "/altour-logo.png";
+
+export default function ActivityDetailModal({
+  activity,
+  isOpen,
+  onClose,
+  onBook,
+}: ActivityDetailModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!activity) return null;
 
-  const images = [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[];
+  const images = [
+    activity.immagine_url,
+    ...(activity.gallery_urls || []),
+  ].filter(Boolean) as string[];
 
-  const nextImage = () => {
+  // FIX: reset indice immagine ogni volta che cambia l'attività aperta
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [activity?.id]);
+
+  const nextImage = () =>
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const prevImage = () => {
+  const prevImage = () =>
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
+
+  // FIX: navigazione gallery con frecce tastiera
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    if (!isOpen || images.length <= 1) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") nextImage();
+      if (e.key === "ArrowLeft") prevImage();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isOpen, images.length]);
 
   return (
     <AnimatePresence>
@@ -50,7 +84,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
             onClick={onClose}
             className="absolute inset-0 bg-brand-stone/80 backdrop-blur-sm"
           />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -61,31 +95,52 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
             <div className="md:w-1/2 relative bg-stone-100 min-h-[300px] md:min-h-full">
               {images.length > 0 ? (
                 <>
+                  {/* FIX: onError fallback su immagine gallery */}
                   <img
                     src={images[currentImageIndex]}
                     alt={activity.titolo}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = IMG_FALLBACK;
+                    }}
                   />
                   {images.length > 1 && (
                     <>
+                      {/* FIX: stopPropagation per non chiudere la modale al click sui bottoni gallery */}
                       <button
-                        onClick={prevImage}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          prevImage();
+                        }}
+                        aria-label="Immagine precedente" // FIX: aria-label
                         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all"
                       >
                         <ChevronLeft size={24} />
                       </button>
                       <button
-                        onClick={nextImage}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          nextImage();
+                        }}
+                        aria-label="Immagine successiva" // FIX: aria-label
                         className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all"
                       >
                         <ChevronRight size={24} />
                       </button>
+                      {/* FIX: dot indicator cliccabili */}
                       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
                         {images.map((_, idx) => (
-                          <div
+                          <button
                             key={idx}
-                            className={`w-2 h-2 rounded-full transition-all ${
-                              idx === currentImageIndex ? 'bg-white w-6' : 'bg-white/50'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentImageIndex(idx);
+                            }}
+                            aria-label={`Vai all'immagine ${idx + 1}`}
+                            className={`h-2 rounded-full transition-all ${
+                              idx === currentImageIndex
+                                ? "bg-white w-6"
+                                : "bg-white/50 w-2"
                             }`}
                           />
                         ))}
@@ -104,6 +159,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
             <div className="md:w-1/2 p-8 md:p-12 flex flex-col">
               <button
                 onClick={onClose}
+                aria-label="Chiudi"
                 className="absolute top-6 right-6 p-2 hover:bg-stone-100 rounded-full transition-colors z-10"
               >
                 <X size={24} className="text-brand-stone" />
@@ -137,7 +193,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
                 <p className="text-stone-600 leading-relaxed font-medium">
                   {activity.descrizione_estesa || activity.descrizione}
                 </p>
-                
+
                 {activity.attrezzatura_consigliata && (
                   <div className="mt-8 p-6 bg-brand-glacier rounded-2xl border border-stone-100">
                     <h4 className="text-xs font-black uppercase tracking-widest text-brand-sky mb-3 flex items-center gap-2">
@@ -152,11 +208,15 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
                 {activity.attrezzatura && (
                   <div className="mt-8 p-6 bg-stone-50 rounded-2xl border border-stone-100">
                     <h4 className="text-xs font-black uppercase tracking-widest text-brand-stone mb-4 flex items-center gap-2">
-                      <Backpack size={16} className="text-brand-sky" /> Equipaggiamento Consigliato
+                      <Backpack size={16} className="text-brand-sky" />{" "}
+                      Equipaggiamento Consigliato
                     </h4>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
-                      {activity.attrezzatura.split(',').map((item, index) => (
-                        <li key={index} className="text-stone-600 text-sm flex items-start gap-2">
+                      {activity.attrezzatura.split(",").map((item, index) => (
+                        <li
+                          key={index}
+                          className="text-stone-600 text-sm flex items-start gap-2"
+                        >
                           <span className="text-brand-sky mt-1">•</span>
                           <span className="font-medium">{item.trim()}</span>
                         </li>
@@ -168,8 +228,13 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBook 
 
               <div className="flex items-center justify-between gap-6 pt-8 border-t border-stone-100 mt-auto">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Quota di partecipazione</span>
-                  <span className="text-4xl font-black text-brand-stone">€{activity.prezzo}</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">
+                    Quota di partecipazione
+                  </span>
+                  {/* FIX: null-safe sul prezzo */}
+                  <span className="text-4xl font-black text-brand-stone">
+                    {activity.prezzo != null ? `€${activity.prezzo}` : "—"}
+                  </span>
                 </div>
                 <button
                   onClick={() => {

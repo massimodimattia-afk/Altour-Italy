@@ -9,19 +9,50 @@ import {
   Users,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion } from "framer-motion";
+
+// FIX: tipi precisi invece di any[]
+type Escursione = Database["public"]["Tables"]["escursioni"]["Row"];
+type Corso = Database["public"]["Tables"]["corsi"]["Row"];
+type Activity = Escursione | Corso;
 
 interface HomeProps {
   onNavigate: (page: string) => void;
   onBookingClick: (title: string) => void;
 }
 
+// FIX: skeleton loader per le card (sostituisce il "Caricamento..." testuale)
+const SkeletonCard = () => (
+  <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col">
+    <div className="h-48 md:h-56 bg-stone-100 animate-pulse" />
+    <div className="p-5 md:p-8 flex flex-col gap-3">
+      <div className="h-2 w-24 bg-stone-100 rounded animate-pulse" />
+      <div className="h-5 w-3/4 bg-stone-200 rounded animate-pulse" />
+      <div className="space-y-2">
+        <div className="h-2 w-full bg-stone-50 rounded animate-pulse" />
+        <div className="h-2 w-5/6 bg-stone-50 rounded animate-pulse" />
+        <div className="h-2 w-4/6 bg-stone-50 rounded animate-pulse" />
+      </div>
+      <div className="flex gap-2 mt-2">
+        <div className="h-12 flex-1 bg-stone-100 rounded-2xl animate-pulse" />
+        <div className="h-12 flex-[1.5] bg-stone-100 rounded-2xl animate-pulse" />
+      </div>
+    </div>
+  </div>
+);
+
+// Placeholder locale se l'immagine remota fallisce
+const IMG_FALLBACK = "/altour-logo.png";
+
 export default function Home({ onNavigate, onBookingClick }: HomeProps) {
-  const [featuredHikes, setFeaturedHikes] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [featuredHikes, setFeaturedHikes] = useState<Escursione[]>([]);
+  const [courses, setCourses] = useState<Corso[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
+    null,
+  ); // FIX: typed
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Tagli voucher richiesti
@@ -47,15 +78,24 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
     loadData();
   }, []);
 
-  const openDetails = (activity: any) => {
+  const openDetails = (activity: Activity) => {
+    // FIX: typed
     setSelectedActivity(activity);
     setIsDetailOpen(true);
   };
 
+  // FIX: skeleton loader al posto del testo "Caricamento..."
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed] text-brand-stone font-bold uppercase tracking-widest text-xs">
-        Caricamento...
+      <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
+        <div className="h-[80vh] md:h-screen bg-stone-200 animate-pulse" />
+        <div className="max-w-6xl mx-auto px-4 py-12 md:py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {[1, 2, 3].map((n) => (
+              <SkeletonCard key={n} />
+            ))}
+          </div>
+        </div>
       </div>
     );
 
@@ -68,6 +108,11 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp"
             className="w-full h-full object-cover object-[center_20%] brightness-[0.8] contrast-[1.02] transition-transform duration-[20s] scale-105"
             alt="Dolomiti Altour Italy"
+            // FIX: hero è above the fold, non serve lazy
+            decoding="async"
+            onError={(e) => {
+              e.currentTarget.src = IMG_FALLBACK;
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/10 via-[70%] to-[#f5f2ed] to-[98%]" />
         </div>
@@ -83,6 +128,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               src="/altour-logo.png"
               className="relative w-20 h-20 md:w-44 md:h-44 mx-auto rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-white/10 object-cover"
               alt="Logo Altour"
+              decoding="async"
+              onError={(e) => {
+                e.currentTarget.style.visibility = "hidden";
+              }}
             />
           </motion.div>
 
@@ -162,10 +211,16 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             >
               <div className="h-48 md:h-56 relative overflow-hidden">
                 {esc.immagine_url && (
+                  // FIX: lazy loading + fallback su errore
                   <img
                     src={esc.immagine_url}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     alt={esc.titolo}
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      e.currentTarget.src = IMG_FALLBACK;
+                    }}
                   />
                 )}
                 <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-black uppercase text-brand-stone shadow-sm">
@@ -268,10 +323,16 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               >
                 <div className="h-40 md:h-48 relative overflow-hidden">
                   {corso.immagine_url && (
+                    // FIX: lazy loading + fallback su errore
                     <img
                       src={corso.immagine_url}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       alt={corso.titolo}
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        e.currentTarget.src = IMG_FALLBACK;
+                      }}
                     />
                   )}
                   <div className="absolute top-3 left-3 bg-brand-stone text-white px-2.5 py-1 rounded text-[8px] font-black uppercase tracking-widest">

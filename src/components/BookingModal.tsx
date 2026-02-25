@@ -7,24 +7,26 @@ interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  initialMessage?: string; // Nuova prop
+  initialMessage?: string;
 }
 
 export default function BookingModal({
   isOpen,
   onClose,
   title,
-  initialMessage = "", // Default vuoto
+  initialMessage = "",
 }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+  // FIX: errore inline invece di alert()
+  const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
     messaggio: "",
   });
 
-  // Aggiorna il form quando la modale si apre (per i voucher)
+  // Aggiorna il messaggio quando la modale si apre (per i voucher)
   useEffect(() => {
     if (isOpen) {
       setFormData((prev) => ({
@@ -33,6 +35,22 @@ export default function BookingModal({
       }));
     }
   }, [isOpen, initialMessage]);
+
+  // FIX: reset form e stato sent quando la modale si riapre/chiude
+  useEffect(() => {
+    if (isOpen) {
+      // FIX: sent non rimane se la modale viene riaperta prima del timeout
+      setSent(false);
+      setFormError(null);
+    } else {
+      // FIX: piccolo delay per non vedere il reset durante l'animazione di chiusura
+      const t = setTimeout(() => {
+        setFormData({ nome: "", email: "", messaggio: "" });
+        setFormError(null);
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,6 +76,8 @@ export default function BookingModal({
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // FIX: pulisce l'errore al primo keystroke dopo che è apparso
+    if (formError) setFormError(null);
   };
 
   const validateForm = (): string | null => {
@@ -71,13 +91,15 @@ export default function BookingModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // FIX: errore inline invece di alert()
     const validationError = validateForm();
     if (validationError) {
-      alert(validationError);
+      setFormError(validationError);
       return;
     }
 
     setIsSubmitting(true);
+    setFormError(null);
     const payload = {
       nome: (formData.nome || "").trim(),
       email: (formData.email || "").trim(),
@@ -95,7 +117,8 @@ export default function BookingModal({
         onClose();
       }, 3500);
     } catch (error: any) {
-      alert(`Si è verificato un errore: ${error.message}`);
+      // FIX: errore server inline invece di alert()
+      setFormError(`Si è verificato un errore: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -123,6 +146,7 @@ export default function BookingModal({
             <div className="bg-[#f5f2ed] p-8 md:p-10 relative border-b border-stone-100">
               <button
                 onClick={onClose}
+                aria-label="Chiudi"
                 className="absolute top-6 right-6 p-2 text-stone-400 hover:text-brand-stone hover:bg-stone-200/50 rounded-full transition-all"
                 disabled={isSubmitting}
               >
@@ -191,10 +215,30 @@ export default function BookingModal({
                           onChange={handleChange}
                           placeholder="Scrivi qui..."
                           rows={3}
+                          maxLength={500}
                           className="w-full p-5 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-xs text-brand-stone resize-none transition-all outline-none"
                         />
+                        {/* FIX: contatore caratteri sul campo note */}
+                        <p className="text-right text-[9px] font-bold text-stone-300 mr-1">
+                          {formData.messaggio.length} / 500
+                        </p>
                       </div>
                     </div>
+
+                    {/* FIX: errore inline al posto di alert() */}
+                    <AnimatePresence>
+                      {formError && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          className="text-red-500 text-[10px] font-black uppercase text-center bg-red-50 py-3 rounded-xl"
+                        >
+                          {formError}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+
                     <button
                       type="submit"
                       disabled={isSubmitting}

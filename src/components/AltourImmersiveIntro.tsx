@@ -2,18 +2,10 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // --- CONFIGURAZIONE COSTANTI ---
-// Mobile: Immagine Supabase (Verticale)
 const MOBILE_IMAGE_URL =
   "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/intro-mobile.webp";
-// Desktop: Immagine Supabase (Landscape)
 const DESKTOP_IMAGE_URL =
   "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp";
-
-/* 
-// NOTE: Se vuoi usare le tue immagini personali, caricale su Supabase Storage nel bucket 'Images' e usa questi URL:
-// const MOBILE_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150440.jpg";
-// const DESKTOP_IMAGE_URL = "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp";
-*/
 
 interface AltourImmersiveIntroProps {
   onComplete: () => void;
@@ -38,7 +30,6 @@ export default function AltourImmersiveIntro({
     const timer = setTimeout(() => {
       setIsVisible(false);
     }, 3500);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -55,31 +46,27 @@ export default function AltourImmersiveIntro({
                   opacity: 0,
                   scale: 1.1,
                   transition: { duration: 0.8, ease: "easeInOut" },
-                } // EFFETTO MOBILE: Fade Out con leggero scale (più fluido)
+                }
               : {
                   y: "-100%",
                   transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] },
-                } // EFFETTO DESKTOP: Sipario Verticale
+                }
           }
         >
           {/* --- IMMAGINE DI SFONDO (KEN BURNS) --- */}
           <div className="absolute inset-0 w-full h-full">
-            {/* Immobile Wrapper per gestire il caricamento condizionale senza layout shift */}
-
             {/* Versione Mobile */}
             <motion.img
               src={MOBILE_IMAGE_URL}
               alt="Altour Intro Mobile"
               className="w-full h-full object-cover object-center block md:hidden"
               initial={{ scale: 1 }}
-              animate={{ scale: 1.05 }} // Zoom leggerissimo
+              animate={{ scale: 1.05 }}
               transition={{ duration: 3.5, ease: "easeOut" }}
               loading="eager"
               // @ts-ignore
               fetchpriority="high"
               onError={(e) => {
-                console.error("Errore caricamento immagine mobile:", e);
-                // Fallback all'immagine desktop se quella mobile fallisce
                 e.currentTarget.src = DESKTOP_IMAGE_URL;
               }}
             />
@@ -98,9 +85,7 @@ export default function AltourImmersiveIntro({
             />
 
             {/* Overlay Scuro */}
-            <div
-              className={`absolute inset-0 ${isMobile ? "bg-black/20" : "bg-black/20"}`}
-            />
+            <div className="absolute inset-0 bg-black/20" />
           </div>
 
           {/* --- CONTENUTO BRANDING --- */}
@@ -108,11 +93,10 @@ export default function AltourImmersiveIntro({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20, transition: { duration: 0.5 } }} // Scompare prima dell'immagine
+              exit={{ opacity: 0, y: -20, transition: { duration: 0.5 } }}
               transition={{ delay: 0.5, duration: 0.8 }}
               className="text-center"
             >
-              {/* Logo (Immagine o Testo Styled) */}
               <div className="relative mb-4">
                 <img
                   src="/altour-logo.png"
@@ -129,6 +113,17 @@ export default function AltourImmersiveIntro({
               </p>
             </motion.div>
           </div>
+
+          {/* Tasto "Salta" — appare dopo 1.2s */}
+          <motion.button
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.5 }}
+            onClick={() => setIsVisible(false)}
+            className="absolute bottom-8 right-8 text-white/50 hover:text-white text-[15px] font-black uppercase tracking-widest transition-colors z-20"
+          >
+            Salta →
+          </motion.button>
         </motion.div>
       )}
     </AnimatePresence>

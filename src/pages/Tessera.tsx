@@ -14,6 +14,34 @@ import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 
+// ─── Costanti sessione ───────────────────────────────────────────────────────
+const SESSION_KEY = "altour_session_v4";
+const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 giorni
+const MAX_LOGIN_ATTEMPTS = 5;
+
+// ─── Helpers localStorage con scadenza ──────────────────────────────────────
+function saveSession(codice: string) {
+  localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify({ code: codice, expires: Date.now() + SESSION_DURATION_MS }),
+  );
+}
+
+function loadSession(): string | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const { code, expires } = JSON.parse(raw);
+    if (Date.now() < expires) return code;
+    localStorage.removeItem(SESSION_KEY); // scaduta
+    return null;
+  } catch {
+    localStorage.removeItem(SESSION_KEY);
+    return null;
+  }
+}
+
+// ─── Componente icona scarpone ───────────────────────────────────────────────
 const IconaScarponeCustom = ({
   size = 24,
   color = "#d6d3d1",
@@ -105,6 +133,7 @@ export default function Tessera() {
   const [currentPage, setCurrentPage] = useState(0);
   const [loginCode, setLoginCode] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [loginAttempts, setLoginAttempts] = useState(0); // FIX: rate limiting
   const [showRedeem, setShowRedeem] = useState(false);
   const [redeemStep, setRedeemStep] = useState<"INPUT" | "COLOR">("INPUT");
   const [redeemCode, setRedeemCode] = useState("");
@@ -113,9 +142,19 @@ export default function Tessera() {
     titolo: string;
   } | null>(null);
 
+  // FIX: window.innerWidth → state reattivo con resize listener
+  const [iconSize, setIconSize] = useState(50);
   useEffect(() => {
-    const saved = localStorage.getItem("altour_session_v4");
-    if (saved) fetchUser(saved);
+    const update = () => setIconSize(window.innerWidth < 768 ? 50 : 70);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // FIX: legge sessione con controllo scadenza
+  useEffect(() => {
+    const savedCode = loadSession();
+    if (savedCode) fetchUser(savedCode);
     else setLoading(false);
   }, []);
 
@@ -132,7 +171,7 @@ export default function Tessera() {
       setLoading(false);
     } else {
       setUserTessera(data as UserTessera);
-      localStorage.setItem("altour_session_v4", data.codice_tessera);
+      saveSession(data.codice_tessera); // FIX: salva con scadenza
       setCurrentPage(
         Math.floor((data.escursioni_completate?.length || 0) / SLOTS_PER_PAGE),
       );
@@ -140,8 +179,18 @@ export default function Tessera() {
     }
   }
 
+  // FIX: login con rate limiting
+  function handleLogin() {
+    if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+      setLoginError("Troppi tentativi. Ricarica la pagina per riprovare.");
+      return;
+    }
+    setLoginAttempts((n) => n + 1);
+    fetchUser(loginCode);
+  }
+
   const handleLogout = () => {
-    localStorage.removeItem("altour_session_v4");
+    localStorage.removeItem(SESSION_KEY);
     window.location.reload();
   };
 
@@ -243,7 +292,8 @@ export default function Tessera() {
               placeholder="ALT-XXX"
               value={loginCode}
               onChange={(e) => setLoginCode(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && fetchUser(loginCode)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()} // FIX: usa handleLogin
+              disabled={loginAttempts >= MAX_LOGIN_ATTEMPTS}
             />
             {loginError && (
               <p className="text-red-500 text-[10px] font-black uppercase py-2 bg-red-50 rounded-lg">
@@ -251,8 +301,9 @@ export default function Tessera() {
               </p>
             )}
             <button
-              onClick={() => fetchUser(loginCode)}
-              className="w-full mt-2 bg-stone-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg hover:bg-stone-700"
+              onClick={handleLogin} // FIX: usa handleLogin
+              disabled={loginAttempts >= MAX_LOGIN_ATTEMPTS}
+              className="w-full mt-2 bg-stone-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Accedi al Passaporto
             </button>
@@ -336,8 +387,9 @@ export default function Tessera() {
                   key={i}
                   className="aspect-square rounded-xl md:rounded-2xl border-2 border-dashed border-stone-50 bg-stone-50/30 flex items-center justify-center"
                 >
+                  {/* FIX: usa iconSize da state reattivo invece di window.innerWidth */}
                   <IconaScarponeCustom
-                    size={window.innerWidth < 768 ? 50 : 70}
+                    size={iconSize}
                     color={esc?.colore || "#d6d3d1"}
                     isActive={!!esc}
                   />
