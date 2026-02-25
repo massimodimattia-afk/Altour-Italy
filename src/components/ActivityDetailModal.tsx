@@ -43,26 +43,16 @@ export default function ActivityDetailModal({
 }: ActivityDetailModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  if (!activity) return null;
+  const images = activity
+    ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[]
+    : [];
 
-  const images = [
-    activity.immagine_url,
-    ...(activity.gallery_urls || []),
-  ].filter(Boolean) as string[];
-
-  // FIX: reset indice immagine ogni volta che cambia l'attività aperta
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
-    setCurrentImageIndex(0);
+    if (activity?.id) {
+      setCurrentImageIndex(0);
+    }
   }, [activity?.id]);
 
-  const nextImage = () =>
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  const prevImage = () =>
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-
-  // FIX: navigazione gallery con frecce tastiera
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!isOpen || images.length <= 1) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -72,6 +62,13 @@ export default function ActivityDetailModal({
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, images.length]);
+
+  if (!activity) return null;
+
+  const nextImage = () =>
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  const prevImage = () =>
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
     <AnimatePresence>
