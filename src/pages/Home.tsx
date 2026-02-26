@@ -20,22 +20,7 @@ type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   posti_disponibili: number;
 };
-
-// Allineamento tipi per evitare conflitti tra definizioni locali e globali
-interface Activity {
-  id: string;
-  titolo: string;
-  descrizione: string | null;
-  descrizione_estesa?: string | null;
-  prezzo: number;
-  immagine_url: string | null;
-  gallery_urls?: string[] | null;
-  difficolta?: string | null;
-  durata?: string | null;
-  attrezzatura_consigliata?: string | null;
-  attrezzatura?: string | null;
-  data?: string | null;
-}
+type Activity = Escursione | Corso;
 
 interface HomeProps {
   onNavigate: (page: string) => void;
@@ -255,11 +240,13 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   )}
                 </div>
                 <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
-                  <Calendar size={12} className="mr-1.5" /> 
-                  {esc.data 
-                    ? new Date(esc.data).toLocaleDateString('it-IT', { day: '2-digit', month: 'long' })
-                    : "Su richiesta"
-                  }
+                  <Calendar size={12} className="mr-1.5" />
+                  {esc.data
+                    ? new Date(esc.data).toLocaleDateString("it-IT", {
+                        day: "2-digit",
+                        month: "long",
+                      })
+                    : "Su richiesta"}
                 </p>
                 <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
                   {esc.titolo}
@@ -290,7 +277,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 3. TAILOR-MADE SECTION (RIPRISTINATA) */}
+      {/* 3. TAILOR-MADE SECTION */}
       <section className="max-w-5xl mx-auto px-4 py-8">
         <div className="relative bg-white rounded-[2rem] border border-stone-100 shadow-sm overflow-hidden group">
           <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10 text-center md:text-left">
@@ -370,14 +357,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       Scopri
                     </button>
                     <button
-                      onClick={() =>
-                        corso.posti_disponibili > 0 &&
-                        onBookingClick(corso.titolo)
-                      }
-                      disabled={corso.posti_disponibili <= 0}
-                      className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all ${corso.posti_disponibili > 0 ? "bg-brand-sky text-white" : "bg-stone-200 text-stone-400"}`}
+                      onClick={() => onBookingClick(corso.titolo)}
+                      className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]"
                     >
-                      Prenota
+                      Richiedi info
                     </button>
                   </div>
                 </div>
@@ -387,71 +370,122 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 5. VOUCHER SECTION (RIPRISTINATA) */}
+      {/* 5. VOUCHER SECTION */}
       <section className="max-w-5xl mx-auto px-4 py-12 md:py-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="relative group"
+          className="relative"
         >
-          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky to-brand-stone rounded-[2rem] md:rounded-[2.5rem] blur opacity-5" />
-          <div className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-stone-100 shadow-xl overflow-hidden">
-            <div className="flex flex-col lg:flex-row items-center gap-8 md:gap-12">
-              <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 flex-grow text-center md:text-left">
-                <div className="shrink-0">
-                  <div className="w-16 h-16 md:w-28 md:h-28 bg-[#f5f2ed] rounded-2xl md:rounded-[2rem] flex items-center justify-center text-brand-sky">
-                    <Gift size={32} className="md:w-12 md:h-12" />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-                    <Star size={8} className="text-brand-sky fill-brand-sky" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky">
-                      Gift Experience
-                    </span>
-                    <Star size={8} className="text-brand-sky fill-brand-sky" />
-                  </div>
-                  <h2 className="text-2xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
-                    Voucher{" "}
-                    <span className="text-brand-sky italic font-light tracking-normal">
-                      Regalo.
-                    </span>
-                  </h2>
-                  <p className="text-stone-500 text-[11px] md:text-sm font-medium max-w-lg leading-relaxed">
-                    Scegli l'importo e regala un'emozione utilizzabile per tutte
-                    le nostre attività.
-                  </p>
+          {/* Glow visibile */}
+          <div className="absolute -inset-1 bg-gradient-to-br from-brand-sky/30 to-brand-stone/20 rounded-[2rem] md:rounded-[2.5rem] blur-xl opacity-40 pointer-events-none" />
+
+          <div className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-stone-100 shadow-xl">
+            {/* Header con sfondo tono-su-tono */}
+            <div className="bg-[#f5f2ed] px-6 md:px-12 pt-8 md:pt-10 pb-6 md:pb-8 flex flex-col md:flex-row items-center gap-4 md:gap-8 text-center md:text-left border-b border-stone-100">
+              <div className="shrink-0 relative">
+                {/* Glow dietro icona */}
+                <div className="absolute inset-0 bg-brand-sky/20 rounded-[2rem] blur-xl" />
+                <div className="relative w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-brand-sky shadow-md border border-white/80">
+                  <Gift size={28} className="md:w-9 md:h-9" strokeWidth={1.5} />
                 </div>
               </div>
-              <div className="w-full lg:w-80 shrink-0 space-y-3">
-                <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-stone-400 text-center lg:text-left">
-                  Tagli disponibili:
+
+              <div className="flex-grow">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-1.5">
+                  <Star size={7} className="text-brand-sky fill-brand-sky" />
+                  <span className="text-[8px] font-black uppercase tracking-[0.35em] text-brand-sky">
+                    Gift Experience
+                  </span>
+                  <Star size={7} className="text-brand-sky fill-brand-sky" />
+                </div>
+                <h2 className="text-2xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-2">
+                  Regala un'
+                  <span className="text-brand-sky italic font-light tracking-normal">
+                    avventura.
+                  </span>
+                </h2>
+                <p className="text-stone-500 text-[11px] md:text-sm font-medium max-w-md leading-relaxed">
+                  Un'emozione in montagna per chi ami — utilizzabile per
+                  escursioni, corsi e tour privati.
                 </p>
-                <div className="grid grid-cols-3 lg:grid-cols-2 gap-2">
-                  {presetVouchers.map((amount) => (
-                    <button
+              </div>
+            </div>
+
+            {/* Body: preset + CTA */}
+            <div className="px-6 md:px-12 py-6 md:py-8">
+              <p className="text-[8px] font-black uppercase tracking-widest text-stone-400 mb-4 text-center md:text-left">
+                Scegli l'importo e apri il modulo regalo
+              </p>
+
+              {/* Preset grid — 2 col mobile, 3 su md, 6 su lg */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-4">
+                {presetVouchers.map((amount, idx) => {
+                  const tag =
+                    idx === 0
+                      ? "Starter"
+                      : idx === 2
+                        ? "Più scelto"
+                        : idx === 4
+                          ? "Premium"
+                          : null;
+                  const isHighlighted = idx === 2;
+
+                  return (
+                    <motion.button
                       key={amount}
+                      whileHover={{ y: -2, scale: 1.03 }}
+                      whileTap={{ scale: 0.96 }}
                       onClick={() =>
                         onBookingClick(`Voucher Regalo da ${amount}€`)
                       }
-                      className="py-3 md:py-4 rounded-xl border-2 border-stone-50 bg-stone-50 text-brand-stone font-black text-[10px] md:text-xs hover:border-brand-sky hover:text-brand-sky hover:bg-white transition-all active:scale-95"
+                      className={`relative flex flex-col items-center justify-center py-4 md:py-5 rounded-2xl font-black transition-all border-2 ${
+                        isHighlighted
+                          ? "border-brand-sky bg-brand-sky text-white shadow-lg shadow-sky-100"
+                          : "border-stone-100 bg-stone-50 text-brand-stone hover:border-brand-sky hover:text-brand-sky hover:bg-white hover:shadow-md"
+                      }`}
                     >
-                      {amount}€
-                    </button>
-                  ))}
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() =>
-                    onBookingClick("Richiesta Gift Voucher Personalizzato")
-                  }
-                  className="w-full bg-brand-stone text-white py-4 md:py-5 rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2"
-                >
-                  Personalizza <TrendingUp size={14} />
-                </motion.button>
+                      {tag && (
+                        <span
+                          className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full whitespace-nowrap ${
+                            isHighlighted
+                              ? "bg-brand-stone text-white"
+                              : "bg-stone-200 text-stone-500"
+                          }`}
+                        >
+                          {tag}
+                        </span>
+                      )}
+                      <span className="text-lg md:text-xl font-black leading-none">
+                        {amount}€
+                      </span>
+                    </motion.button>
+                  );
+                })}
               </div>
+
+              {/* Separatore */}
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-stone-100" />
+                <span className="text-[8px] font-black uppercase tracking-widest text-stone-300">
+                  oppure
+                </span>
+                <div className="flex-1 h-px bg-stone-100" />
+              </div>
+
+              {/* CTA Personalizza */}
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() =>
+                  onBookingClick("Richiesta Gift Voucher Personalizzato")
+                }
+                className="w-full bg-brand-stone text-white py-4 md:py-5 rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2.5"
+              >
+                <Gift size={14} />
+                Importo personalizzato
+              </motion.button>
             </div>
           </div>
         </motion.div>
