@@ -3,15 +3,12 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowRight,
-  RefreshCcw,
-  Star,
-  Sparkles,
-  ChevronDown,
-} from "lucide-react";
+import { ArrowRight, RefreshCcw, Star, ChevronDown } from "lucide-react";
 
-type Escursione = Database["public"]["Tables"]["escursioni"]["Row"];
+// FIX: Estendiamo il tipo per includere la nuova colonna Supabase
+type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
+  posti_disponibili: number;
+};
 
 interface EscursioniPageProps {
   onNavigate: (page: string) => void;
@@ -81,8 +78,8 @@ export default function EscursioniPage({
         .from("escursioni")
         .select("*")
         .order("data", { ascending: true });
-      if (data) setEscursioni(data);
-      // FIX: rimosso setTimeout artificiale da 800ms — lo skeleton è già presente
+      // FIX: casting per includere la colonna aggiunta manualmente
+      if (data) setEscursioni(data as Escursione[]);
       setLoading(false);
     }
     fetchEscursioni();
@@ -95,7 +92,6 @@ export default function EscursioniPage({
       setAnswers(newAnswers);
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      // FIX: guard — se non ci sono escursioni non crashare
       if (escursioni.length === 0) {
         setQuizStep("intro");
         return;
@@ -106,15 +102,12 @@ export default function EscursioniPage({
 
       escursioni.forEach((esc) => {
         let score = 0;
-
-        // 1. Match sul Livello (Domanda 2 - indice 1)
         const livelloScelto = newAnswers[1];
         const diff = esc.difficolta?.toLowerCase() || "";
         if (livelloScelto === "Base" && diff === "facile") score += 3;
         if (livelloScelto === "Medio" && diff === "medio") score += 3;
         if (livelloScelto === "Pro" && diff.includes("difficile")) score += 3;
 
-        // 2. Match sulla Durata (Domanda 6 - indice 5)
         const tempoScelto = newAnswers[5];
         const cat = esc.categoria?.toLowerCase() || "";
         if (
@@ -124,7 +117,6 @@ export default function EscursioniPage({
           score += 3;
         if (tempoScelto === "Tour" && cat === "tour") score += 3;
 
-        // 3. Randomizzazione lieve per variare risultati a parità di punteggio
         score += Math.random();
 
         if (score > maxScore) {
@@ -138,7 +130,6 @@ export default function EscursioniPage({
     }
   };
 
-  // FIX: filtro case-insensitive — Supabase può restituire "Giornata" o "giornata"
   const filteredEscursioni = escursioni.filter((esc) =>
     activeFilter === "tutte"
       ? true
@@ -217,13 +208,43 @@ export default function EscursioniPage({
               </div>
 
               <div className="p-5 flex flex-col flex-grow">
+                {/* FIX: LOGICA POSTI DISPONIBILI AGGIUNTA QUI */}
+                <div className="mb-4 flex items-center gap-2">
+                  {esc.posti_disponibili > 0 ? (
+                    <>
+                      <span className="relative flex h-2 w-2">
+                        {esc.posti_disponibili <= 3 && (
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        )}
+                        <span
+                          className={`relative inline-flex rounded-full h-2 w-2 ${esc.posti_disponibili <= 3 ? "bg-red-500" : "bg-orange-500"}`}
+                        ></span>
+                      </span>
+                      <p
+                        className={`text-[10px] font-black uppercase tracking-widest ${esc.posti_disponibili <= 3 ? "text-red-600" : "text-orange-600"}`}
+                      >
+                        {esc.posti_disponibili <= 3
+                          ? `SOLO ${esc.posti_disponibili} POSTI!`
+                          : `${esc.posti_disponibili} posti disponibili`}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
+                      Completo
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-[1px] w-5 bg-brand-sky" />
                   <span className="text-[9px] font-bold text-brand-sky uppercase tracking-[0.2em]">
-                    {new Date(esc.data).toLocaleDateString("it-IT", {
-                      day: "2-digit",
-                      month: "long",
-                    })}
+                    {esc.data 
+                      ? new Date(esc.data).toLocaleDateString("it-IT", {
+                          day: "2-digit",
+                          month: "long",
+                        })
+                      : "Su richiesta"
+                    }
                   </span>
                 </div>
                 <h2 className="text-xl font-black mb-3 text-brand-stone uppercase tracking-tighter leading-tight group-hover:text-brand-sky transition-colors line-clamp-1 italic">
@@ -243,10 +264,23 @@ export default function EscursioniPage({
                     Dettagli
                   </button>
                   <button
-                    onClick={() => onBookingClick(esc.titolo)}
-                    className="flex-[1.5] bg-brand-stone text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-brand-sky transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95"
+                    onClick={() =>
+                      esc.posti_disponibili > 0 && onBookingClick(esc.titolo)
+                    }
+                    disabled={esc.posti_disponibili <= 0}
+                    className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 ${
+                      esc.posti_disponibili > 0
+                        ? "bg-brand-stone text-white hover:bg-brand-sky"
+                        : "bg-stone-200 text-stone-400 cursor-not-allowed"
+                    }`}
                   >
-                    Prenota <ArrowRight size={12} />
+                    {esc.posti_disponibili > 0 ? (
+                      <>
+                        Prenota <ArrowRight size={12} />
+                      </>
+                    ) : (
+                      "Sold Out"
+                    )}
                   </button>
                 </div>
               </div>
@@ -285,7 +319,7 @@ export default function EscursioniPage({
               <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
               <div className="absolute bottom-6 left-8 text-white z-10">
                 <div className="flex items-center gap-2 mb-2">
-                  <Sparkles size={14} className="text-brand-sky" />
+                  <Star size={14} className="text-brand-sky fill-brand-sky" />
                   <span className="text-[9px] font-black uppercase tracking-[0.3em]">
                     Altour consiglia
                   </span>
@@ -391,7 +425,6 @@ export default function EscursioniPage({
                       >
                         Visualizza
                       </button>
-                      {/* FIX: reset anche answers[] al "Rifai il test" */}
                       <button
                         onClick={() => {
                           setQuizStep("intro");

@@ -13,9 +13,13 @@ import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion } from "framer-motion";
 
-// FIX: tipi precisi invece di any[]
-type Escursione = Database["public"]["Tables"]["escursioni"]["Row"];
-type Corso = Database["public"]["Tables"]["corsi"]["Row"];
+// FIX: Estensione tipi per supportare la nuova colonna Supabase
+type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
+  posti_disponibili: number;
+};
+type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
+  posti_disponibili: number;
+};
 type Activity = Escursione | Corso;
 
 interface HomeProps {
@@ -23,7 +27,6 @@ interface HomeProps {
   onBookingClick: (title: string) => void;
 }
 
-// FIX: skeleton loader per le card (sostituisce il "Caricamento..." testuale)
 const SkeletonCard = () => (
   <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col">
     <div className="h-48 md:h-56 bg-stone-100 animate-pulse" />
@@ -33,7 +36,6 @@ const SkeletonCard = () => (
       <div className="space-y-2">
         <div className="h-2 w-full bg-stone-50 rounded animate-pulse" />
         <div className="h-2 w-5/6 bg-stone-50 rounded animate-pulse" />
-        <div className="h-2 w-4/6 bg-stone-50 rounded animate-pulse" />
       </div>
       <div className="flex gap-2 mt-2">
         <div className="h-12 flex-1 bg-stone-100 rounded-2xl animate-pulse" />
@@ -43,7 +45,6 @@ const SkeletonCard = () => (
   </div>
 );
 
-// Placeholder locale se l'immagine remota fallisce
 const IMG_FALLBACK = "/altour-logo.png";
 
 export default function Home({ onNavigate, onBookingClick }: HomeProps) {
@@ -52,10 +53,9 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
     null,
-  ); // FIX: typed
+  );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // Tagli voucher richiesti
   const presetVouchers = [10, 20, 60, 100, 200, 300];
 
   useEffect(() => {
@@ -68,8 +68,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           .order("data", { ascending: true })
           .limit(4);
         const { data: crs } = await supabase.from("corsi").select("*").limit(4);
-        if (hikes) setFeaturedHikes(hikes);
-        if (crs) setCourses(crs);
+        if (hikes) setFeaturedHikes(hikes as Escursione[]);
+        if (crs) setCourses(crs as Corso[]);
       } catch (e) {
         console.error(e);
       }
@@ -79,12 +79,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   }, []);
 
   const openDetails = (activity: Activity) => {
-    // FIX: typed
     setSelectedActivity(activity);
     setIsDetailOpen(true);
   };
 
-  // FIX: skeleton loader al posto del testo "Caricamento..."
   if (loading)
     return (
       <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
@@ -101,14 +99,13 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
-      {/* 1. HERO SECTION & OPTIMIZED TRUST BAR */}
+      {/* 1. HERO SECTION */}
       <section className="relative h-[80vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
         <div className="absolute inset-0">
           <img
             src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp"
             className="w-full h-full object-cover object-[center_20%] brightness-[0.8] contrast-[1.02] transition-transform duration-[20s] scale-105"
             alt="Dolomiti Altour Italy"
-            // FIX: hero è above the fold, non serve lazy
             decoding="async"
             onError={(e) => {
               e.currentTarget.src = IMG_FALLBACK;
@@ -128,10 +125,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               src="/altour-logo.png"
               className="relative w-20 h-20 md:w-44 md:h-44 mx-auto rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-white/10 object-cover"
               alt="Logo Altour"
-              decoding="async"
-              onError={(e) => {
-                e.currentTarget.style.visibility = "hidden";
-              }}
             />
           </motion.div>
 
@@ -148,7 +141,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             </p>
           </div>
 
-          {/* TRUST BAR - MOBILE OPTIMIZED (Orizzontale su mobile) */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -210,26 +202,49 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col group"
             >
               <div className="h-48 md:h-56 relative overflow-hidden">
-                {esc.immagine_url && (
-                  // FIX: lazy loading + fallback su errore
-                  <img
-                    src={esc.immagine_url}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    alt={esc.titolo}
-                    loading="lazy"
-                    decoding="async"
-                    onError={(e) => {
-                      e.currentTarget.src = IMG_FALLBACK;
-                    }}
-                  />
-                )}
+                <img
+                  src={esc.immagine_url || IMG_FALLBACK}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  alt={esc.titolo}
+                  loading="lazy"
+                />
                 <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-black uppercase text-brand-stone shadow-sm">
                   {esc.difficolta}
                 </div>
               </div>
               <div className="p-5 md:p-8 flex flex-col flex-grow">
+                {/* URGENZA POSTI */}
+                <div className="mb-4 flex items-center gap-2">
+                  {esc.posti_disponibili > 0 ? (
+                    <>
+                      <span className="relative flex h-2 w-2">
+                        {esc.posti_disponibili <= 3 && (
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        )}
+                        <span
+                          className={`relative inline-flex rounded-full h-2 w-2 ${esc.posti_disponibili <= 3 ? "bg-red-500" : "bg-orange-500"}`}
+                        ></span>
+                      </span>
+                      <p
+                        className={`text-[10px] font-black uppercase tracking-widest ${esc.posti_disponibili <= 3 ? "text-red-600" : "text-orange-600"}`}
+                      >
+                        {esc.posti_disponibili <= 3
+                          ? `SOLO ${esc.posti_disponibili} POSTI RIMASTI!`
+                          : `${esc.posti_disponibili} posti disponibili`}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
+                      Esaurito / Sold Out
+                    </p>
+                  )}
+                </div>
                 <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
-                  <Calendar size={12} className="mr-1.5" /> Su richiesta
+                  <Calendar size={12} className="mr-1.5" /> 
+                  {esc.data 
+                    ? new Date(esc.data).toLocaleDateString('it-IT', { day: '2-digit', month: 'long' })
+                    : "Su richiesta"
+                  }
                 </p>
                 <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
                   {esc.titolo}
@@ -245,10 +260,13 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                     Info
                   </button>
                   <button
-                    onClick={() => onBookingClick(esc.titolo)}
-                    className="flex-[1.5] bg-brand-sky text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-[0_10px_20px_rgba(14,165,233,0.25)] hover:bg-[#0284c7] transition-all"
+                    onClick={() =>
+                      esc.posti_disponibili > 0 && onBookingClick(esc.titolo)
+                    }
+                    disabled={esc.posti_disponibili <= 0}
+                    className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all ${esc.posti_disponibili > 0 ? "bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}
                   >
-                    Prenota
+                    {esc.posti_disponibili > 0 ? "Prenota" : "Completo"}
                   </button>
                 </div>
               </div>
@@ -257,7 +275,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 3. TAILOR-MADE SECTION */}
+      {/* 3. TAILOR-MADE SECTION (RIPRISTINATA) */}
       <section className="max-w-5xl mx-auto px-4 py-8">
         <div className="relative bg-white rounded-[2rem] border border-stone-100 shadow-sm overflow-hidden group">
           <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10 text-center md:text-left">
@@ -292,28 +310,14 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 4. ACCADEMIA SECTION (Ottimizzata per uniformità pulsanti) */}
+      {/* 4. ACCADEMIA SECTION */}
       <section className="bg-stone-100 py-12 md:py-20 text-brand-stone">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-10 md:mb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="flex flex-col items-center"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-[1px] w-8 md:w-12 bg-brand-sky" />
-                <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-brand-sky">
-                  Professional Training
-                </span>
-                <div className="h-[1px] w-8 md:w-12 bg-brand-sky" />
-              </div>
-              <h2 className="text-4xl md:text-5xl font-light uppercase tracking-tighter leading-none text-brand-stone">
-                Accademia <span className="font-black">Altour</span>
-                <span className="text-brand-sky">.</span>
-              </h2>
-            </motion.div>
+            <h2 className="text-4xl md:text-5xl font-light uppercase tracking-tighter leading-none text-brand-stone">
+              Accademia <span className="font-black">Altour</span>
+              <span className="text-brand-sky">.</span>
+            </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {courses.map((corso) => (
@@ -322,25 +326,22 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col group"
               >
                 <div className="h-40 md:h-48 relative overflow-hidden">
-                  {corso.immagine_url && (
-                    // FIX: lazy loading + fallback su errore
-                    <img
-                      src={corso.immagine_url}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      alt={corso.titolo}
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        e.currentTarget.src = IMG_FALLBACK;
-                      }}
-                    />
-                  )}
+                  <img
+                    src={corso.immagine_url || IMG_FALLBACK}
+                    className="w-full h-full object-cover"
+                    alt={corso.titolo}
+                  />
                   <div className="absolute top-3 left-3 bg-brand-stone text-white px-2.5 py-1 rounded text-[8px] font-black uppercase tracking-widest">
                     {corso.categoria}
                   </div>
                 </div>
                 <div className="p-6 md:p-8 flex flex-col flex-grow">
-                  <h3 className="text-lg md:text-xl font-black mb-3 uppercase line-clamp-2 leading-snug">
+                  <div className="mb-4 flex items-center gap-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-sky">
+                      Iscrizioni aperte
+                    </p>
+                  </div>
+                  <h3 className="text-lg md:text-xl font-black mb-3 uppercase line-clamp-2">
                     {corso.titolo}
                   </h3>
                   <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-2 font-medium leading-relaxed">
@@ -354,8 +355,12 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       Scopri
                     </button>
                     <button
-                      onClick={() => onBookingClick(corso.titolo)}
-                      className="flex-[1.5] bg-brand-sky text-white py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest shadow-[0_10px_20px_rgba(14,165,233,0.25)] hover:bg-[#0284c7] transition-all"
+                      onClick={() =>
+                        corso.posti_disponibili > 0 &&
+                        onBookingClick(corso.titolo)
+                      }
+                      disabled={corso.posti_disponibili <= 0}
+                      className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all ${corso.posti_disponibili > 0 ? "bg-brand-sky text-white" : "bg-stone-200 text-stone-400"}`}
                     >
                       Prenota
                     </button>
@@ -367,7 +372,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 5. VOUCHER SECTION - MOBILE OPTIMIZED (Compact grid) */}
+      {/* 5. VOUCHER SECTION (RIPRISTINATA) */}
       <section className="max-w-5xl mx-auto px-4 py-12 md:py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -404,12 +409,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   </p>
                 </div>
               </div>
-
               <div className="w-full lg:w-80 shrink-0 space-y-3">
                 <p className="text-[8px] md:text-[9px] font-black uppercase tracking-widest text-stone-400 text-center lg:text-left">
                   Tagli disponibili:
                 </p>
-                {/* Griglia 3 colonne su mobile per salvare spazio */}
                 <div className="grid grid-cols-3 lg:grid-cols-2 gap-2">
                   {presetVouchers.map((amount) => (
                     <button

@@ -54,7 +54,7 @@ export interface Database {
         Row: {
           id: string
           created_at: string
-          data: string
+          data: string | null
           titolo: string
           descrizione: string | null
           descrizione_estesa: string | null
@@ -71,7 +71,7 @@ export interface Database {
         Insert: {
           id?: string
           created_at?: string
-          data: string
+          data?: string | null
           titolo: string
           descrizione?: string | null
           descrizione_estesa?: string | null
@@ -88,7 +88,7 @@ export interface Database {
         Update: {
           id?: string
           created_at?: string
-          data?: string
+          data?: string | null
           titolo?: string
           descrizione?: string | null
           descrizione_estesa?: string | null
