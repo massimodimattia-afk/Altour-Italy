@@ -10,6 +10,22 @@ type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   posti_disponibili: number;
 };
 
+// Definizione locale coerente con ActivityDetailModal per evitare errori di cast
+interface Activity {
+  id: string;
+  titolo: string;
+  descrizione: string | null;
+  descrizione_estesa?: string | null;
+  prezzo: number;
+  immagine_url: string | null;
+  gallery_urls?: string[] | null;
+  difficolta?: string | null;
+  durata?: string | null;
+  attrezzatura_consigliata?: string | null;
+  attrezzatura?: string | null;
+  data?: string | null;
+}
+
 interface EscursioniPageProps {
   onNavigate: (page: string) => void;
   onBookingClick: (title: string) => void;
@@ -39,7 +55,7 @@ export default function EscursioniPage({
 }: EscursioniPageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedActivity, setSelectedActivity] = useState<Escursione | null>(
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
     null,
   );
   const [isDetailOpen, setIsDetailOpen] = useState(false);

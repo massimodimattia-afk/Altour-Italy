@@ -20,7 +20,22 @@ type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   posti_disponibili: number;
 };
-type Activity = Escursione | Corso;
+
+// Allineamento tipi per evitare conflitti tra definizioni locali e globali
+interface Activity {
+  id: string;
+  titolo: string;
+  descrizione: string | null;
+  descrizione_estesa?: string | null;
+  prezzo: number;
+  immagine_url: string | null;
+  gallery_urls?: string[] | null;
+  difficolta?: string | null;
+  durata?: string | null;
+  attrezzatura_consigliata?: string | null;
+  attrezzatura?: string | null;
+  data?: string | null;
+}
 
 interface HomeProps {
   onNavigate: (page: string) => void;

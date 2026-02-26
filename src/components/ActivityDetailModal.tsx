@@ -23,7 +23,7 @@ interface Activity {
   durata?: string | null;
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
-  data?: string;
+  data?: string | null;
 }
 
 interface ActivityDetailModalProps {
