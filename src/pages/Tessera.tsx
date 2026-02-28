@@ -22,7 +22,7 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const MAX_REDEEM_ATTEMPTS = 10;
 
 const REDEEM_CODE_REGEX = /^[A-Z0-9]{3,10}$/;
-const TESSERA_CODE_REGEX = /^ALT-[A-Z0-9]{1,10}$/;
+const TESSERA_CODE_REGEX = /^ALT[A-Z0-9]{1,10}$/;
 
 // ─── Helpers localStorage ────────────────────────────────────────────────────
 function saveSession(codice: string) {
@@ -340,7 +340,7 @@ export default function Tessera() {
     }
     const normalized = loginCode.toUpperCase().trim();
     if (!TESSERA_CODE_REGEX.test(normalized)) {
-      setLoginError("Formato non valido. Usa il formato ALT-XXX.");
+      setLoginError("Formato non valido. Usa il formato ALTXXX.");
       return;
     }
     setLoginAttempts((n) => n + 1);
@@ -508,7 +508,7 @@ export default function Tessera() {
           <div className="space-y-4">
             <input
               className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center font-black uppercase outline-none focus:border-brand-sky focus:bg-white transition-all text-lg tracking-widest placeholder:text-stone-300 shadow-inner"
-              placeholder="ALT-XXX"
+              placeholder="ALTXXX"
               value={loginCode}
               onChange={(e) => setLoginCode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleLogin()}
@@ -713,7 +713,7 @@ export default function Tessera() {
                   Premio Sbloccato
                 </p>
                 <h4 className="text-sm md:text-lg font-black uppercase">
-                  {vouchersCount} Voucher disponibili
+                  {vouchersCount} Voucher di 10 € disponibile
                 </h4>
               </div>
             </div>

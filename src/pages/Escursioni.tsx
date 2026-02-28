@@ -215,9 +215,6 @@ export default function EscursioniPage({
                   />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
-                <div className="absolute top-4 right-4 backdrop-blur-md bg-white/20 border border-white/30 px-3 py-1.5 rounded-2xl text-[8px] font-black uppercase text-white">
-                  {esc.difficolta}
-                </div>
                 <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-xl shadow-lg text-[10px] font-black text-brand-stone">
                   €{esc.prezzo}
                 </div>

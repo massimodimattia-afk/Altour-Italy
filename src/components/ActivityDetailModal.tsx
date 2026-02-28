@@ -163,24 +163,21 @@ export default function ActivityDetailModal({
               </button>
 
               <div className="mb-8">
-                <h2 className="text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-4">
-                  {activity.titolo}
-                </h2>
+                <div className="flex justify-between items-start gap-4 mb-4">
+                  <h2 className="text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none">
+                    {activity.titolo}
+                  </h2>
+                  {activity.difficolta && (
+                    <div className="bg-brand-stone text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 shadow-md">
+                      {activity.difficolta}
+                    </div>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-4 text-xs font-black uppercase tracking-widest text-stone-400">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={14} className="text-brand-sky" />
-                    Su richiesta
-                  </div>
                   {activity.durata && (
                     <div className="flex items-center gap-2">
                       <Clock size={14} className="text-brand-sky" />
                       {activity.durata}
-                    </div>
-                  )}
-                  {activity.difficolta && (
-                    <div className="flex items-center gap-2">
-                      <TrendingUp size={14} className="text-brand-sky" />
-                      {activity.difficolta}
                     </div>
                   )}
                 </div>
