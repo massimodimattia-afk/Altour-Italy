@@ -16,6 +16,7 @@ import { motion } from "framer-motion";
 // FIX: Estensione tipi per supportare la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   posti_disponibili: number;
+  filosofia?: string | null;
 };
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   posti_disponibili: number;
@@ -46,6 +47,24 @@ const SkeletonCard = () => (
 );
 
 const IMG_FALLBACK = "/altour-logo.png";
+
+function FilosofiaBadge({ value }: { value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div
+      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/25"
+      style={{
+        backgroundColor: "rgba(255,255,255,0.15)",
+        color: "white",
+        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+        boxShadow:
+          "0 2px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.25)",
+      }}
+    >
+      {value}
+    </div>
+  );
+}
 
 export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [featuredHikes, setFeaturedHikes] = useState<Escursione[]>([]);
@@ -203,7 +222,19 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           {featuredHikes.map((esc) => (
             <div
               key={esc.id}
-              className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col group"
+              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5"
+              style={{
+                boxShadow:
+                  "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.boxShadow =
+                  "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.boxShadow =
+                  "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")
+              }
             >
               <div className="h-48 md:h-56 relative overflow-hidden">
                 <img
@@ -212,9 +243,11 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   alt={esc.titolo}
                   loading="lazy"
                 />
-                <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-black uppercase text-brand-stone shadow-sm">
-                  {esc.difficolta}
-                </div>
+                {/* Gradiente base */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                {/* Accent line in fondo all'immagine */}
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-sky/80 via-brand-sky to-brand-sky/30" />
+                <FilosofiaBadge value={esc.filosofia} />
               </div>
               <div className="p-5 md:p-8 flex flex-col flex-grow">
                 {/* URGENZA POSTI */}
@@ -272,7 +305,9 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                     disabled={esc.posti_disponibili <= 0}
                     className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all ${esc.posti_disponibili > 0 ? "bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}
                   >
-                    {esc.posti_disponibili > 0 ? "Richiedi Info" : "Completo"}
+                    {esc.posti_disponibili > 0
+                      ? "Richiedi Informazioni"
+                      : "Completo"}
                   </button>
                 </div>
               </div>
@@ -364,7 +399,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       onClick={() => onBookingClick(corso.titolo)}
                       className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]"
                     >
-                      Richiedi Info
+                      Richiedi Informazioni
                     </button>
                   </div>
                 </div>

@@ -3,11 +3,18 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, RefreshCcw, Star, ChevronDown } from "lucide-react";
+import {
+  ArrowRight,
+  RefreshCcw,
+  Star,
+  ChevronDown,
+  Calendar,
+} from "lucide-react";
 
 // FIX: Estendiamo il tipo per includere la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   posti_disponibili: number;
+  filosofia?: string | null;
 };
 
 interface Activity {
@@ -31,6 +38,24 @@ interface EscursioniPageProps {
 }
 
 // --- SKELETON LOADER ---
+function FilosofiaBadge({ value }: { value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div
+      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/25"
+      style={{
+        backgroundColor: "rgba(255,255,255,0.15)",
+        color: "white",
+        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+        boxShadow:
+          "0 2px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.25)",
+      }}
+    >
+      {value}
+    </div>
+  );
+}
+
 const SkeletonCard = () => (
   <div className="bg-white rounded-[2.5rem] p-3 border border-stone-100 shadow-sm">
     <div className="h-52 bg-stone-100 rounded-[1.8rem] animate-pulse" />
@@ -154,7 +179,7 @@ export default function EscursioniPage({
 
   if (loading) {
     return (
-      <div className="container mx-auto px-5 py-10 md:py-20">
+      <div className="max-w-6xl mx-auto px-4 py-10 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[1, 2, 3, 4].map((n) => (
             <SkeletonCard key={n} />
@@ -165,7 +190,7 @@ export default function EscursioniPage({
   }
 
   return (
-    <div className="container mx-auto px-5 py-10 md:py-20">
+    <div className="max-w-6xl mx-auto px-4 py-10 md:py-20">
       {/* --- HEADER --- */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
         <div>
@@ -194,7 +219,7 @@ export default function EscursioniPage({
       </div>
 
       {/* --- GRID ESCURSIONI --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         <AnimatePresence mode="popLayout">
           {visibleEscursioni.map((esc) => (
             <motion.div
@@ -203,9 +228,21 @@ export default function EscursioniPage({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
               key={esc.id}
-              className="group relative bg-white rounded-[2.5rem] p-3 shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-stone-100 flex flex-col"
+              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5"
+              style={{
+                boxShadow:
+                  "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.boxShadow =
+                  "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.boxShadow =
+                  "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")
+              }
             >
-              <div className="relative h-52 w-full overflow-hidden rounded-[1.8rem]">
+              <div className="h-48 md:h-56 relative overflow-hidden">
                 {esc.immagine_url && (
                   <img
                     src={esc.immagine_url}
@@ -213,13 +250,14 @@ export default function EscursioniPage({
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
-                <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-xl shadow-lg text-[10px] font-black text-brand-stone">
-                  €{esc.prezzo}
-                </div>
+                {/* Gradiente base */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                {/* Accent line in fondo all'immagine */}
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-sky/80 via-brand-sky to-brand-sky/30" />
+                <FilosofiaBadge value={esc.filosofia} />
               </div>
 
-              <div className="p-5 flex flex-col flex-grow">
+              <div className="p-5 md:p-8 flex flex-col flex-grow">
                 {/* LOGICA POSTI DISPONIBILI */}
                 <div className="mb-4 flex items-center gap-2">
                   {esc.posti_disponibili > 0 ? (
@@ -247,21 +285,19 @@ export default function EscursioniPage({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="h-[1px] w-5 bg-brand-sky" />
-                  <span className="text-[9px] font-bold text-brand-sky uppercase tracking-[0.2em]">
-                    {esc.data
-                      ? new Date(esc.data).toLocaleDateString("it-IT", {
-                          day: "2-digit",
-                          month: "long",
-                        })
-                      : "Su richiesta"}
-                  </span>
-                </div>
-                <h2 className="text-xl font-black mb-3 text-brand-stone uppercase tracking-tighter leading-tight group-hover:text-brand-sky transition-colors line-clamp-1 italic">
+                <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
+                  <Calendar size={12} className="mr-1.5" />
+                  {esc.data
+                    ? new Date(esc.data).toLocaleDateString("it-IT", {
+                        day: "2-digit",
+                        month: "long",
+                      })
+                    : "Su richiesta"}
+                </p>
+                <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
                   {esc.titolo}
-                </h2>
-                <p className="text-stone-400 text-[13px] mb-8 line-clamp-2 font-medium leading-relaxed flex-grow">
+                </h3>
+                <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow leading-relaxed">
                   {esc.descrizione}
                 </p>
 
@@ -289,7 +325,7 @@ export default function EscursioniPage({
                   >
                     {esc.posti_disponibili > 0 ? (
                       <>
-                        Richiedi Info <ArrowRight size={12} />
+                        Richiedi Informazioni <ArrowRight size={12} />
                       </>
                     ) : (
                       "Completo"
