@@ -10,7 +10,6 @@ type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   posti_disponibili: number;
 };
 
-// Definizione locale coerente con ActivityDetailModal per evitare errori di cast
 interface Activity {
   id: string;
   titolo: string;
@@ -221,7 +220,7 @@ export default function EscursioniPage({
               </div>
 
               <div className="p-5 flex flex-col flex-grow">
-                {/* FIX: LOGICA POSTI DISPONIBILI AGGIUNTA QUI */}
+                {/* LOGICA POSTI DISPONIBILI */}
                 <div className="mb-4 flex items-center gap-2">
                   {esc.posti_disponibili > 0 ? (
                     <>
@@ -251,13 +250,12 @@ export default function EscursioniPage({
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-[1px] w-5 bg-brand-sky" />
                   <span className="text-[9px] font-bold text-brand-sky uppercase tracking-[0.2em]">
-                    {esc.data 
+                    {esc.data
                       ? new Date(esc.data).toLocaleDateString("it-IT", {
                           day: "2-digit",
                           month: "long",
                         })
-                      : "Su richiesta"
-                    }
+                      : "Su richiesta"}
                   </span>
                 </div>
                 <h2 className="text-xl font-black mb-3 text-brand-stone uppercase tracking-tighter leading-tight group-hover:text-brand-sky transition-colors line-clamp-1 italic">
@@ -266,13 +264,15 @@ export default function EscursioniPage({
                 <p className="text-stone-400 text-[13px] mb-8 line-clamp-2 font-medium leading-relaxed flex-grow">
                   {esc.descrizione}
                 </p>
+
+                {/* BOTTONI UNIFORMATI */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
                       setSelectedActivity(esc);
                       setIsDetailOpen(true);
                     }}
-                    className="flex-1 border border-stone-200 text-brand-stone py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+                    className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
                   >
                     Dettagli
                   </button>
@@ -283,16 +283,16 @@ export default function EscursioniPage({
                     disabled={esc.posti_disponibili <= 0}
                     className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 ${
                       esc.posti_disponibili > 0
-                        ? "bg-brand-stone text-white hover:bg-brand-sky"
+                        ? "bg-brand-sky text-white hover:bg-[#0284c7]"
                         : "bg-stone-200 text-stone-400 cursor-not-allowed"
                     }`}
                   >
                     {esc.posti_disponibili > 0 ? (
                       <>
-                        Prenota <ArrowRight size={12} />
+                        Richiedi Info <ArrowRight size={12} />
                       </>
                     ) : (
-                      "Sold Out"
+                      "Completo"
                     )}
                   </button>
                 </div>

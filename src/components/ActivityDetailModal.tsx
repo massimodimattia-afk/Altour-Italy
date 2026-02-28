@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
-  Calendar,
   Clock,
   ChevronLeft,
   ChevronRight,
@@ -44,7 +43,9 @@ export default function ActivityDetailModal({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const images = activity
-    ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[]
+    ? ([activity.immagine_url, ...(activity.gallery_urls || [])].filter(
+        Boolean,
+      ) as string[])
     : [];
 
   useEffect(() => {
@@ -237,7 +238,7 @@ export default function ActivityDetailModal({
                   }}
                   className="flex-grow bg-brand-sky hover:bg-brand-stone text-white px-8 py-5 rounded-2xl font-black uppercase text-sm tracking-widest transition-all duration-300 shadow-xl shadow-brand-sky/20 flex items-center justify-center gap-3 active:scale-95"
                 >
-                  Richiedi Info
+                  Prenota Ora
                   <TrendingUp size={20} />
                 </button>
               </div>

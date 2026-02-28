@@ -212,6 +212,9 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   alt={esc.titolo}
                   loading="lazy"
                 />
+                <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-black uppercase text-brand-stone shadow-sm">
+                  {esc.difficolta}
+                </div>
               </div>
               <div className="p-5 md:p-8 flex flex-col flex-grow">
                 {/* URGENZA POSTI */}
@@ -258,9 +261,9 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <div className="flex gap-2 md:gap-3">
                   <button
                     onClick={() => openDetails(esc)}
-                    className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all"
+                    className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all"
                   >
-                    Info
+                    Dettagli
                   </button>
                   <button
                     onClick={() =>
@@ -269,7 +272,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                     disabled={esc.posti_disponibili <= 0}
                     className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all ${esc.posti_disponibili > 0 ? "bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}
                   >
-                    {esc.posti_disponibili > 0 ? "Prenota" : "Completo"}
+                    {esc.posti_disponibili > 0 ? "Richiedi Info" : "Completo"}
                   </button>
                 </div>
               </div>
@@ -353,15 +356,15 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   <div className="mt-auto pt-4 border-t border-stone-100 flex gap-2 md:gap-3">
                     <button
                       onClick={() => openDetails(corso)}
-                      className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all"
+                      className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all"
                     >
-                      Scopri
+                      Dettagli
                     </button>
                     <button
                       onClick={() => onBookingClick(corso.titolo)}
                       className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]"
                     >
-                      Richiedi info
+                      Richiedi Info
                     </button>
                   </div>
                 </div>
