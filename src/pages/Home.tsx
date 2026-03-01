@@ -196,7 +196,11 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   icon: <TrendingUp size={14} />,
                 },
                 { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
-                { value: "800+", label: "Clienti", icon: <Users size={14} /> },
+                {
+                  value: "4k+",
+                  label: "Escursionisti",
+                  icon: <Users size={14} />,
+                },
               ].map((stat, index) => (
                 <div
                   key={index}

@@ -38,7 +38,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Trek Urbano": "#f39452",
 };
 
-const DEFAULT_BOOT_COLOR = "#0ea5e9";
+const DEFAULT_BOOT_COLOR = "#5aaadd";
 
 function getFilosofiaColor(filosofia?: string | null): string {
   if (!filosofia) return DEFAULT_BOOT_COLOR;
@@ -259,7 +259,7 @@ const TESSERA_LEVELS = [
   "Leggenda vivente",
 ];
 
-// ─── Componente principale ────────────────────────────────────────0��──────────
+// ─── Componente principale ───────────────────────────────────────────────────
 export default function Tessera() {
   const [loading, setLoading] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -604,7 +604,7 @@ export default function Tessera() {
                 "0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.1)",
             }}
           >
-            <IconaScarponeCustom size={22} color="#0ea5e9" isActive={true} />
+            <IconaScarponeCustom size={40} color="#5aaadd" isActive={true} />
             <div className="flex flex-col items-start">
               <span className="text-[7px] font-black uppercase tracking-[0.25em] text-white/50 leading-none mb-0.5">
                 Livello
@@ -745,7 +745,7 @@ export default function Tessera() {
             setRedeemStep("INPUT");
             setShowRedeem(true);
           }}
-          className="w-full mt-4 md:mt-6 bg-[#0ea5e9] text-white py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-sky-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:bg-[#0284c7]"
+          className="w-full mt-4 md:mt-6 bg-[#5aaadd] text-white py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-sky-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:bg-[#0284c7]"
         >
           <Plus size={20} strokeWidth={3} />
           <span className="text-sm md:text-base">Riscatta Scarpone</span>

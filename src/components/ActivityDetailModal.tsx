@@ -7,6 +7,8 @@ import {
   TrendingUp,
   Info,
   Briefcase as Backpack,
+  Ruler,
+  Gauge,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -20,6 +22,7 @@ interface Activity {
   gallery_urls?: string[] | null;
   difficolta?: string | null;
   durata?: string | null;
+  lunghezza?: number | null;
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
   data?: string | null;
@@ -43,7 +46,9 @@ export default function ActivityDetailModal({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const images = activity
-    ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[]
+    ? ([activity.immagine_url, ...(activity.gallery_urls || [])].filter(
+        Boolean,
+      ) as string[])
     : [];
 
   useEffect(() => {
@@ -91,7 +96,6 @@ export default function ActivityDetailModal({
             <div className="md:w-1/2 relative bg-stone-100 min-h-[300px] md:min-h-full">
               {images.length > 0 ? (
                 <>
-                  {/* FIX: onError fallback su immagine gallery */}
                   <img
                     src={images[currentImageIndex]}
                     alt={activity.titolo}
@@ -102,13 +106,12 @@ export default function ActivityDetailModal({
                   />
                   {images.length > 1 && (
                     <>
-                      {/* FIX: stopPropagation per non chiudere la modale al click sui bottoni gallery */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           prevImage();
                         }}
-                        aria-label="Immagine precedente" // FIX: aria-label
+                        aria-label="Immagine precedente"
                         className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all"
                       >
                         <ChevronLeft size={24} />
@@ -118,12 +121,11 @@ export default function ActivityDetailModal({
                           e.stopPropagation();
                           nextImage();
                         }}
-                        aria-label="Immagine successiva" // FIX: aria-label
+                        aria-label="Immagine successiva"
                         className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all"
                       >
                         <ChevronRight size={24} />
                       </button>
-                      {/* FIX: dot indicator cliccabili */}
                       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
                         {images.map((_, idx) => (
                           <button
@@ -162,21 +164,26 @@ export default function ActivityDetailModal({
               </button>
 
               <div className="mb-8">
-                <div className="flex justify-between items-start gap-4 mb-4">
-                  <h2 className="text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none">
-                    {activity.titolo}
-                  </h2>
+                <h2 className="text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-4">
+                  {activity.titolo}
+                </h2>
+                <div className="flex flex-wrap gap-4 text-xs font-black uppercase tracking-widest text-stone-400">
                   {activity.difficolta && (
-                    <div className="bg-brand-stone text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0 shadow-md">
+                    <div className="flex items-center gap-2">
+                      <Gauge size={14} className="text-brand-sky" />
                       {activity.difficolta}
                     </div>
                   )}
-                </div>
-                <div className="flex flex-wrap gap-4 text-xs font-black uppercase tracking-widest text-stone-400">
                   {activity.durata && (
                     <div className="flex items-center gap-2">
                       <Clock size={14} className="text-brand-sky" />
                       {activity.durata}
+                    </div>
+                  )}
+                  {activity.lunghezza && (
+                    <div className="flex items-center gap-2">
+                      <Ruler size={14} className="text-brand-sky" />
+                      {activity.lunghezza} km
                     </div>
                   )}
                 </div>
@@ -224,7 +231,6 @@ export default function ActivityDetailModal({
                   <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">
                     Quota di partecipazione
                   </span>
-                  {/* FIX: null-safe sul prezzo */}
                   <span className="text-4xl font-black text-brand-stone">
                     {activity.prezzo != null ? `€${activity.prezzo}` : "—"}
                   </span>
