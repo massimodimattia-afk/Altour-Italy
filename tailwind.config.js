@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        'brand-sky': '#00a8e8',
+        'brand-sky': '#5aaadd',
         'brand-stone': '#1a1a1a',
         'brand-glacier': '#f8fafc',
       },

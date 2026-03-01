@@ -15,12 +15,10 @@ import { motion } from "framer-motion";
 
 // FIX: Estensione tipi per supportare la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
-  posti_disponibili: number;
   filosofia?: string | null;
+  lunghezza?: number | null;
 };
-type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
-  posti_disponibili: number;
-};
+type Corso = Database["public"]["Tables"]["corsi"]["Row"];
 type Activity = Escursione | Corso;
 
 interface HomeProps {
@@ -48,17 +46,38 @@ const SkeletonCard = () => (
 
 const IMG_FALLBACK = "/altour-logo.png";
 
+const FILOSOFIA_COLORS: Record<string, string> = {
+  Avventura: "#e94544",
+  Benessere: "#a5daca",
+  "Borghi più belli": "#946a52",
+  Formazione: "#002f59",
+  "Giornata da Guida": "#75c43c",
+  "Immersi nel verde": "#358756",
+  "Luoghi dello Spirito": "#c8a3c9",
+  "Outdoor Education": "#01aa9f",
+  Speciali: "#b8163c",
+  "Tra Mare e Cielo": "#7aaecd",
+  "Trek Urbano": "#f39452",
+};
+
+function getFilosofiaOpacity(color: string): string {
+  // Colori scuri: opacità ridotta per mantenere l'effetto glass
+  const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
+  return dark.includes(color) ? `${color}aa` : `${color}cc`;
+}
+
 function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   if (!value) return null;
+  const color = FILOSOFIA_COLORS[value] ?? "#44403c";
+  const bg = getFilosofiaOpacity(color);
   return (
     <div
-      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/25"
+      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-sm"
       style={{
-        backgroundColor: "rgba(255,255,255,0.15)",
-        color: "white",
-        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-        boxShadow:
-          "0 2px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.25)",
+        backgroundColor: bg,
+        color: "rgba(255,255,255,0.95)",
+        textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+        boxShadow: `0 2px 12px ${color}55, inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px ${color}`,
       }}
     >
       {value}
@@ -81,13 +100,16 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
     async function loadData() {
       setLoading(true);
       try {
-        const { data: hikes } = await supabase
+        const { data: allHikes } = await supabase
           .from("escursioni")
           .select("*")
-          .order("data", { ascending: true })
-          .limit(4);
-        const { data: crs } = await supabase.from("corsi").select("*").limit(4);
-        if (hikes) setFeaturedHikes(hikes as Escursione[]);
+          .order("data", { ascending: true });
+        const { data: crs } = await supabase.from("corsi").select("*").limit(2);
+        if (allHikes) {
+          // 3 escursioni casuali ad ogni caricamento
+          const shuffled = [...allHikes].sort(() => Math.random() - 0.5);
+          setFeaturedHikes(shuffled.slice(0, 3) as Escursione[]);
+        }
         if (crs) setCourses(crs as Corso[]);
       } catch (e) {
         console.error(e);
@@ -174,11 +196,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   icon: <TrendingUp size={14} />,
                 },
                 { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
-                {
-                  value: "4k+",
-                  label: "Escursionisti",
-                  icon: <Users size={14} />,
-                },
+                { value: "800+", label: "Clienti", icon: <Users size={14} /> },
               ].map((stat, index) => (
                 <div
                   key={index}
@@ -250,32 +268,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <FilosofiaBadge value={esc.filosofia} />
               </div>
               <div className="p-5 md:p-8 flex flex-col flex-grow">
-                {/* URGENZA POSTI */}
-                <div className="mb-4 flex items-center gap-2">
-                  {esc.posti_disponibili > 0 ? (
-                    <>
-                      <span className="relative flex h-2 w-2">
-                        {esc.posti_disponibili <= 3 && (
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        )}
-                        <span
-                          className={`relative inline-flex rounded-full h-2 w-2 ${esc.posti_disponibili <= 3 ? "bg-red-500" : "bg-orange-500"}`}
-                        ></span>
-                      </span>
-                      <p
-                        className={`text-[10px] font-black uppercase tracking-widest ${esc.posti_disponibili <= 3 ? "text-red-600" : "text-orange-600"}`}
-                      >
-                        {esc.posti_disponibili <= 3
-                          ? `SOLO ${esc.posti_disponibili} POSTI RIMASTI!`
-                          : `${esc.posti_disponibili} posti disponibili`}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
-                      Esaurito / Sold Out
-                    </p>
-                  )}
-                </div>
                 <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
                   <Calendar size={12} className="mr-1.5" />
                   {esc.data
@@ -299,15 +291,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                     Dettagli
                   </button>
                   <button
-                    onClick={() =>
-                      esc.posti_disponibili > 0 && onBookingClick(esc.titolo)
-                    }
-                    disabled={esc.posti_disponibili <= 0}
-                    className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all ${esc.posti_disponibili > 0 ? "bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]" : "bg-stone-200 text-stone-400 cursor-not-allowed"}`}
+                    onClick={() => onBookingClick(esc.titolo)}
+                    className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]"
                   >
-                    {esc.posti_disponibili > 0
-                      ? "Richiedi Informazioni"
-                      : "Completo"}
+                    Richiedi Info
                   </button>
                 </div>
               </div>
@@ -354,13 +341,19 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       {/* 4. ACCADEMIA SECTION */}
       <section className="bg-stone-100 py-12 md:py-20 text-brand-stone">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="text-center mb-10 md:mb-16">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-4">
             <h2 className="text-4xl md:text-5xl font-light uppercase tracking-tighter leading-none text-brand-stone">
               Accademia <span className="font-black">Altour</span>
               <span className="text-brand-sky">.</span>
             </h2>
+            <button
+              onClick={() => onNavigate("corsi")}
+              className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
+            >
+              Vedi tutti i corsi <TrendingUp size={14} />
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {courses.map((corso) => (
               <div
                 key={corso.id}
@@ -399,7 +392,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       onClick={() => onBookingClick(corso.titolo)}
                       className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]"
                     >
-                      Richiedi Informazioni
+                      Richiedi Info
                     </button>
                   </div>
                 </div>

@@ -9,7 +9,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Gift,
-  Lock,
   CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +22,32 @@ const MAX_REDEEM_ATTEMPTS = 10;
 
 const REDEEM_CODE_REGEX = /^[A-Z0-9]{3,10}$/;
 const TESSERA_CODE_REGEX = /^ALT[A-Z0-9]{1,10}$/;
+
+// ─── Mappa Filosofia → Colore ────────────────────────────────────────────────
+const FILOSOFIA_COLORS: Record<string, string> = {
+  Avventura: "#e94544",
+  Benessere: "#a5daca",
+  "Borghi più belli": "#946a52",
+  Formazione: "#002f59",
+  "Giornata da Guida": "#75c43c",
+  "Immersi nel verde": "#358756",
+  "Luoghi dello Spirito": "#c8a3c9",
+  "Outdoor Education": "#01aa9f",
+  Speciali: "#b8163c",
+  "Tra Mare e Cielo": "#7aaecd",
+  "Trek Urbano": "#f39452",
+};
+
+const DEFAULT_BOOT_COLOR = "#0ea5e9";
+
+function getFilosofiaColor(filosofia?: string | null): string {
+  if (!filosofia) return DEFAULT_BOOT_COLOR;
+  return FILOSOFIA_COLORS[filosofia] ?? DEFAULT_BOOT_COLOR;
+}
+
+function getFilosofiaName(hex: string): string {
+  return Object.entries(FILOSOFIA_COLORS).find(([, v]) => v === hex)?.[0] ?? "";
+}
 
 // ─── Helpers localStorage ────────────────────────────────────────────────────
 function saveSession(codice: string) {
@@ -204,39 +229,37 @@ interface ToastData {
   color: string;
 }
 
-type RedeemStep = "INPUT" | "REVEAL" | "COLOR" | "SUCCESS";
+// Flow: INPUT → REVEAL → SUCCESS (nessuno step COLOR)
+type RedeemStep = "INPUT" | "REVEAL" | "SUCCESS";
 
 // ─── Costanti ────────────────────────────────────────────────────────────────
 const SLOTS_PER_PAGE = 8;
 
-// 16 colori con requisito per livello (minLevelIndex = indice in LEVELS)
-const EXPANDED_PALETTE = [
-  { name: "Siena", hex: "#C0623D", minLevelIndex: 0 },
-  { name: "Bosco", hex: "#2E9B2E", minLevelIndex: 0 },
-  { name: "Abisso", hex: "#101090", minLevelIndex: 0 },
-  { name: "Roccia", hex: "#8090A0", minLevelIndex: 0 },
-  { name: "Ocra", hex: "#DD8833", minLevelIndex: 0 },
-  { name: "Sky", hex: "#0ea5e9", minLevelIndex: 0 },
-  { name: "Sunset", hex: "#f59e0b", minLevelIndex: 0 },
-  { name: "Viola", hex: "#8b5cf6", minLevelIndex: 0 },
-  { name: "Nebbia", hex: "#94a3b8", minLevelIndex: 1 },
-  { name: "Pino", hex: "#166534", minLevelIndex: 1 },
-  { name: "Lavanda", hex: "#c4b5fd", minLevelIndex: 1 },
-  { name: "Corallo", hex: "#fb7185", minLevelIndex: 1 },
-  { name: "Bronzo", hex: "#92400e", minLevelIndex: 2 },
-  { name: "Ghiaccio", hex: "#bae6fd", minLevelIndex: 2 },
-  { name: "Grafite", hex: "#374151", minLevelIndex: 3 },
-  { name: "Oro", hex: "#fbbf24", minLevelIndex: 3 },
+// Un livello per ogni tessera completata (8 scarponi = 1 tessera)
+const TESSERA_LEVELS = [
+  "Amante di attività all'aperto",
+  "Elfo dei prati",
+  "Collezionista di muschio",
+  "Principe della mappa",
+  "Guardiano delle nuvole",
+  "Mago della bussola",
+  "Spirito dei boschi",
+  "Collezionista di scarponi",
+  "Asceta dei monti",
+  "Re dell'altimetro",
+  "Saltatore di tronchi",
+  "Amico delle querce",
+  "Menestrello dei bastoncini",
+  "Duca degli scalatori",
+  "Custode del verde",
+  "Specialista dei sentieri",
+  "Gnomo delle pigne",
+  "Spiritello degli stagni",
+  "Appassionato naturalista",
+  "Leggenda vivente",
 ];
 
-const LEVELS = [
-  { min: 0, max: 16, label: "Camminatore della domenica", color: "#d6d3d1" },
-  { min: 17, max: 50, label: "Esploratore", color: "#38bdf8" },
-  { min: 51, max: 100, label: "Guida", color: "#f59e0b" },
-  { min: 100, max: 999, label: "Leggenda", color: "#44403c" },
-];
-
-// ─── Componente principale ───────────────────────────────────────────────────
+// ─── Componente principale ────────────────────────────────────────0��──────────
 export default function Tessera() {
   const [loading, setLoading] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -254,8 +277,9 @@ export default function Tessera() {
   const [redeemAttempts, setRedeemAttempts] = useState(0);
   const [pendingActivity, setPendingActivity] = useState<{
     titolo: string;
+    filosofia?: string | null;
   } | null>(null);
-  const [previewColor, setPreviewColor] = useState<string | null>(null);
+  const [pendingColor, setPendingColor] = useState<string>(DEFAULT_BOOT_COLOR);
   const [chosenColor, setChosenColor] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastData | null>(null);
   const [selectedBoot, setSelectedBoot] = useState<EscursioneCompletata | null>(
@@ -270,7 +294,6 @@ export default function Tessera() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // Escape chiude modali (prima selectedBoot, poi redeem)
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -360,7 +383,7 @@ export default function Tessera() {
     setRedeemError("");
     setSaveError("");
     setPendingActivity(null);
-    setPreviewColor(null);
+    setPendingColor(DEFAULT_BOOT_COLOR);
     setChosenColor(null);
   }, [isSaving]);
 
@@ -378,11 +401,13 @@ export default function Tessera() {
     setIsVerifying(true);
     setRedeemError("");
     setRedeemAttempts((n) => n + 1);
+
     const { data, error } = await supabase
       .from("escursioni")
-      .select("titolo, codice_riscatto")
+      .select("titolo, codice_riscatto, filosofia")
       .eq("codice_riscatto", normalized)
       .single();
+
     if (error || !data) {
       setRedeemError("Codice non valido.");
       setIsVerifying(false);
@@ -395,13 +420,16 @@ export default function Tessera() {
         setIsVerifying(false);
         return;
       }
+      // Colore automatico dalla filosofia
+      const autoColor = getFilosofiaColor(data.filosofia);
       setPendingActivity(data);
+      setPendingColor(autoColor);
       setRedeemStep("REVEAL");
       setIsVerifying(false);
     }
   };
 
-  const saveVetta = async (selectedHex: string) => {
+  const saveVetta = async () => {
     if (!userTessera || !pendingActivity || isSaving) return;
     setIsSaving(true);
     setSaveError("");
@@ -411,7 +439,7 @@ export default function Tessera() {
       ...(userTessera.escursioni_completate || []),
       {
         titolo: pendingActivity.titolo,
-        colore: selectedHex,
+        colore: pendingColor,
         data: new Date().toISOString(),
       },
     ];
@@ -431,18 +459,18 @@ export default function Tessera() {
     setUserTessera(updatedTessera);
     const newCount = updatedTessera.escursioni_completate?.length || 0;
     setCurrentPage(Math.floor((newCount - 1) / SLOTS_PER_PAGE));
-    setChosenColor(selectedHex);
+    setChosenColor(pendingColor);
     setRedeemStep("SUCCESS");
     setIsSaving(false);
-    fireConfetti(selectedHex);
+    fireConfetti(pendingColor);
   };
 
   const handleSuccessClose = () => {
     if (chosenColor && pendingActivity) {
       const colorName =
-        EXPANDED_PALETTE.find((c) => c.hex === chosenColor)?.name ?? "";
+        getFilosofiaName(chosenColor) || pendingActivity.filosofia || "";
       setToast({
-        message: `🥾 ${colorName} aggiunto alla tessera!`,
+        message: `Scarpone ${colorName} aggiunto!`,
         color: chosenColor,
       });
     }
@@ -452,17 +480,17 @@ export default function Tessera() {
   const stats = useMemo(() => {
     if (!userTessera) return null;
     const count = userTessera.escursioni_completate?.length || 0;
-    const rawIndex = LEVELS.findIndex((l) => count >= l.min && count <= l.max);
-    const currentLevelIndex = rawIndex === -1 ? 0 : rawIndex;
-    const currentLevel = LEVELS[currentLevelIndex];
     const totalPages = Math.max(1, Math.ceil(count / SLOTS_PER_PAGE));
     const vouchersCount = Math.floor(count / 8);
     const progressInCycle = count % 8;
     const toNextVoucher = 8 - progressInCycle;
+    // Livello = tessere completate (non la pagina corrente)
+    const completedTessere = Math.floor(count / SLOTS_PER_PAGE);
+    const currentLevelLabel =
+      TESSERA_LEVELS[Math.min(completedTessere, TESSERA_LEVELS.length - 1)];
     return {
       count,
-      currentLevel,
-      currentLevelIndex,
+      currentLevelLabel,
       totalPages,
       vouchersCount,
       progressInCycle,
@@ -470,7 +498,7 @@ export default function Tessera() {
     };
   }, [userTessera]);
 
-  // ─── Loading / Login ────────────────────────────────────────────────────────
+  // ─── Loading / Login ─────────────────────────────────────────────────────
   if (loading && !userTessera)
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed]">
@@ -536,15 +564,14 @@ export default function Tessera() {
     );
 
   const {
-    currentLevel,
-    currentLevelIndex,
+    currentLevelLabel,
     totalPages,
     vouchersCount,
     progressInCycle,
     toNextVoucher,
   } = stats!;
 
-  // ─── Main ───────────────────────────────────────────────────────────────────
+  // ─── Main ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f5f2ed] pb-20 text-stone-800">
       {/* HERO */}
@@ -568,15 +595,27 @@ export default function Tessera() {
           <p className="text-white/80 font-bold tracking-[0.3em] text-[10px] md:text-xs uppercase mt-1 mb-4">
             Cod. {userTessera.codice_tessera}
           </p>
-          <div className="inline-flex items-center gap-2 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-            <IconaScarponeCustom
-              size={18}
-              color={currentLevel.color}
-              isActive={true}
-            />
-            <span className="text-[10px] font-black uppercase text-white tracking-tight">
-              {currentLevel.label}
-            </span>
+          <div
+            className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl backdrop-blur-md border border-white/20"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)",
+              boxShadow:
+                "0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.1)",
+            }}
+          >
+            <IconaScarponeCustom size={22} color="#0ea5e9" isActive={true} />
+            <div className="flex flex-col items-start">
+              <span className="text-[7px] font-black uppercase tracking-[0.25em] text-white/50 leading-none mb-0.5">
+                Livello
+              </span>
+              <span
+                className="text-[11px] md:text-[13px] font-black uppercase tracking-wide text-white leading-none"
+                style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}
+              >
+                {currentLevelLabel}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -652,7 +691,18 @@ export default function Tessera() {
               <ChevronLeft size={20} />
             </button>
             <span className="text-[9px] md:text-[10px] font-black uppercase text-stone-300 tracking-widest">
-              Pagina {currentPage + 1} / {totalPages}
+              Tessera {currentPage + 1}
+              {totalPages > 1 && (
+                <span className="text-stone-200">
+                  {" "}
+                  ·{" "}
+                  {
+                    TESSERA_LEVELS[
+                      Math.min(currentPage, TESSERA_LEVELS.length - 1)
+                    ]
+                  }
+                </span>
+              )}
             </span>
             <button
               disabled={currentPage >= totalPages - 1}
@@ -664,7 +714,7 @@ export default function Tessera() {
           </div>
         </div>
 
-        {/* PROGRESS BAR verso prossimo voucher */}
+        {/* PROGRESS BAR */}
         <div className="mt-4 md:mt-6 bg-white/70 rounded-[2rem] p-4 md:p-5 border border-white/50 shadow-sm">
           <div className="flex justify-between items-center mb-2">
             <span className="text-[8px] md:text-[9px] font-black uppercase text-stone-400 tracking-widest">
@@ -794,7 +844,7 @@ export default function Tessera() {
               </button>
 
               <AnimatePresence mode="wait">
-                {/* ── STEP 1: INPUT ─────────────────────────────────────────── */}
+                {/* STEP 1: INPUT */}
                 {redeemStep === "INPUT" && (
                   <motion.div
                     key="input"
@@ -848,7 +898,7 @@ export default function Tessera() {
                   </motion.div>
                 )}
 
-                {/* ── STEP 2: REVEAL ────────────────────────────────────────── */}
+                {/* STEP 2: REVEAL — colore auto da filosofia, conferma diretta */}
                 {redeemStep === "REVEAL" && pendingActivity && (
                   <motion.div
                     key="reveal"
@@ -857,6 +907,7 @@ export default function Tessera() {
                     exit={{ opacity: 0, x: -20 }}
                     className="flex flex-col items-center"
                   >
+                    {/* Scarpone con colore filosofia */}
                     <motion.div
                       initial={{ scale: 0, rotate: -20 }}
                       animate={{ scale: 1, rotate: 0 }}
@@ -866,163 +917,64 @@ export default function Tessera() {
                         damping: 15,
                         delay: 0.1,
                       }}
-                      className="mb-6 p-6 bg-stone-50 rounded-3xl"
+                      className="mb-4 p-6 rounded-3xl"
+                      style={{ backgroundColor: `${pendingColor}18` }}
                     >
                       <IconaScarponeCustom
-                        size={72}
-                        color="#0ea5e9"
+                        size={80}
+                        color={pendingColor}
                         isActive={true}
                       />
                     </motion.div>
+
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
+                      className="w-full"
                     >
-                      <p className="text-[9px] font-black uppercase text-sky-400 tracking-widest mb-2">
-                        Escursione sbloccata!
-                      </p>
+                      {/* Etichetta filosofia colorata */}
+                      {pendingActivity.filosofia && (
+                        <p
+                          className="text-[9px] font-black uppercase tracking-widest mb-2"
+                          style={{ color: pendingColor }}
+                        >
+                          {pendingActivity.filosofia}
+                        </p>
+                      )}
                       <h3 className="text-xl font-black uppercase tracking-tighter text-stone-800 mb-1">
                         {pendingActivity.titolo}
                       </h3>
                       <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1 mb-8">
-                        Scegli il colore del tuo scarpone
+                        Scarpone sbloccato — aggiungilo alla tessera
                       </p>
                     </motion.div>
+
                     <motion.button
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.5 }}
-                      onClick={() => setRedeemStep("COLOR")}
-                      className="w-full bg-[#0ea5e9] text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-sky-100 hover:bg-[#0284c7]"
+                      onClick={saveVetta}
+                      disabled={isSaving}
+                      className="w-full text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: pendingColor }}
                     >
-                      Scegli il colore →
+                      {isSaving ? (
+                        <Loader2 className="animate-spin mx-auto" size={20} />
+                      ) : (
+                        "Aggiungi alla Tessera →"
+                      )}
                     </motion.button>
-                  </motion.div>
-                )}
 
-                {/* ── STEP 3: COLOR ─────────────────────────────────────────── */}
-                {redeemStep === "COLOR" && (
-                  <motion.div
-                    key="color"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                  >
-                    {/* Preview scarpone live */}
-                    <div className="flex justify-center mb-4">
-                      <motion.div
-                        animate={{ scale: previewColor ? 1.08 : 1 }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 20,
-                        }}
-                        className="p-4 bg-stone-50 rounded-3xl"
-                      >
-                        <IconaScarponeCustom
-                          size={64}
-                          color={previewColor ?? EXPANDED_PALETTE[0].hex}
-                          isActive={true}
-                        />
-                      </motion.div>
-                    </div>
-                    <div className="mb-5">
-                      <h3 className="text-2xl font-black uppercase tracking-tighter">
-                        Colora la Vetta
-                      </h3>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1 h-4">
-                        {previewColor
-                          ? (EXPANDED_PALETTE.find(
-                              (c) => c.hex === previewColor,
-                            )?.name ?? "")
-                          : "Passa su un colore per la preview"}
-                      </p>
-                    </div>
-
-                    {/* Griglia 4×4 con lucchetti */}
-                    <div className="grid grid-cols-4 gap-2.5 mb-5">
-                      {EXPANDED_PALETTE.map((c) => {
-                        const locked = c.minLevelIndex > currentLevelIndex;
-                        return (
-                          <div key={c.hex} className="relative group/color">
-                            <button
-                              onClick={() => !locked && saveVetta(c.hex)}
-                              onMouseEnter={() =>
-                                !locked && setPreviewColor(c.hex)
-                              }
-                              onMouseLeave={() => setPreviewColor(null)}
-                              disabled={isSaving || locked}
-                              className={`
-                                aspect-square w-full rounded-2xl border-2 transition-all
-                                flex items-center justify-center p-1.5 shadow-sm
-                                ${
-                                  locked
-                                    ? "border-stone-100 bg-stone-50/50 cursor-not-allowed opacity-50"
-                                    : "border-transparent hover:border-brand-sky active:scale-90 bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
-                                }
-                              `}
-                            >
-                              {locked ? (
-                                <Lock size={16} className="text-stone-300" />
-                              ) : (
-                                <IconaScarponeCustom
-                                  size={34}
-                                  color={c.hex}
-                                  isActive={true}
-                                />
-                              )}
-                            </button>
-                            {locked && (
-                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/color:block z-[60] pointer-events-none">
-                                <div className="bg-stone-900 text-white text-[8px] font-bold uppercase py-1.5 px-2.5 rounded-xl shadow-2xl whitespace-nowrap border border-white/10">
-                                  {LEVELS[c.minLevelIndex]?.label}
-                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-stone-900" />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Legenda livelli */}
-                    <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-                      {LEVELS.map((l, idx) => (
-                        <div
-                          key={l.label}
-                          className={`flex items-center gap-1 px-2 py-1 rounded-full text-[7px] font-black uppercase border ${
-                            idx <= currentLevelIndex
-                              ? "border-stone-200 bg-stone-50 text-stone-600"
-                              : "border-stone-100 bg-stone-50/30 text-stone-300"
-                          }`}
-                        >
-                          <div
-                            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{
-                              backgroundColor:
-                                idx <= currentLevelIndex ? l.color : "#d6d3d1",
-                            }}
-                          />
-                          {l.label}
-                        </div>
-                      ))}
-                    </div>
-
-                    {isSaving && (
-                      <div className="flex justify-center mt-2">
-                        <Loader2 className="animate-spin text-brand-sky w-8 h-8" />
-                      </div>
-                    )}
                     {saveError && (
-                      <p className="text-red-500 text-[10px] font-black uppercase py-2 bg-red-50 rounded-lg mt-2">
+                      <p className="text-red-500 text-[10px] font-black uppercase py-2 bg-red-50 rounded-lg mt-3 w-full">
                         {saveError}
                       </p>
                     )}
                   </motion.div>
                 )}
 
-                {/* ── STEP 4: SUCCESS ───────────────────────────────────────── */}
+                {/* STEP 3: SUCCESS */}
                 {redeemStep === "SUCCESS" && pendingActivity && chosenColor && (
                   <motion.div
                     key="success"
@@ -1055,7 +1007,8 @@ export default function Tessera() {
                         damping: 14,
                         delay: 0.15,
                       }}
-                      className="mb-6 p-6 bg-stone-50 rounded-3xl"
+                      className="mb-6 p-6 rounded-3xl"
+                      style={{ backgroundColor: `${chosenColor}18` }}
                     >
                       <IconaScarponeCustom
                         size={80}
@@ -1074,13 +1027,14 @@ export default function Tessera() {
                       <h3 className="text-xl font-black uppercase tracking-tighter text-stone-800 mb-1">
                         {pendingActivity.titolo}
                       </h3>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-8">
-                        Colore:{" "}
-                        {
-                          EXPANDED_PALETTE.find((c) => c.hex === chosenColor)
-                            ?.name
-                        }
-                      </p>
+                      {pendingActivity.filosofia && (
+                        <p
+                          className="text-[10px] font-black uppercase tracking-widest mb-8"
+                          style={{ color: chosenColor }}
+                        >
+                          {pendingActivity.filosofia}
+                        </p>
+                      )}
                     </motion.div>
                     <motion.button
                       initial={{ opacity: 0 }}
@@ -1099,7 +1053,7 @@ export default function Tessera() {
         )}
       </AnimatePresence>
 
-      {/* ─── POPUP DETTAGLIO SCARPONE ────────────────────────────────────── */}
+      {/* ─── POPUP DETTAGLIO SCARPONE ──────────────────────────────────────── */}
       <AnimatePresence>
         {selectedBoot && (
           <div
@@ -1115,7 +1069,6 @@ export default function Tessera() {
               transition={{ type: "spring", stiffness: 380, damping: 28 }}
               className="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-stone-100 relative"
             >
-              {/* Chiudi */}
               <button
                 onClick={() => setSelectedBoot(null)}
                 className="absolute top-5 right-5 p-2 bg-stone-50 rounded-full text-stone-300 hover:text-stone-700 transition-colors"
@@ -1123,7 +1076,6 @@ export default function Tessera() {
                 <X size={18} />
               </button>
 
-              {/* Scarpone grande */}
               <div className="flex justify-center mb-5">
                 <motion.div
                   initial={{ scale: 0, rotate: -15 }}
@@ -1135,7 +1087,7 @@ export default function Tessera() {
                     delay: 0.05,
                   }}
                   className="p-5 rounded-3xl"
-                  style={{ backgroundColor: `${selectedBoot.colore}15` }}
+                  style={{ backgroundColor: `${selectedBoot.colore}18` }}
                 >
                   <IconaScarponeCustom
                     size={72}
@@ -1145,28 +1097,21 @@ export default function Tessera() {
                 </motion.div>
               </div>
 
-              {/* Info */}
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
                 className="text-center"
               >
-                {/* Nome colore */}
                 <p
                   className="text-[9px] font-black uppercase tracking-widest mb-1"
                   style={{ color: selectedBoot.colore }}
                 >
-                  {EXPANDED_PALETTE.find((c) => c.hex === selectedBoot.colore)
-                    ?.name ?? "Personalizzato"}
+                  {getFilosofiaName(selectedBoot.colore) || "Personalizzato"}
                 </p>
-
-                {/* Titolo escursione */}
                 <h3 className="text-xl md:text-2xl font-black uppercase tracking-tighter text-stone-800 leading-tight mb-4 px-2">
                   {selectedBoot.titolo}
                 </h3>
-
-                {/* Data */}
                 <div className="inline-flex items-center gap-2 bg-stone-50 px-4 py-2 rounded-full">
                   <span className="text-[9px] font-black uppercase text-stone-400 tracking-widest">
                     Completata il
@@ -1185,7 +1130,7 @@ export default function Tessera() {
         )}
       </AnimatePresence>
 
-      {/* ─── TOAST ───────────────────────────────────────────────────────────── */}
+      {/* ─── TOAST ─────────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {toast && (
           <Toast

@@ -43,9 +43,7 @@ export default function ActivityDetailModal({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const images = activity
-    ? ([activity.immagine_url, ...(activity.gallery_urls || [])].filter(
-        Boolean,
-      ) as string[])
+    ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[]
     : [];
 
   useEffect(() => {

@@ -13,8 +13,8 @@ import {
 
 // FIX: Estendiamo il tipo per includere la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
-  posti_disponibili: number;
   filosofia?: string | null;
+  lunghezza?: number | null;
 };
 
 interface Activity {
@@ -27,6 +27,7 @@ interface Activity {
   gallery_urls?: string[] | null;
   difficolta?: string | null;
   durata?: string | null;
+  lunghezza?: number | null;
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
   data?: string | null;
@@ -38,17 +39,38 @@ interface EscursioniPageProps {
 }
 
 // --- SKELETON LOADER ---
+const FILOSOFIA_COLORS: Record<string, string> = {
+  Avventura: "#e94544",
+  Benessere: "#a5daca",
+  "Borghi più belli": "#946a52",
+  Formazione: "#002f59",
+  "Giornata da Guida": "#75c43c",
+  "Immersi nel verde": "#358756",
+  "Luoghi dello Spirito": "#c8a3c9",
+  "Outdoor Education": "#01aa9f",
+  Speciali: "#b8163c",
+  "Tra Mare e Cielo": "#7aaecd",
+  "Trek Urbano": "#f39452",
+};
+
+function getFilosofiaOpacity(color: string): string {
+  // Colori scuri: opacità ridotta per mantenere l'effetto glass
+  const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
+  return dark.includes(color) ? `${color}aa` : `${color}cc`;
+}
+
 function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   if (!value) return null;
+  const color = FILOSOFIA_COLORS[value] ?? "#44403c";
+  const bg = getFilosofiaOpacity(color);
   return (
     <div
-      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/25"
+      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-sm"
       style={{
-        backgroundColor: "rgba(255,255,255,0.15)",
-        color: "white",
-        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-        boxShadow:
-          "0 2px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.25)",
+        backgroundColor: bg,
+        color: "rgba(255,255,255,0.95)",
+        textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+        boxShadow: `0 2px 12px ${color}55, inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px ${color}`,
       }}
     >
       {value}
@@ -138,26 +160,108 @@ export default function EscursioniPage({
       }
 
       let bestMatch = escursioni[0];
-      let maxScore = -1;
+      let maxScore = -Infinity;
 
       escursioni.forEach((esc) => {
         let score = 0;
-        const livelloScelto = newAnswers[1];
-        const diff = esc.difficolta?.toLowerCase() || "";
-        if (livelloScelto === "Base" && diff === "facile") score += 3;
-        if (livelloScelto === "Medio" && diff === "medio") score += 3;
-        if (livelloScelto === "Pro" && diff.includes("difficile")) score += 3;
-
-        const tempoScelto = newAnswers[5];
+        const t = esc.titolo?.toLowerCase() || "";
+        const d = esc.descrizione?.toLowerCase() || "";
+        const diffDB = esc.difficolta ?? ""; // es. 'Facile', 'Facile-Media', 'Media', 'Media-Impegnativa', 'Impegnativa'
         const cat = esc.categoria?.toLowerCase() || "";
+        const filo = esc.filosofia?.toLowerCase() || "";
+
+        // 1. COMPAGNIA (Peso 2)
+        const compagnia = newAnswers[0];
         if (
-          (tempoScelto === "Ore" || tempoScelto === "Giorno") &&
-          cat === "giornata"
+          compagnia === "Solo" &&
+          (filo.includes("spirit") || d.includes("silenzio"))
+        )
+          score += 2;
+        if (
+          compagnia === "Coppia" &&
+          (d.includes("tramonto") || d.includes("emozione"))
+        )
+          score += 2;
+        if (
+          compagnia === "Gruppo" &&
+          (d.includes("convivial") || d.includes("compagnia"))
+        )
+          score += 2;
+
+        // 2. LIVELLO TREKKING (Peso 10 — sicurezza prioritaria)
+        const livello = newAnswers[1];
+        if (livello === "Base") {
+          if (diffDB === "Facile") score += 10;
+          else if (diffDB === "Facile-Media") score += 5;
+          else score -= 15;
+        } else if (livello === "Medio") {
+          if (diffDB === "Media") score += 10;
+          else if (diffDB === "Facile-Media" || diffDB === "Media-Impegnativa")
+            score += 7;
+          else if (diffDB === "Facile") score += 3;
+        } else if (livello === "Pro") {
+          if (diffDB === "Impegnativa") score += 10;
+          else if (diffDB === "Media-Impegnativa") score += 8;
+          else if (diffDB === "Media") score += 4;
+        }
+
+        // 3. LUOGO IDEALE (Peso 5)
+        const luogo = newAnswers[2].toLowerCase();
+        if (luogo === "laghi" && (t.includes("lago") || d.includes("acqua")))
+          score += 5;
+        if (
+          luogo === "vette" &&
+          (t.includes("cima") || t.includes("vetta") || d.includes("panorama"))
+        )
+          score += 5;
+        if (
+          luogo === "boschi" &&
+          (d.includes("bosco") || d.includes("alberi") || d.includes("ombra"))
+        )
+          score += 5;
+
+        // 4. SFORZO FISICO (Peso 6)
+        const sforzo = newAnswers[3];
+        if (sforzo === "Leggero") {
+          if (diffDB === "Facile") score += 6;
+          if (d.includes("pianeggiante") || d.includes("relax")) score += 2;
+        } else if (sforzo === "Medio") {
+          if (diffDB === "Facile-Media" || diffDB === "Media") score += 6;
+        } else if (sforzo === "Intenso") {
+          if (diffDB === "Media-Impegnativa" || diffDB === "Impegnativa")
+            score += 6;
+          if (d.includes("dislivello") || d.includes("ripido")) score += 2;
+        }
+
+        // 5. COSA CERCHI (Peso 3)
+        const cerca = newAnswers[4];
+        if (
+          cerca === "Foto" &&
+          (filo.includes("panoram") || d.includes("vista"))
         )
           score += 3;
-        if (tempoScelto === "Tour" && cat === "tour") score += 3;
+        if (cerca === "Pace" && (filo.includes("spirit") || d.includes("pace")))
+          score += 3;
+        if (
+          cerca === "Sfida" &&
+          (diffDB.includes("Impegnativa") || t.includes("traversata"))
+        )
+          score += 3;
 
-        score += Math.random();
+        // 6. QUANTO TEMPO (Peso 8 — logistica)
+        const tempo = newAnswers[5];
+        if (
+          tempo === "Ore" &&
+          cat === "giornata" &&
+          (d.includes("mezza") || d.includes("breve"))
+        )
+          score += 8;
+        else if (tempo === "Giorno" && cat === "giornata") score += 8;
+        else if (tempo === "Tour" && cat === "tour") score += 8;
+        else score -= 5;
+
+        // Bonus: entropia minima per tiebreaker
+        score += Math.random() * 0.5;
 
         if (score > maxScore) {
           maxScore = score;
@@ -258,33 +362,6 @@ export default function EscursioniPage({
               </div>
 
               <div className="p-5 md:p-8 flex flex-col flex-grow">
-                {/* LOGICA POSTI DISPONIBILI */}
-                <div className="mb-4 flex items-center gap-2">
-                  {esc.posti_disponibili > 0 ? (
-                    <>
-                      <span className="relative flex h-2 w-2">
-                        {esc.posti_disponibili <= 3 && (
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        )}
-                        <span
-                          className={`relative inline-flex rounded-full h-2 w-2 ${esc.posti_disponibili <= 3 ? "bg-red-500" : "bg-orange-500"}`}
-                        ></span>
-                      </span>
-                      <p
-                        className={`text-[10px] font-black uppercase tracking-widest ${esc.posti_disponibili <= 3 ? "text-red-600" : "text-orange-600"}`}
-                      >
-                        {esc.posti_disponibili <= 3
-                          ? `SOLO ${esc.posti_disponibili} POSTI!`
-                          : `${esc.posti_disponibili} posti disponibili`}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
-                      Completo
-                    </p>
-                  )}
-                </div>
-
                 <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
                   <Calendar size={12} className="mr-1.5" />
                   {esc.data
@@ -301,7 +378,6 @@ export default function EscursioniPage({
                   {esc.descrizione}
                 </p>
 
-                {/* BOTTONI UNIFORMATI */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
@@ -313,23 +389,10 @@ export default function EscursioniPage({
                     Dettagli
                   </button>
                   <button
-                    onClick={() =>
-                      esc.posti_disponibili > 0 && onBookingClick(esc.titolo)
-                    }
-                    disabled={esc.posti_disponibili <= 0}
-                    className={`flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 ${
-                      esc.posti_disponibili > 0
-                        ? "bg-brand-sky text-white hover:bg-[#0284c7]"
-                        : "bg-stone-200 text-stone-400 cursor-not-allowed"
-                    }`}
+                    onClick={() => onBookingClick(esc.titolo)}
+                    className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                   >
-                    {esc.posti_disponibili > 0 ? (
-                      <>
-                        Richiedi Informazioni <ArrowRight size={12} />
-                      </>
-                    ) : (
-                      "Completo"
-                    )}
+                    Richiedi Informazioni <ArrowRight size={12} />
                   </button>
                 </div>
               </div>
@@ -396,7 +459,11 @@ export default function EscursioniPage({
                       perfetta.
                     </p>
                     <button
-                      onClick={() => setQuizStep("questions")}
+                      onClick={() => {
+                        setCurrentQuestion(0);
+                        setAnswers([]);
+                        setQuizStep("questions");
+                      }}
                       className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-brand-sky transition-all shadow-xl active:scale-95"
                     >
                       Inizia il Test <ArrowRight size={14} />
