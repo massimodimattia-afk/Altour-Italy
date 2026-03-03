@@ -19,11 +19,11 @@ export default function EscursioneCard({ escursione, onBook }: Props) {
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 flex flex-col h-full w-full">
 
-      {/* aspect-video (16/9) — compatto su mobile, proporzionato su desktop */}
-      <div className="relative w-full aspect-video overflow-hidden">
+      {/* Altezza fissa coerente con le altre card dell'app */}
+      <div className="relative h-40 sm:h-44 w-full overflow-hidden">
         <img
           src={escursione.immagine_url || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800'}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105"
           alt={escursione.titolo}
           loading="lazy"
           decoding="async"
