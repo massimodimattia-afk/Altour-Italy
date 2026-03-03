@@ -46,9 +46,7 @@ export default function ActivityDetailModal({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const images = activity
-    ? ([activity.immagine_url, ...(activity.gallery_urls || [])].filter(
-        Boolean,
-      ) as string[])
+    ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[]
     : [];
 
   useEffect(() => {
@@ -93,13 +91,13 @@ export default function ActivityDetailModal({
             className="relative bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
           >
             {/* Gallery Section */}
-            <div className="md:w-1/2 relative bg-stone-100 min-h-[300px] md:min-h-full">
+            <div className="md:w-1/2 relative bg-stone-100 h-64 md:h-auto md:min-h-full flex-shrink-0">
               {images.length > 0 ? (
                 <>
                   <img
                     src={images[currentImageIndex]}
                     alt={activity.titolo}
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = IMG_FALLBACK;
                     }}
