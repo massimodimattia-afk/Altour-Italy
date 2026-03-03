@@ -392,7 +392,7 @@ export default function EscursioniPage({
           <div className="flex flex-col md:flex-row min-h-[400px]">
             <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80"
+                src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
                 alt="Montagna"
                 className="absolute inset-0 w-full h-full object-cover"
               />

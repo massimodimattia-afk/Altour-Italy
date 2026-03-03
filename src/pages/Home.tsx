@@ -407,31 +407,32 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
           <div className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-stone-100 shadow-xl">
 
-            {/* Header con sfondo tono-su-tono */}
-            <div className="bg-[#f5f2ed] px-6 md:px-12 pt-8 md:pt-10 pb-6 md:pb-8 flex flex-col md:flex-row items-center gap-4 md:gap-8 text-center md:text-left border-b border-stone-100">
-              <div className="shrink-0 relative">
-                {/* Glow dietro icona */}
-                <div className="absolute inset-0 bg-brand-sky/20 rounded-[2rem] blur-xl" />
-                <div className="relative w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-brand-sky shadow-md border border-white/80">
-                  <Gift size={28} className="md:w-9 md:h-9" strokeWidth={1.5} />
-                </div>
+            {/* Immagine principale con overlay */}
+            <div className="relative h-56 md:h-80 overflow-hidden">
+              <img
+                src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
+                alt="Gift Experience Altour"
+                className="w-full h-full object-cover"
+                onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
+                loading="lazy"
+                decoding="async"
+              />
+              {/* Overlay gradiente per leggibilità testo */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              {/* Badge pill */}
+              <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-black/25 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full">
+                <Star size={7} className="text-brand-sky fill-brand-sky" />
+                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white">Gift Experience</span>
               </div>
-
-              <div className="flex-grow">
-                <div className="flex items-center justify-center md:justify-start gap-2 mb-1.5">
-                  <Star size={7} className="text-brand-sky fill-brand-sky" />
-                  <span className="text-[8px] font-black uppercase tracking-[0.35em] text-brand-sky">
-                    Gift Experience
-                  </span>
-                  <Star size={7} className="text-brand-sky fill-brand-sky" />
-                </div>
-                <h2 className="text-2xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-2">
+              {/* Titolo sovrapposto in basso sull'immagine */}
+              <div className="absolute bottom-0 left-0 right-0 px-6 md:px-12 pb-8 md:pb-10">
+                <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter leading-none mb-2 drop-shadow-lg">
                   Regala un'
                   <span className="text-brand-sky italic font-light tracking-normal">
                     avventura.
                   </span>
                 </h2>
-                <p className="text-stone-500 text-[11px] md:text-sm font-medium max-w-md leading-relaxed">
+                <p className="text-stone-200 text-xs md:text-sm font-medium max-w-lg leading-relaxed">
                   Un'emozione in montagna per chi ami — utilizzabile per escursioni, corsi e tour privati.
                 </p>
               </div>
