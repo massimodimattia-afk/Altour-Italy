@@ -19,12 +19,14 @@ export default function EscursioneCard({ escursione, onBook }: Props) {
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 flex flex-col h-full w-full">
 
-      {/* aspect-[4/3] garantisce sempre lo stesso rapporto su qualsiasi schermo */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden">
+      {/* aspect-video (16/9) — compatto su mobile, proporzionato su desktop */}
+      <div className="relative w-full aspect-video overflow-hidden">
         <img
           src={escursione.immagine_url || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800'}
           className="absolute inset-0 w-full h-full object-cover"
           alt={escursione.titolo}
+          loading="lazy"
+          decoding="async"
         />
         <div className="absolute top-2 left-2 bg-white/90 px-2 py-1 rounded text-[10px] font-bold uppercase border">
           {escursione.difficolta || 'E'}
