@@ -3,13 +3,7 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowRight,
-  RefreshCcw,
-  Star,
-  ChevronDown,
-  Calendar,
-} from "lucide-react";
+import { ArrowRight, RefreshCcw, Star, ChevronDown, Calendar } from "lucide-react";
 
 // FIX: Estendiamo il tipo per includere la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
@@ -40,17 +34,17 @@ interface EscursioniPageProps {
 
 // --- SKELETON LOADER ---
 const FILOSOFIA_COLORS: Record<string, string> = {
-  Avventura: "#e94544",
-  Benessere: "#a5daca",
-  "Borghi più belli": "#946a52",
-  Formazione: "#002f59",
-  "Giornata da Guida": "#75c43c",
-  "Immersi nel verde": "#358756",
+  "Avventura":            "#e94544",
+  "Benessere":            "#a5daca",
+  "Borghi più belli":     "#946a52",
+  "Formazione":           "#002f59",
+  "Giornata da Guida":    "#75c43c",
+  "Immersi nel verde":    "#358756",
   "Luoghi dello Spirito": "#c8a3c9",
-  "Outdoor Education": "#01aa9f",
-  Speciali: "#b8163c",
-  "Tra Mare e Cielo": "#7aaecd",
-  "Trek Urbano": "#f39452",
+  "Outdoor Education":    "#01aa9f",
+  "Speciali":             "#b8163c",
+  "Tra Mare e Cielo":     "#7aaecd",
+  "Trek Urbano":          "#f39452",
 };
 
 function getFilosofiaOpacity(color: string): string {
@@ -101,25 +95,20 @@ export default function EscursioniPage({
 }: EscursioniPageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
-    null,
-  );
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Filtri e Paginazione
-  const [activeFilter, setActiveFilter] = useState<
-    "tutte" | "giornata" | "tour"
-  >("tutte");
-  const ITEMS_PER_LOAD = 4;
+  const [activeFilter, setActiveFilter] = useState<"tutte" | "giornata" | "tour">("tutte");
+  const ITEMS_PER_LOAD = 3;
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
 
   // Quiz States
-  const [quizStep, setQuizStep] = useState<"intro" | "questions" | "result">(
-    "intro",
-  );
+  const [quizStep, setQuizStep] = useState<"intro" | "questions" | "result">("intro");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [suggestedHike, setSuggestedHike] = useState<Escursione | null>(null);
+  const [shownSuggestions, setShownSuggestions] = useState<string[]>([]);
 
   const quizQuestions = [
     { q: "Con chi verrai?", options: ["Solo", "Coppia", "Gruppo"] },
@@ -141,11 +130,26 @@ export default function EscursioniPage({
         .select("*")
         .order("data", { ascending: true });
       // FIX: casting per includere la colonna aggiunta manualmente
-      if (data) setEscursioni(data as Escursione[]);
+      if (data) setEscursioni([...data].sort(() => Math.random() - 0.5) as Escursione[]);
       setLoading(false);
     }
     fetchEscursioni();
   }, []);
+
+  // ─── Mappa filosofia → segnali quiz ────────────────────────────────────────
+  const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
+    "Avventura":            { cerca: "Sfida", sforzo: "Intenso", livello: "Pro" },
+    "Benessere":            { cerca: "Pace", sforzo: "Leggero", compagnia: "Coppia" },
+    "Borghi più belli":     { luogo: "Boschi", tempo: "Giorno" },
+    "Immersi nel verde":    { luogo: "Boschi", cerca: "Pace" },
+    "Tra Mare e Cielo":     { luogo: "Laghi", cerca: "Foto" },
+    "Luoghi dello Spirito": { cerca: "Pace", compagnia: "Solo" },
+    "Trek Urbano":          { tempo: "Ore", sforzo: "Leggero" },
+    "Outdoor Education":    { livello: "Base", compagnia: "Gruppo" },
+    "Giornata da Guida":    { tempo: "Giorno", livello: "Medio" },
+    "Speciali":             { cerca: "Sfida", compagnia: "Gruppo" },
+    "Formazione":           { livello: "Base", tempo: "Tour" },
+  };
 
   const handleAnswer = (option: string) => {
     const newAnswers = [...answers, option];
@@ -153,125 +157,96 @@ export default function EscursioniPage({
     if (currentQuestion < quizQuestions.length - 1) {
       setAnswers(newAnswers);
       setCurrentQuestion(currentQuestion + 1);
-    } else {
-      if (escursioni.length === 0) {
-        setQuizStep("intro");
-        return;
-      }
-
-      let bestMatch = escursioni[0];
-      let maxScore = -Infinity;
-
-      escursioni.forEach((esc) => {
-        let score = 0;
-        const t = esc.titolo?.toLowerCase() || "";
-        const d = esc.descrizione?.toLowerCase() || "";
-        const diffDB = esc.difficolta ?? ""; // es. 'Facile', 'Facile-Media', 'Media', 'Media-Impegnativa', 'Impegnativa'
-        const cat = esc.categoria?.toLowerCase() || "";
-        const filo = esc.filosofia?.toLowerCase() || "";
-
-        // 1. COMPAGNIA (Peso 2)
-        const compagnia = newAnswers[0];
-        if (
-          compagnia === "Solo" &&
-          (filo.includes("spirit") || d.includes("silenzio"))
-        )
-          score += 2;
-        if (
-          compagnia === "Coppia" &&
-          (d.includes("tramonto") || d.includes("emozione"))
-        )
-          score += 2;
-        if (
-          compagnia === "Gruppo" &&
-          (d.includes("convivial") || d.includes("compagnia"))
-        )
-          score += 2;
-
-        // 2. LIVELLO TREKKING (Peso 10 — sicurezza prioritaria)
-        const livello = newAnswers[1];
-        if (livello === "Base") {
-          if (diffDB === "Facile") score += 10;
-          else if (diffDB === "Facile-Media") score += 5;
-          else score -= 15;
-        } else if (livello === "Medio") {
-          if (diffDB === "Media") score += 10;
-          else if (diffDB === "Facile-Media" || diffDB === "Media-Impegnativa")
-            score += 7;
-          else if (diffDB === "Facile") score += 3;
-        } else if (livello === "Pro") {
-          if (diffDB === "Impegnativa") score += 10;
-          else if (diffDB === "Media-Impegnativa") score += 8;
-          else if (diffDB === "Media") score += 4;
-        }
-
-        // 3. LUOGO IDEALE (Peso 5)
-        const luogo = newAnswers[2].toLowerCase();
-        if (luogo === "laghi" && (t.includes("lago") || d.includes("acqua")))
-          score += 5;
-        if (
-          luogo === "vette" &&
-          (t.includes("cima") || t.includes("vetta") || d.includes("panorama"))
-        )
-          score += 5;
-        if (
-          luogo === "boschi" &&
-          (d.includes("bosco") || d.includes("alberi") || d.includes("ombra"))
-        )
-          score += 5;
-
-        // 4. SFORZO FISICO (Peso 6)
-        const sforzo = newAnswers[3];
-        if (sforzo === "Leggero") {
-          if (diffDB === "Facile") score += 6;
-          if (d.includes("pianeggiante") || d.includes("relax")) score += 2;
-        } else if (sforzo === "Medio") {
-          if (diffDB === "Facile-Media" || diffDB === "Media") score += 6;
-        } else if (sforzo === "Intenso") {
-          if (diffDB === "Media-Impegnativa" || diffDB === "Impegnativa")
-            score += 6;
-          if (d.includes("dislivello") || d.includes("ripido")) score += 2;
-        }
-
-        // 5. COSA CERCHI (Peso 3)
-        const cerca = newAnswers[4];
-        if (
-          cerca === "Foto" &&
-          (filo.includes("panoram") || d.includes("vista"))
-        )
-          score += 3;
-        if (cerca === "Pace" && (filo.includes("spirit") || d.includes("pace")))
-          score += 3;
-        if (
-          cerca === "Sfida" &&
-          (diffDB.includes("Impegnativa") || t.includes("traversata"))
-        )
-          score += 3;
-
-        // 6. QUANTO TEMPO (Peso 8 — logistica)
-        const tempo = newAnswers[5];
-        if (
-          tempo === "Ore" &&
-          cat === "giornata" &&
-          (d.includes("mezza") || d.includes("breve"))
-        )
-          score += 8;
-        else if (tempo === "Giorno" && cat === "giornata") score += 8;
-        else if (tempo === "Tour" && cat === "tour") score += 8;
-        else score -= 5;
-
-        // Bonus: entropia minima per tiebreaker
-        score += Math.random() * 0.5;
-
-        if (score > maxScore) {
-          maxScore = score;
-          bestMatch = esc;
-        }
-      });
-
-      setSuggestedHike(bestMatch);
-      setQuizStep("result");
+      return;
     }
+
+    if (escursioni.length === 0) { setQuizStep("intro"); return; }
+
+    const [compagnia, livello, luogo, sforzo, cerca, tempo] = newAnswers;
+
+    let bestMatch = escursioni[0];
+    let maxScore = -Infinity;
+
+    escursioni.forEach((esc) => {
+      let score = 0;
+      const t = esc.titolo?.toLowerCase() || "";
+      const d = esc.descrizione?.toLowerCase() || "";
+      const diffDB = esc.difficolta ?? "";
+      const cat = esc.categoria?.toLowerCase() || "";
+      const filo = esc.filosofia ?? "";
+
+      // ── 1. FILOSOFIA come segnale primario (Peso 8) ─────────────────────
+      const filoSignals = FILOSOFIA_QUIZ_MAP[filo] ?? {};
+      if (filoSignals.compagnia === compagnia) score += 8;
+      if (filoSignals.livello === livello)     score += 8;
+      if (filoSignals.luogo === luogo)         score += 8;
+      if (filoSignals.sforzo === sforzo)       score += 8;
+      if (filoSignals.cerca === cerca)         score += 8;
+      if (filoSignals.tempo === tempo)         score += 8;
+
+      // ── 2. LIVELLO TREKKING — filtro hard con null-safety (Peso 10) ─────
+      if (diffDB) {
+        if (livello === "Base") {
+          if (diffDB === "Facile")             score += 10;
+          else if (diffDB === "Facile-Media")  score += 5;
+          else if (diffDB === "Media")         score -= 8;
+          else                                 score -= 15;
+        } else if (livello === "Medio") {
+          if (diffDB === "Media")                                         score += 10;
+          else if (diffDB === "Facile-Media" || diffDB === "Media-Impegnativa") score += 7;
+          else if (diffDB === "Facile")                                   score += 3;
+        } else if (livello === "Pro") {
+          if (diffDB === "Impegnativa")        score += 10;
+          else if (diffDB === "Media-Impegnativa") score += 8;
+          else if (diffDB === "Media")         score += 4;
+        }
+      }
+      // se difficolta è null → nessuna penalità, campo non valorizzato
+
+      // ── 3. QUANTO TEMPO — logistica (Peso 8) ────────────────────────────
+      if (tempo === "Ore" && cat === "giornata")  score += 8;
+      else if (tempo === "Giorno" && cat === "giornata") score += 8;
+      else if (tempo === "Tour" && cat === "tour") score += 8;
+      else if (cat)                               score -= 5;
+      // se categoria è null → nessuna penalità
+
+      // ── 4. SFORZO FISICO — rinforzo secondario (Peso 4) ─────────────────
+      if (diffDB) {
+        if (sforzo === "Leggero" && (diffDB === "Facile" || diffDB === "Facile-Media")) score += 4;
+        if (sforzo === "Medio"   && (diffDB === "Facile-Media" || diffDB === "Media"))  score += 4;
+        if (sforzo === "Intenso" && (diffDB === "Media-Impegnativa" || diffDB === "Impegnativa")) score += 4;
+      }
+      if (sforzo === "Leggero" && (d.includes("pianeggiante") || d.includes("relax"))) score += 2;
+      if (sforzo === "Intenso" && (d.includes("dislivello")  || d.includes("ripido"))) score += 2;
+
+      // ── 5. LUOGO IDEALE — keyword fallback (Peso 4) ──────────────────────
+      const luogoL = luogo.toLowerCase();
+      if (luogoL === "laghi"  && (t.includes("lago")  || d.includes("lago")  || d.includes("acqua")))    score += 4;
+      if (luogoL === "vette"  && (t.includes("cima")  || t.includes("vetta") || d.includes("panorama"))) score += 4;
+      if (luogoL === "boschi" && (d.includes("bosco") || d.includes("alberi") || d.includes("foresta"))) score += 4;
+
+      // ── 6. COSA CERCHI (Peso 3) ──────────────────────────────────────────
+      if (cerca === "Foto"  && (d.includes("vista") || d.includes("panoram") || d.includes("foto")))         score += 3;
+      if (cerca === "Pace"  && (d.includes("pace")  || d.includes("silenzio") || d.includes("relax")))        score += 3;
+      if (cerca === "Sfida" && (diffDB.includes("Impegnativa") || t.includes("traversata") || d.includes("sfida"))) score += 3;
+
+      // ── 7. COMPAGNIA (Peso 2) ─────────────────────────────────────────────
+      if (compagnia === "Solo"   && (d.includes("silenzio") || d.includes("solitari"))) score += 2;
+      if (compagnia === "Coppia" && (d.includes("tramonto") || d.includes("romantico") || d.includes("coppia"))) score += 2;
+      if (compagnia === "Gruppo" && (d.includes("convivial") || d.includes("gruppo") || d.includes("compagnia"))) score += 2;
+
+      // ── 8. DIVERSITÀ: penalizza suggerimenti già mostrati ────────────────
+      if (shownSuggestions.includes(esc.id)) score -= 12;
+
+      // ── 9. Tiebreaker casuale ─────────────────────────────────────────────
+      score += Math.random() * 1.5;
+
+      if (score > maxScore) { maxScore = score; bestMatch = esc; }
+    });
+
+    setShownSuggestions(prev => [...prev, bestMatch.id]);
+    setSuggestedHike(bestMatch);
+    setQuizStep("result");
   };
 
   const filteredEscursioni = escursioni.filter((esc) =>
@@ -334,17 +309,10 @@ export default function EscursioniPage({
               key={esc.id}
               className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5"
               style={{
-                boxShadow:
-                  "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
+                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.boxShadow =
-                  "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.boxShadow =
-                  "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")
-              }
+              onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")}
+              onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")}
             >
               <div className="h-48 md:h-56 relative overflow-hidden">
                 {esc.immagine_url && (
@@ -392,7 +360,7 @@ export default function EscursioniPage({
                     onClick={() => onBookingClick(esc.titolo)}
                     className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                   >
-                    Richiedi Info <ArrowRight size={12} />
+                    Richiedi Informazioni <ArrowRight size={12} />
                   </button>
                 </div>
               </div>
@@ -424,7 +392,7 @@ export default function EscursioniPage({
           <div className="flex flex-col md:flex-row min-h-[400px]">
             <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80"
+                src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
                 alt="Montagna"
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -520,10 +488,7 @@ export default function EscursioniPage({
                     className="text-center"
                   >
                     <div className="w-16 h-16 bg-brand-sky/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Star
-                        size={28}
-                        className="text-brand-sky fill-brand-sky"
-                      />
+                      <Star size={28} className="text-brand-sky fill-brand-sky" />
                     </div>
                     <p className="text-[10px] font-black text-brand-sky uppercase tracking-[0.2em] mb-2">
                       Abbiamo scelto per te:

@@ -10,6 +10,44 @@ interface CorsiPageProps {
   onBookingClick: (title: string) => void;
 }
 
+const FILOSOFIA_COLORS: Record<string, string> = {
+  Avventura: "#e94544",
+  Benessere: "#a5daca",
+  "Borghi più belli": "#946a52",
+  Formazione: "#002f59",
+  "Giornata da Guida": "#75c43c",
+  "Immersi nel verde": "#358756",
+  "Luoghi dello Spirito": "#c8a3c9",
+  "Outdoor Education": "#01aa9f",
+  Speciali: "#b8163c",
+  "Tra Mare e Cielo": "#7aaecd",
+  "Trek Urbano": "#f39452",
+};
+
+function getFilosofiaOpacity(color: string): string {
+  const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
+  return dark.includes(color) ? `${color}aa` : `${color}cc`;
+}
+
+function FilosofiaBadge({ value }: { value: string | null | undefined }) {
+  if (!value) return null;
+  const color = FILOSOFIA_COLORS[value] ?? "#44403c";
+  const bg = getFilosofiaOpacity(color);
+  return (
+    <div
+      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-sm"
+      style={{
+        backgroundColor: bg,
+        color: "rgba(255,255,255,0.95)",
+        textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+        boxShadow: `0 2px 12px ${color}55, inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px ${color}`,
+      }}
+    >
+      {value}
+    </div>
+  );
+}
+
 // FIX: skeleton loader al posto del testo "Caricamento..."
 const SkeletonCard = () => (
   <div className="bg-white rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col">
@@ -77,7 +115,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
   return (
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-4xl font-black mb-12 text-brand-stone uppercase tracking-tighter">
-        I Nostri Corsi
+        Accademia
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {/* FIX: empty state se Supabase restituisce zero corsi */}
@@ -107,9 +145,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                     }}
                   />
                 )}
-                <div className="absolute top-4 left-4 bg-brand-stone text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">
-                  {corso.categoria}
-                </div>
+                <FilosofiaBadge value={corso.categoria} />
               </div>
               <div className="p-8 flex flex-col flex-grow">
                 <h2 className="text-xl font-black mb-4 text-brand-stone uppercase line-clamp-2">

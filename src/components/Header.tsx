@@ -12,7 +12,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
   const navItems = [
     { id: "home", label: "Home" },
     { id: "escursioni", label: "Escursioni" },
-    { id: "corsi", label: "Corsi" },
+    { id: "corsi", label: "Accademia" },
     { id: "tessera", label: "La Mia Tessera" },
   ];
 

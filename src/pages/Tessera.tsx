@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import {
   X,
   Loader2,
@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   Gift,
   CheckCircle2,
+  User,
+  Camera,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
@@ -221,6 +223,8 @@ interface UserTessera {
   id: string;
   codice_tessera: string;
   nome_escursionista: string;
+  cognome_escursionista: string;
+  avatar_url: string | null;
   escursioni_completate: EscursioneCompletata[];
   punti: number;
 }
@@ -266,6 +270,8 @@ export default function Tessera() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [userTessera, setUserTessera] = useState<UserTessera | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [loginCode, setLoginCode] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -313,6 +319,95 @@ export default function Tessera() {
     if (savedCode) fetchUserFromSession(savedCode);
     else setLoading(false);
   }, []);
+
+  async function compressImage(file: File): Promise<Blob> {
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 400;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const targetW = Math.max(1, Math.round(bitmap.width * scale));
+    const targetH = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = targetW;
+    canvas.height = targetH;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas non disponibile");
+    ctx.drawImage(bitmap, 0, 0, targetW, targetH);
+    let quality = 0.8;
+    const targetBytes = 100 * 1024;
+    let blob: Blob | null = await new Promise((res) =>
+      canvas.toBlob(res, "image/jpeg", quality),
+    );
+    while (blob && blob.size > targetBytes && quality > 0.4) {
+      quality -= 0.1;
+      // eslint-disable-next-line no-await-in-loop
+      blob = await new Promise((res) =>
+        canvas.toBlob(res, "image/jpeg", quality),
+      );
+    }
+    if (!blob) throw new Error("Impossibile generare l'immagine");
+    return blob;
+  }
+
+  async function handleAvatarFileChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    try {
+      if (!userTessera) return;
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setAvatarUploading(true);
+      
+      let compressed: Blob;
+      try {
+        compressed = await compressImage(file);
+      } catch {
+        compressed = file;
+      }
+
+      const path = `avatars/${userTessera.id}.jpg`;
+
+      // 1. Eseguiamo l'upload (sovrascrivendo grazie a upsert)
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, compressed, { upsert: true, contentType: "image/jpeg" });
+
+      if (upErr) {
+        setToast({ message: `Errore upload: ${upErr.message}`, color: "#ef4444" });
+        throw upErr;
+      }
+
+      // 2. Otteniamo l'URL pubblico (QUESTO VA PRIMA DEL FRESHURL)
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const publicUrl = pub.publicUrl;
+
+      // 3. Creiamo l'URL con il timestamp per ingannare la cache del browser
+      const freshUrl = `${publicUrl}?t=${new Date().getTime()}`;
+
+      // 4. Aggiorniamo il database con l'URL pulito
+      const { error: dbErr } = await supabase
+        .from("tessere")
+        .update({ avatar_url: publicUrl })
+        .eq("id", userTessera.id);
+
+      if (dbErr) {
+        setToast({ message: `Errore salvataggio: ${dbErr.message}`, color: "#ef4444" });
+        throw dbErr;
+      }
+
+      // 5. Aggiorniamo lo stato locale con l'URL "fresco" così l'immagine cambia subito
+      setUserTessera((prev) => (prev ? { ...prev, avatar_url: freshUrl } : prev));
+      
+      setToast({ message: "Avatar aggiornato", color: "#10b981" });
+
+    } catch (err) {
+      console.error("Errore upload avatar:", err);
+      // Il toast di errore viene già gestito nei blocchi if sopra
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   async function fetchUserFromSession(codice: string) {
     setLoading(true);
@@ -624,16 +719,59 @@ export default function Tessera() {
         {/* TESSERA con swipe */}
         <div className="bg-white rounded-[2.5rem] md:rounded-[3rem] p-5 md:p-8 shadow-2xl border border-white/50">
           <div className="flex justify-between items-start mb-6">
-            <div className="max-w-[70%]">
-              <div className="flex items-center gap-1 mb-0.5 text-sky-500">
-                <ShieldCheck size={12} />
-                <span className="text-[8px] md:text-[9px] font-black uppercase">
-                  Escursionista Verificato
-                </span>
+            <div className="max-w-[70%] flex items-center gap-4">
+              <div className="relative">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border border-stone-200 shadow-sm bg-stone-100 flex items-center justify-center"
+                >
+                  {userTessera.avatar_url ? (
+                    <img
+                      src={userTessera.avatar_url}
+                      alt="Avatar escursionista"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-8 h-8 text-stone-400" />
+                  )}
+                  {avatarUploading && (
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-white animate-spin" />
+                    </div>
+                  )}
+                </motion.div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white border border-stone-200 shadow flex items-center justify-center hover:bg-stone-50 transition-colors"
+                  aria-label="Carica avatar"
+                >
+                  <Camera className="w-4 h-4 text-stone-600" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarFileChange}
+                />
               </div>
-              <h2 className="text-xl md:text-2xl font-black uppercase truncate leading-tight">
-                {userTessera.nome_escursionista}
-              </h2>
+              <div>
+                <div className="flex items-center gap-1 mb-0.5 text-sky-500">
+                  <ShieldCheck size={12} />
+                  <span className="text-[8px] md:text-[9px] font-black uppercase">
+                    Escursionista Verificato
+                  </span>
+                </div>
+                <h2 className="text-xl md:text-2xl font-black uppercase truncate leading-tight">
+                  {[
+                    userTessera.nome_escursionista,
+                    userTessera.cognome_escursionista,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                </h2>
+              </div>
             </div>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-stone-50 rounded-xl flex items-center justify-center border border-stone-100">
               {userTessera.escursioni_completate?.length >=

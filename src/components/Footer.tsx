@@ -1,7 +1,11 @@
 import { Instagram, Mail, Phone, Heart, Facebook, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function Footer() {
+interface FooterProps {
+  onNavigate: (page: string) => void;
+}
+
+export default function Footer({ onNavigate }: FooterProps) {
   return (
     <footer className="bg-[#2a2723] text-stone-200 mt-auto border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 md:py-16">
@@ -16,6 +20,7 @@ export default function Footer() {
                 src="/altour-logo.png"
                 alt="Altour Italy"
                 className="h-20 md:h-24 w-auto object-contain rounded-[1.5rem] border border-white/10 shadow-2xl bg-white/5 p-1 cursor-pointer"
+                onClick={() => onNavigate("home")}
               />
             </div>
             <p className="text-sm leading-relaxed text-stone-400 max-w-xs font-medium">
@@ -111,32 +116,30 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* FOOTER BOTTOM - OTTIMIZZATO MOBILE */}
+        {/* FOOTER BOTTOM */}
         <div className="border-t border-white/5 mt-16 pt-10 flex flex-col items-center">
-          {/* Legal Links Stack - Molto più pulito su mobile */}
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-4 mb-10">
-            <a
-              href="#"
+            <button
+              onClick={() => onNavigate("legal-privacy")}
               className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 hover:text-brand-sky transition-colors"
             >
               Privacy Policy
-            </a>
-            <a
-              href="#"
+            </button>
+            <button
+              onClick={() => onNavigate("legal-cookie")}
               className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 hover:text-brand-sky transition-colors"
             >
               Cookie Policy
-            </a>
-            <a
-              href="#"
+            </button>
+            <button
+              onClick={() => onNavigate("legal-termini")}
               className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-500 hover:text-brand-sky transition-colors"
             >
               Termini
-            </a>
+            </button>
           </div>
 
           <div className="flex flex-col items-center gap-6 text-center">
-            {/* Copyright & P.IVA */}
             <div className="flex flex-col gap-2">
               <p className="text-[10px] text-stone-500 uppercase tracking-[0.3em] font-black">
                 &copy; {new Date().getFullYear()} Altour Italy
@@ -146,7 +149,6 @@ export default function Footer() {
               </p>
             </div>
 
-            {/* Made with - Design più leggero e centrato */}
             <div className="flex flex-col items-center gap-3">
               <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.4em] text-stone-600 font-bold">
                 <span>Made with</span>

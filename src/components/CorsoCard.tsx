@@ -1,74 +1,48 @@
-import { Clock, Euro, BookOpen, TrendingUp } from 'lucide-react';
-import type { Database } from '../lib/database.types';
+import { Calendar } from 'lucide-react';
 
-type Corso = Database['public']['Tables']['corsi']['Row'];
+interface Escursione {
+  id: string;
+  titolo: string;
+  descrizione: string;
+  data: string;
+  difficolta: string;
+  prezzo: number;
+  immagine_url: string | null;
+}
 
-interface CorsoCardProps {
-  corso: Corso;
+interface Props {
+  escursione: Escursione;
   onBook: () => void;
 }
 
-export default function CorsoCard({ corso, onBook }: CorsoCardProps) {
+export default function EscursioneCard({ escursione, onBook }: Props) {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col h-full border border-stone-100 group">
-      {/* Immagine con Overlay Gradiente */}
-      <div className="relative h-56 overflow-hidden">
-        <img
-          src={corso.immagine_url || 'https://images.pexels.com/photos/1252500/pexels-photo-1252500.jpeg'}
-          alt={corso.titolo}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+    <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 flex flex-col h-full w-full">
+      <div className="relative h-48 w-full">
+        <img 
+          src={escursione.immagine_url || 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800'} 
+          className="w-full h-full object-cover"
+          alt={escursione.titolo}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        
-        {/* Badge Categoria - Ora in Brand Stone */}
-        <div className="absolute top-4 left-4">
-          <span className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-brand-stone text-white shadow-lg">
-            {corso.categoria}
-          </span>
+        <div className="absolute top-2 left-2 bg-white/90 px-2 py-1 rounded text-[10px] font-bold uppercase border">
+          {escursione.difficolta || 'E'}
         </div>
       </div>
-
-      <div className="p-6 flex flex-col flex-grow">
-        <h3 className="text-xl font-black text-brand-stone mb-3 leading-tight uppercase tracking-tight">
-          {corso.titolo}
-        </h3>
-
-        <p className="text-stone-500 text-sm leading-relaxed mb-6 flex-grow font-medium">
-          {corso.descrizione}
-        </p>
-
-        {/* Dettagli Tecnici */}
-        <div className="space-y-3 mb-8">
-          <div className="flex items-center space-x-3 text-stone-700">
-            <div className="p-2 bg-brand-glacier rounded-lg">
-              <Clock className="w-4 h-4 text-brand-sky flex-shrink-0" />
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider">Durata: {corso.durata}</span>
-          </div>
-          <div className="flex items-center space-x-3 text-stone-700">
-            <div className="p-2 bg-brand-glacier rounded-lg">
-              <BookOpen className="w-4 h-4 text-brand-sky flex-shrink-0" />
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider">Materiale didattico incluso</span>
-          </div>
+      
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="flex items-center gap-2 text-sky-600 text-[10px] font-bold mb-1">
+          <Calendar size={12} /> {new Date(escursione.data).toLocaleDateString('it-IT')}
         </div>
-
-        {/* Footer Card - Prezzo e Prenotazione */}
-        <div className="flex items-center justify-between gap-4 pt-6 border-t border-stone-100">
-          <div className="flex items-baseline space-x-1">
-            <span className="text-2xl font-black text-brand-stone">{corso.prezzo}</span>
-            <Euro className="w-4 h-4 text-stone-400 flex-shrink-0" />
-          </div>
-          
-          <div className="flex flex-col items-end">
-            <button
-              onClick={onBook}
-              className="bg-brand-sky hover:bg-brand-stone text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all duration-300 shadow-lg shadow-brand-sky/20 flex items-center space-x-2 active:scale-95"
-            >
-              <span>Iscriviti</span>
-              <TrendingUp className="w-4 h-4" />
-            </button>
-          </div>
+        <h3 className="text-base font-bold text-slate-900 mb-4 line-clamp-2">{escursione.titolo}</h3>
+        
+        <div className="mt-auto pt-3 border-t flex justify-between items-center">
+          <span className="text-lg font-black text-slate-900">€{escursione.prezzo}</span>
+          <button 
+            onClick={onBook}
+            className="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-sky-600 transition-colors"
+          >
+            Dettagli
+          </button>
         </div>
       </div>
     </div>
