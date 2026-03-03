@@ -196,7 +196,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   icon: <TrendingUp size={14} />,
                 },
                 { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
-                { value: "4k+", label: "Attività", icon: <Users size={14} /> },
+                { value: "800+", label: "Clienti", icon: <Users size={14} /> },
               ].map((stat, index) => (
                 <div
                   key={index}
@@ -247,7 +247,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")}
               onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")}
             >
-              <div className="h-48 md:h-56 relative overflow-hidden">
+              <div className="h-40 md:h-52 relative overflow-hidden">
                 <img
                   src={esc.immagine_url || IMG_FALLBACK}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -407,35 +407,35 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
           <div className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-stone-100 shadow-xl">
 
-           {/* Immagine libera — nessun testo sovrapposto */}
-<div className="relative h-56 md:h-80 overflow-hidden">
-  <img
-    src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Trentino_neve.webp"
-    alt="Gift Experience Altour"
-    className="w-full h-full object-cover"
-    onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
-    loading="lazy"
-    decoding="async"
-  />
-  <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-black/25 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full">
-    <Star size={7} className="text-brand-sky fill-brand-sky" />
-    <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white">Gift Experience</span>
-  </div>
-</div>
+            {/* Header con sfondo tono-su-tono */}
+            <div className="bg-[#f5f2ed] px-6 md:px-12 pt-8 md:pt-10 pb-6 md:pb-8 flex flex-col md:flex-row items-center gap-4 md:gap-8 text-center md:text-left border-b border-stone-100">
+              <div className="shrink-0 relative">
+                {/* Glow dietro icona */}
+                <div className="absolute inset-0 bg-brand-sky/20 rounded-[2rem] blur-xl" />
+                <div className="relative w-16 h-16 md:w-20 md:h-20 bg-white rounded-2xl md:rounded-[1.5rem] flex items-center justify-center text-brand-sky shadow-md border border-white/80">
+                  <Gift size={28} className="md:w-9 md:h-9" strokeWidth={1.5} />
+                </div>
+              </div>
 
-{/* Titolo e sottotitolo su bianco */}
-<div className="px-6 md:px-12 pt-8 md:pt-10 pb-6 md:pb-8 border-b border-stone-100">
-  <h2 className="text-2xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
-    Regala un'
-    <span className="text-brand-sky italic font-light tracking-normal">
-      avventura.
-    </span>
-  </h2>
-  <p className="text-stone-500 text-sm font-medium max-w-lg leading-relaxed">
-    Un'emozione in montagna per chi ami — utilizzabile per escursioni, corsi e tour privati.
-  </p>
-</div>
-
+              <div className="flex-grow">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-1.5">
+                  <Star size={7} className="text-brand-sky fill-brand-sky" />
+                  <span className="text-[8px] font-black uppercase tracking-[0.35em] text-brand-sky">
+                    Gift Experience
+                  </span>
+                  <Star size={7} className="text-brand-sky fill-brand-sky" />
+                </div>
+                <h2 className="text-2xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-2">
+                  Regala un'
+                  <span className="text-brand-sky italic font-light tracking-normal">
+                    avventura.
+                  </span>
+                </h2>
+                <p className="text-stone-500 text-[11px] md:text-sm font-medium max-w-md leading-relaxed">
+                  Un'emozione in montagna per chi ami — utilizzabile per escursioni, corsi e tour privati.
+                </p>
+              </div>
+            </div>
 
             {/* Body: preset + CTA */}
             <div className="px-6 md:px-12 py-6 md:py-8">

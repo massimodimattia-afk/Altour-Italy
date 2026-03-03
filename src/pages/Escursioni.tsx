@@ -314,7 +314,7 @@ export default function EscursioniPage({
               onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")}
               onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")}
             >
-              <div className="h-48 md:h-56 relative overflow-hidden">
+              <div className="h-40 md:h-52 relative overflow-hidden">
                 {esc.immagine_url && (
                   <img
                     src={esc.immagine_url}
@@ -392,7 +392,7 @@ export default function EscursioniPage({
           <div className="flex flex-col md:flex-row min-h-[400px]">
             <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
               <img
-                src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
+                src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80"
                 alt="Montagna"
                 className="absolute inset-0 w-full h-full object-cover"
               />
