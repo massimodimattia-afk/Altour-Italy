@@ -65,6 +65,18 @@ export default function ActivityDetailModal({
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, images.length]);
 
+  // Scroll lock: blocca il body quando il modale è aperto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   if (!activity) return null;
 
   const nextImage = () =>
@@ -88,7 +100,7 @@ export default function ActivityDetailModal({
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
+            className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
           >
             {/* Gallery Section */}
             <div className="md:w-1/2 relative bg-stone-100 h-64 md:h-auto md:min-h-full flex-shrink-0">
@@ -101,6 +113,8 @@ export default function ActivityDetailModal({
                     onError={(e) => {
                       e.currentTarget.src = IMG_FALLBACK;
                     }}
+                    fetchPriority="high"
+                    decoding="async"
                   />
                   {images.length > 1 && (
                     <>
@@ -152,7 +166,7 @@ export default function ActivityDetailModal({
             </div>
 
             {/* Content Section */}
-            <div className="md:w-1/2 p-8 md:p-12 flex flex-col">
+            <div className="md:w-1/2 p-8 md:p-12 flex flex-col overflow-y-auto md:overflow-visible">
               <button
                 onClick={onClose}
                 aria-label="Chiudi"
@@ -207,7 +221,9 @@ export default function ActivityDetailModal({
                   <div className="mt-8 p-6 bg-stone-50 rounded-2xl border border-stone-100">
                     <h4 className="text-xs font-black uppercase tracking-widest text-brand-stone mb-4 flex items-center gap-2">
                       <Backpack size={16} className="text-brand-sky" />{" "}
-                      Equipaggiamento Consigliato
+                      {"data" in activity
+  ? "Equipaggiamento Consigliato"
+  : "Di cosa parleremo"}
                     </h4>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
                       {activity.attrezzatura.split(",").map((item, index) => (

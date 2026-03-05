@@ -48,11 +48,10 @@ function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
-// FIX: skeleton loader al posto del testo "Caricamento..."
 const SkeletonCard = () => (
-  <div className="bg-white rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col">
-    <div className="h-48 bg-stone-100 animate-pulse" />
-    <div className="p-8 flex flex-col gap-4">
+  <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col">
+    <div className="h-48 md:h-56 bg-stone-100 animate-pulse" />
+    <div className="p-5 md:p-8 flex flex-col gap-4">
       <div className="h-6 w-3/4 bg-stone-200 rounded animate-pulse" />
       <div className="space-y-2">
         <div className="h-3 w-full bg-stone-100 rounded animate-pulse" />
@@ -73,7 +72,6 @@ const SkeletonCard = () => (
   </div>
 );
 
-// Placeholder se l'immagine remota fallisce
 const IMG_FALLBACK = "/altour-logo.png";
 
 export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
@@ -99,7 +97,6 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
     setIsDetailOpen(true);
   };
 
-  // FIX: skeleton loader invece del testo "Caricamento..."
   if (loading)
     return (
       <div className="container mx-auto px-4 py-12">
@@ -118,7 +115,6 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         Accademia
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {/* FIX: empty state se Supabase restituisce zero corsi */}
         {corsi.length === 0 ? (
           <div className="col-span-3 py-24 text-center">
             <p className="text-stone-300 font-black uppercase tracking-widest text-sm">
@@ -129,11 +125,10 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
           corsi.map((corso) => (
             <div
               key={corso.id}
-              className="bg-white rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500"
+              className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500"
             >
-              <div className="h-48 bg-stone-200 relative overflow-hidden">
+              <div className="h-48 md:h-56 bg-stone-200 relative overflow-hidden">
                 {corso.immagine_url && (
-                  // FIX: lazy loading + fallback su immagine rotta
                   <img
                     src={corso.immagine_url}
                     alt={corso.titolo}
@@ -147,11 +142,11 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                 )}
                 <FilosofiaBadge value={corso.categoria} />
               </div>
-              <div className="p-8 flex flex-col flex-grow">
-                <h2 className="text-xl font-black mb-4 text-brand-stone uppercase line-clamp-2">
+              <div className="p-5 md:p-8 flex flex-col flex-grow">
+                <h2 className="text-lg md:text-xl font-black mb-4 text-brand-stone uppercase line-clamp-2">
                   {corso.titolo}
                 </h2>
-                <p className="text-stone-500 text-sm mb-6 line-clamp-3 font-medium flex-grow">
+                <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow">
                   {corso.descrizione}
                 </p>
 
@@ -167,13 +162,13 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                   <div className="flex gap-3">
                     <button
                       onClick={() => openDetails(corso)}
-                      className="flex-1 border-2 border-brand-stone text-brand-stone py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-brand-stone hover:text-white transition-all"
+                      className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all"
                     >
                       Dettagli
                     </button>
                     <button
                       onClick={() => onBookingClick(corso.titolo)}
-                      className="flex-[2] bg-brand-stone text-white py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-brand-sky transition-all active:scale-95"
+                      className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                     >
                       Richiedi Info
                     </button>

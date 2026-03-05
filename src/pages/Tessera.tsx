@@ -670,10 +670,10 @@ export default function Tessera() {
   return (
     <div className="min-h-screen bg-[#f5f2ed] pb-20 text-stone-800">
       {/* HERO */}
-      <div className="relative h-[28vh] md:h-[32vh] w-full flex items-center justify-center text-center overflow-hidden">
+      <div className="relative h-[45vh] md:h-[50vh] w-full flex items-center justify-center text-center overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Trentino_neve.webp"
+          className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
           alt="header bg"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#f5f2ed]" />

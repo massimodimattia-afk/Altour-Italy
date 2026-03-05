@@ -18,7 +18,6 @@ export default function BookingModal({
 }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
-  // FIX: errore inline invece di alert()
   const [formError, setFormError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     nome: "",
@@ -26,7 +25,6 @@ export default function BookingModal({
     messaggio: "",
   });
 
-  // Aggiorna il messaggio quando la modale si apre (per i voucher)
   useEffect(() => {
     if (isOpen) {
       setFormData((prev) => ({
@@ -36,14 +34,11 @@ export default function BookingModal({
     }
   }, [isOpen, initialMessage]);
 
-  // FIX: reset form e stato sent quando la modale si riapre/chiude
   useEffect(() => {
     if (isOpen) {
-      // FIX: sent non rimane se la modale viene riaperta prima del timeout
       setSent(false);
       setFormError(null);
     } else {
-      // FIX: piccolo delay per non vedere il reset durante l'animazione di chiusura
       const t = setTimeout(() => {
         setFormData({ nome: "", email: "", messaggio: "" });
         setFormError(null);
@@ -52,12 +47,14 @@ export default function BookingModal({
     }
   }, [isOpen]);
 
+  // FIX 1: "unset" → "" — valore corretto per inline style reset
+  // Evita conflitti con altri modali che usano ""
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     }
     return () => {
-      document.body.style.overflow = "unset";
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -76,7 +73,6 @@ export default function BookingModal({
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // FIX: pulisce l'errore al primo keystroke dopo che è apparso
     if (formError) setFormError(null);
   };
 
@@ -91,7 +87,6 @@ export default function BookingModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // FIX: errore inline invece di alert()
     const validationError = validateForm();
     if (validationError) {
       setFormError(validationError);
@@ -117,7 +112,6 @@ export default function BookingModal({
         onClose();
       }, 3500);
     } catch (error: any) {
-      // FIX: errore server inline invece di alert()
       setFormError(`Si è verificato un errore: ${error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -127,7 +121,13 @@ export default function BookingModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        // FIX 2: role="dialog" + aria-modal + aria-labelledby per accessibilità
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="booking-modal-title"
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -163,7 +163,11 @@ export default function BookingModal({
                     Contatto Diretto
                   </span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-black uppercase tracking-tighter leading-tight text-brand-stone">
+                {/* FIX 2: id per aria-labelledby */}
+                <h2
+                  id="booking-modal-title"
+                  className="text-2xl md:text-3xl font-black uppercase tracking-tighter leading-tight text-brand-stone"
+                >
                   {title}
                 </h2>
               </motion.div>
@@ -176,13 +180,19 @@ export default function BookingModal({
                     key="form"
                     onSubmit={handleSubmit}
                     className="space-y-5"
+                    noValidate
                   >
                     <div className="space-y-4">
                       <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
+                        {/* FIX 2: htmlFor + id su tutti i campi */}
+                        <label
+                          htmlFor="booking-nome"
+                          className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1"
+                        >
                           Nome Completo
                         </label>
                         <input
+                          id="booking-nome"
                           required
                           name="nome"
                           value={formData.nome}
@@ -192,10 +202,14 @@ export default function BookingModal({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
+                        <label
+                          htmlFor="booking-email"
+                          className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1"
+                        >
                           Email di Contatto
                         </label>
                         <input
+                          id="booking-email"
                           required
                           name="email"
                           value={formData.email}
@@ -206,10 +220,14 @@ export default function BookingModal({
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1">
+                        <label
+                          htmlFor="booking-messaggio"
+                          className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1"
+                        >
                           Note / Importo Voucher
                         </label>
                         <textarea
+                          id="booking-messaggio"
                           name="messaggio"
                           value={formData.messaggio}
                           onChange={handleChange}
@@ -218,20 +236,19 @@ export default function BookingModal({
                           maxLength={500}
                           className="w-full p-5 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-xs text-brand-stone resize-none transition-all outline-none"
                         />
-                        {/* FIX: contatore caratteri sul campo note */}
                         <p className="text-right text-[9px] font-bold text-stone-300 mr-1">
                           {formData.messaggio.length} / 500
                         </p>
                       </div>
                     </div>
 
-                    {/* FIX: errore inline al posto di alert() */}
                     <AnimatePresence>
                       {formError && (
                         <motion.p
                           initial={{ opacity: 0, y: -6 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -6 }}
+                          role="alert"
                           className="text-red-500 text-[10px] font-black uppercase text-center bg-red-50 py-3 rounded-xl"
                         >
                           {formError}
@@ -245,7 +262,11 @@ export default function BookingModal({
                       className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-4 transition-all shadow-[0_15px_30px_rgba(14,165,233,0.25)] active:scale-95"
                     >
                       {isSubmitting ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        // FIX 3: testo + spinner durante invio
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Invio in corso...</span>
+                        </>
                       ) : (
                         <>
                           <span>Invia Richiesta</span>
@@ -260,6 +281,8 @@ export default function BookingModal({
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="py-12 text-center"
+                    role="status"
+                    aria-live="polite"
                   >
                     <div className="bg-emerald-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                       <CheckCircle2 className="w-10 h-10 text-emerald-500" />

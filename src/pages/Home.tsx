@@ -61,7 +61,6 @@ const FILOSOFIA_COLORS: Record<string, string> = {
 };
 
 function getFilosofiaOpacity(color: string): string {
-  // Colori scuri: opacità ridotta per mantenere l'effetto glass
   const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
   return dark.includes(color) ? `${color}aa` : `${color}cc`;
 }
@@ -85,16 +84,16 @@ function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
+// Costante fuori dal componente — non viene ricreata ad ogni render
+const PRESET_VOUCHERS = [10, 20, 60, 100, 200, 300];
+
 export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [featuredHikes, setFeaturedHikes] = useState<Escursione[]>([]);
   const [courses, setCourses] = useState<Corso[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
-    null,
-  );
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  const presetVouchers = [10, 20, 60, 100, 200, 300];
 
   useEffect(() => {
     async function loadData() {
@@ -106,7 +105,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           .order("data", { ascending: true });
         const { data: crs } = await supabase.from("corsi").select("*").limit(2);
         if (allHikes) {
-          // 3 escursioni casuali ad ogni caricamento
           const shuffled = [...allHikes].sort(() => Math.random() - 0.5);
           setFeaturedHikes(shuffled.slice(0, 3) as Escursione[]);
         }
@@ -147,6 +145,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp"
             className="w-full h-full object-cover object-[center_20%] brightness-[0.8] contrast-[1.02] transition-transform duration-[20s] scale-105"
             alt="Dolomiti Altour Italy"
+            loading="eager"
+            fetchPriority="high"
             decoding="async"
             onError={(e) => {
               e.currentTarget.src = IMG_FALLBACK;
@@ -190,27 +190,14 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           >
             <div className="grid grid-cols-3 gap-0 divide-x divide-white/10">
               {[
-                {
-                  value: "10 anni",
-                  label: "Exp.",
-                  icon: <TrendingUp size={14} />,
-                },
+                { value: "10 anni", label: "Exp.", icon: <TrendingUp size={14} /> },
                 { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
-                { value: "800+", label: "Clienti", icon: <Users size={14} /> },
+                { value: "4k+", label: "Attività", icon: <Users size={14} /> },
               ].map((stat, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-center justify-center px-1"
-                >
-                  <div className="text-brand-sky mb-1 md:hidden">
-                    {stat.icon}
-                  </div>
-                  <p className="text-xs md:text-2xl font-black text-white leading-none">
-                    {stat.value}
-                  </p>
-                  <p className="text-[7px] md:text-[10px] uppercase tracking-widest text-stone-300 font-bold mt-1">
-                    {stat.label}
-                  </p>
+                <div key={index} className="flex flex-col items-center justify-center px-1">
+                  <div className="text-brand-sky mb-1 md:hidden">{stat.icon}</div>
+                  <p className="text-xs md:text-2xl font-black text-white leading-none">{stat.value}</p>
+                  <p className="text-[7px] md:text-[10px] uppercase tracking-widest text-stone-300 font-bold mt-1">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -223,8 +210,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-4 px-2">
           <div className="max-w-md">
             <h2 className="text-2xl md:text-4xl font-black text-stone-900 uppercase tracking-tight leading-tight">
-              Scegli la meta, <br className="hidden md:block" /> noi pensiamo al
-              resto.
+              Scegli la meta, <br className="hidden md:block" /> noi pensiamo al resto.
             </h2>
             <div className="h-1 w-12 bg-brand-sky mt-3" />
           </div>
@@ -243,9 +229,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5"
               style={{
                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
+                transition: "box-shadow 0.3s ease, transform 0.3s ease",
               }}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)"; }}
             >
               <div className="h-48 md:h-56 relative overflow-hidden">
                 <img
@@ -254,40 +241,23 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   alt={esc.titolo}
                   loading="lazy"
                 />
-                {/* Gradiente base */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                {/* Accent line in fondo all'immagine */}
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-sky/80 via-brand-sky to-brand-sky/30" />
                 <FilosofiaBadge value={esc.filosofia} />
               </div>
               <div className="p-5 md:p-8 flex flex-col flex-grow">
                 <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
                   <Calendar size={12} className="mr-1.5" />
-                  {esc.data
-                    ? new Date(esc.data).toLocaleDateString("it-IT", {
-                        day: "2-digit",
-                        month: "long",
-                      })
-                    : "Su richiesta"}
+                  {esc.data ? new Date(esc.data).toLocaleDateString("it-IT", { day: "2-digit", month: "long" }) : "Su richiesta"}
                 </p>
-                <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
-                  {esc.titolo}
-                </h3>
-                <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow leading-relaxed">
-                  {esc.descrizione}
-                </p>
+                <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">{esc.titolo}</h3>
+                <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow leading-relaxed">{esc.descrizione}</p>
                 <div className="flex gap-2 md:gap-3">
-                  <button
-                    onClick={() => openDetails(esc)}
-                    className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all"
-                  >
+                  <button onClick={() => openDetails(esc)} className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all">
                     Dettagli
                   </button>
-                  <button
-                    onClick={() => onBookingClick(esc.titolo)}
-                    className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]"
-                  >
-                    Richiedi Informazioni
+                  <button onClick={() => onBookingClick(esc.titolo)} className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]">
+                    Richiedi Info
                   </button>
                 </div>
               </div>
@@ -297,38 +267,66 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       </section>
 
       {/* 3. TAILOR-MADE SECTION */}
-      <section className="max-w-5xl mx-auto px-4 py-8">
-        <div className="relative bg-white rounded-[2rem] border border-stone-100 shadow-sm overflow-hidden group">
-          <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 md:gap-10 text-center md:text-left">
-            <div className="w-16 h-16 md:w-24 md:h-24 bg-[#f5f2ed] rounded-2xl md:rounded-3xl flex items-center justify-center text-brand-sky shrink-0">
-              <TrendingUp size={32} strokeWidth={1.5} />
-            </div>
-            <div className="flex-grow">
-              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-2 block">
-                Progetti Personalizzati
-              </span>
-              <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
-                Avventura{" "}
-                <span className="text-brand-sky italic font-light tracking-normal">
-                  su misura.
+      <section className="max-w-4xl mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative"
+        >
+          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
+          <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
+            <div className="flex flex-col md:flex-row min-h-[280px]">
+
+              {/* ── Immagine sinistra ── */}
+              <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
+                <img
+                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Box_avventura.webp"
+                  alt="Escursione personalizzata Altour nelle Dolomiti"
+                  className="absolute inset-0 w-full h-full object-cover object-[center_30%]"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
+                <div className="absolute bottom-6 left-8 text-white z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp size={14} className="text-brand-sky" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">
+                      Progetti Personalizzati
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
+                    Su misura, <br /> per te.
+                  </h3>
+                </div>
+              </div>
+
+              {/* ── Contenuto destra ── */}
+              <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-3 block">
+                  Progetti Personalizzati
                 </span>
-              </h2>
-              <p className="text-stone-500 text-xs md:text-sm font-medium max-w-lg leading-relaxed">
-                Hai un'idea specifica? Progettiamo tour privati e team building
-                tracciando la rotta insieme a te.
-              </p>
+                <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
+                  Avventura{" "}
+                  <span className="text-brand-sky italic font-light tracking-normal">su misura.</span>
+                </h2>
+                <p className="text-stone-500 text-sm font-medium max-w-sm leading-relaxed mb-8">
+                  Hai un'idea specifica? Progettiamo tour privati e team building
+                  tracciando la rotta insieme a te.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => onBookingClick("Esperienza su Misura")}
+                  className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-brand-sky transition-all flex items-center justify-center gap-3"
+                >
+                  Contattaci <Send size={14} />
+                </motion.button>
+              </div>
+
             </div>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => onBookingClick("Esperienza su Misura")}
-              className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-3 shrink-0"
-            >
-              <span>Contattaci</span>
-              <Send size={14} />
-            </motion.button>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* 4. ACCADEMIA SECTION */}
@@ -336,55 +334,32 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-4">
             <h2 className="text-4xl md:text-5xl font-light uppercase tracking-tighter leading-none text-brand-stone">
-              Accademia <span className="font-black">Altour</span>
-              <span className="text-brand-sky">.</span>
+              Accademia <span className="font-black">Altour</span><span className="text-brand-sky">.</span>
             </h2>
-            <button
-              onClick={() => onNavigate("corsi")}
-              className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
-            >
+            <button onClick={() => onNavigate("corsi")} className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto">
               Vedi tutti i corsi <TrendingUp size={14} />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {courses.map((corso) => (
-              <div
-                key={corso.id}
-                className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col group"
-              >
+              <div key={corso.id} className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col group">
                 <div className="h-40 md:h-48 relative overflow-hidden">
-                  <img
-                    src={corso.immagine_url || IMG_FALLBACK}
-                    className="w-full h-full object-cover"
-                    alt={corso.titolo}
-                  />
+                  <img src={corso.immagine_url || IMG_FALLBACK} className="w-full h-full object-cover" alt={corso.titolo} loading="lazy" decoding="async" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                   <FilosofiaBadge value={corso.categoria} />
                 </div>
                 <div className="p-6 md:p-8 flex flex-col flex-grow">
                   <div className="mb-4 flex items-center gap-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-sky">
-                      Iscrizioni aperte
-                    </p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-sky">Iscrizioni aperte</p>
                   </div>
-                  <h3 className="text-lg md:text-xl font-black mb-3 uppercase line-clamp-2">
-                    {corso.titolo}
-                  </h3>
-                  <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-2 font-medium leading-relaxed">
-                    {corso.descrizione}
-                  </p>
+                  <h3 className="text-lg md:text-xl font-black mb-3 uppercase line-clamp-2">{corso.titolo}</h3>
+                  <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-2 font-medium leading-relaxed">{corso.descrizione}</p>
                   <div className="mt-auto pt-4 border-t border-stone-100 flex gap-2 md:gap-3">
-                    <button
-                      onClick={() => openDetails(corso)}
-                      className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all"
-                    >
+                    <button onClick={() => openDetails(corso)} className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all">
                       Dettagli
                     </button>
-                    <button
-                      onClick={() => onBookingClick(corso.titolo)}
-                      className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]"
-                    >
-                      Richiedi Informazioni
+                    <button onClick={() => onBookingClick(corso.titolo)} className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]">
+                      Richiedi Info
                     </button>
                   </div>
                 </div>
@@ -395,127 +370,122 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       </section>
 
       {/* 5. VOUCHER SECTION */}
-      <section className="max-w-5xl mx-auto px-4 py-12 md:py-20">
+      <section className="max-w-4xl mx-auto px-4 py-12 md:py-20">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="relative"
         >
-          {/* Glow visibile */}
-          <div className="absolute -inset-1 bg-gradient-to-br from-brand-sky/30 to-brand-stone/20 rounded-[2rem] md:rounded-[2.5rem] blur-xl opacity-40 pointer-events-none" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
+          <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
+            <div className="flex flex-col md:flex-row min-h-[360px]">
 
-          <div className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden border border-stone-100 shadow-xl">
+            {/* ── Immagine sinistra ── */}
+<div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
+  <img
+    src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20250101_132336.webp"
+    alt="Paesaggio innevato Trentino — Gift Experience Altour"
+    className="absolute inset-0 w-full h-full object-cover object-center"
+    onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
+    loading="lazy"
+    decoding="async"
+  />
+  
+  {/* MODIFICATO: sfumatura verso il basso (to-b) su mobile */}
+  <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
+  
+  {/* MODIFICATO: top-6 invece di bottom-6 */}
+  <div className="absolute top-6 left-8 text-white z-10">
+    <div className="flex items-center gap-2 mb-2">
+      <Star size={14} className="text-brand-sky fill-brand-sky" />
+      <span className="text-[9px] font-black uppercase tracking-[0.3em]">
+        Gift Experience
+      </span>
+    </div>
+    <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
+      Regala un'<br />avventura.
+    </h3>
+  </div>
+</div>
 
-            {/* Immagine principale con overlay */}
-            <div className="relative h-56 md:h-80 overflow-hidden">
-              <img
-                src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
-                alt="Gift Experience Altour"
-                className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
-                loading="lazy"
-                decoding="async"
-              />
-              {/* Overlay gradiente per leggibilità testo */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-              {/* Badge pill */}
-              <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-black/25 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-full">
-                <Star size={7} className="text-brand-sky fill-brand-sky" />
-                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white">Gift Experience</span>
-              </div>
-              {/* Titolo sovrapposto in basso sull'immagine */}
-              <div className="absolute bottom-0 left-0 right-0 px-6 md:px-12 pb-8 md:pb-10">
-                <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter leading-none mb-2 drop-shadow-lg">
-                  Regala un'
-                  <span className="text-brand-sky italic font-light tracking-normal">
-                    avventura.
-                  </span>
-                </h2>
-                <p className="text-stone-200 text-xs md:text-sm font-medium max-w-lg leading-relaxed">
+              {/* ── Contenuto destra ── */}
+              <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
+                <p className="text-stone-500 text-sm font-medium leading-relaxed mb-6">
                   Un'emozione in montagna per chi ami — utilizzabile per escursioni, corsi e tour privati.
                 </p>
-              </div>
-            </div>
 
-            {/* Body: preset + CTA */}
-            <div className="px-6 md:px-12 py-6 md:py-8">
-              <p className="text-[8px] font-black uppercase tracking-widest text-stone-400 mb-4 text-center md:text-left">
-                Scegli l'importo e apri il modulo regalo
-              </p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-stone-400 mb-3">
+                  Scegli l'importo e apri il modulo regalo
+                </p>
 
-              {/* Preset grid — 2 col mobile, 3 su md, 6 su lg */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-4">
-                {presetVouchers.map((amount, idx) => {
-                  const tag =
-                    idx === 0 ? "Starter" :
-                    idx === 2 ? "Più scelto" :
-                    idx === 4 ? "Premium" :
-                    null;
-                  const isHighlighted = idx === 2;
-
-                  return (
-                    <motion.button
-                      key={amount}
-                      whileHover={{ y: -2, scale: 1.03 }}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`)}
-                      className={`relative flex flex-col items-center justify-center py-4 md:py-5 rounded-2xl font-black transition-all border-2 ${
-                        isHighlighted
-                          ? "border-brand-sky bg-brand-sky text-white shadow-lg shadow-sky-100"
-                          : "border-stone-100 bg-stone-50 text-brand-stone hover:border-brand-sky hover:text-brand-sky hover:bg-white hover:shadow-md"
-                      }`}
-                    >
-                      {tag && (
-                        <span
-                          className={`absolute -top-2.5 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full whitespace-nowrap ${
-                            isHighlighted
-                              ? "bg-brand-stone text-white"
-                              : "bg-stone-200 text-stone-500"
-                          }`}
-                        >
-                          {tag}
+                {/* 2 col mobile, 3 col md, 6 col lg */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
+                  {PRESET_VOUCHERS.map((amount, idx) => {
+                    const tag = idx === 0 ? "Starter" : idx === 2 ? "Top" : idx === 4 ? "Premium" : null;
+                    const isHighlighted = idx === 2;
+                    return (
+                      <motion.button
+                        key={amount}
+                        whileHover={{ y: -2, scale: 1.04 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`)}
+                        className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-all border-2 gap-0.5 ${
+                          isHighlighted
+                            ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100"
+                            : "border-stone-200 bg-white text-brand-stone hover:border-brand-sky hover:text-brand-sky hover:shadow-sm"
+                        }`}
+                      >
+                        {tag && (
+                          <span className={`absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                            isHighlighted ? "bg-brand-stone text-white" : "bg-stone-200 text-stone-500"
+                          }`}>
+                            {tag}
+                          </span>
+                        )}
+                        <span className="text-sm md:text-base font-black leading-none">{amount}€</span>
+                        <span className={`text-[7px] font-bold leading-none mt-0.5 ${
+                          isHighlighted ? "text-white/70" : "text-stone-400"
+                        }`}>
+                          scegli →
                         </span>
-                      )}
-                      <span className="text-lg md:text-xl font-black leading-none">
-                        {amount}€
-                      </span>
-                    </motion.button>
-                  );
-                })}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-3 my-3">
+                  <div className="flex-1 h-px bg-stone-200" />
+                  <span className="text-[7px] font-black uppercase tracking-widest text-stone-300">oppure</span>
+                  <div className="flex-1 h-px bg-stone-200" />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato")}
+                  className="w-full bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2"
+                >
+                  <Gift size={12} />
+                  Importo personalizzato
+                </motion.button>
               </div>
 
-              {/* Separatore */}
-              <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-px bg-stone-100" />
-                <span className="text-[8px] font-black uppercase tracking-widest text-stone-300">oppure</span>
-                <div className="flex-1 h-px bg-stone-100" />
-              </div>
-
-              {/* CTA Personalizza */}
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato")}
-                className="w-full bg-brand-stone text-white py-4 md:py-5 rounded-2xl font-black uppercase text-[10px] md:text-[11px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2.5"
-              >
-                <Gift size={14} />
-                Importo personalizzato
-              </motion.button>
             </div>
-
           </div>
         </motion.div>
       </section>
 
-      <ActivityDetailModal
-        activity={selectedActivity}
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        onBook={onBookingClick}
-      />
+      {selectedActivity && (
+        <ActivityDetailModal
+          activity={selectedActivity}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          onBook={onBookingClick}
+        />
+      )}
 
-      {/* WHATSAPP FLOATING BUTTON */}
+      {/* WHATSAPP FLOATING BUTTON — nascosto quando il modale dettagli è aperto */}
       <motion.a
         href="https://wa.me/393281613762"
         target="_blank"
@@ -525,16 +495,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         transition={{ delay: 1.2, type: "spring", stiffness: 280, damping: 22 }}
         whileHover={{ scale: 1.04, y: -2 }}
         whileTap={{ scale: 0.97, y: 0 }}
-        className="fixed bottom-6 right-6 z-[90] flex items-center justify-center w-14 h-14 rounded-full"
+        className={`fixed bottom-6 right-6 z-[90] flex items-center justify-center w-14 h-14 rounded-full transition-opacity duration-200 ${isDetailOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}
         style={{
           background: "linear-gradient(145deg, #2ecc71 0%, #25D366 40%, #1aab52 100%)",
-          boxShadow: `
-            0 1px 0 0 rgba(255,255,255,0.25) inset,
-            0 -1px 0 0 rgba(0,0,0,0.15) inset,
-            0 6px 16px -2px rgba(37,211,102,0.55),
-            0 2px 4px -1px rgba(0,0,0,0.2),
-            0 0 0 1px rgba(0,0,0,0.06)
-          `,
+          boxShadow: "0 1px 0 0 rgba(255,255,255,0.25) inset, 0 -1px 0 0 rgba(0,0,0,0.15) inset, 0 6px 16px -2px rgba(37,211,102,0.55), 0 2px 4px -1px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.06)",
         }}
         aria-label="Contattaci su WhatsApp"
       >

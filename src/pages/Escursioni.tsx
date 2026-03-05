@@ -32,6 +32,31 @@ interface EscursioniPageProps {
   onBookingClick: (title: string) => void;
 }
 
+// ── Costanti fuori dal componente: non vengono ricreate ad ogni render ────────
+const QUIZ_QUESTIONS = [
+  { q: "Con chi verrai?", options: ["Solo", "Coppia", "Gruppo"] },
+  { q: "Livello Trekking?", options: ["Base", "Medio", "Pro"] },
+  { q: "Luogo ideale?", options: ["Laghi", "Vette", "Boschi"] },
+  { q: "Sforzo fisico?", options: ["Leggero", "Medio", "Intenso"] },
+  { q: "Cosa cerchi?", options: ["Foto", "Pace", "Sfida"] },
+  { q: "Quanto tempo?", options: ["Ore", "Giorno", "Tour"] },
+];
+
+// ─── Mappa filosofia → segnali quiz ──────────────────────────────────────────
+const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
+  "Avventura":            { cerca: "Sfida", sforzo: "Intenso", livello: "Pro" },
+  "Benessere":            { cerca: "Pace", sforzo: "Leggero", compagnia: "Coppia" },
+  "Borghi più belli":     { luogo: "Boschi", tempo: "Giorno" },
+  "Immersi nel verde":    { luogo: "Boschi", cerca: "Pace" },
+  "Tra Mare e Cielo":     { luogo: "Laghi", cerca: "Foto" },
+  "Luoghi dello Spirito": { cerca: "Pace", compagnia: "Solo" },
+  "Trek Urbano":          { tempo: "Ore", sforzo: "Leggero" },
+  "Outdoor Education":    { livello: "Base", compagnia: "Gruppo" },
+  "Giornata da Guida":    { tempo: "Giorno", livello: "Medio" },
+  "Speciali":             { cerca: "Sfida", compagnia: "Gruppo" },
+  "Formazione":           { livello: "Base", tempo: "Tour" },
+};
+
 // --- SKELETON LOADER ---
 const FILOSOFIA_COLORS: Record<string, string> = {
   "Avventura":            "#e94544",
@@ -110,15 +135,6 @@ export default function EscursioniPage({
   const [suggestedHike, setSuggestedHike] = useState<Escursione | null>(null);
   const [shownSuggestions, setShownSuggestions] = useState<string[]>([]);
 
-  const quizQuestions = [
-    { q: "Con chi verrai?", options: ["Solo", "Coppia", "Gruppo"] },
-    { q: "Livello Trekking?", options: ["Base", "Medio", "Pro"] },
-    { q: "Luogo ideale?", options: ["Laghi", "Vette", "Boschi"] },
-    { q: "Sforzo fisico?", options: ["Leggero", "Medio", "Intenso"] },
-    { q: "Cosa cerchi?", options: ["Foto", "Pace", "Sfida"] },
-    { q: "Quanto tempo?", options: ["Ore", "Giorno", "Tour"] },
-  ];
-
   useEffect(() => {
     setVisibleCount(ITEMS_PER_LOAD);
   }, [activeFilter]);
@@ -136,27 +152,12 @@ export default function EscursioniPage({
     fetchEscursioni();
   }, []);
 
-  // ─── Mappa filosofia → segnali quiz ────────────────────────────────────────
-  const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
-    "Avventura":            { cerca: "Sfida", sforzo: "Intenso", livello: "Pro" },
-    "Benessere":            { cerca: "Pace", sforzo: "Leggero", compagnia: "Coppia" },
-    "Borghi più belli":     { luogo: "Boschi", tempo: "Giorno" },
-    "Immersi nel verde":    { luogo: "Boschi", cerca: "Pace" },
-    "Tra Mare e Cielo":     { luogo: "Laghi", cerca: "Foto" },
-    "Luoghi dello Spirito": { cerca: "Pace", compagnia: "Solo" },
-    "Trek Urbano":          { tempo: "Ore", sforzo: "Leggero" },
-    "Outdoor Education":    { livello: "Base", compagnia: "Gruppo" },
-    "Giornata da Guida":    { tempo: "Giorno", livello: "Medio" },
-    "Speciali":             { cerca: "Sfida", compagnia: "Gruppo" },
-    "Formazione":           { livello: "Base", tempo: "Tour" },
-  };
-
   const handleAnswer = (option: string) => {
     const newAnswers = [...answers, option];
 
-    if (currentQuestion < quizQuestions.length - 1) {
+    if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
       setAnswers(newAnswers);
-      setCurrentQuestion(currentQuestion + 1);
+      setCurrentQuestion((prev) => prev + 1);
       return;
     }
 
@@ -320,6 +321,8 @@ export default function EscursioniPage({
                     src={esc.immagine_url}
                     alt={esc.titolo}
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                    loading="lazy"
+                    decoding="async"
                   />
                 )}
                 {/* Gradiente base */}
@@ -360,7 +363,7 @@ export default function EscursioniPage({
                     onClick={() => onBookingClick(esc.titolo)}
                     className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                   >
-                    Richiedi Informazioni <ArrowRight size={12} />
+                    Richiedi Info <ArrowRight size={12} />
                   </button>
                 </div>
               </div>
@@ -446,24 +449,38 @@ export default function EscursioniPage({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
                   >
-                    <div className="flex justify-between items-center mb-6">
-                      <div className="h-1 flex-grow bg-stone-200 rounded-full mr-4">
+                    <div className="flex justify-between items-center mb-6 gap-3">
+                      {currentQuestion > 0 ? (
+                        <button
+                          onClick={() => {
+                            setCurrentQuestion((prev) => prev - 1);
+                            setAnswers((prev) => prev.slice(0, -1));
+                          }}
+                          className="text-stone-400 hover:text-brand-stone transition-colors text-[9px] font-black uppercase tracking-widest shrink-0"
+                          aria-label="Domanda precedente"
+                        >
+                          ← Indietro
+                        </button>
+                      ) : (
+                        <span />
+                      )}
+                      <div className="h-1 flex-grow bg-stone-200 rounded-full">
                         <motion.div
                           className="h-full bg-brand-sky rounded-full"
                           animate={{
-                            width: `${((currentQuestion + 1) / 6) * 100}%`,
+                            width: `${((currentQuestion + 1) / QUIZ_QUESTIONS.length) * 100}%`,
                           }}
                         />
                       </div>
-                      <span className="text-[10px] font-black text-stone-400">
-                        {currentQuestion + 1}/6
+                      <span className="text-[10px] font-black text-stone-400 shrink-0">
+                        {currentQuestion + 1}/{QUIZ_QUESTIONS.length}
                       </span>
                     </div>
                     <h3 className="text-xl font-black text-brand-stone uppercase tracking-tight mb-8 leading-tight">
-                      {quizQuestions[currentQuestion].q}
+                      {QUIZ_QUESTIONS[currentQuestion].q}
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {quizQuestions[currentQuestion].options.map((opt) => (
+                      {QUIZ_QUESTIONS[currentQuestion].options.map((opt) => (
                         <button
                           key={opt}
                           onClick={() => handleAnswer(opt)}

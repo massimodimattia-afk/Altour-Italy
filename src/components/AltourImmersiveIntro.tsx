@@ -17,7 +17,6 @@ export default function AltourImmersiveIntro({
   const [isVisible, setIsVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Hook per rilevare se siamo su mobile (< 768px)
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -25,7 +24,6 @@ export default function AltourImmersiveIntro({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Timer per gestire la durata dell'intro (3.5s)
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
@@ -33,11 +31,21 @@ export default function AltourImmersiveIntro({
     return () => clearTimeout(timer);
   }, []);
 
+  // FIX: scroll lock durante l'intro
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   return (
     <AnimatePresence mode="wait" onExitComplete={onComplete}>
       {isVisible && (
         <motion.div
           key="intro-container"
+          // FIX: aria-hidden — l'intro è decorativo, non deve essere letto da screen reader
+          aria-hidden="true"
           className="fixed inset-0 z-[9999] overflow-hidden bg-brand-stone"
           initial={{ opacity: 1 }}
           exit={
@@ -58,14 +66,14 @@ export default function AltourImmersiveIntro({
             {/* Versione Mobile */}
             <motion.img
               src={MOBILE_IMAGE_URL}
-              alt="Altour Intro Mobile"
+              alt=""
+              aria-hidden="true"
               className="w-full h-full object-cover object-center block md:hidden"
               initial={{ scale: 1 }}
               animate={{ scale: 1.05 }}
               transition={{ duration: 3.5, ease: "easeOut" }}
               loading="eager"
-              // @ts-ignore
-              fetchpriority="high"
+              fetchPriority="high"
               onError={(e) => {
                 e.currentTarget.src = DESKTOP_IMAGE_URL;
               }}
@@ -74,14 +82,14 @@ export default function AltourImmersiveIntro({
             {/* Versione Desktop */}
             <motion.img
               src={DESKTOP_IMAGE_URL}
-              alt="Altour Intro Desktop"
+              alt=""
+              aria-hidden="true"
               className="w-full h-full object-cover object-center hidden md:block"
               initial={{ scale: 1.1 }}
               animate={{ scale: 1 }}
               transition={{ duration: 3.5, ease: "easeOut" }}
               loading="eager"
-              // @ts-ignore
-              fetchpriority="high"
+              fetchPriority="high"
             />
 
             {/* Overlay Scuro */}
@@ -100,7 +108,7 @@ export default function AltourImmersiveIntro({
               <div className="relative mb-4">
                 <img
                   src="/altour-logo.png"
-                  alt="Logo"
+                  alt="Logo Altour Italy"
                   className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-2xl shadow-2xl border border-white/20 mb-6"
                 />
               </div>
@@ -114,13 +122,14 @@ export default function AltourImmersiveIntro({
             </motion.div>
           </div>
 
-          {/* Tasto "Salta" — appare dopo 1.2s */}
+          {/* FIX: bottone Salta — target touch adeguato + aria-label */}
           <motion.button
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.5 }}
             onClick={() => setIsVisible(false)}
-            className="absolute bottom-8 right-8 text-white/50 hover:text-white text-[15px] font-black uppercase tracking-widest transition-colors z-20"
+            aria-label="Salta introduzione"
+            className="absolute bottom-8 right-8 text-white/50 hover:text-white text-[15px] font-black uppercase tracking-widest transition-colors z-20 px-4 py-3 min-w-[44px] min-h-[44px] flex items-center"
           >
             Salta →
           </motion.button>
