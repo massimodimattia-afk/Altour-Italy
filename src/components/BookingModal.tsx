@@ -8,6 +8,7 @@ interface BookingModalProps {
   onClose: () => void;
   title: string;
   initialMessage?: string;
+  mode?: "info" | "prenota";
 }
 
 export default function BookingModal({
@@ -15,6 +16,7 @@ export default function BookingModal({
   onClose,
   title,
   initialMessage = "",
+  mode = "info",
 }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
@@ -99,7 +101,7 @@ export default function BookingModal({
       nome: (formData.nome || "").trim(),
       email: (formData.email || "").trim(),
       messaggio: (formData.messaggio || "").trim() || null,
-      attivita: (title || "Prenotazione").trim(),
+      attivita: `[${mode === 'prenota' ? 'PRENOTA' : 'INFO'}] ${(title || "Prenotazione").trim()}`,
     };
 
     try {
@@ -160,7 +162,7 @@ export default function BookingModal({
                 <div className="flex items-center gap-2 mb-3">
                   <div className="h-[1px] w-6 bg-brand-sky" />
                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky">
-                    Contatto Diretto
+                    {mode === "prenota" ? "Prenotazione Attività" : "Richiesta Informazioni"}
                   </span>
                 </div>
                 {/* FIX 2: id per aria-labelledby */}

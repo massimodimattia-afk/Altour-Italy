@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
+  is_italic?: boolean | null;
 };
 type Corso = Database["public"]["Tables"]["corsi"]["Row"];
 type Activity = Escursione | Corso;
@@ -190,9 +191,9 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           >
             <div className="grid grid-cols-3 gap-0 divide-x divide-white/10">
               {[
-                { value: "10 anni", label: "Exp.", icon: <TrendingUp size={14} /> },
+                { value: "10 anni", label: "Esperienza", icon: <TrendingUp size={14} /> },
                 { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
-                { value: "4k+", label: "Attività", icon: <Users size={14} /> },
+                { value: "800+", label: "tesserati", icon: <Users size={14} /> },
               ].map((stat, index) => (
                 <div key={index} className="flex flex-col items-center justify-center px-1">
                   <div className="text-brand-sky mb-1 md:hidden">{stat.icon}</div>
@@ -251,7 +252,9 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   {esc.data ? new Date(esc.data).toLocaleDateString("it-IT", { day: "2-digit", month: "long" }) : "Su richiesta"}
                 </p>
                 <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">{esc.titolo}</h3>
-                <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow leading-relaxed">{esc.descrizione}</p>
+                <p className={`text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 flex-grow leading-relaxed ${
+                  esc.is_italic ? "italic font-serif" : "font-medium"
+                }`}>{esc.descrizione}</p>
                 <div className="flex gap-2 md:gap-3">
                   <button onClick={() => openDetails(esc)} className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all">
                     Dettagli
@@ -381,33 +384,29 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
             <div className="flex flex-col md:flex-row min-h-[360px]">
 
-            {/* ── Immagine sinistra ── */}
-<div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
-  <img
-    src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20250101_132336.webp"
-    alt="Paesaggio innevato Trentino — Gift Experience Altour"
-    className="absolute inset-0 w-full h-full object-cover object-center"
-    onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
-    loading="lazy"
-    decoding="async"
-  />
-  
-  {/* MODIFICATO: sfumatura verso il basso (to-b) su mobile */}
-  <div className="absolute inset-0 bg-gradient-to-b md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
-  
-  {/* MODIFICATO: top-6 invece di bottom-6 */}
-  <div className="absolute top-6 left-8 text-white z-10">
-    <div className="flex items-center gap-2 mb-2">
-      <Star size={14} className="text-brand-sky fill-brand-sky" />
-      <span className="text-[9px] font-black uppercase tracking-[0.3em]">
-        Gift Experience
-      </span>
-    </div>
-    <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
-      Regala un'<br />avventura.
-    </h3>
-  </div>
-</div>
+              {/* ── Immagine sinistra ── */}
+              <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
+                <img
+                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20250101_132336.webp"
+                  alt="Paesaggio innevato Trentino — Gift Experience Altour"
+                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
+                <div className="absolute bottom-6 left-8 text-white z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star size={14} className="text-brand-sky fill-brand-sky" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">
+                      Gift Experience
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
+                    Regala un'<br />avventura.
+                  </h3>
+                </div>
+              </div>
 
               {/* ── Contenuto destra ── */}
               <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">

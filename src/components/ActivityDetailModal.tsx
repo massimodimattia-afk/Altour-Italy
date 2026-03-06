@@ -8,7 +8,7 @@ import {
   Info,
   Briefcase as Backpack,
   Ruler,
-  Gauge,
+  Mountain,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -26,13 +26,15 @@ interface Activity {
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
   data?: string | null;
+  _tipo?: 'corso' | 'campo' | null;
+  is_italic?: boolean | null;
 }
 
 interface ActivityDetailModalProps {
   activity: Activity | null;
   isOpen: boolean;
   onClose: () => void;
-  onBook: (title: string) => void;
+  onBook: (title: string, mode?: 'info' | 'prenota') => void;
 }
 
 const IMG_FALLBACK = "/altour-logo.png";
@@ -50,9 +52,7 @@ export default function ActivityDetailModal({
     : [];
 
   useEffect(() => {
-    if (activity?.id) {
-      setCurrentImageIndex(0);
-    }
+    if (activity?.id) setCurrentImageIndex(0);
   }, [activity?.id]);
 
   useEffect(() => {
@@ -65,29 +65,20 @@ export default function ActivityDetailModal({
     return () => window.removeEventListener("keydown", handleKey);
   }, [isOpen, images.length]);
 
-  // Scroll lock: blocca il body quando il modale è aperto
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
   if (!activity) return null;
 
-  const nextImage = () =>
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  const prevImage = () =>
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-8">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -97,60 +88,56 @@ export default function ActivityDetailModal({
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative bg-white w-full max-w-5xl max-h-[90vh] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 60 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="relative bg-white w-full max-w-5xl max-h-[93vh] md:max-h-[90vh] rounded-t-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
           >
-            {/* Gallery Section */}
-            <div className="md:w-1/2 relative bg-stone-100 h-64 md:h-auto md:min-h-full flex-shrink-0">
+            <button
+              onClick={onClose}
+              aria-label="Chiudi"
+              className="absolute top-4 right-4 z-20 p-2 bg-white/80 hover:bg-white backdrop-blur-sm rounded-full shadow-md transition-all active:scale-90"
+            >
+              <X size={20} className="text-brand-stone" />
+            </button>
+
+            {/* Gallery */}
+            <div className="md:w-1/2 relative bg-stone-100 h-52 md:h-auto md:min-h-full flex-shrink-0">
               {images.length > 0 ? (
                 <>
                   <img
                     src={images[currentImageIndex]}
                     alt={activity.titolo}
                     className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = IMG_FALLBACK;
-                    }}
+                    onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
                     fetchPriority="high"
                     decoding="async"
                   />
                   {images.length > 1 && (
                     <>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          prevImage();
-                        }}
+                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
                         aria-label="Immagine precedente"
-                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition-all"
                       >
-                        <ChevronLeft size={24} />
+                        <ChevronLeft size={22} />
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          nextImage();
-                        }}
+                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
                         aria-label="Immagine successiva"
-                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-md p-2 rounded-full text-white transition-all"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition-all"
                       >
-                        <ChevronRight size={24} />
+                        <ChevronRight size={22} />
                       </button>
-                      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                         {images.map((_, idx) => (
                           <button
                             key={idx}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex(idx);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); }}
                             aria-label={`Vai all'immagine ${idx + 1}`}
                             className={`h-2 rounded-full transition-all ${
-                              idx === currentImageIndex
-                                ? "bg-white w-6"
-                                : "bg-white/50 w-2"
+                              idx === currentImageIndex ? "bg-white w-6" : "bg-white/50 w-2"
                             }`}
                           />
                         ))}
@@ -159,79 +146,75 @@ export default function ActivityDetailModal({
                   )}
                 </>
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-stone-300">
-                  Nessuna immagine
+                <div className="w-full h-full flex items-center justify-center text-stone-300 font-bold uppercase tracking-widest text-xs">
+                  Immagine non disponibile
                 </div>
               )}
             </div>
 
-            {/* Content Section */}
-            <div className="md:w-1/2 p-8 md:p-12 flex flex-col overflow-y-auto md:overflow-visible">
-              <button
-                onClick={onClose}
-                aria-label="Chiudi"
-                className="absolute top-6 right-6 p-2 hover:bg-stone-100 rounded-full transition-colors z-10"
-              >
-                <X size={24} className="text-brand-stone" />
-              </button>
+            {/* Contenuto */}
+            <div className="md:w-1/2 flex flex-col overflow-hidden">
 
-              <div className="mb-8">
-                <h2 className="text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-4">
+              {/* Header fisso */}
+              <div className="px-6 pt-6 pb-4 md:px-12 md:pt-10 md:pb-6 border-b border-stone-100 flex-shrink-0">
+                <h2 className="text-xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-tight mb-3 pr-8">
                   {activity.titolo}
                 </h2>
-                <div className="flex flex-wrap gap-4 text-xs font-black uppercase tracking-widest text-stone-400">
+                <div className="flex flex-wrap gap-3 text-[10px] font-black uppercase tracking-widest text-stone-400">
                   {activity.difficolta && (
-                    <div className="flex items-center gap-2">
-                      <Gauge size={14} className="text-brand-sky" />
+                    <div className="flex items-center gap-1.5">
+                      <Mountain size={12} className="text-brand-sky" />
                       {activity.difficolta}
                     </div>
                   )}
                   {activity.durata && (
-                    <div className="flex items-center gap-2">
-                      <Clock size={14} className="text-brand-sky" />
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={12} className="text-brand-sky" />
                       {activity.durata}
                     </div>
                   )}
                   {activity.lunghezza && (
-                    <div className="flex items-center gap-2">
-                      <Ruler size={14} className="text-brand-sky" />
+                    <div className="flex items-center gap-1.5">
+                      <Ruler size={12} className="text-brand-sky" />
                       {activity.lunghezza} km
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="prose prose-stone max-w-none flex-grow overflow-y-auto mb-8 pr-4 custom-scrollbar">
-                <p className="text-stone-600 leading-relaxed font-medium">
+              {/* Corpo scrollabile */}
+              <div className="flex-grow overflow-y-auto px-6 py-5 md:px-12 md:py-8 space-y-6">
+
+                {/* Descrizione — is_italic da Supabase */}
+                <p className={`text-stone-600 leading-relaxed text-sm md:text-base ${
+                  activity.is_italic
+                    ? "italic font-serif text-stone-500 border-l-2 border-brand-sky/20 pl-4 py-1"
+                    : "font-medium"
+                }`}>
                   {activity.descrizione_estesa || activity.descrizione}
                 </p>
 
                 {activity.attrezzatura_consigliata && (
-                  <div className="mt-8 p-6 bg-brand-glacier rounded-2xl border border-stone-100">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-brand-sky mb-3 flex items-center gap-2">
-                      <Info size={14} /> Nota Importante
+                  <div className="p-4 md:p-6 bg-brand-glacier rounded-2xl border border-stone-100">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-sky mb-2 flex items-center gap-2">
+                      <Info size={13} /> Nota Importante
                     </h4>
-                    <p className="text-stone-500 text-sm italic">
+                    <p className="text-stone-500 text-sm italic leading-relaxed">
                       {activity.attrezzatura_consigliata}
                     </p>
                   </div>
                 )}
 
                 {activity.attrezzatura && (
-                  <div className="mt-8 p-6 bg-stone-50 rounded-2xl border border-stone-100">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-brand-stone mb-4 flex items-center gap-2">
-                      <Backpack size={16} className="text-brand-sky" />{" "}
-                      {"data" in activity
-  ? "Equipaggiamento Consigliato"
-  : "Di cosa parleremo"}
+                  <div className="p-4 md:p-6 bg-stone-50 rounded-2xl border border-stone-100">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-stone mb-3 flex items-center gap-2">
+                      <Backpack size={14} className="text-brand-sky" />
+                      {activity._tipo === 'corso' ? "Di cosa parleremo" : "Equipaggiamento Consigliato"}
                     </h4>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
                       {activity.attrezzatura.split(",").map((item, index) => (
-                        <li
-                          key={index}
-                          className="text-stone-600 text-sm flex items-start gap-2"
-                        >
-                          <span className="text-brand-sky mt-1">•</span>
+                        <li key={index} className="text-stone-600 text-sm flex items-start gap-2">
+                          <span className="text-brand-sky mt-0.5">•</span>
                           <span className="font-medium">{item.trim()}</span>
                         </li>
                       ))}
@@ -240,27 +223,29 @@ export default function ActivityDetailModal({
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-6 pt-8 border-t border-stone-100 mt-auto">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">
+              {/* Footer CTA fisso */}
+              <div className="flex-shrink-0 px-6 py-5 md:px-12 md:py-8 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                <div className="flex sm:flex-col items-baseline sm:items-start gap-2 sm:gap-0">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 hidden sm:block">
                     Quota di partecipazione
                   </span>
-                  <span className="text-4xl font-black text-brand-stone">
+                  <span className="text-3xl md:text-4xl font-black text-brand-stone leading-none">
                     {activity.prezzo != null ? `€${activity.prezzo}` : "—"}
+                  </span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 sm:hidden">
+                    quota
                   </span>
                 </div>
                 <button
-                  onClick={() => {
-                    onBook(activity.titolo);
-                    onClose();
-                  }}
-                  className="flex-grow bg-brand-sky hover:bg-brand-stone text-white px-8 py-5 rounded-2xl font-black uppercase text-sm tracking-widest transition-all duration-300 shadow-xl shadow-brand-sky/20 flex items-center justify-center gap-3 active:scale-95"
+                  onClick={() => { onBook(activity.titolo, 'prenota'); onClose(); }}
+                  className="flex-grow bg-brand-sky hover:bg-brand-stone text-white px-6 py-4 md:py-5 rounded-2xl font-black uppercase text-xs md:text-sm tracking-widest transition-all duration-300 shadow-xl shadow-brand-sky/20 flex items-center justify-center gap-3 active:scale-95"
                 >
                   Prenota Ora
-                  <TrendingUp size={20} />
+                  <TrendingUp size={18} />
                 </button>
               </div>
             </div>
+
           </motion.div>
         </div>
       )}

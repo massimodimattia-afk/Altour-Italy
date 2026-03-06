@@ -9,6 +9,7 @@ import { ArrowRight, RefreshCcw, Star, ChevronDown, Calendar } from "lucide-reac
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
+  is_italic?: boolean | null;
 };
 
 interface Activity {
@@ -25,6 +26,7 @@ interface Activity {
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
   data?: string | null;
+  is_italic?: boolean | null;
 }
 
 interface EscursioniPageProps {
@@ -345,7 +347,9 @@ export default function EscursioniPage({
                 <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
                   {esc.titolo}
                 </h3>
-                <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow leading-relaxed">
+                <p className={`text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 flex-grow leading-relaxed ${
+                  esc.is_italic ? "italic font-serif" : "font-medium"
+                }`}>
                   {esc.descrizione}
                 </p>
 

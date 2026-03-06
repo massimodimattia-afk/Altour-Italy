@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import Escursioni from './pages/Escursioni';
 import Corsi from './pages/Corsi';
 import Tessera from './pages/Tessera';
-import Calendario from './pages/Calendario'; // FIX 1: rimossa estensione .tsx dall'import
+import Campi from './pages/CampiPage';
 import Legal from './pages/Legal';
 import BookingModal from './components/BookingModal';
 import AltourImmersiveIntro from './components/AltourImmersiveIntro';
@@ -15,27 +15,26 @@ type PageType =
   | 'escursioni'
   | 'corsi'
   | 'tessera'
-  | 'calendario'
+  | 'campi'
   | 'legal-privacy'
   | 'legal-cookie'
   | 'legal-termini';
 
 const VALID_PAGES: PageType[] = [
-  'home', 'escursioni', 'corsi', 'tessera', 'calendario',
+  'home', 'escursioni', 'corsi', 'tessera', 'campi',
   'legal-privacy', 'legal-cookie', 'legal-termini',
 ];
 
 function App() {
-  // FIX 3: sessionStorage — l'intro non si ripete se l'utente ricarica nella stessa sessione
   const [showIntro, setShowIntro] = useState(() => {
     return !sessionStorage.getItem('intro-seen');
   });
   const [currentPage, setCurrentPage] = useState<PageType>('home');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState('');
+  const [bookingMode, setBookingMode] = useState<'info' | 'prenota'>('info');
 
   useEffect(() => {
-    // FIX 2: rispetta prefers-reduced-motion
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: 0, behavior: prefersReduced ? 'instant' : 'smooth' });
   }, [currentPage]);
@@ -46,12 +45,12 @@ function App() {
     }
   };
 
-  const openBooking = (title: string) => {
+  const openBooking = (title: string, mode: 'info' | 'prenota' = 'info') => {
     setSelectedTitle(title);
+    setBookingMode(mode);
     setIsModalOpen(true);
   };
 
-  // FIX 5: reset selectedTitle dopo la chiusura (delay per non vederlo durante l'animazione exit)
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setTimeout(() => setSelectedTitle(''), 300);
@@ -72,8 +71,8 @@ function App() {
         return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'tessera':
         return <Tessera />;
-      case 'calendario':
-        return <Calendario onBookingClick={openBooking} />;
+      case 'campi':
+        return <Campi onBookingClick={openBooking} />;
       case 'legal-privacy':
         return <Legal initialTab="privacy" />;
       case 'legal-cookie':
@@ -102,12 +101,12 @@ function App() {
         </div>
       </main>
 
-      {/* FIX 4: BookingModal montato solo quando c'è un titolo valido */}
       {selectedTitle && (
         <BookingModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           title={selectedTitle}
+          mode={bookingMode}
         />
       )}
 
