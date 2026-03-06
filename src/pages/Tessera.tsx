@@ -27,24 +27,41 @@ const TESSERA_CODE_REGEX = /^ALT[A-Z0-9]{1,10}$/;
 
 // ─── Mappa Filosofia → Colore ────────────────────────────────────────────────
 const FILOSOFIA_COLORS: Record<string, string> = {
-  Avventura: "#e94544",
-  Benessere: "#a5daca",
+  "Avventura": "#e94544",
+  "Benessere": "#a5d9c9",
   "Borghi più belli": "#946a52",
-  Formazione: "#002f59",
-  "Giornata da Guida": "#75c43c",
+  "Cammini": "#e3c45d",
+  "Educazione all’aperto": "#01aa9f",
+  "Eventi": "#ffc0cb",
+  "Formazione": "#002f59",
   "Immersi nel verde": "#358756",
-  "Luoghi dello Spirito": "#c8a3c9",
-  "Outdoor Education": "#01aa9f",
-  Speciali: "#b8163c",
-  "Tra Mare e Cielo": "#7aaecd",
-  "Trek Urbano": "#f39452",
+  "Luoghi dello spirito": "#c8a3c9",
+  "Novità": "#75c43c",
+  "Speciali": "#b8163c",
+  "Tra mare e cielo": "#7aaecd",
+  "Trek urbano": "#f39452",
 };
 
 const DEFAULT_BOOT_COLOR = "#5aaadd";
 
+const FILOSOFIA_ALIAS: Record<string, string> = {
+  "Outdoor Education": "Educazione all’aperto",
+  "Luoghi dello Spirito": "Luoghi dello spirito",
+  "Tra Mare e Cielo": "Tra mare e cielo",
+  "Trek Urbano": "Trek urbano",
+  "Giornata da Guida": "Novità",
+};
+
+function normalizeFilosofia(value?: string | null): string | null {
+  if (!value) return value ?? null;
+  const key = value.trim();
+  return FILOSOFIA_ALIAS[key] ?? key;
+}
+
 function getFilosofiaColor(filosofia?: string | null): string {
   if (!filosofia) return DEFAULT_BOOT_COLOR;
-  return FILOSOFIA_COLORS[filosofia] ?? DEFAULT_BOOT_COLOR;
+  const f = normalizeFilosofia(filosofia);
+  return FILOSOFIA_COLORS[f ?? ""] ?? DEFAULT_BOOT_COLOR;
 }
 
 function getFilosofiaName(hex: string): string {

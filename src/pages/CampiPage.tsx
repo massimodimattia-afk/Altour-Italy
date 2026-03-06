@@ -3,17 +3,19 @@ import { supabase } from "../lib/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 
 const FILOSOFIA_COLORS: Record<string, string> = {
-  "Avventura":            "#e94544",
-  "Benessere":            "#a5daca",
-  "Borghi più belli":     "#946a52",
-  "Formazione":           "#002f59",
-  "Giornata da Guida":    "#75c43c",
-  "Immersi nel verde":    "#358756",
-  "Luoghi dello Spirito": "#c8a3c9",
-  "Outdoor Education":    "#01aa9f",
-  "Speciali":             "#b8163c",
-  "Tra Mare e Cielo":     "#7aaecd",
-  "Trek Urbano":          "#f39452",
+  "Avventura": "#e94544",
+  "Benessere": "#a5d9c9",
+  "Borghi più belli": "#946a52",
+  "Cammini": "#e3c45d",
+  "Educazione all’aperto": "#01aa9f",
+  "Eventi": "#ffc0cb",
+  "Formazione": "#002f59",
+  "Immersi nel verde": "#358756",
+  "Luoghi dello spirito": "#c8a3c9",
+  "Novità": "#75c43c",
+  "Speciali": "#b8163c",
+  "Tra mare e cielo": "#7aaecd",
+  "Trek urbano": "#f39452",
 };
 
 function getFilosofiaOpacity(color: string): string {

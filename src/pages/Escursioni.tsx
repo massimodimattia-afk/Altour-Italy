@@ -38,40 +38,44 @@ interface EscursioniPageProps {
 const QUIZ_QUESTIONS = [
   { q: "Con chi verrai?", options: ["Solo", "Coppia", "Gruppo"] },
   { q: "Livello Trekking?", options: ["Base", "Medio", "Pro"] },
-  { q: "Luogo ideale?", options: ["Laghi", "Vette", "Boschi"] },
+  { q: "Luogo ideale?", options: ["Mare, lago o fiume", "Vette", "Boschi", "Prati o spazi aperti"] },
   { q: "Sforzo fisico?", options: ["Leggero", "Medio", "Intenso"] },
-  { q: "Cosa cerchi?", options: ["Foto", "Pace", "Sfida"] },
+  { q: "Cosa cerchi?", options: ["Panorami", "Pace", "Tempo di qualità", "Racconto"] },
   { q: "Quanto tempo?", options: ["Ore", "Giorno", "Tour"] },
 ];
 
 // ─── Mappa filosofia → segnali quiz ──────────────────────────────────────────
 const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
-  "Avventura":            { cerca: "Sfida", sforzo: "Intenso", livello: "Pro" },
-  "Benessere":            { cerca: "Pace", sforzo: "Leggero", compagnia: "Coppia" },
-  "Borghi più belli":     { luogo: "Boschi", tempo: "Giorno" },
-  "Immersi nel verde":    { luogo: "Boschi", cerca: "Pace" },
-  "Tra Mare e Cielo":     { luogo: "Laghi", cerca: "Foto" },
-  "Luoghi dello Spirito": { cerca: "Pace", compagnia: "Solo" },
-  "Trek Urbano":          { tempo: "Ore", sforzo: "Leggero" },
-  "Outdoor Education":    { livello: "Base", compagnia: "Gruppo" },
-  "Giornata da Guida":    { tempo: "Giorno", livello: "Medio" },
-  "Speciali":             { cerca: "Sfida", compagnia: "Gruppo" },
-  "Formazione":           { livello: "Base", tempo: "Tour" },
+  "Avventura":             { cerca: "Tempo di qualità", sforzo: "Intenso", livello: "Pro" },
+  "Benessere":             { cerca: "Pace", sforzo: "Leggero", compagnia: "Coppia" },
+  "Borghi più belli":      { luogo: "Boschi", tempo: "Giorno", cerca: "Racconto" },
+  "Cammini":               { luogo: "Boschi", tempo: "Tour", cerca: "Pace" },
+  "Educazione all'aperto": { livello: "Base", compagnia: "Gruppo" },
+  "Eventi":                { compagnia: "Gruppo", tempo: "Giorno" },
+  "Formazione":            { livello: "Base", tempo: "Tour", cerca: "Racconto" },
+  "Immersi nel verde":     { luogo: "Boschi", cerca: "Pace" },
+  "Luoghi dello spirito":  { cerca: "Pace", compagnia: "Solo" },
+  "Novità":                { cerca: "Tempo di qualità", compagnia: "Gruppo", tempo: "Giorno" },
+  "Speciali":              { cerca: "Tempo di qualità", compagnia: "Gruppo" },
+  "Tra mare e cielo":      { luogo: "Mare, lago o fiume", cerca: "Panorami" },
+  "Trek urbano":           { tempo: "Ore", sforzo: "Leggero" },
 };
 
 // --- SKELETON LOADER ---
 const FILOSOFIA_COLORS: Record<string, string> = {
-  "Avventura":            "#e94544",
-  "Benessere":            "#a5daca",
-  "Borghi più belli":     "#946a52",
-  "Formazione":           "#002f59",
-  "Giornata da Guida":    "#75c43c",
-  "Immersi nel verde":    "#358756",
-  "Luoghi dello Spirito": "#c8a3c9",
-  "Outdoor Education":    "#01aa9f",
-  "Speciali":             "#b8163c",
-  "Tra Mare e Cielo":     "#7aaecd",
-  "Trek Urbano":          "#f39452",
+  "Avventura":              "#e94544",
+  "Benessere":              "#a5d9c9",
+  "Borghi più belli":       "#946a52",
+  "Cammini":                "#e3c45d",
+  "Educazione all'aperto":  "#01aa9f",
+  "Eventi":                 "#ffc0cb",
+  "Formazione":             "#002f59",
+  "Immersi nel verde":      "#358756",
+  "Luoghi dello spirito":   "#c8a3c9",
+  "Novità":                 "#75c43c",
+  "Speciali":               "#b8163c",
+  "Tra mare e cielo":       "#7aaecd",
+  "Trek urbano":            "#f39452",
 };
 
 function getFilosofiaOpacity(color: string): string {
@@ -224,14 +228,16 @@ export default function EscursioniPage({
 
       // ── 5. LUOGO IDEALE — keyword fallback (Peso 4) ──────────────────────
       const luogoL = luogo.toLowerCase();
-      if (luogoL === "laghi"  && (t.includes("lago")  || d.includes("lago")  || d.includes("acqua")))    score += 4;
-      if (luogoL === "vette"  && (t.includes("cima")  || t.includes("vetta") || d.includes("panorama"))) score += 4;
-      if (luogoL === "boschi" && (d.includes("bosco") || d.includes("alberi") || d.includes("foresta"))) score += 4;
+      if (luogoL === "mare, lago o fiume"   && (t.includes("lago") || t.includes("mare") || t.includes("fiume") || d.includes("lago") || d.includes("acqua") || d.includes("mare") || d.includes("costiera"))) score += 4;
+      if (luogoL === "vette"                && (t.includes("cima")  || t.includes("vetta") || d.includes("panorama"))) score += 4;
+      if (luogoL === "boschi"               && (d.includes("bosco") || d.includes("alberi") || d.includes("foresta"))) score += 4;
+      if (luogoL === "prati o spazi aperti" && (d.includes("prato") || d.includes("aperto") || d.includes("pianura") || d.includes("campo") || d.includes("pascolo"))) score += 4;
 
       // ── 6. COSA CERCHI (Peso 3) ──────────────────────────────────────────
-      if (cerca === "Foto"  && (d.includes("vista") || d.includes("panoram") || d.includes("foto")))         score += 3;
-      if (cerca === "Pace"  && (d.includes("pace")  || d.includes("silenzio") || d.includes("relax")))        score += 3;
-      if (cerca === "Sfida" && (diffDB.includes("Impegnativa") || t.includes("traversata") || d.includes("sfida"))) score += 3;
+      if (cerca === "Panorami"         && (d.includes("vista") || d.includes("panoram") || d.includes("foto")))              score += 3;
+      if (cerca === "Pace"             && (d.includes("pace")  || d.includes("silenzio") || d.includes("relax")))             score += 3;
+      if (cerca === "Tempo di qualità" && (diffDB.includes("Impegnativa") || t.includes("traversata") || d.includes("sfida"))) score += 3;
+      if (cerca === "Racconto"         && (d.includes("storia") || d.includes("cultura") || d.includes("racconto") || d.includes("tradizion") || d.includes("borghi"))) score += 3;
 
       // ── 7. COMPAGNIA (Peso 2) ─────────────────────────────────────────────
       if (compagnia === "Solo"   && (d.includes("silenzio") || d.includes("solitari"))) score += 2;

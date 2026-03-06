@@ -11,22 +11,38 @@ interface CorsiPageProps {
 }
 
 const FILOSOFIA_COLORS: Record<string, string> = {
-  Avventura: "#e94544",
-  Benessere: "#a5daca",
+  "Avventura": "#e94544",
+  "Benessere": "#a5d9c9",
   "Borghi più belli": "#946a52",
-  Formazione: "#002f59",
-  "Giornata da Guida": "#75c43c",
+  "Cammini": "#e3c45d",
+  "Educazione all’aperto": "#01aa9f",
+  "Eventi": "#ffc0cb",
+  "Formazione": "#002f59",
   "Immersi nel verde": "#358756",
-  "Luoghi dello Spirito": "#c8a3c9",
-  "Outdoor Education": "#01aa9f",
-  Speciali: "#b8163c",
-  "Tra Mare e Cielo": "#7aaecd",
-  "Trek Urbano": "#f39452",
+  "Luoghi dello spirito": "#c8a3c9",
+  "Novità": "#75c43c",
+  "Speciali": "#b8163c",
+  "Tra mare e cielo": "#7aaecd",
+  "Trek urbano": "#f39452",
 };
 
 function getFilosofiaOpacity(color: string): string {
   const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
   return dark.includes(color) ? `${color}aa` : `${color}cc`;
+}
+
+const FILOSOFIA_ALIAS: Record<string, string> = {
+  "Outdoor Education": "Educazione all’aperto",
+  "Luoghi dello Spirito": "Luoghi dello spirito",
+  "Tra Mare e Cielo": "Tra mare e cielo",
+  "Trek Urbano": "Trek urbano",
+  "Giornata da Guida": "Novità",
+};
+
+function normalizeFilosofia(value?: string | null): string | null {
+  if (!value) return value ?? null;
+  const key = value.trim();
+  return FILOSOFIA_ALIAS[key] ?? key;
 }
 
 function FilosofiaBadge({ value }: { value: string | null | undefined }) {
@@ -91,7 +107,11 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
       if (error) {
         setError("Impossibile caricare i corsi. Riprova più tardi.");
       } else {
-        setCorsi(data ?? []);
+        const normalized = (data ?? []).map((c: any) => ({
+          ...c,
+          categoria: normalizeFilosofia(c?.categoria),
+        }));
+        setCorsi(normalized);
       }
       setLoading(false);
     }

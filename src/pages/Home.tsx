@@ -48,17 +48,19 @@ const SkeletonCard = () => (
 const IMG_FALLBACK = "/altour-logo.png";
 
 const FILOSOFIA_COLORS: Record<string, string> = {
-  "Avventura":            "#e94544",
-  "Benessere":            "#a5daca",
-  "Borghi più belli":     "#946a52",
-  "Formazione":           "#002f59",
-  "Giornata da Guida":    "#75c43c",
-  "Immersi nel verde":    "#358756",
-  "Luoghi dello Spirito": "#c8a3c9",
-  "Outdoor Education":    "#01aa9f",
-  "Speciali":             "#b8163c",
-  "Tra Mare e Cielo":     "#7aaecd",
-  "Trek Urbano":          "#f39452",
+  "Avventura":              "#e94544",
+  "Benessere":              "#a5d9c9",
+  "Borghi più belli":       "#946a52",
+  "Cammini":                "#e3c45d",
+  "Educazione all'aperto":  "#01aa9f",
+  "Eventi":                 "#ffc0cb",
+  "Formazione":             "#002f59",
+  "Immersi nel verde":      "#358756",
+  "Luoghi dello spirito":   "#c8a3c9",
+  "Novità":                 "#75c43c",
+  "Speciali":               "#b8163c",
+  "Tra mare e cielo":       "#7aaecd",
+  "Trek urbano":            "#f39452",
 };
 
 function getFilosofiaOpacity(color: string): string {
@@ -191,9 +193,9 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           >
             <div className="grid grid-cols-3 gap-0 divide-x divide-white/10">
               {[
-                { value: "10 anni", label: "Esperienza", icon: <TrendingUp size={14} /> },
+                { value: "10 anni", label: "Exp.", icon: <TrendingUp size={14} /> },
                 { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
-                { value: "800+", label: "tesserati", icon: <Users size={14} /> },
+                { value: "800+", label: "Tesserati", icon: <Users size={14} /> },
               ].map((stat, index) => (
                 <div key={index} className="flex flex-col items-center justify-center px-1">
                   <div className="text-brand-sky mb-1 md:hidden">{stat.icon}</div>
@@ -362,7 +364,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       Dettagli
                     </button>
                     <button onClick={() => onBookingClick(corso.titolo)} className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]">
-                      Richiedi Info
+                      Richiedi Informazioni
                     </button>
                   </div>
                 </div>
