@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, RefreshCcw, Star, ChevronDown, Calendar } from "lucide-react";
+import { ArrowRight, RefreshCcw, Star, ChevronDown, Calendar, X } from "lucide-react";
 
 // FIX: Estendiamo il tipo per includere la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
@@ -140,6 +140,8 @@ export default function EscursioniPage({
   const [answers, setAnswers] = useState<string[]>([]);
   const [suggestedHike, setSuggestedHike] = useState<Escursione | null>(null);
   const [shownSuggestions, setShownSuggestions] = useState<string[]>([]);
+  const [quizStarted, setQuizStarted] = useState(false);
+  const quizRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setVisibleCount(ITEMS_PER_LOAD);
@@ -306,9 +308,49 @@ export default function EscursioniPage({
         </div>
       </div>
 
+      {/* --- STRIP QUIZ (dismissibile) --- */}
+      <AnimatePresence>
+        {!quizStarted && (
+          <motion.div
+            key="quiz-strip"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8, height: 0, marginBottom: 0 }}
+            transition={{ duration: 0.28, ease: "easeInOut" }}
+            className="flex items-center justify-between gap-4 bg-brand-stone/[0.04] border border-brand-stone/10 rounded-2xl px-5 py-3.5 mb-10 cursor-pointer group"
+            onClick={() => {
+              setQuizStarted(true);
+              setQuizStep("questions");
+              setCurrentQuestion(0);
+              setAnswers([]);
+              setTimeout(() => quizRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+            }}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="text-lg select-none shrink-0">🧭</span>
+              <p className="text-[11px] font-black uppercase tracking-widest text-brand-stone truncate">
+                Non sai da dove iniziare?{" "}
+                <span className="text-brand-sky group-hover:underline underline-offset-2">
+                  Scopri il tuo stile Altour →
+                </span>
+              </p>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); setQuizStarted(true); }}
+              className="shrink-0 text-stone-300 hover:text-stone-500 transition-colors p-1"
+              aria-label="Chiudi"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* --- GRID ESCURSIONI --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         <AnimatePresence mode="popLayout">
+
+
           {visibleEscursioni.map((esc) => (
             <motion.div
               layout
@@ -373,7 +415,7 @@ export default function EscursioniPage({
                     onClick={() => onBookingClick(esc.titolo)}
                     className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                   >
-                    Richiedi Info <ArrowRight size={12} />
+                    Richiedi Informazioni <ArrowRight size={12} />
                   </button>
                 </div>
               </div>
@@ -399,7 +441,7 @@ export default function EscursioniPage({
       )}
 
       {/* --- QUIZ BOX --- */}
-      <section className="max-w-4xl mx-auto mt-32 relative px-2">
+      <section ref={quizRef} className="max-w-4xl mx-auto mt-32 relative px-2">
         <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
         <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
           <div className="flex flex-col md:flex-row min-h-[400px]">
