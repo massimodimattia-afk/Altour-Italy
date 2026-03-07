@@ -8,6 +8,7 @@ import {
   Info,
   Briefcase as Backpack,
   Ruler,
+  Route,
   Mountain,
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -23,6 +24,7 @@ interface Activity {
   difficolta?: string | null;
   durata?: string | null;
   lunghezza?: number | null;
+  categoria?: string | null;
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
   data?: string | null;
@@ -74,6 +76,8 @@ export default function ActivityDetailModal({
 
   const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  const LunghezzaIcon = activity.categoria?.toLowerCase() === "tour" ? Route : Ruler;
 
   return (
     <AnimatePresence>
@@ -175,8 +179,8 @@ export default function ActivityDetailModal({
                   )}
                   {activity.lunghezza && (
                     <div className="flex items-center gap-1.5">
-                      <Ruler size={12} className="text-brand-sky" />
-                      {activity.lunghezza} km
+                      <LunghezzaIcon size={12} className="text-brand-sky" />
+                      {activity.lunghezza} 
                     </div>
                   )}
                 </div>

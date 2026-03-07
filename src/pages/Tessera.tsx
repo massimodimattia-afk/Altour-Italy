@@ -384,6 +384,7 @@ interface UserTessera {
   pin?: string | null;
   nome_escursionista: string;
   cognome_escursionista: string;
+  email?: string | null;
   avatar_url: string | null;
   escursioni_completate: EscursioneCompletata[];
   punti: number;
@@ -491,10 +492,12 @@ export default function Tessera() {
   const [loginCode, setLoginCode] = useState("");
   const [loginError, setLoginError] = useState("");
   const [loginAttempts, setLoginAttempts] = useState(0);
-  const [loginStep, setLoginStep] = useState<"code" | "pin" | "set-pin">("code");
+  const [loginStep, setLoginStep] = useState<"code" | "pin" | "set-pin" | "recover-email" | "recover-pin">("code");
   const [loginPin, setLoginPin] = useState("");
   const [loginPinConfirm, setLoginPinConfirm] = useState("");
   const [pendingTessera, setPendingTessera] = useState<UserTessera | null>(null);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [recoveryError, setRecoveryError] = useState("");
   const [showRedeem, setShowRedeem] = useState(false);
   const [redeemStep, setRedeemStep] = useState<RedeemStep>("INPUT");
   const [redeemCode, setRedeemCode] = useState("");
@@ -634,6 +637,38 @@ export default function Tessera() {
   }
 
   async function handleSetPin() {
+    if (!pendingTessera) return;
+    if (loginPin.length !== 4) { setLoginError("Il PIN deve essere di 4 cifre."); return; }
+    if (loginPin !== loginPinConfirm) { setLoginError("I PIN non corrispondono."); return; }
+    setLoading(true);
+    const { error } = await supabase.from("tessere").update({ pin: loginPin }).eq("id", pendingTessera.id);
+    if (error) { setLoginError("Errore nel salvataggio. Riprova."); setLoading(false); return; }
+    const updated = { ...pendingTessera, pin: loginPin };
+    completeLogin(updated as UserTessera);
+    setLoading(false);
+  }
+
+  async function handleRecoverEmail() {
+    if (!pendingTessera) return;
+    const entered = recoveryEmail.trim().toLowerCase();
+    if (!entered.includes("@")) { setRecoveryError("Inserisci un'email valida."); return; }
+    const stored = (pendingTessera.email ?? "").trim().toLowerCase();
+    if (!stored) {
+      setRecoveryError("Nessuna email associata a questa tessera. Contatta Altour per il reset.");
+      return;
+    }
+    if (entered !== stored) {
+      setRecoveryError("Email non corrispondente. Contatta Altour per il reset.");
+      return;
+    }
+    // email corrisponde → permetti nuovo PIN
+    setRecoveryError("");
+    setLoginPin("");
+    setLoginPinConfirm("");
+    setLoginStep("recover-pin");
+  }
+
+  async function handleRecoverSetPin() {
     if (!pendingTessera) return;
     if (loginPin.length !== 4) { setLoginError("Il PIN deve essere di 4 cifre."); return; }
     if (loginPin !== loginPinConfirm) { setLoginError("I PIN non corrispondono."); return; }
@@ -827,9 +862,14 @@ export default function Tessera() {
                 >
                   {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Accedi al Passaporto"}
                 </button>
-                <button onClick={() => { setLoginStep("code"); setLoginError(""); setPendingTessera(null); }} className="text-[9px] font-black uppercase tracking-widest text-stone-300 hover:text-stone-500 transition-colors">
-                  ← Cambia codice
-                </button>
+                <div className="flex justify-between items-center pt-1">
+                  <button onClick={() => { setLoginStep("code"); setLoginError(""); setPendingTessera(null); }} className="text-[9px] font-black uppercase tracking-widest text-stone-300 hover:text-stone-500 transition-colors">
+                    ← Cambia codice
+                  </button>
+                  <button onClick={() => { setRecoveryEmail(""); setRecoveryError(""); setLoginError(""); setLoginStep("recover-email"); }} className="text-[9px] font-black uppercase tracking-widest text-stone-300 hover:text-brand-sky transition-colors">
+                    PIN dimenticato?
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -853,6 +893,79 @@ export default function Tessera() {
                 {loginError && <p className="text-red-500 text-[10px] font-black uppercase py-2 bg-red-50 rounded-lg px-3">{loginError}</p>}
                 <button
                   onClick={handleSetPin}
+                  disabled={loginPin.length < 4 || loginPinConfirm.length < 4 || loading}
+                  className="w-full bg-stone-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Salva e Accedi"}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── STEP 4: RECOVERY — verifica email ── */}
+          {loginStep === "recover-email" && (
+            <>
+              <div className="space-y-2 mb-8">
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-stone-800">Recupera PIN</h2>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                  Inserisci l'email associata alla tessera
+                </p>
+              </div>
+              <div className="space-y-4">
+                <input
+                  type="email"
+                  className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center font-bold outline-none focus:border-brand-sky focus:bg-white transition-all text-sm tracking-wide placeholder:text-stone-300 shadow-inner lowercase"
+                  placeholder="la-tua@email.com"
+                  value={recoveryEmail}
+                  onChange={(e) => { setRecoveryEmail(e.target.value); setRecoveryError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleRecoverEmail()}
+                />
+                {recoveryError && (
+                  <div className="space-y-2">
+                    <p className="text-red-500 text-[10px] font-black uppercase py-2 bg-red-50 rounded-lg px-3">{recoveryError}</p>
+                    {recoveryError.includes("Contatta") && (
+                      <a
+                        href="mailto:info@altouritaly.it"
+                        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-stone-200 text-[9px] font-black uppercase tracking-widest text-stone-500 hover:border-brand-sky hover:text-brand-sky transition-all"
+                      >
+                        Scrivi ad Altour →
+                      </a>
+                    )}
+                  </div>
+                )}
+                <button
+                  onClick={handleRecoverEmail}
+                  disabled={!recoveryEmail.includes("@") || loading}
+                  className="w-full mt-2 bg-stone-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Verifica"}
+                </button>
+                <button onClick={() => { setLoginStep("pin"); setLoginPin(""); setLoginError(""); }} className="text-[9px] font-black uppercase tracking-widest text-stone-300 hover:text-stone-500 transition-colors">
+                  ← Torna al PIN
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ── STEP 5: RECOVERY — nuovo PIN ── */}
+          {loginStep === "recover-pin" && (
+            <>
+              <div className="space-y-2 mb-2">
+                <h2 className="text-2xl font-black uppercase tracking-tighter text-stone-800">Nuovo PIN</h2>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">Scegli un nuovo PIN di 4 cifre</p>
+              </div>
+              <div className="space-y-6 mt-6">
+                <div className="space-y-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Nuovo PIN</p>
+                  <PinInput value={loginPin} onChange={(v) => { setLoginPin(v); setLoginError(""); }} />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400">Conferma PIN</p>
+                  <PinInput value={loginPinConfirm} onChange={(v) => { setLoginPinConfirm(v); setLoginError(""); }} onComplete={loginPin.length === 4 ? handleRecoverSetPin : undefined} />
+                </div>
+                {loginError && <p className="text-red-500 text-[10px] font-black uppercase py-2 bg-red-50 rounded-lg px-3">{loginError}</p>}
+                <button
+                  onClick={handleRecoverSetPin}
                   disabled={loginPin.length < 4 || loginPinConfirm.length < 4 || loading}
                   className="w-full bg-stone-800 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
