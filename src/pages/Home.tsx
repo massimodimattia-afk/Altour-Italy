@@ -193,7 +193,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           >
             <div className="grid grid-cols-3 gap-0 divide-x divide-white/10">
               {[
-                { value: "10 anni", label: "Exp.", icon: <TrendingUp size={14} /> },
+                { value: "10 anni", label: "Esperienza", icon: <TrendingUp size={14} /> },
                 { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
                 { value: "800+", label: "Tesserati", icon: <Users size={14} /> },
               ].map((stat, index) => (
@@ -413,7 +413,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               {/* ── Contenuto destra ── */}
               <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
                 <p className="text-stone-500 text-sm font-medium leading-relaxed mb-6">
-                  Un'emozione in montagna per chi ami — utilizzabile per escursioni, corsi e tour privati.
+                  Un'emozione da regalare a chi ami — utilizzabile per ogni tipo di esperienza Altour.
                 </p>
 
                 <p className="text-[8px] font-black uppercase tracking-widest text-stone-400 mb-3">
