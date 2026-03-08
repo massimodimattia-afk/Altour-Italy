@@ -77,7 +77,7 @@ export default function ActivityDetailModal({
   const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
 
-  const LunghezzaIcon = activity.categoria?.toLowerCase() === "tour" ? Route : Ruler;
+  const LunghezzaIcon = activity.categoria?.toLowerCase() === "tour" || activity._tipo === "campo" ? Route : Ruler;
 
   return (
     <AnimatePresence>
@@ -213,7 +213,11 @@ export default function ActivityDetailModal({
                   <div className="p-4 md:p-6 bg-stone-50 rounded-2xl border border-stone-100">
                     <h4 className="text-[10px] font-black uppercase tracking-widest text-brand-stone mb-3 flex items-center gap-2">
                       <Backpack size={14} className="text-brand-sky" />
-                      {activity._tipo === 'corso' ? "Di cosa parleremo" : "Equipaggiamento Consigliato"}
+                      {activity._tipo === 'corso'
+                        ? "Di cosa parleremo"
+                        : activity._tipo === 'campo'
+                          ? "Attività previste"
+                          : "Equipaggiamento Consigliato"}
                     </h4>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
                       {activity.attrezzatura.split(",").map((item, index) => (

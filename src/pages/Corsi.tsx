@@ -117,8 +117,8 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
     fetchCorsi();
   }, []);
 
-  // ── FIX: aggiunge _tipo: 'corso' così ActivityDetailModal
-  //         mostra "Di cosa parleremo" invece di "Equipaggiamento Consigliato"
+  // Aggiunge _tipo: 'corso' per il label "Di cosa parleremo" nel modal.
+  // descrizione_estesa viene inclusa automaticamente dallo spread (select("*")).
   const openDetails = (corso: Corso) => {
     setSelectedActivity({ ...corso, _tipo: "corso" });
     setIsDetailOpen(true);

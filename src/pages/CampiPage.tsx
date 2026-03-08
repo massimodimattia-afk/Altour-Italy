@@ -47,11 +47,16 @@ export interface Campo {
   created_at: string;
   titolo: string;
   descrizione: string | null;
+  // ── NUOVO: descrizione estesa per la card esplosa ─────────────────────
+  descrizione_estesa?: string | null;
   immagine_url: string | null;
   servizi: string[] | null;
   slug: string;
   prezzo?: number | null;
   durata?: string | null;
+  // ── NUOVO: campi badge modal (stile escursioni) ───────────────────────
+  difficolta?: string | null;
+  lunghezza?: number | null;
 }
 
 interface CampiPageProps {
@@ -63,14 +68,17 @@ function campoToActivity(campo: Campo) {
     id: campo.id,
     titolo: campo.titolo,
     descrizione: campo.descrizione,
-    descrizione_estesa: null,
+    // Passa descrizione_estesa: se presente verrà mostrata nel modal al posto di descrizione
+    descrizione_estesa: campo.descrizione_estesa ?? null,
     prezzo: campo.prezzo ?? (null as unknown as number),
     immagine_url: campo.immagine_url,
     gallery_urls: null,
-    difficolta: null,
-    durata: null,
-    lunghezza: null,
+    // Badge modal — allineati a EscursioniPage
+    difficolta: campo.difficolta ?? null,
+    durata: campo.durata ?? null,
+    lunghezza: campo.lunghezza ?? null,
     attrezzatura_consigliata: null,
+    // servizi → "Attività previste" nel modal (grazie a _tipo: 'campo')
     attrezzatura: campo.servizi?.join(", ") ?? null,
     _tipo: 'campo' as const,
   };
@@ -104,7 +112,6 @@ const SkeletonCard = () => (
 export default function CampiPage({ onBookingClick }: CampiPageProps) {
   const [campi, setCampi] = useState<Campo[]>([]);
   const [loading, setLoading] = useState(true);
-  // FIX 5: error state — distingue "vuoto" da "errore Supabase"
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<ReturnType<typeof campoToActivity> | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -123,6 +130,7 @@ export default function CampiPage({ onBookingClick }: CampiPageProps) {
           created_at: row.created_at,
           titolo: row.titolo,
           descrizione: row.descrizione ?? null,
+          descrizione_estesa: row.descrizione_estesa ?? null,
           immagine_url: row.immagine_url ?? null,
           servizi:
             typeof row.servizi === "string"
@@ -131,6 +139,8 @@ export default function CampiPage({ onBookingClick }: CampiPageProps) {
           slug: row.slug,
           prezzo: row.prezzo ?? null,
           durata: row.durata ?? null,
+          difficolta: row.difficolta ?? null,
+          lunghezza: row.lunghezza ?? null,
         }));
         setCampi(normalized);
       }
@@ -153,7 +163,6 @@ export default function CampiPage({ onBookingClick }: CampiPageProps) {
     setIsDetailOpen(true);
   };
 
-  // FIX 6: onClose resetta anche selectedActivity dopo l'animazione di uscita
   const handleCloseDetail = () => {
     setIsDetailOpen(false);
     setTimeout(() => setSelectedActivity(null), 300);
@@ -180,7 +189,6 @@ export default function CampiPage({ onBookingClick }: CampiPageProps) {
         <div className="h-1.5 w-12 bg-brand-sky rounded-full" />
       </div>
 
-      {/* FIX 5: banner errore se Supabase fallisce */}
       {error && (
         <div className="mb-8 rounded-2xl border border-rose-100 bg-rose-50 px-6 py-4 text-rose-600 text-sm font-bold">
           {error}
@@ -219,10 +227,10 @@ export default function CampiPage({ onBookingClick }: CampiPageProps) {
                   <h2 className="text-lg md:text-xl font-black mb-4 text-brand-stone uppercase line-clamp-2">
                     {campo.titolo}
                   </h2>
+                  {/* Anteprima usa sempre descrizione (breve) */}
                   <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow">
                     {campo.descrizione}
                   </p>
-
 
                   <div className="mt-auto pt-6 border-t border-stone-100 flex flex-col gap-4">
                     <div className="flex justify-between items-center mb-2">
@@ -259,7 +267,6 @@ export default function CampiPage({ onBookingClick }: CampiPageProps) {
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={handleCloseDetail}
-        // FIX 7: onBook tipizzato correttamente con mode opzionale
         onBook={onBookingClick}
       />
     </div>
