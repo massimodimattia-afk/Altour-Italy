@@ -7,7 +7,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Benessere": "#a5d9c9",
   "Borghi più belli": "#946a52",
   "Cammini": "#e3c45d",
-  "Educazione all’aperto": "#01aa9f",
+  "Educazione all'aperto": "#01aa9f",
   "Eventi": "#ffc0cb",
   "Formazione": "#002f59",
   "Immersi nel verde": "#358756",

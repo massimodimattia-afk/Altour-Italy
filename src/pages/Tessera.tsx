@@ -66,7 +66,7 @@ const BADGE_EMOJI: Record<string, string> = {
   "Avventura":              "⛰",
   "Benessere":              "🌿",
   "Borghi più belli":       "🏘",
-  "Cammini":                "🥾",
+  "Cammini":                "👣",
   "Educazione all'aperto":  "🌱",
   "Eventi":                 "✨",
   "Formazione":             "📖",
@@ -135,7 +135,7 @@ const ACHIEVEMENT_BADGES: AchievementBadge[] = [
   {
     id: "streak_tour",
     name: "Lupo dei Cammini",
-    emoji: "🔥",
+    emoji: "🐺",
     description: "3 tour completati",
     color: "#e94544",
     check: (e) => e.filter(x => x.categoria === "tour").length >= 3,
@@ -144,7 +144,7 @@ const ACHIEVEMENT_BADGES: AchievementBadge[] = [
   {
     id: "assiduo",
     name: "Assiduo",
-    emoji: "📅",
+    emoji: "🎯",
     description: "8 giornate completate",
     color: "#01aa9f",
     check: (e) => e.filter(x => x.categoria === "giornata").length >= 8,
@@ -153,7 +153,7 @@ const ACHIEVEMENT_BADGES: AchievementBadge[] = [
   {
     id: "collezionista",
     name: "Collezionista",
-    emoji: "🌈",
+    emoji: "💎",
     description: "5 filosofie diverse",
     color: "#946a52",
     check: (e) => new Set(e.map(x => getFilosofiaName(x.colore)).filter(Boolean)).size >= 5,
@@ -162,7 +162,7 @@ const ACHIEVEMENT_BADGES: AchievementBadge[] = [
   {
     id: "stagionale",
     name: "Anima delle Stagioni",
-    emoji: "🗓",
+    emoji: "🍂",
     description: "Tutte e 4 le stagioni",
     color: "#75c43c",
     check: (e) => new Set(e.map(x => getSeason(new Date(x.data)))).size >= 4,
@@ -171,7 +171,7 @@ const ACHIEVEMENT_BADGES: AchievementBadge[] = [
   {
     id: "esploratore_verticale",
     name: "Esploratore Verticale",
-    emoji: "🏔",
+    emoji: "⚡",
     description: "Facile → Media → Impegnativa",
     color: "#002f59",
     check: (e) => {
@@ -228,23 +228,56 @@ const IconaScarponeCustom = ({ size = 24, color = "#d6d3d1", isActive = false, c
 const BadgeChip = ({ filo, isUnlocked, count, onClick }: { filo: string; isUnlocked: boolean; count: number; onClick?: () => void }) => {
   const color = FILOSOFIA_COLORS[filo] ?? "#44403c";
   const emoji = BADGE_EMOJI[filo] ?? "★";
+  const shortName = BADGE_NAMES[filo]?.split(" ")[0] ?? filo.split(" ")[0];
   return (
-    <motion.div whileTap={{ scale: 0.93 }} onClick={onClick} className="flex flex-col items-center cursor-pointer">
+    <motion.div
+      whileTap={{ scale: 0.91 }}
+      onClick={onClick}
+      className="flex flex-col items-center gap-1.5 cursor-pointer group"
+    >
       <div className="relative">
         <motion.div
-          className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-xl transition-all"
-          style={isUnlocked ? { backgroundColor: color, boxShadow: `0 4px 14px ${color}55, inset 0 1px 0 rgba(255,255,255,0.25)` } : { backgroundColor: "#f5f5f4", border: "2px dashed #e7e5e4" }}
-          whileHover={isUnlocked ? { scale: 1.08, y: -2 } : {}}
+          className="w-[52px] h-[52px] md:w-[60px] md:h-[60px] rounded-2xl flex items-center justify-center transition-all relative overflow-hidden"
+          style={isUnlocked
+            ? {
+                backgroundColor: color,
+                boxShadow: `0 6px 18px ${color}45, inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.1)`,
+              }
+            : { backgroundColor: "#f5f5f4" }}
+          whileHover={isUnlocked ? { scale: 1.06, y: -2 } : { scale: 1.03 }}
           transition={{ type: "spring", stiffness: 400, damping: 15 }}
         >
-          {isUnlocked ? <span className="text-lg leading-none">{emoji}</span> : <span className="text-stone-300 text-[9px] font-black">{count}/{BADGE_THRESHOLD}</span>}
+          {isUnlocked ? (
+            <>
+              {/* subtle shine overlay */}
+              <div className="absolute inset-0 opacity-20" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 60%)" }} />
+              <span className="text-[22px] leading-none relative z-10 drop-shadow-sm">{emoji}</span>
+            </>
+          ) : (
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[18px] leading-none opacity-20">{emoji}</span>
+              <span className="text-[8px] font-black text-stone-400 leading-none">{count}/{BADGE_THRESHOLD}</span>
+            </div>
+          )}
         </motion.div>
         {isUnlocked && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-sm" style={{ border: `2px solid ${color}` }}>
-            <CheckCircle2 size={8} style={{ color }} />
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 15, delay: 0.1 }}
+            className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center"
+            style={{ boxShadow: `0 2px 6px ${color}55`, border: `2px solid ${color}` }}
+          >
+            <CheckCircle2 size={9} style={{ color }} />
           </motion.div>
         )}
       </div>
+      <span
+        className="text-[8px] font-black uppercase tracking-wide leading-none text-center w-full truncate px-0.5"
+        style={{ color: isUnlocked ? color : "#d6d3d1" }}
+      >
+        {shortName}
+      </span>
     </motion.div>
   );
 };
@@ -288,25 +321,46 @@ const BadgeDetailPopup = ({ filo, isUnlocked, count, onClose }: { filo: string; 
 };
 
 const AchievementChip = ({ badge, isUnlocked, progress, onClick }: { badge: AchievementBadge; isUnlocked: boolean; progress: { current: number; total: number }; onClick?: () => void }) => (
-  <motion.div whileTap={{ scale: 0.93 }} onClick={onClick} className="flex flex-col items-center cursor-pointer">
-    <div className="relative">
-      <motion.div
-        className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-xl transition-all"
-        style={isUnlocked
-          ? { backgroundColor: badge.color, boxShadow: `0 4px 14px ${badge.color}55, inset 0 1px 0 rgba(255,255,255,0.25)` }
-          : { backgroundColor: "#f5f5f4", border: "2px dashed #e7e5e4" }}
-        whileHover={isUnlocked ? { scale: 1.08, y: -2 } : {}}
-        transition={{ type: "spring", stiffness: 400, damping: 15 }}
-      >
+  <motion.div
+    whileTap={{ scale: 0.97 }}
+    onClick={onClick}
+    className="flex items-center gap-3 cursor-pointer rounded-2xl p-3 transition-all"
+    style={isUnlocked
+      ? { backgroundColor: `${badge.color}10`, border: `1.5px solid ${badge.color}25` }
+      : { backgroundColor: "#fafaf9", border: "1.5px solid #f0eeec" }}
+    whileHover={{ scale: 1.01 }}
+    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+  >
+    {/* Icon */}
+    <div
+      className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 relative overflow-hidden"
+      style={isUnlocked
+        ? { backgroundColor: badge.color, boxShadow: `0 4px 12px ${badge.color}40, inset 0 1px 0 rgba(255,255,255,0.3)` }
+        : { backgroundColor: "#eeeceb" }}
+    >
+      {isUnlocked && <div className="absolute inset-0 opacity-20" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 60%)" }} />}
+      <span className={`leading-none relative z-10 ${isUnlocked ? "drop-shadow-sm" : "opacity-30"}`}>{badge.emoji}</span>
+    </div>
+    {/* Text + progress */}
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-black uppercase tracking-tight leading-none truncate" style={{ color: isUnlocked ? badge.color : "#c4c2c0" }}>
+          {badge.name}
+        </span>
         {isUnlocked
-          ? <span className="text-lg leading-none">{badge.emoji}</span>
-          : <span className="text-stone-300 text-[9px] font-black leading-none text-center px-1">{progress.current}/{progress.total}</span>}
-      </motion.div>
-      {isUnlocked && (
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-white flex items-center justify-center shadow-sm" style={{ border: `2px solid ${badge.color}` }}>
-          <CheckCircle2 size={8} style={{ color: badge.color }} />
-        </motion.div>
-      )}
+          ? <CheckCircle2 size={12} style={{ color: badge.color }} className="flex-shrink-0 ml-1" />
+          : <span className="text-[8px] font-black text-stone-300 flex-shrink-0 ml-1">{progress.current}/{progress.total}</span>}
+      </div>
+      {/* Progress bar */}
+      <div className="w-full bg-stone-100 rounded-full h-1 overflow-hidden">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ backgroundColor: isUnlocked ? badge.color : "#d6d3d1" }}
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.min((progress.current / progress.total) * 100, 100)}%` }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
+        />
+      </div>
     </div>
   </motion.div>
 );
@@ -775,7 +829,7 @@ export default function Tessera() {
         <div style="margin-top:48px;padding-top:24px;border-top:1px solid #e7e5e4;display:flex;justify-content:space-between;align-items:flex-end;">
           <div>
             <div style="font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#a8a29e;margin-bottom:6px;">Firma della Guida</div>
-            <div style="font-size:13px;font-weight:900;color:#1c1917;font-style:italic;">Claudio</div>
+            <div style="font-size:13px;font-weight:900;color:#1c1917;font-style:italic;">Matteo Rizzardi</div>
             <div style="font-size:9px;color:#a8a29e;margin-top:2px;">Guida Ambientale Escursionistica · Altour Italy</div>
           </div>
           <div style="text-align:right;">
@@ -957,7 +1011,16 @@ export default function Tessera() {
           </div>
         </div>
 
-        <div className="mt-4 md:mt-6 bg-white/70 rounded-[2rem] p-4 md:p-5 border border-white/50 shadow-sm">
+        {/* ─── RISCATTA — primo posto dopo la tessera ──────────────────────── */}
+        <button
+          onClick={() => { setRedeemStep("INPUT"); setShowRedeem(true); }}
+          className="w-full mt-4 md:mt-5 bg-[#5aaadd] text-white py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-sky-100/60 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:bg-[#0284c7]"
+        >
+          <Plus size={20} strokeWidth={3} /><span className="text-sm md:text-base">Riscatta Scarpone</span>
+        </button>
+
+        {/* ─── PROGRESS BAR VOUCHER ───────────────────────────────────────── */}
+        <div className="mt-4 md:mt-5 bg-white/70 rounded-[2rem] p-4 md:p-5 border border-white/50 shadow-sm">
           <div className="flex justify-between items-center mb-2">
             <span className="text-[8px] md:text-[9px] font-black uppercase text-stone-400 tracking-widest">Prossimo voucher</span>
             <span className="text-[8px] md:text-[9px] font-black uppercase text-stone-400 tracking-widest">{progressInCycle}/8 escursioni{toNextVoucher < 8 && <span className="text-sky-400 ml-1">· mancano {toNextVoucher}</span>}</span>
@@ -967,27 +1030,95 @@ export default function Tessera() {
           </div>
         </div>
 
-        <div className="mt-4 md:mt-6 bg-white rounded-[2rem] p-5 md:p-6 border border-white/50 shadow-sm">
-          <div className="flex justify-between items-center mb-5">
-            <div className="flex items-center gap-2"><Award size={14} className="text-stone-400" /><span className="text-[8px] md:text-[9px] font-black uppercase text-stone-400 tracking-widest">Badge Filosofia</span></div>
-            <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-stone-50 text-stone-400">{earnedBadges.length}/{Object.keys(BADGE_NAMES).length}</span>
+        {/* ─── BADGE FILOSOFIA ─────────────────────────────────────────────── */}
+        <div className="mt-4 md:mt-5 bg-white rounded-[2rem] overflow-hidden border border-stone-100/80 shadow-sm">
+          {/* Header */}
+          <div className="flex justify-between items-center px-5 pt-5 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-lg bg-stone-800 flex items-center justify-center">
+                <Award size={12} className="text-white" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-stone-700 leading-none">Collezione Filosofie</p>
+                <p className="text-[8px] font-bold text-stone-400 uppercase tracking-wide mt-0.5 leading-none">5 escursioni per categoria</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-16 rounded-full bg-stone-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-stone-700 transition-all duration-700"
+                  style={{ width: `${(earnedBadges.length / Object.keys(BADGE_NAMES).length) * 100}%` }}
+                />
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 tabular-nums">
+                {earnedBadges.length}/{Object.keys(BADGE_NAMES).length}
+              </span>
+            </div>
           </div>
-          <div className="grid grid-cols-5 gap-2 md:gap-3">
-            {Object.keys(BADGE_NAMES).map((filo) => (
-              <BadgeChip key={filo} filo={filo} isUnlocked={earnedBadges.includes(filo)} count={badgeCounts[filo] ?? 0}
-                onClick={() => setSelectedBadge({ filo, isUnlocked: earnedBadges.includes(filo), count: badgeCounts[filo] ?? 0 })} />
-            ))}
+
+          {/* Divider */}
+          <div className="h-px bg-stone-50 mx-5" />
+
+          {/* Grid */}
+          <div className="p-5 pt-4">
+            <div className="grid grid-cols-5 gap-x-2 gap-y-4 md:gap-x-3">
+              {Object.keys(BADGE_NAMES).map((filo) => (
+                <BadgeChip key={filo} filo={filo} isUnlocked={earnedBadges.includes(filo)} count={badgeCounts[filo] ?? 0}
+                  onClick={() => setSelectedBadge({ filo, isUnlocked: earnedBadges.includes(filo), count: badgeCounts[filo] ?? 0 })} />
+              ))}
+            </div>
+            {earnedBadges.length === 0 && (
+              <p className="text-center text-[8px] font-bold text-stone-300 uppercase tracking-widest mt-4">
+                Tocca un badge per scoprire come sbloccarlo
+              </p>
+            )}
           </div>
-          {earnedBadges.length === 0 && <p className="text-center text-[9px] font-bold text-stone-300 uppercase tracking-widest mt-5">Completa 5 escursioni della stessa categoria per sbloccare un badge</p>}
         </div>
 
-        <button onClick={() => { setRedeemStep("INPUT"); setShowRedeem(true); }}
-          className="w-full mt-4 md:mt-6 bg-[#5aaadd] text-white py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-sky-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:bg-[#0284c7]">
-          <Plus size={20} strokeWidth={3} /><span className="text-sm md:text-base">Riscatta Scarpone</span>
-        </button>
+        {/* ─── TRAGUARDI ───────────────────────────────────────────────────── */}
+        <div className="mt-4 md:mt-5 bg-white rounded-[2rem] overflow-hidden border border-stone-100/80 shadow-sm">
+          {/* Header */}
+          <div className="flex justify-between items-center px-5 pt-5 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-lg bg-stone-800 flex items-center justify-center">
+                <Trophy size={12} className="text-white" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-stone-700 leading-none">Traguardi Speciali</p>
+                <p className="text-[8px] font-bold text-stone-400 uppercase tracking-wide mt-0.5 leading-none">Sfide di esplorazione</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-16 rounded-full bg-stone-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-stone-700 transition-all duration-700"
+                  style={{ width: `${(earnedAchievements.length / ACHIEVEMENT_BADGES.length) * 100}%` }}
+                />
+              </div>
+              <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 tabular-nums">
+                {earnedAchievements.length}/{ACHIEVEMENT_BADGES.length}
+              </span>
+            </div>
+          </div>
 
+          {/* Divider */}
+          <div className="h-px bg-stone-50 mx-5" />
+
+          {/* List */}
+          <div className="px-4 py-3 space-y-2">
+            {ACHIEVEMENT_BADGES.map((ab) => {
+              const isUnlocked = earnedAchievements.some(x => x.id === ab.id);
+              const prog = ab.progress(userTessera.escursioni_completate ?? []);
+              return (
+                <AchievementChip key={ab.id} badge={ab} isUnlocked={isUnlocked} progress={prog} onClick={() => setSelectedAchievement(ab)} />
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ─── VOUCHER ─────────────────────────────────────────────────────── */}
         {vouchersCount > 0 && (
-          <div className="mt-4 md:mt-6 bg-amber-50/50 border-2 border-dashed border-amber-100 p-4 md:p-6 rounded-[2rem] flex items-center justify-between">
+          <div className="mt-4 md:mt-5 bg-amber-50/50 border-2 border-dashed border-amber-100 p-4 md:p-6 rounded-[2rem] flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-white rounded-full shadow-sm text-amber-500"><Gift size={20} /></div>
               <div><p className="text-[8px] md:text-[10px] font-black uppercase text-amber-600">Premio Sbloccato</p><h4 className="text-sm md:text-lg font-black uppercase">{vouchersCount} Voucher di 10 € disponibile</h4></div>
@@ -995,49 +1126,14 @@ export default function Tessera() {
           </div>
         )}
 
-        {/* ─── TRAGUARDI ─────────────────────────────────────────────────────── */}
-        <div className="mt-4 md:mt-6 bg-white rounded-[2rem] p-5 md:p-6 border border-white/50 shadow-sm">
-          <div className="flex justify-between items-center mb-5">
-            <div className="flex items-center gap-2">
-              <Trophy size={14} className="text-stone-400" />
-              <span className="text-[8px] md:text-[9px] font-black uppercase text-stone-400 tracking-widest">Traguardi</span>
-            </div>
-            <span className="text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-stone-50 text-stone-400">
-              {earnedAchievements.length}/{ACHIEVEMENT_BADGES.length}
-            </span>
-          </div>
-          <div className="grid grid-cols-5 gap-2 md:gap-3">
-            {ACHIEVEMENT_BADGES.map((ab) => {
-              const isUnlocked = earnedAchievements.some(x => x.id === ab.id);
-              const prog = ab.progress(userTessera.escursioni_completate ?? []);
-              return (
-                <AchievementChip
-                  key={ab.id}
-                  badge={ab}
-                  isUnlocked={isUnlocked}
-                  progress={prog}
-                  onClick={() => setSelectedAchievement(ab)}
-                />
-              );
-            })}
-          </div>
-          {earnedAchievements.length === 0 && (
-            <p className="text-center text-[9px] font-bold text-stone-300 uppercase tracking-widest mt-5">
-              Completa sfide speciali per sbloccare i traguardi
-            </p>
-          )}
-        </div>
-
-        {/* ─── PDF DOWNLOAD ──────────────────────────────────────────────────── */}
+        {/* ─── PDF DOWNLOAD ────────────────────────────────────────────────── */}
         <button
           onClick={generatePDF}
           disabled={isPdfGenerating || (userTessera.escursioni_completate?.length ?? 0) === 0}
-          className="w-full mt-4 md:mt-6 mb-8 border-2 border-stone-200 text-stone-500 py-4 md:py-5 rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:border-stone-300 hover:text-stone-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full mt-4 md:mt-5 mb-8 border-2 border-stone-200 text-stone-500 py-4 rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all hover:border-stone-300 hover:text-stone-700 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isPdfGenerating
-            ? <Loader2 size={18} className="animate-spin" />
-            : <FileDown size={18} />}
-          <span className="text-sm">Scarica Registro Escursioni</span>
+          {isPdfGenerating ? <Loader2 size={16} className="animate-spin" /> : <FileDown size={16} />}
+          <span className="text-[11px] md:text-xs">Scarica Registro Escursioni</span>
         </button>
       </div>
 

@@ -6,7 +6,7 @@ import ActivityDetailModal from "../components/ActivityDetailModal";
 type Corso = Database["public"]["Tables"]["corsi"]["Row"];
 
 interface CorsiPageProps {
-  onNavigate: (page: string) => void; // mantenuta per compatibilità con App.tsx
+  onNavigate: (page: string) => void;
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
 
@@ -15,7 +15,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Benessere": "#a5d9c9",
   "Borghi più belli": "#946a52",
   "Cammini": "#e3c45d",
-  "Educazione all’aperto": "#01aa9f",
+  "Educazione all'aperto": "#01aa9f",
   "Eventi": "#ffc0cb",
   "Formazione": "#002f59",
   "Immersi nel verde": "#358756",
@@ -32,7 +32,7 @@ function getFilosofiaOpacity(color: string): string {
 }
 
 const FILOSOFIA_ALIAS: Record<string, string> = {
-  "Outdoor Education": "Educazione all’aperto",
+  "Outdoor Education": "Educazione all'aperto",
   "Luoghi dello Spirito": "Luoghi dello spirito",
   "Tra Mare e Cielo": "Tra mare e cielo",
   "Trek Urbano": "Trek urbano",
@@ -93,9 +93,8 @@ const IMG_FALLBACK = "/altour-logo.png";
 export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
   const [corsi, setCorsi] = useState<Corso[]>([]);
   const [loading, setLoading] = useState(true);
-  // FIX 1: error state — distingue "vuoto" da "errore Supabase"
   const [error, setError] = useState<string | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<Corso | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   useEffect(() => {
@@ -118,12 +117,13 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
     fetchCorsi();
   }, []);
 
+  // ── FIX: aggiunge _tipo: 'corso' così ActivityDetailModal
+  //         mostra "Di cosa parleremo" invece di "Equipaggiamento Consigliato"
   const openDetails = (corso: Corso) => {
-    setSelectedActivity(corso);
+    setSelectedActivity({ ...corso, _tipo: "corso" });
     setIsDetailOpen(true);
   };
 
-  // FIX 2: onClose resetta anche selectedActivity dopo l'animazione di uscita
   const handleCloseDetail = () => {
     setIsDetailOpen(false);
     setTimeout(() => setSelectedActivity(null), 300);
@@ -148,7 +148,6 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         <span className="text-brand-sky italic font-light">Altour.</span>
       </h1>
 
-      {/* FIX 1: banner errore se Supabase fallisce */}
       {error && (
         <div className="col-span-3 mb-8 rounded-2xl border border-rose-100 bg-rose-50 px-6 py-4 text-rose-600 text-sm font-bold">
           {error}
@@ -203,7 +202,6 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                   <div className="flex gap-3">
                     <button
                       onClick={() => openDetails(corso)}
-                      // FIX 3: aggiunto active:scale-95 — coerente con Campi ed Escursioni
                       className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
                     >
                       Dettagli
