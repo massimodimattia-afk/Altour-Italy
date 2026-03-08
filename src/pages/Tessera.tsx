@@ -949,14 +949,14 @@ export default function Tessera() {
   return (
     <div className="min-h-screen bg-[#f5f2ed] pb-20 text-stone-800">
       <div className="relative h-[45vh] md:h-[50vh] w-full flex items-center justify-center text-center overflow-hidden">
-        <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Trentino_neve.webp" className="absolute inset-0 w-full h-full object-cover object-[center_60%]" alt="header bg" />
+        <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Sezione%20tessera%20hero.webp" className="absolute inset-0 w-full h-full object-cover object-[center_60%]" alt="header bg" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-[#f5f2ed]" />
         <button onClick={handleLogout} className="absolute top-4 right-4 md:top-6 md:right-6 p-2 md:p-3 bg-black/20 backdrop-blur-md rounded-full text-white border border-white/10 z-50"><LogOut size={18} className="md:w-5 md:h-5" /></button>
         <div className="relative z-20 px-4 flex flex-col items-center">
           <h1 className="text-3xl md:text-4xl font-black text-white uppercase drop-shadow-md">Passaporto Altour</h1>
           <p className="text-white/80 font-bold tracking-[0.3em] text-[10px] md:text-xs uppercase mt-1 mb-4">Cod. {userTessera.codice_tessera}</p>
           <div className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl backdrop-blur-md border border-white/20" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)", boxShadow: "0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.1)" }}>
-            <IconaScarponeCustom size={40} color="#5aaadd" isActive={true} />
+            <IconaScarponeCustom size={48} color="#002f59" isActive={true} />
             <div className="flex flex-col items-start">
               <span className="text-[7px] font-black uppercase tracking-[0.25em] text-white/50 leading-none mb-0.5">Livello</span>
               <span className="text-[11px] md:text-[13px] font-black uppercase tracking-wide text-white leading-none" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>{currentLevelLabel}</span>

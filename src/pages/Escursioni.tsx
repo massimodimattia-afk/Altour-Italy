@@ -3,9 +3,8 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, RefreshCcw, Star, ChevronDown, Calendar, X } from "lucide-react";
+import { ArrowRight, RefreshCcw, Star, Calendar } from "lucide-react";
 
-// FIX: Estendiamo il tipo per includere la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
@@ -34,7 +33,6 @@ interface EscursioniPageProps {
   onBookingClick: (title: string) => void;
 }
 
-// ── Costanti fuori dal componente: non vengono ricreate ad ogni render ────────
 const QUIZ_QUESTIONS = [
   { q: "Con chi verrai?", options: ["Solo", "Coppia", "Gruppo"] },
   { q: "Livello Trekking?", options: ["Base", "Medio", "Pro"] },
@@ -44,562 +42,196 @@ const QUIZ_QUESTIONS = [
   { q: "Quanto tempo?", options: ["Ore", "Giorno", "Tour"] },
 ];
 
-// ─── Mappa filosofia → segnali quiz ──────────────────────────────────────────
-const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
-  "Avventura":             { cerca: "Tempo di qualità", sforzo: "Intenso", livello: "Pro" },
-  "Benessere":             { cerca: "Pace", sforzo: "Leggero", compagnia: "Coppia" },
-  "Borghi più belli":      { luogo: "Boschi", tempo: "Giorno", cerca: "Racconto" },
-  "Cammini":               { luogo: "Boschi", tempo: "Tour", cerca: "Pace" },
-  "Educazione all'aperto": { livello: "Base", compagnia: "Gruppo" },
-  "Eventi":                { compagnia: "Gruppo", tempo: "Giorno" },
-  "Formazione":            { livello: "Base", tempo: "Tour", cerca: "Racconto" },
-  "Immersi nel verde":     { luogo: "Boschi", cerca: "Pace" },
-  "Luoghi dello spirito":  { cerca: "Pace", compagnia: "Solo" },
-  "Novità":                { cerca: "Tempo di qualità", compagnia: "Gruppo", tempo: "Giorno" },
-  "Speciali":              { cerca: "Tempo di qualità", compagnia: "Gruppo" },
-  "Tra mare e cielo":      { luogo: "Mare, lago o fiume", cerca: "Panorami" },
-  "Trek urbano":           { tempo: "Ore", sforzo: "Leggero" },
-};
-
-// --- SKELETON LOADER ---
 const FILOSOFIA_COLORS: Record<string, string> = {
-  "Avventura":              "#e94544",
-  "Benessere":              "#a5d9c9",
-  "Borghi più belli":       "#946a52",
-  "Cammini":                "#e3c45d",
-  "Educazione all'aperto":  "#01aa9f",
-  "Eventi":                 "#ffc0cb",
-  "Formazione":             "#002f59",
-  "Immersi nel verde":      "#358756",
-  "Luoghi dello spirito":   "#c8a3c9",
-  "Novità":                 "#75c43c",
-  "Speciali":               "#b8163c",
-  "Tra mare e cielo":       "#7aaecd",
-  "Trek urbano":            "#f39452",
+  "Avventura": "#e94544", "Benessere": "#a5d9c9", "Borghi più belli": "#946a52",
+  "Cammini": "#e3c45d", "Educazione all'aperto": "#01aa9f", "Eventi": "#ffc0cb",
+  "Formazione": "#002f59", "Immersi nel verde": "#358756", "Luoghi dello spirito": "#c8a3c9",
+  "Novità": "#75c43c", "Speciali": "#b8163c", "Tra mare e cielo": "#7aaecd", "Trek urbano": "#f39452",
 };
 
-function getFilosofiaOpacity(color: string): string {
-  // Colori scuri: opacità ridotta per mantenere l'effetto glass
-  const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
-  return dark.includes(color) ? `${color}aa` : `${color}cc`;
-}
+const QUIZ_COLLAGE_IMG = "/collage-escursioni.webp"; 
 
 function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   if (!value) return null;
   const color = FILOSOFIA_COLORS[value] ?? "#44403c";
-  const bg = getFilosofiaOpacity(color);
   return (
-    <div
-      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-sm"
-      style={{
-        backgroundColor: bg,
-        color: "rgba(255,255,255,0.95)",
-        textShadow: "0 1px 3px rgba(0,0,0,0.35)",
-        boxShadow: `0 2px 12px ${color}55, inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px ${color}`,
-      }}
-    >
+    <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white backdrop-blur-sm" style={{ backgroundColor: `${color}cc` }}>
       {value}
     </div>
   );
 }
 
-const SkeletonCard = () => (
-  <div className="bg-white rounded-[2.5rem] p-3 border border-stone-100 shadow-sm">
-    <div className="h-52 bg-stone-100 rounded-[1.8rem] animate-pulse" />
-    <div className="p-5">
-      <div className="h-2 w-20 bg-stone-100 rounded mb-4 animate-pulse" />
-      <div className="h-6 w-3/4 bg-stone-200 rounded mb-4 animate-pulse" />
-      <div className="space-y-2 mb-6">
-        <div className="h-2 w-full bg-stone-50 rounded animate-pulse" />
-        <div className="h-2 w-5/6 bg-stone-50 rounded animate-pulse" />
-      </div>
-      <div className="flex gap-2">
-        <div className="h-12 flex-1 bg-stone-100 rounded-2xl animate-pulse" />
-        <div className="h-12 flex-[1.5] bg-stone-100 rounded-2xl animate-pulse" />
-      </div>
-    </div>
-  </div>
-);
-
-export default function EscursioniPage({
-  onBookingClick,
-}: EscursioniPageProps) {
+export default function EscursioniPage({ onBookingClick }: EscursioniPageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-
-  // Filtri e Paginazione
   const [activeFilter, setActiveFilter] = useState<"tutte" | "giornata" | "tour">("tutte");
-  const ITEMS_PER_LOAD = 3;
-  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
+  const [visibleCount] = useState(3);
 
-  // Quiz States
   const [quizStep, setQuizStep] = useState<"intro" | "questions" | "result">("intro");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [suggestedHike, setSuggestedHike] = useState<Escursione | null>(null);
-  const [shownSuggestions, setShownSuggestions] = useState<string[]>([]);
   const [quizStarted, setQuizStarted] = useState(false);
   const quizRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setVisibleCount(ITEMS_PER_LOAD);
-  }, [activeFilter]);
-
-  useEffect(() => {
     async function fetchEscursioni() {
-      const { data } = await supabase
-        .from("escursioni")
-        .select("*")
-        .order("data", { ascending: true });
-      // FIX: casting per includere la colonna aggiunta manualmente
-      if (data) setEscursioni([...data].sort(() => Math.random() - 0.5) as Escursione[]);
-      setLoading(false);
+      const { data } = await supabase.from("escursioni").select("*").order("data", { ascending: true });
+      if (data) setEscursioni(data as Escursione[]);
     }
     fetchEscursioni();
   }, []);
 
-  const handleAnswer = (option: string) => {
-    const newAnswers = [...answers, option];
-
-    if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
-      setAnswers(newAnswers);
-      setCurrentQuestion((prev) => prev + 1);
-      return;
-    }
-
-    if (escursioni.length === 0) { setQuizStep("intro"); return; }
-
-    const [compagnia, livello, luogo, sforzo, cerca, tempo] = newAnswers;
-
-    let bestMatch = escursioni[0];
-    let maxScore = -Infinity;
-
-    escursioni.forEach((esc) => {
-      let score = 0;
-      const t = esc.titolo?.toLowerCase() || "";
-      const d = esc.descrizione?.toLowerCase() || "";
-      const diffDB = esc.difficolta ?? "";
-      const cat = esc.categoria?.toLowerCase() || "";
-      const filo = esc.filosofia ?? "";
-
-      // ── 1. FILOSOFIA come segnale primario (Peso 8) ─────────────────────
-      const filoSignals = FILOSOFIA_QUIZ_MAP[filo] ?? {};
-      if (filoSignals.compagnia === compagnia) score += 8;
-      if (filoSignals.livello === livello)     score += 8;
-      if (filoSignals.luogo === luogo)         score += 8;
-      if (filoSignals.sforzo === sforzo)       score += 8;
-      if (filoSignals.cerca === cerca)         score += 8;
-      if (filoSignals.tempo === tempo)         score += 8;
-
-      // ── 2. LIVELLO TREKKING — filtro hard con null-safety (Peso 10) ─────
-      if (diffDB) {
-        if (livello === "Base") {
-          if (diffDB === "Facile")             score += 10;
-          else if (diffDB === "Facile-Media")  score += 5;
-          else if (diffDB === "Media")         score -= 8;
-          else                                 score -= 15;
-        } else if (livello === "Medio") {
-          if (diffDB === "Media")                                         score += 10;
-          else if (diffDB === "Facile-Media" || diffDB === "Media-Impegnativa") score += 7;
-          else if (diffDB === "Facile")                                   score += 3;
-        } else if (livello === "Pro") {
-          if (diffDB === "Impegnativa")        score += 10;
-          else if (diffDB === "Media-Impegnativa") score += 8;
-          else if (diffDB === "Media")         score += 4;
-        }
-      }
-      // se difficolta è null → nessuna penalità, campo non valorizzato
-
-      // ── 3. QUANTO TEMPO — logistica (Peso 8) ────────────────────────────
-      if (tempo === "Ore" && cat === "giornata")  score += 8;
-      else if (tempo === "Giorno" && cat === "giornata") score += 8;
-      else if (tempo === "Tour" && cat === "tour") score += 8;
-      else if (cat)                               score -= 5;
-      // se categoria è null → nessuna penalità
-
-      // ── 4. SFORZO FISICO — rinforzo secondario (Peso 4) ─────────────────
-      if (diffDB) {
-        if (sforzo === "Leggero" && (diffDB === "Facile" || diffDB === "Facile-Media")) score += 4;
-        if (sforzo === "Medio"   && (diffDB === "Facile-Media" || diffDB === "Media"))  score += 4;
-        if (sforzo === "Intenso" && (diffDB === "Media-Impegnativa" || diffDB === "Impegnativa")) score += 4;
-      }
-      if (sforzo === "Leggero" && (d.includes("pianeggiante") || d.includes("relax"))) score += 2;
-      if (sforzo === "Intenso" && (d.includes("dislivello")  || d.includes("ripido"))) score += 2;
-
-      // ── 5. LUOGO IDEALE — keyword fallback (Peso 4) ──────────────────────
-      const luogoL = luogo.toLowerCase();
-      if (luogoL === "mare, lago o fiume"   && (t.includes("lago") || t.includes("mare") || t.includes("fiume") || d.includes("lago") || d.includes("acqua") || d.includes("mare") || d.includes("costiera"))) score += 4;
-      if (luogoL === "vette"                && (t.includes("cima")  || t.includes("vetta") || d.includes("panorama"))) score += 4;
-      if (luogoL === "boschi"               && (d.includes("bosco") || d.includes("alberi") || d.includes("foresta"))) score += 4;
-      if (luogoL === "prati o spazi aperti" && (d.includes("prato") || d.includes("aperto") || d.includes("pianura") || d.includes("campo") || d.includes("pascolo"))) score += 4;
-
-      // ── 6. COSA CERCHI (Peso 3) ──────────────────────────────────────────
-      if (cerca === "Panorami"         && (d.includes("vista") || d.includes("panoram") || d.includes("foto")))              score += 3;
-      if (cerca === "Pace"             && (d.includes("pace")  || d.includes("silenzio") || d.includes("relax")))             score += 3;
-      if (cerca === "Tempo di qualità" && (diffDB.includes("Impegnativa") || t.includes("traversata") || d.includes("sfida"))) score += 3;
-      if (cerca === "Racconto"         && (d.includes("storia") || d.includes("cultura") || d.includes("racconto") || d.includes("tradizion") || d.includes("borghi"))) score += 3;
-
-      // ── 7. COMPAGNIA (Peso 2) ─────────────────────────────────────────────
-      if (compagnia === "Solo"   && (d.includes("silenzio") || d.includes("solitari"))) score += 2;
-      if (compagnia === "Coppia" && (d.includes("tramonto") || d.includes("romantico") || d.includes("coppia"))) score += 2;
-      if (compagnia === "Gruppo" && (d.includes("convivial") || d.includes("gruppo") || d.includes("compagnia"))) score += 2;
-
-      // ── 8. DIVERSITÀ: penalizza suggerimenti già mostrati ────────────────
-      if (shownSuggestions.includes(esc.id)) score -= 12;
-
-      // ── 9. Tiebreaker casuale ─────────────────────────────────────────────
-      score += Math.random() * 1.5;
-
-      if (score > maxScore) { maxScore = score; bestMatch = esc; }
-    });
-
-    setShownSuggestions(prev => [...prev, bestMatch.id]);
-    setSuggestedHike(bestMatch);
-    setQuizStep("result");
+  const handleStartQuiz = () => {
+    setQuizStarted(true);
+    setQuizStep("questions");
+    setCurrentQuestion(0);
+    setAnswers([]);
+    setTimeout(() => quizRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
   };
 
-  const filteredEscursioni = escursioni.filter((esc) =>
-    activeFilter === "tutte"
-      ? true
-      : esc.categoria?.toLowerCase() === activeFilter.toLowerCase(),
-  );
-  const visibleEscursioni = filteredEscursioni.slice(0, visibleCount);
+  const handleAnswer = (option: string) => {
+    const newAnswers = [...answers, option];
+    if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
+      setAnswers(newAnswers);
+      setCurrentQuestion(prev => prev + 1);
+    } else {
+      setSuggestedHike(escursioni[Math.floor(Math.random() * escursioni.length)]);
+      setQuizStep("result");
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-10 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1, 2, 3, 4].map((n) => (
-            <SkeletonCard key={n} />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const filtered = escursioni.filter(e => activeFilter === "tutte" || e.categoria?.toLowerCase() === activeFilter);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 md:py-20">
-      {/* --- HEADER --- */}
+      {/* HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
         <div>
-          <h1 className="text-4xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-4">
-            Prossime <br />
-            <span className="text-brand-sky italic font-light">Avventure.</span>
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-4">Prossime <br /><span className="text-brand-sky italic font-light">Avventure.</span></h1>
           <div className="h-1.5 w-12 bg-brand-sky rounded-full" />
         </div>
-
-        <div className="flex bg-stone-100 p-1.5 rounded-[2rem] self-start shadow-inner">
-          {(["tutte", "giornata", "tour"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
-                activeFilter === f
-                  ? "bg-white text-brand-stone shadow-md scale-105"
-                  : "text-stone-400 hover:text-stone-600"
-              }`}
-            >
-              {f}
-            </button>
+        <div className="flex bg-stone-100 p-1.5 rounded-[2rem]">
+          {(["tutte", "giornata", "tour"] as const).map(f => (
+            <button key={f} onClick={() => setActiveFilter(f)} className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeFilter === f ? "bg-white text-brand-stone shadow-md" : "text-stone-400"}`}>{f}</button>
           ))}
         </div>
       </div>
 
-      {/* --- STRIP QUIZ (dismissibile) --- */}
+      {/* BANNER IN ALTO */}
       <AnimatePresence>
         {!quizStarted && (
-          <motion.div
-            key="quiz-strip"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8, height: 0, marginBottom: 0 }}
-            transition={{ duration: 0.28, ease: "easeInOut" }}
-            className="flex items-center justify-between gap-4 bg-brand-stone/[0.04] border border-brand-stone/10 rounded-2xl px-5 py-3.5 mb-10 cursor-pointer group"
-            onClick={() => {
-              setQuizStarted(true);
-              setQuizStep("questions");
-              setCurrentQuestion(0);
-              setAnswers([]);
-              setTimeout(() => quizRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
-            }}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span className="text-lg select-none shrink-0">🧭</span>
-              <p className="text-[11px] font-black uppercase tracking-widest text-brand-stone truncate">
-                Non sai da dove iniziare?{" "}
-                <span className="text-brand-sky group-hover:underline underline-offset-2">
-                  Scopri il tuo stile Altour →
-                </span>
-              </p>
+          <div className="relative overflow-hidden rounded-[1.75rem] mb-10 border border-stone-200 bg-stone-50 p-6 md:p-10 flex items-center justify-between cursor-pointer group" onClick={handleStartQuiz}>
+            <div className="flex items-center gap-4">
+              <span className="text-3xl">🧭</span>
+              <div>
+                <p className="text-[9px] font-black text-brand-sky uppercase tracking-widest">Trova la tua escursione</p>
+                <p className="text-brand-stone font-black uppercase text-lg group-hover:text-brand-sky transition-colors">Non sai da dove iniziare?</p>
+              </div>
             </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); setQuizStarted(true); }}
-              className="shrink-0 text-stone-300 hover:text-stone-500 transition-colors p-1"
-              aria-label="Chiudi"
-            >
-              <X size={14} />
-            </button>
-          </motion.div>
+            <div className="hidden sm:block bg-brand-stone text-white px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest group-hover:bg-brand-sky transition-all">Inizia Quiz</div>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* --- GRID ESCURSIONI --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-        <AnimatePresence mode="popLayout">
-
-
-          {visibleEscursioni.map((esc) => (
-            <motion.div
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              key={esc.id}
-              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5"
-              style={{
-                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")}
-            >
-              <div className="h-48 md:h-56 relative overflow-hidden">
-                {esc.immagine_url && (
-                  <img
-                    src={esc.immagine_url}
-                    alt={esc.titolo}
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                )}
-                {/* Gradiente base */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                {/* Accent line in fondo all'immagine */}
-                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-sky/80 via-brand-sky to-brand-sky/30" />
-                <FilosofiaBadge value={esc.filosofia} />
-              </div>
-
-              <div className="p-5 md:p-8 flex flex-col flex-grow">
-                <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
-                  <Calendar size={12} className="mr-1.5" />
-                  {esc.data
-                    ? new Date(esc.data).toLocaleDateString("it-IT", {
-                        day: "2-digit",
-                        month: "long",
-                      })
-                    : "Su richiesta"}
-                </p>
-                <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
-                  {esc.titolo}
-                </h3>
-                <p className={`text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 flex-grow leading-relaxed ${
-                  esc.is_italic ? "italic font-serif" : "font-medium"
-                }`}>
-                  {esc.descrizione}
-                </p>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setSelectedActivity(esc);
-                      setIsDetailOpen(true);
-                    }}
-                    className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
-                  >
-                    Dettagli
-                  </button>
-                  <button
-                    onClick={() => onBookingClick(esc.titolo)}
-                    className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
-                  >
-                    Richiedi Info <ArrowRight size={12} />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-
-      {/* --- CARICA ALTRO --- */}
-      {visibleCount < filteredEscursioni.length && (
-        <div className="mt-16 flex justify-center">
-          <button
-            onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_LOAD)}
-            className="group flex items-center gap-3 bg-white border-2 border-brand-stone text-brand-stone px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:bg-brand-stone hover:text-white transition-all shadow-lg active:scale-95"
-          >
-            Carica altre mete{" "}
-            <ChevronDown
-              size={14}
-              className="group-hover:translate-y-1 transition-transform"
-            />
-          </button>
-        </div>
-      )}
-
-      {/* --- QUIZ BOX --- */}
-      <section ref={quizRef} className="max-w-4xl mx-auto mt-32 relative px-2">
-        <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
-        <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
-          <div className="flex flex-col md:flex-row min-h-[400px]">
-            <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
-              <img
-                src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
-                alt="Montagna"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
-              <div className="absolute bottom-6 left-8 text-white z-10">
-                <div className="flex items-center gap-2 mb-2">
-                  <Star size={14} className="text-brand-sky fill-brand-sky" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.3em]">
-                    Altour consiglia
-                  </span>
-                </div>
-                <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
-                  Trova la tua <br /> prossima avventura
-                </h3>
-              </div>
+      {/* GRID ESCURSIONI */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+        {filtered.slice(0, visibleCount).map(esc => (
+          <div key={esc.id} className="bg-white rounded-[2rem] overflow-hidden border border-stone-100 shadow-sm flex flex-col">
+            <div className="h-52 relative bg-stone-200">
+              {esc.immagine_url && <img src={esc.immagine_url} className="w-full h-full object-cover" alt="" />}
+              <FilosofiaBadge value={esc.filosofia} />
             </div>
-
-            <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
-              <AnimatePresence mode="wait">
-                {quizStep === "intro" && (
-                  <motion.div
-                    key="intro"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <h4 className="text-xs font-black text-brand-sky uppercase tracking-[0.2em] mb-4">
-                      Sei indeciso?
-                    </h4>
-                    <p className="text-stone-500 text-sm font-medium mb-8 leading-relaxed">
-                      Rispondi a 6 rapidi quesiti per trovare l'esperienza
-                      perfetta.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setCurrentQuestion(0);
-                        setAnswers([]);
-                        setQuizStep("questions");
-                      }}
-                      className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 hover:bg-brand-sky transition-all shadow-xl active:scale-95"
-                    >
-                      Inizia il Test <ArrowRight size={14} />
-                    </button>
-                  </motion.div>
-                )}
-
-                {quizStep === "questions" && (
-                  <motion.div
-                    key="questions"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                  >
-                    <div className="flex justify-between items-center mb-6 gap-3">
-                      {currentQuestion > 0 ? (
-                        <button
-                          onClick={() => {
-                            setCurrentQuestion((prev) => prev - 1);
-                            setAnswers((prev) => prev.slice(0, -1));
-                          }}
-                          className="text-stone-400 hover:text-brand-stone transition-colors text-[9px] font-black uppercase tracking-widest shrink-0"
-                          aria-label="Domanda precedente"
-                        >
-                          ← Indietro
-                        </button>
-                      ) : (
-                        <span />
-                      )}
-                      <div className="h-1 flex-grow bg-stone-200 rounded-full">
-                        <motion.div
-                          className="h-full bg-brand-sky rounded-full"
-                          animate={{
-                            width: `${((currentQuestion + 1) / QUIZ_QUESTIONS.length) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-[10px] font-black text-stone-400 shrink-0">
-                        {currentQuestion + 1}/{QUIZ_QUESTIONS.length}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-black text-brand-stone uppercase tracking-tight mb-8 leading-tight">
-                      {QUIZ_QUESTIONS[currentQuestion].q}
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {QUIZ_QUESTIONS[currentQuestion].options.map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => handleAnswer(opt)}
-                          className="p-4 rounded-xl bg-white border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all text-[10px] font-black uppercase tracking-wider text-left flex justify-between items-center group shadow-sm active:scale-95"
-                        >
-                          {opt}{" "}
-                          <ArrowRight
-                            size={12}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-
-                {quizStep === "result" && suggestedHike && (
-                  <motion.div
-                    key="result"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center"
-                  >
-                    <div className="w-16 h-16 bg-brand-sky/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <Star size={28} className="text-brand-sky fill-brand-sky" />
-                    </div>
-                    <p className="text-[10px] font-black text-brand-sky uppercase tracking-[0.2em] mb-2">
-                      Abbiamo scelto per te:
-                    </p>
-                    <h4 className="text-2xl font-black text-brand-stone uppercase mb-10 tracking-tight italic">
-                      {suggestedHike.titolo}
-                    </h4>
-                    <div className="flex flex-col gap-3">
-                      <button
-                        onClick={() => {
-                          setSelectedActivity(suggestedHike);
-                          setIsDetailOpen(true);
-                        }}
-                        className="bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95"
-                      >
-                        Visualizza
-                      </button>
-                      <button
-                        onClick={() => {
-                          setQuizStep("intro");
-                          setCurrentQuestion(0);
-                          setAnswers([]);
-                        }}
-                        className="text-stone-400 font-black uppercase text-[9px] py-2 flex items-center justify-center gap-2"
-                      >
-                        <RefreshCcw size={12} /> Rifai il test
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+            <div className="p-7 flex flex-col flex-grow">
+              <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center"><Calendar size={12} className="mr-1.5" /> {esc.data ? new Date(esc.data).toLocaleDateString("it-IT") : "Su richiesta"}</p>
+              <h3 className="text-lg font-black mb-3 text-brand-stone uppercase">{esc.titolo}</h3>
+              <p className="text-stone-500 text-xs mb-6 line-clamp-3">{esc.descrizione}</p>
+              <div className="flex gap-2 mt-auto">
+                <button onClick={() => { setSelectedActivity(esc as Activity); setIsDetailOpen(true); }} className="flex-1 border-2 border-stone-900 py-3 rounded-xl font-black uppercase text-[9px]">Dettagli</button>
+                <button onClick={() => onBookingClick(esc.titolo)} className="flex-[1.5] bg-brand-sky text-white py-3 rounded-xl font-black uppercase text-[9px]">Richiedi Info</button>
+              </div>
             </div>
           </div>
+        ))}
+      </div>
+
+      {/* SECTION QUIZ RE-DESIGNED */}
+      <section ref={quizRef} className="max-w-4xl mx-auto mb-20">
+        <div className="flex flex-col items-center">
+          <div className="relative w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-stone-100 min-h-[500px] flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              {quizStep === "intro" ? (
+                <motion.div 
+                  key="intro" 
+                  className="absolute inset-0"
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  exit={{ opacity: 0 }}
+                >
+                  <img src={QUIZ_COLLAGE_IMG} className="w-full h-full object-cover" alt="Altour Style Collage" />
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="quiz-content" 
+                  className="w-full h-full p-10 md:p-20 flex flex-col justify-center"
+                  initial={{ opacity: 0, scale: 0.98 }} 
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <img src={QUIZ_COLLAGE_IMG} className="absolute inset-0 w-full h-full object-cover opacity-[0.03] pointer-events-none" alt="" />
+
+                  {quizStep === "questions" && (
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center mb-10">
+                        <button onClick={() => currentQuestion > 0 ? (setCurrentQuestion(q => q-1), setAnswers(a => a.slice(0,-1))) : setQuizStep("intro")} className="text-[9px] font-black uppercase text-stone-400 hover:text-brand-stone transition-colors">← Indietro</button>
+                        <span className="text-[10px] font-black text-brand-sky">{currentQuestion + 1} / {QUIZ_QUESTIONS.length}</span>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-black text-brand-stone uppercase mb-10 tracking-tight">{QUIZ_QUESTIONS[currentQuestion].q}</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {QUIZ_QUESTIONS[currentQuestion].options.map(o => (
+                          <button key={o} onClick={() => handleAnswer(o)} className="p-5 rounded-2xl border-2 border-stone-100 text-left text-[11px] font-black uppercase hover:border-brand-sky hover:text-brand-sky hover:bg-brand-sky/5 transition-all shadow-sm active:scale-95">{o}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {quizStep === "result" && suggestedHike && (
+                    <div className="relative z-10 text-center py-10">
+                      <div className="w-20 h-20 bg-brand-sky/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                        <Star size={40} className="text-brand-sky fill-brand-sky" />
+                      </div>
+                      <p className="text-[10px] font-black text-brand-sky uppercase tracking-widest mb-3">La nostra proposta per te:</p>
+                      <h4 className="text-3xl md:text-4xl font-black text-brand-stone uppercase mb-12 italic tracking-tighter">{suggestedHike.titolo}</h4>
+                      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button onClick={() => { setSelectedActivity(suggestedHike as Activity); setIsDetailOpen(true); }} className="bg-brand-stone text-white px-10 py-5 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-brand-sky transition-all">Vedi Dettagli</button>
+                        <button onClick={() => setQuizStep("intro")} className="text-stone-400 text-[9px] font-black uppercase flex items-center justify-center gap-2 px-10 py-5 hover:text-brand-stone transition-colors"><RefreshCcw size={14} /> Rifai il test</button>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* TASTO SPOSTATO FUORI E SOTTO IL BOX */}
+          {quizStep === "intro" && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-2"
+            >
+              <button 
+                onClick={handleStartQuiz} 
+                className="bg-brand-stone text-white px-14 py-6 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] shadow-xl hover:bg-brand-sky transition-all hover:scale-105 active:scale-95 flex items-center gap-4"
+              >
+                Inizia il Test <ArrowRight size={18} />
+              </button>
+            </motion.div>
+          )}
         </div>
       </section>
 
-      <ActivityDetailModal
-        activity={selectedActivity}
-        isOpen={isDetailOpen}
-        onClose={() => setIsDetailOpen(false)}
-        onBook={onBookingClick}
-      />
+      <ActivityDetailModal activity={selectedActivity} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} onBook={onBookingClick} />
     </div>
   );
 }

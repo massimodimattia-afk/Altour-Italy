@@ -364,7 +364,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       Dettagli
                     </button>
                     <button onClick={() => onBookingClick(corso.titolo)} className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]">
-                      Richiedi Informazioni
+                      Richiedi Info
                     </button>
                   </div>
                 </div>
