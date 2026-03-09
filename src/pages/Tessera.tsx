@@ -940,7 +940,7 @@ export default function Tessera() {
         <div style="margin-top:48px;padding-top:24px;border-top:1px solid #e7e5e4;display:flex;justify-content:space-between;align-items:flex-end;">
           <div>
             <div style="font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#a8a29e;margin-bottom:6px;">Firma della Guida</div>
-            <div style="font-size:13px;font-weight:900;color:#1c1917;font-style:italic;">Matteo Rizzardi</div>
+            <div style="font-size:13px;font-weight:900;color:#1c1917;font-style:italic;">Claudio Corazza</div>
             <div style="font-size:9px;color:#a8a29e;margin-top:2px;">Guida Ambientale Escursionistica · Altour Italy</div>
           </div>
           <div style="text-align:right;">
