@@ -389,7 +389,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               {/* ── Immagine sinistra ── */}
               <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
                 <img
-                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20250101_132336.webp"
+                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
                   alt="Paesaggio innevato Trentino — Gift Experience Altour"
                   className="absolute inset-0 w-full h-full object-cover object-center"
                   onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}

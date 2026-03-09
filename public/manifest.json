@@ -3,10 +3,13 @@
   "short_name": "Altour",
   "description": "Escursioni e formazione outdoor - Altour Italy",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#1c1917",
   "theme_color": "#0ea5e7",
   "orientation": "portrait-primary",
+  "lang": "it-IT",
+  "categories": ["travel", "sports", "education"],
   "icons": [
     {
       "src": "/altour-logo.png",
@@ -25,6 +28,28 @@
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/altour-logo-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "La mia Tessera",
+      "short_name": "Tessera",
+      "description": "Accedi alla tua tessera Altour",
+      "url": "/?page=tessera",
+      "icons": [{ "src": "/altour-logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Escursioni",
+      "short_name": "Escursioni",
+      "description": "Scopri le prossime avventure",
+      "url": "/?page=escursioni",
+      "icons": [{ "src": "/altour-logo.png", "sizes": "192x192" }]
     }
   ]
 }

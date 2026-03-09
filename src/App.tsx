@@ -9,6 +9,7 @@ import Campi from './pages/CampiPage';
 import Legal from './pages/Legal';
 import BookingModal from './components/BookingModal';
 import AltourImmersiveIntro from './components/AltourImmersiveIntro';
+import PWAPrompt from "./components/PWAprompt";
 
 type PageType =
   | 'home'
@@ -111,6 +112,9 @@ function App() {
       )}
 
       <Footer onNavigate={handleNavigate} />
+
+      {/* PWAPrompt va dentro il return, in fondo al div root */}
+      <PWAPrompt />
     </div>
   );
 }

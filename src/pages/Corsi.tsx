@@ -102,6 +102,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
       const { data, error } = await supabase
         .from("corsi")
         .select("*")
+        .order("posizione", { ascending: true })
         .order("created_at", { ascending: false });
       if (error) {
         setError("Impossibile caricare i corsi. Riprova più tardi.");

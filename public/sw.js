@@ -1,56 +1,123 @@
-// Service Worker di emergenza - si autodistrugge
-console.log('SW EMERGENZA: Auto-deregistrazione in corso');
+// ─── Altour Italy — Service Worker ───────────────────────────────────────────
+// Strategia:
+//   • Cache-first   → asset statici (JS, CSS, immagini, font)
+//   • Network-first → chiamate Supabase (dati sempre freschi, fallback cache)
+//   • Offline page  → quando non c'è rete e la cache è vuota
 
-// Passo 1: Immediatamente skippa waiting e attivati
-self.addEventListener('install', (event) => {
-  console.log('SW: Installazione - mi autodistruggo');
-  self.skipWaiting();
-  
-  // Non mettere nulla in cache
-  event.waitUntil(Promise.resolve());
-});
+const CACHE_VERSION = "altour-v1";
+const STATIC_CACHE  = `${CACHE_VERSION}-static`;
+const DATA_CACHE    = `${CACHE_VERSION}-data`;
 
-// Passo 2: Attivazione - deregistrati e elimina tutto
-self.addEventListener('activate', (event) => {
-  console.log('SW: Attivazione - deregistrazione forzata');
-  
+// Asset da pre-cachare all'installazione
+const PRECACHE_URLS = [
+  "/",
+  "/index.html",
+  "/altour-logo.png",
+  "/collage-escursioni.webp",
+  "/offline.html",
+];
+
+// ─── INSTALL: pre-cacha gli asset fondamentali ────────────────────────────────
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    Promise.all([
-      // Elimina tutte le cache
-      caches.keys().then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            console.log('Elimino cache:', cacheName);
-            return caches.delete(cacheName);
-          })
-        );
-      }),
-      
-      // Prendi controllo di tutte le pagine
-      self.clients.claim(),
-      
-      // Auto-deregistrazione dopo 2 secondi
-      new Promise(resolve => {
-        setTimeout(() => {
-          self.registration.unregister();
-          console.log('SW auto-deregistrato');
-          resolve();
-        }, 2000);
-      })
-    ])
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(PRECACHE_URLS).catch((err) => {
+        // Non bloccare l'install se un asset non è disponibile
+        console.warn("[SW] Precache parziale:", err);
+      });
+    })
   );
+  // Forza attivazione immediata senza aspettare il refresh
+  self.skipWaiting();
 });
 
-// Passo 3: NON intercettare NESSUNA richiesta
-// Lascia un fetch handler vuoto che passa tutto
-self.addEventListener('fetch', (event) => {
-  // Lascia passare TUTTE le richieste senza caching
-  event.respondWith(fetch(event.request));
+// ─── ACTIVATE: rimuove cache vecchie ─────────────────────────────────────────
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((k) => k.startsWith("altour-") && k !== STATIC_CACHE && k !== DATA_CACHE)
+          .map((k) => {
+            console.log("[SW] Elimino cache obsoleta:", k);
+            return caches.delete(k);
+          })
+      )
+    )
+  );
+  // Prendi controllo di tutte le tab aperte immediatamente
+  self.clients.claim();
 });
 
-// Auto-messaggio per distruzione
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'UNREGISTER_SELF') {
-    self.registration.unregister();
+// ─── FETCH: intercetta le richieste ──────────────────────────────────────────
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Ignora richieste non-GET e richieste browser-extension
+  if (request.method !== "GET") return;
+  if (!url.protocol.startsWith("http")) return;
+
+  // ── Supabase API → Network-first ──────────────────────────────────────────
+  if (url.hostname.includes("supabase.co")) {
+    event.respondWith(networkFirst(request, DATA_CACHE));
+    return;
   }
+
+  // ── Navigazione HTML → Network-first con fallback offline ─────────────────
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request).catch(() =>
+        caches.match("/offline.html").then((r) => r || caches.match("/"))
+      )
+    );
+    return;
+  }
+
+  // ── Asset statici (JS/CSS/immagini/font) → Cache-first ────────────────────
+  if (
+    url.pathname.match(/\.(js|css|png|jpg|jpeg|webp|svg|woff2?|ttf|ico)$/)
+  ) {
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
+    return;
+  }
+
+  // ── Tutto il resto → Network-first ────────────────────────────────────────
+  event.respondWith(networkFirst(request, DATA_CACHE));
 });
+
+// ─── Strategie ────────────────────────────────────────────────────────────────
+
+async function cacheFirst(request, cacheName) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return new Response("Asset non disponibile offline", { status: 503 });
+  }
+}
+
+async function networkFirst(request, cacheName) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    return new Response(
+      JSON.stringify({ error: "Offline — dati non disponibili" }),
+      { status: 503, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
