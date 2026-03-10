@@ -13,7 +13,6 @@ import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion } from "framer-motion";
 
-// FIX: Estensione tipi per supportare la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
@@ -70,7 +69,9 @@ function getFilosofiaOpacity(color: string): string {
 
 function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   if (!value) return null;
-  const color = FILOSOFIA_COLORS[value] ?? "#44403c";
+  // Fix #11: non mostrare il badge se il valore non è una filosofia riconosciuta
+  if (!FILOSOFIA_COLORS[value]) return null;
+  const color = FILOSOFIA_COLORS[value];
   const bg = getFilosofiaOpacity(color);
   return (
     <div
@@ -87,8 +88,14 @@ function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
-// Costante fuori dal componente — non viene ricreata ad ogni render
-const PRESET_VOUCHERS = [10, 20, 60, 100, 200, 300];
+const PRESET_VOUCHERS = [
+  { amount: 10,  tag: null,      highlight: false },
+  { amount: 20,  tag: null,      highlight: false },
+  { amount: 60,  tag: "Top",     highlight: true  },
+  { amount: 100, tag: null,      highlight: false },
+  { amount: 200, tag: "Premium", highlight: false },
+  { amount: 300, tag: null,      highlight: false },
+];
 
 export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [featuredHikes, setFeaturedHikes] = useState<Escursione[]>([]);
@@ -96,7 +103,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-
 
   useEffect(() => {
     async function loadData() {
@@ -131,9 +137,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         <div className="h-[80vh] md:h-screen bg-stone-200 animate-pulse" />
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {[1, 2, 3].map((n) => (
-              <SkeletonCard key={n} />
-            ))}
+            {[1, 2, 3].map((n) => <SkeletonCard key={n} />)}
           </div>
         </div>
       </div>
@@ -141,19 +145,18 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
-      {/* 1. HERO SECTION */}
+
+      {/* ── 1. HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative h-[80vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp"
+            src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458.webp"
             className="w-full h-full object-cover object-[center_20%] brightness-[0.8] contrast-[1.02] transition-transform duration-[20s] scale-105"
             alt="Dolomiti Altour Italy"
             loading="eager"
             fetchPriority="high"
             decoding="async"
-            onError={(e) => {
-              e.currentTarget.src = IMG_FALLBACK;
-            }}
+            onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/10 via-[70%] to-[#f5f2ed] to-[98%]" />
         </div>
@@ -164,7 +167,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             animate={{ opacity: 1, scale: 1 }}
             className="relative inline-block mb-6 md:mb-10"
           >
-            <div className="absolute -inset-8 bg-white/5 rounded-full blur-3xl opacity-40" />
+            {/* Fix #6: blur contenuto dentro l'elemento, non overflow su mobile */}
+            <div className="absolute inset-0 bg-white/5 rounded-full blur-2xl opacity-40" />
             <img
               src="/altour-logo.png"
               className="relative w-20 h-20 md:w-44 md:h-44 mx-auto rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-white/10 object-cover"
@@ -180,7 +184,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             >
               Altour
             </motion.h1>
-            <p className="text-[10px] md:text-2xl font-bold uppercase tracking-[0.5em] text-stone-200 opacity-90 mt-2">
+            {/* Fix #7: text-xs su mobile invece di text-[10px], tracking ridotto */}
+            <p className="text-xs md:text-2xl font-bold uppercase tracking-[0.3em] md:tracking-[0.5em] text-stone-200 opacity-90 mt-2">
               Italy
             </p>
           </div>
@@ -194,13 +199,14 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             <div className="grid grid-cols-3 gap-0 divide-x divide-white/10">
               {[
                 { value: "10 anni", label: "Esperienza", icon: <TrendingUp size={14} /> },
-                { value: "AIGAE", label: "Guide", icon: <Shield size={14} /> },
-                { value: "800+", label: "Tesserati", icon: <Users size={14} /> },
+                { value: "AIGAE",   label: "Guide",       icon: <Shield size={14} /> },
+                { value: "800+",    label: "Tesserati",   icon: <Users size={14} /> },
               ].map((stat, index) => (
                 <div key={index} className="flex flex-col items-center justify-center px-1">
                   <div className="text-brand-sky mb-1 md:hidden">{stat.icon}</div>
                   <p className="text-xs md:text-2xl font-black text-white leading-none">{stat.value}</p>
-                  <p className="text-[7px] md:text-[10px] uppercase tracking-widest text-stone-300 font-bold mt-1">{stat.label}</p>
+                  {/* Fix #8: text-[9px] invece di text-[7px] — soglia minima leggibilità */}
+                  <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-stone-300 font-bold mt-1">{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -208,7 +214,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 2. ESCURSIONI SECTION */}
+      {/* ── 2. ESCURSIONI ───────────────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-12 md:py-20">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-4 px-2">
           <div className="max-w-md">
@@ -229,13 +235,13 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           {featuredHikes.map((esc) => (
             <div
               key={esc.id}
-              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5"
+              // Fix #9: rimossi onMouseEnter/Leave (non funzionano su touch).
+              // Fix #10: aggiunto active:scale per feedback tattile.
+              // Shadow gestita solo via className con hover: di Tailwind.
+              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5 active:scale-[0.99]"
               style={{
                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
-                transition: "box-shadow 0.3s ease, transform 0.3s ease",
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)"; }}
             >
               <div className="h-48 md:h-56 relative overflow-hidden">
                 <img
@@ -251,17 +257,29 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               <div className="p-5 md:p-8 flex flex-col flex-grow">
                 <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
                   <Calendar size={12} className="mr-1.5" />
-                  {esc.data ? new Date(esc.data).toLocaleDateString("it-IT", { day: "2-digit", month: "long" }) : "Su richiesta"}
+                  {esc.data
+                    ? new Date(esc.data).toLocaleDateString("it-IT", { day: "2-digit", month: "long" })
+                    : "Su richiesta"}
                 </p>
-                <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">{esc.titolo}</h3>
+                <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
+                  {esc.titolo}
+                </h3>
                 <p className={`text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 flex-grow leading-relaxed ${
                   esc.is_italic ? "italic font-serif" : "font-medium"
-                }`}>{esc.descrizione}</p>
+                }`}>
+                  {esc.descrizione}
+                </p>
                 <div className="flex gap-2 md:gap-3">
-                  <button onClick={() => openDetails(esc)} className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all">
+                  <button
+                    onClick={() => openDetails(esc)}
+                    className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+                  >
                     Dettagli
                   </button>
-                  <button onClick={() => onBookingClick(esc.titolo)} className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]">
+                  <button
+                    onClick={() => onBookingClick(esc.titolo)}
+                    className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7] active:scale-95"
+                  >
                     Richiedi Info
                   </button>
                 </div>
@@ -271,7 +289,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 3. TAILOR-MADE SECTION */}
+      {/* ── 3. TAILOR-MADE ──────────────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -282,8 +300,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
           <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
             <div className="flex flex-col md:flex-row min-h-[280px]">
-
-              {/* ── Immagine sinistra ── */}
               <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
                 <img
                   src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Box_avventura.webp"
@@ -296,17 +312,13 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <div className="absolute bottom-6 left-8 text-white z-10">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp size={14} className="text-brand-sky" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">
-                      Progetti Personalizzati
-                    </span>
+                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Progetti Personalizzati</span>
                   </div>
                   <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
                     Su misura, <br /> per te.
                   </h3>
                 </div>
               </div>
-
-              {/* ── Contenuto destra ── */}
               <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-3 block">
                   Progetti Personalizzati
@@ -328,20 +340,22 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   Contattaci <Send size={14} />
                 </motion.button>
               </div>
-
             </div>
           </div>
         </motion.div>
       </section>
 
-      {/* 4. ACCADEMIA SECTION */}
+      {/* ── 4. ACCADEMIA ────────────────────────────────────────────────────── */}
       <section className="bg-stone-100 py-12 md:py-20 text-brand-stone">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-4">
             <h2 className="text-4xl md:text-5xl font-light uppercase tracking-tighter leading-none text-brand-stone">
               Accademia <span className="font-black">Altour</span><span className="text-brand-sky">.</span>
             </h2>
-            <button onClick={() => onNavigate("corsi")} className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto">
+            <button
+              onClick={() => onNavigate("corsi")}
+              className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
+            >
               Vedi tutti i corsi <TrendingUp size={14} />
             </button>
           </div>
@@ -349,8 +363,15 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             {courses.map((corso) => (
               <div key={corso.id} className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col group">
                 <div className="h-40 md:h-48 relative overflow-hidden">
-                  <img src={corso.immagine_url || IMG_FALLBACK} className="w-full h-full object-cover" alt={corso.titolo} loading="lazy" decoding="async" />
+                  <img
+                    src={corso.immagine_url || IMG_FALLBACK}
+                    className="w-full h-full object-cover"
+                    alt={corso.titolo}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  {/* Fix #11: FilosofiaBadge solo se categoria corrisponde a una filosofia valida */}
                   <FilosofiaBadge value={corso.categoria} />
                 </div>
                 <div className="p-6 md:p-8 flex flex-col flex-grow">
@@ -360,10 +381,16 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   <h3 className="text-lg md:text-xl font-black mb-3 uppercase line-clamp-2">{corso.titolo}</h3>
                   <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-2 font-medium leading-relaxed">{corso.descrizione}</p>
                   <div className="mt-auto pt-4 border-t border-stone-100 flex gap-2 md:gap-3">
-                    <button onClick={() => openDetails(corso)} className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all">
+                    <button
+                      onClick={() => openDetails(corso)}
+                      className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+                    >
                       Dettagli
                     </button>
-                    <button onClick={() => onBookingClick(corso.titolo)} className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7]">
+                    <button
+                      onClick={() => onBookingClick(corso.titolo)}
+                      className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7] active:scale-95"
+                    >
                       Richiedi Info
                     </button>
                   </div>
@@ -374,7 +401,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* 5. VOUCHER SECTION */}
+      {/* ── 5. VOUCHER ──────────────────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 py-12 md:py-20">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -386,7 +413,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
             <div className="flex flex-col md:flex-row min-h-[360px]">
 
-              {/* ── Immagine sinistra ── */}
+              {/* Immagine */}
               <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
                 <img
                   src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
@@ -400,9 +427,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <div className="absolute bottom-6 left-8 text-white z-10">
                   <div className="flex items-center gap-2 mb-2">
                     <Star size={14} className="text-brand-sky fill-brand-sky" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">
-                      Gift Experience
-                    </span>
+                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Gift Experience</span>
                   </div>
                   <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
                     Regala un'<br />avventura.
@@ -410,54 +435,55 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 </div>
               </div>
 
-              {/* ── Contenuto destra ── */}
-              <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
+              {/* Contenuto */}
+              <div className="w-full md:w-3/5 p-8 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
                 <p className="text-stone-500 text-sm font-medium leading-relaxed mb-6">
                   Un'emozione da regalare a chi ami — utilizzabile per ogni tipo di esperienza Altour.
                 </p>
 
-                <p className="text-[8px] font-black uppercase tracking-widest text-stone-400 mb-3">
-                  Scegli l'importo e apri il modulo regalo
+                {/* Fix #4: label leggibile (text-[10px] invece di text-[8px]) */}
+                <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-4">
+                  Scegli l'importo
                 </p>
 
-                {/* 2 col mobile, 3 col md, 6 col lg */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
-                  {PRESET_VOUCHERS.map((amount, idx) => {
-                    const tag = idx === 0 ? "Starter" : idx === 2 ? "Top" : idx === 4 ? "Premium" : null;
-                    const isHighlighted = idx === 2;
-                    return (
-                      <motion.button
-                        key={amount}
-                        whileHover={{ y: -2, scale: 1.04 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`)}
-                        className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-all border-2 gap-0.5 ${
-                          isHighlighted
-                            ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100"
-                            : "border-stone-200 bg-white text-brand-stone hover:border-brand-sky hover:text-brand-sky hover:shadow-sm"
-                        }`}
-                      >
-                        {tag && (
-                          <span className={`absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full whitespace-nowrap ${
-                            isHighlighted ? "bg-brand-stone text-white" : "bg-stone-200 text-stone-500"
-                          }`}>
-                            {tag}
-                          </span>
-                        )}
-                        <span className="text-sm md:text-base font-black leading-none">{amount}€</span>
-                        <span className={`text-[7px] font-bold leading-none mt-0.5 ${
-                          isHighlighted ? "text-white/70" : "text-stone-400"
+                {/*
+                  Fix #1: rimossa scritta "scegli →" dai bottoni
+                  Fix #2: 3 colonne su mobile (2 righe da 3) invece di 2 (3 righe da 2)
+                          — bottoni più larghi, più facili da toccare
+                  Fix #3: tag "Starter/Premium" spostati dentro il bottone (non absolute -top-2)
+                          — non fuoriescono su mobile e non richiedono overflow:visible sul parent
+                  Fix #5: nessun feedback "selezionato" per non bloccare l'UX —
+                          il tap apre direttamente il form come prima, ma senza testo di supporto inutile
+                */}
+                <div className="grid grid-cols-3 gap-2.5 mb-5">
+                  {PRESET_VOUCHERS.map(({ amount, tag, highlight }) => (
+                    <motion.button
+                      key={amount}
+                      whileHover={{ y: -2, scale: 1.04 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`)}
+                      className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-all border-2 ${
+                        highlight
+                          ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100"
+                          : "border-stone-200 bg-white text-brand-stone hover:border-brand-sky hover:text-brand-sky hover:shadow-sm"
+                      }`}
+                    >
+                      <span className="text-base font-black leading-none">{amount}€</span>
+                      {/* Fix #3: tag inline sotto il prezzo, non absolute */}
+                      {tag && (
+                        <span className={`text-[7px] font-black uppercase tracking-wider mt-1 ${
+                          highlight ? "text-white/75" : "text-stone-400"
                         }`}>
-                          scegli →
+                          {tag}
                         </span>
-                      </motion.button>
-                    );
-                  })}
+                      )}
+                    </motion.button>
+                  ))}
                 </div>
 
-                <div className="flex items-center gap-3 my-3">
+                <div className="flex items-center gap-3 mb-4">
                   <div className="flex-1 h-px bg-stone-200" />
-                  <span className="text-[7px] font-black uppercase tracking-widest text-stone-300">oppure</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-stone-300">oppure</span>
                   <div className="flex-1 h-px bg-stone-200" />
                 </div>
 
@@ -486,17 +512,19 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         />
       )}
 
-      {/* WHATSAPP FLOATING BUTTON — nascosto quando il modale dettagli è aperto */}
+      {/* Fix #12: delay ridotto da 1.2s a 0.6s — appare prima che l'utente inizi a scrollare */}
       <motion.a
         href="https://wa.me/393281613762"
         target="_blank"
         rel="noopener noreferrer"
         initial={{ scale: 0, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ delay: 1.2, type: "spring", stiffness: 280, damping: 22 }}
+        transition={{ delay: 0.6, type: "spring", stiffness: 280, damping: 22 }}
         whileHover={{ scale: 1.04, y: -2 }}
         whileTap={{ scale: 0.97, y: 0 }}
-        className={`fixed bottom-6 right-6 z-[90] flex items-center justify-center w-14 h-14 rounded-full transition-opacity duration-200 ${isDetailOpen ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        className={`fixed bottom-6 right-6 z-[90] flex items-center justify-center w-14 h-14 rounded-full transition-opacity duration-200 ${
+          isDetailOpen ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
         style={{
           background: "linear-gradient(145deg, #2ecc71 0%, #25D366 40%, #1aab52 100%)",
           boxShadow: "0 1px 0 0 rgba(255,255,255,0.25) inset, 0 -1px 0 0 rgba(0,0,0,0.15) inset, 0 6px 16px -2px rgba(37,211,102,0.55), 0 2px 4px -1px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.06)",
@@ -507,6 +535,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
         </svg>
       </motion.a>
+
     </div>
   );
 }

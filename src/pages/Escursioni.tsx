@@ -10,6 +10,8 @@ type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
   is_italic?: boolean | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 
 interface Activity {
@@ -283,6 +285,22 @@ export default function EscursioniPage({
     setQuizStep("result");
   };
 
+  // Fix mobile #1: banner click goes straight to questions — no extra tap
+  const startQuiz = () => {
+    setQuizStarted(true);
+    setCurrentQuestion(0);
+    setAnswers([]);
+    setQuizStep("questions");
+    setTimeout(() => {
+      if (!quizRef.current) return;
+      const top = quizRef.current.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top, behavior: "smooth" });
+    }, 60);
+  };
+
+  // Fix mobile #2: key changes per-question so AnimatePresence fires on each answer
+  const quizQuestionKey = `q-${currentQuestion}`;
+
   const filteredEscursioni = escursioni.filter((esc) =>
     activeFilter === "tutte"
       ? true
@@ -342,15 +360,7 @@ export default function EscursioniPage({
             transition={{ duration: 0.28, ease: "easeInOut" }}
             style={{ transformOrigin: "top", overflow: "hidden" }}
             className="rounded-[1.75rem] mb-10 cursor-pointer group bg-stone-100/80 border border-stone-200/60 hover:border-brand-sky/30 hover:bg-stone-100 transition-all"
-            onClick={() => {
-              setQuizStarted(true);
-              setQuizStep("intro");
-              setTimeout(() => {
-                if (!quizRef.current) return;
-                const top = quizRef.current.getBoundingClientRect().top + window.scrollY - 80;
-                window.scrollTo({ top, behavior: "smooth" });
-              }, 60);
-            }}
+            onClick={() => startQuiz()}
           >
             <div className="flex items-center justify-between gap-4 px-6 py-5 md:px-8 md:py-6">
               <div className="flex items-center gap-4 min-w-0">
@@ -496,12 +506,13 @@ export default function EscursioniPage({
         <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
         <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
 
-          {/* ── MOBILE: stack verticale semplice ─────────────────────────────── */}
+          {/* ── MOBILE ───────────────────────────────────────────────────────── */}
           <div className="md:hidden">
-            {/* Collage in cima — si ritira quando il quiz è attivo */}
+
+            {/* Collage intro — visibile solo nello stato "intro" (accesso diretto, non da banner) */}
             <motion.div
               animate={{ height: quizStep === "intro" ? 208 : 0 }}
-              transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+              transition={{ duration: 0.38, ease: [0.32, 0.72, 0, 1] }}
               className="relative overflow-hidden"
             >
               <img
@@ -510,7 +521,6 @@ export default function EscursioniPage({
                 className="w-full h-full object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-brand-stone/60 via-transparent to-transparent" />
-              {/* Tasto intro mobile */}
               <AnimatePresence>
                 {quizStep === "intro" && (
                   <motion.div
@@ -529,65 +539,178 @@ export default function EscursioniPage({
                 )}
               </AnimatePresence>
             </motion.div>
-            {/* Contenuto mobile */}
+
+            {/* Contenuto quiz — domande e risultato */}
             <AnimatePresence>
               {quizStep !== "intro" && (
                 <motion.div
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  // Fix #4: delay matches half the collage collapse duration (0.4s → delay 0.22s)
-                  // so content never appears while the collage is still mid-collapse
-                  transition={{ delay: 0.22, duration: 0.3, ease: "easeOut" }}
-                  className="p-7 bg-[#faf9f7]"
+                  transition={{ delay: quizStep === "questions" ? 0.18 : 0, duration: 0.28, ease: "easeOut" }}
+                  className="bg-[#faf9f7]"
                 >
+
+                  {/* ── DOMANDE ── */}
                   {quizStep === "questions" && (
-                    <div>
-                      <div className="flex justify-between items-center mb-5 gap-3">
-                        {currentQuestion > 0 ? (
-                          <button onClick={() => { setCurrentQuestion(p => p - 1); setAnswers(p => p.slice(0, -1)); }} className="text-stone-400 text-[9px] font-black uppercase tracking-widest">← Indietro</button>
-                        ) : <span />}
-                        <div className="h-1 flex-grow bg-stone-200 rounded-full">
-                          <motion.div className="h-full bg-brand-sky rounded-full" animate={{ width: `${((currentQuestion + 1) / QUIZ_QUESTIONS.length) * 100}%` }} />
+                    <div className="p-5">
+
+                      {/* Fix #8: progress dots + header row */}
+                      <div className="flex items-center justify-between mb-5">
+                        {/* Indietro — Fix #4: area tap adeguata */}
+                        <button
+                          onClick={() => { setCurrentQuestion(p => p - 1); setAnswers(p => p.slice(0, -1)); }}
+                          className={`text-[10px] font-black uppercase tracking-widest py-2 pr-3 transition-colors ${
+                            currentQuestion > 0
+                              ? "text-stone-400 active:text-brand-stone"
+                              : "invisible pointer-events-none"
+                          }`}
+                        >
+                          ← Indietro
+                        </button>
+
+                        {/* Fix #8: dot stepper */}
+                        <div className="flex items-center gap-1.5">
+                          {QUIZ_QUESTIONS.map((_, i) => (
+                            <div
+                              key={i}
+                              className={`rounded-full transition-all duration-300 ${
+                                i < currentQuestion
+                                  ? "w-2 h-2 bg-brand-sky"
+                                  : i === currentQuestion
+                                  ? "w-4 h-2 bg-brand-sky"
+                                  : "w-2 h-2 bg-stone-200"
+                              }`}
+                            />
+                          ))}
                         </div>
-                        <span className="text-[10px] font-black text-stone-400 shrink-0">{currentQuestion + 1}/{QUIZ_QUESTIONS.length}</span>
+
+                        <span className="text-[10px] font-black text-stone-400 tabular-nums">
+                          {currentQuestion + 1}<span className="text-stone-300">/{QUIZ_QUESTIONS.length}</span>
+                        </span>
                       </div>
-                      <h3 className="text-lg font-black text-brand-stone uppercase tracking-tight mb-6">{QUIZ_QUESTIONS[currentQuestion].q}</h3>
-                      <div className="grid grid-cols-1 gap-2.5">
-                        {QUIZ_QUESTIONS[currentQuestion].options.map(opt => (
-                          <button key={opt} onClick={() => handleAnswer(opt)}
-                            className={`p-4 rounded-xl border transition-all text-[10px] font-black uppercase tracking-wider text-left flex justify-between items-center shadow-sm active:scale-95 ${
-                              pressedOption === opt
-                                ? "bg-brand-sky border-brand-sky text-white"
-                                : "bg-white border-stone-200 hover:border-brand-sky hover:text-brand-sky"
-                            }`}>
-                            {opt} <ArrowRight size={12} className={pressedOption === opt ? "opacity-100" : "text-stone-300"} />
-                          </button>
-                        ))}
-                      </div>
+
+                      {/* Fix #2+#3: AnimatePresence con key per slide tra domande */}
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={quizQuestionKey}
+                          initial={{ opacity: 0, x: 18 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -18 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                        >
+                          {/* Fix #5: text-xs (12px) invece di text-[10px] */}
+                          <h3 className="text-base font-black text-brand-stone uppercase tracking-tight mb-4 leading-snug">
+                            {QUIZ_QUESTIONS[currentQuestion].q}
+                          </h3>
+                          <div className="grid grid-cols-1 gap-2">
+                            {QUIZ_QUESTIONS[currentQuestion].options.map(opt => (
+                              <button
+                                key={opt}
+                                onClick={() => handleAnswer(opt)}
+                                className={`min-h-[52px] px-4 py-3 rounded-2xl border-2 transition-all text-xs font-black uppercase tracking-wider text-left flex justify-between items-center active:scale-[0.97] ${
+                                  pressedOption === opt
+                                    ? "bg-brand-sky border-brand-sky text-white shadow-md"
+                                    : "bg-white border-stone-150 text-stone-700 hover:border-brand-sky hover:text-brand-sky"
+                                }`}
+                              >
+                                <span>{opt}</span>
+                                <ArrowRight
+                                  size={14}
+                                  className={pressedOption === opt ? "opacity-100 shrink-0" : "opacity-20 shrink-0"}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
                     </div>
                   )}
+
+                  {/* ── RISULTATO — Fix #3+#6 ── */}
                   {quizStep === "result" && suggestedHike && (
-                    <div className="text-center py-4">
-                      <div className="w-14 h-14 bg-brand-sky/10 rounded-full flex items-center justify-center mx-auto mb-5">
-                        <Star size={24} className="text-brand-sky fill-brand-sky" />
-                      </div>
-                      <p className="text-[10px] font-black text-brand-sky uppercase tracking-widest mb-2">Abbiamo scelto per te:</p>
-                      <h4 className="text-xl font-black text-brand-stone uppercase mb-7 tracking-tight italic">{suggestedHike.titolo}</h4>
-                      <div className="flex flex-col gap-3">
-                        <button onClick={() => { setSelectedActivity(suggestedHike); setIsDetailOpen(true); }} className="bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95">Visualizza</button>
-                        <button onClick={() => {
-                          setQuizStep("intro"); setCurrentQuestion(0); setAnswers([]);
-                          // Fix #5: scroll back to quiz top so user sees collage reappear
-                          setTimeout(() => {
-                            if (!quizRef.current) return;
-                            const top = quizRef.current.getBoundingClientRect().top + window.scrollY - 80;
-                            window.scrollTo({ top, behavior: "smooth" });
-                          }, 60);
-                        }} className="text-stone-400 font-black uppercase text-[9px] py-2 flex items-center justify-center gap-2"><RefreshCcw size={12} /> Rifai il test</button>
-                      </div>
-                    </div>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key="result-mobile"
+                        initial={{ opacity: 0, scale: 0.97 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                      >
+                        {/* Fix #6: thumbnail escursione */}
+                        {suggestedHike.immagine_url && (
+                          <div className="relative h-40 overflow-hidden">
+                            <img
+                              src={suggestedHike.immagine_url}
+                              alt={suggestedHike.titolo}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-brand-stone/80 via-brand-stone/20 to-transparent" />
+                            <div className="absolute bottom-3 left-4">
+                              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-brand-sky/90">
+                                Abbiamo scelto per te
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="p-5 text-center">
+                          {!suggestedHike.immagine_url && (
+                            <>
+                              <div className="w-12 h-12 bg-brand-sky/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Star size={22} className="text-brand-sky fill-brand-sky" />
+                              </div>
+                              <p className="text-[10px] font-black text-brand-sky uppercase tracking-widest mb-1">
+                                Abbiamo scelto per te
+                              </p>
+                            </>
+                          )}
+
+                          <h4 className="text-lg font-black text-brand-stone uppercase tracking-tight italic leading-tight mb-5 mt-2">
+                            {suggestedHike.titolo}
+                          </h4>
+
+                          {/* Pill difficoltà se disponibile */}
+                          {suggestedHike.difficolta && (
+                            <span className="inline-block mb-4 px-3 py-1 rounded-full bg-stone-100 text-stone-500 text-[9px] font-black uppercase tracking-widest">
+                              {suggestedHike.difficolta}
+                            </span>
+                          )}
+
+                          <div className="flex flex-col gap-2.5">
+                            <button
+                              onClick={() => { setSelectedActivity(suggestedHike); setIsDetailOpen(true); }}
+                              className="w-full min-h-[52px] bg-brand-stone text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-[0.97] transition-all"
+                            >
+                              Visualizza dettagli
+                            </button>
+                            <button
+                              onClick={() => onBookingClick(suggestedHike.titolo)}
+                              className="w-full min-h-[52px] bg-brand-sky text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-md active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+                            >
+                              Richiedi Info <ArrowRight size={13} />
+                            </button>
+                            {/* Fix #7: "Rifai" più leggibile e tappabile */}
+                            <button
+                              onClick={() => {
+                                setQuizStep("intro");
+                                setCurrentQuestion(0);
+                                setAnswers([]);
+                                setTimeout(() => {
+                                  if (!quizRef.current) return;
+                                  const top = quizRef.current.getBoundingClientRect().top + window.scrollY - 80;
+                                  window.scrollTo({ top, behavior: "smooth" });
+                                }, 60);
+                              }}
+                              className="w-full min-h-[44px] flex items-center justify-center gap-2 text-stone-400 font-bold text-xs py-2 rounded-xl hover:text-brand-stone transition-colors"
+                            >
+                              <RefreshCcw size={13} /> Rifai il test
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
                   )}
+
                 </motion.div>
               )}
             </AnimatePresence>

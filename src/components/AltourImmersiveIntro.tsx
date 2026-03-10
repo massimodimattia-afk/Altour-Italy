@@ -5,7 +5,7 @@ import { motion, AnimatePresence, Variants } from "framer-motion";
 const MOBILE_IMAGE_URL =
   "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/intro-mobile.webp";
 const DESKTOP_IMAGE_URL =
-  "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp";
+  "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458.webp";
 
 // Supabase Storage supports image transforms via query params.
 // Resize to display size to avoid downloading a 4MB photo for a 400px slot.

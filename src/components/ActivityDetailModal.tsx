@@ -10,6 +10,7 @@ import {
   Ruler,
   Route,
   Mountain,
+  MapPin,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -30,6 +31,9 @@ interface Activity {
   data?: string | null;
   _tipo?: 'corso' | 'campo' | null;
   is_italic?: boolean | null;
+  // Mini-mappa: colonne lat/lng da Supabase
+  lat?: number | null;
+  lng?: number | null;
 }
 
 interface ActivityDetailModalProps {
@@ -40,6 +44,68 @@ interface ActivityDetailModalProps {
 }
 
 const IMG_FALLBACK = "/altour-logo.png";
+
+// ── Mini-mappa OpenStreetMap iframe (zero dipendenze) ─────────────────────────
+// Usa l'embed ufficiale OSM con marker integrato nell'URL.
+// bbox calcolato attorno al punto con un padding di ~1km per mostrare contesto.
+function MiniMap({ lat, lng, titolo }: { lat: number; lng: number; titolo: string }) {
+  const delta = 0.018; // ~2km di contesto attorno al punto
+  const bbox = `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`;
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+
+  return (
+    <div className="rounded-2xl overflow-hidden border border-stone-100 relative">
+      {/* Header della sezione */}
+      <div className="flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-100">
+        <MapPin size={13} className="text-brand-sky shrink-0" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-brand-stone">
+          Dove andiamo
+        </span>
+        {/* Link apri in OSM — utile su mobile per navigare */}
+        <a
+          href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=13`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto text-[9px] font-black uppercase tracking-widest text-brand-sky hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Apri mappa →
+        </a>
+      </div>
+
+      {/* iframe OSM — pointer-events: none la rende statica (non scrollabile) */}
+      <div className="relative h-48">
+        <iframe
+          title={`Mappa — ${titolo}`}
+          src={src}
+          width="100%"
+          height="100%"
+          loading="lazy"
+          style={{
+            border: "none",
+            display: "block",
+            // Rende la mappa non interattiva su mobile:
+            // l'utente non resta intrappolato nello scroll dell'iframe
+            pointerEvents: "none",
+          }}
+          // Attributo sandbox permissivo solo per la visualizzazione
+          sandbox="allow-scripts allow-same-origin"
+          aria-label={`Mappa del punto di partenza: ${titolo}`}
+        />
+        {/* Overlay trasparente che cattura tap e apre OSM in tab — 
+            meglio che un iframe interattivo che ingoia lo scroll mobile */}
+        <a
+          href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=13`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0"
+          aria-label="Apri la posizione su OpenStreetMap"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function ActivityDetailModal({
   activity,
@@ -52,6 +118,8 @@ export default function ActivityDetailModal({
   const images = activity
     ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[]
     : [];
+
+  const hasMap = Boolean(activity?.lat && activity?.lng);
 
   useEffect(() => {
     if (activity?.id) setCurrentImageIndex(0);
@@ -106,7 +174,7 @@ export default function ActivityDetailModal({
               <X size={20} className="text-brand-stone" />
             </button>
 
-            {/* Gallery */}
+            {/* ── Gallery ─────────────────────────────────────────────────── */}
             <div className="md:w-1/2 relative bg-stone-100 h-52 md:h-auto md:min-h-full flex-shrink-0">
               {images.length > 0 ? (
                 <>
@@ -156,7 +224,7 @@ export default function ActivityDetailModal({
               )}
             </div>
 
-            {/* Contenuto */}
+            {/* ── Contenuto ───────────────────────────────────────────────── */}
             <div className="md:w-1/2 flex flex-col overflow-hidden">
 
               {/* Header fisso */}
@@ -180,7 +248,7 @@ export default function ActivityDetailModal({
                   {activity.lunghezza && (
                     <div className="flex items-center gap-1.5">
                       <LunghezzaIcon size={12} className="text-brand-sky" />
-                      {activity.lunghezza} 
+                      {activity.lunghezza}
                     </div>
                   )}
                 </div>
@@ -189,7 +257,7 @@ export default function ActivityDetailModal({
               {/* Corpo scrollabile */}
               <div className="flex-grow overflow-y-auto px-6 py-5 md:px-12 md:py-8 space-y-6">
 
-                {/* Descrizione — is_italic da Supabase */}
+                {/* Descrizione */}
                 <p className={`text-stone-600 leading-relaxed text-sm md:text-base ${
                   activity.is_italic
                     ? "italic font-serif text-stone-500 border-l-2 border-brand-sky/20 pl-4 py-1"
@@ -229,6 +297,16 @@ export default function ActivityDetailModal({
                     </ul>
                   </div>
                 )}
+
+                {/* ── Mini-mappa ─────────────────────────────────────────── */}
+                {hasMap && (
+                  <MiniMap
+                    lat={activity.lat!}
+                    lng={activity.lng!}
+                    titolo={activity.titolo}
+                  />
+                )}
+
               </div>
 
               {/* Footer CTA fisso */}
@@ -252,8 +330,8 @@ export default function ActivityDetailModal({
                   <TrendingUp size={18} />
                 </button>
               </div>
-            </div>
 
+            </div>
           </motion.div>
         </div>
       )}
