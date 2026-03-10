@@ -3,7 +3,7 @@ import { Download, RefreshCw, X } from "lucide-react";
 import { usePWA } from "../hooks/usePWA";
 
 export default function PWAPrompt() {
-  const { isInstallable, hasUpdate, promptInstall, dismissUpdate } = usePWA();
+  const { isInstallable, hasUpdate, promptInstall, dismissInstall, dismissUpdate } = usePWA();
 
   return (
     <>
@@ -38,13 +38,7 @@ export default function PWAPrompt() {
                 </button>
                 {/* Il dismiss nasconde solo il banner, non blocca future installazioni */}
                 <button
-                  onClick={() => {
-                    // Trick: rimuoviamo il prompt dallo state senza rifiutarlo
-                    // così su iOS il banner sparisce ma il prompt può riapparire
-                    (window as any).__pwaPromptDismissed = true;
-                    // forza re-render nascondendo il banner
-                    window.dispatchEvent(new Event("pwa-dismissed"));
-                  }}
+                  onClick={dismissInstall}
                   className="text-white/30 hover:text-white/60 transition-colors p-1"
                   aria-label="Chiudi"
                 >

@@ -10,6 +10,7 @@ interface UsePWAReturn {
   isInstalled: boolean;
   hasUpdate: boolean;
   promptInstall: () => Promise<void>;
+  dismissInstall: () => void;
   dismissUpdate: () => void;
 }
 
@@ -79,9 +80,14 @@ export function usePWA(): UsePWAReturn {
     }
   };
 
+  // Hides the banner without calling prompt() — the native prompt is preserved
+  // so the browser can show it again later (e.g. via address bar mini-infobar).
+  const dismissInstall = () => {
+    setInstallPrompt(null);
+  };
+
   const dismissUpdate = () => {
     if (waitingWorker) {
-      // Attiva il nuovo SW immediatamente
       waitingWorker.postMessage({ type: "SKIP_WAITING" });
     }
     setHasUpdate(false);
@@ -92,6 +98,7 @@ export function usePWA(): UsePWAReturn {
     isInstalled,
     hasUpdate,
     promptInstall,
+    dismissInstall,
     dismissUpdate,
   };
 }

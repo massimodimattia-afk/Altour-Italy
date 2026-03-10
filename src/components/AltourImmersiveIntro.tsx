@@ -1,109 +1,127 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 
-// --- CONFIGURAZIONE ---
+// ─── Config ───────────────────────────────────────────────────────────────────
 const MOBILE_IMAGE_URL =
   "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/intro-mobile.webp";
 const DESKTOP_IMAGE_URL =
   "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp";
 
+// Supabase Storage supports image transforms via query params.
+// Resize to display size to avoid downloading a 4MB photo for a 400px slot.
+const MOBILE_IMAGE_SRC  = `${MOBILE_IMAGE_URL}?width=800&quality=75`;
+const DESKTOP_IMAGE_SRC = `${DESKTOP_IMAGE_URL}?width=1600&quality=75`;
+
+const MIN_DISPLAY_AFTER_LOAD_MS = 1200; // reduced: 1.2s is plenty
+const HARD_CAP_MS       = 4500;
+const IMAGE_TIMEOUT_MS  = 2500;
+
 interface AltourImmersiveIntroProps {
   onComplete: () => void;
 }
 
-// --- VARIANTI SPOSTATE FUORI DAL COMPONENTE ---
-// Evita la ricreazione degli oggetti ad ogni render migliorando i frame per second (FPS)
+interface ImgWithFetchPriority extends HTMLImageElement {
+  fetchPriority: "high" | "low" | "auto";
+}
+
+// ─── Container exit variants (image has NO variants — pure CSS transition) ───
 const mobileContainerVariants: Variants = {
   initial: { opacity: 1 },
-  exit: {
-    opacity: 0,
-    scale: 1.1,
-    transition: { duration: 0.8, ease: "easeOut" }
-  }
+  exit: { opacity: 0, transition: { duration: 0.5, ease: "easeOut" } },
 };
 
 const desktopContainerVariants: Variants = {
   initial: { opacity: 1 },
-  exit: {
-    y: "-100%",
-    transition: { duration: 1.2, ease: [0.22, 1, 0.36, 1] }
-  }
-};
-
-const imageVariants: Variants = {
-  initial: (isMobile: boolean) => ({ 
-    scale: isMobile ? 1 : 1.1,
-    opacity: 0 
-  }),
-  animate: (isMobile: boolean) => ({ 
-    scale: isMobile ? 1.05 : 1,
-    opacity: 1,
-    transition: { duration: 1.5, ease: "easeOut" } 
-  })
+  exit: { y: "-100%", transition: { duration: 1.1, ease: [0.22, 1, 0.36, 1] } },
 };
 
 const contentVariants: Variants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20, transition: { duration: 0.5 } }
+  initial: { opacity: 0, y: 16 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { delay: 0.3, duration: 0.7, ease: "easeOut" },
+  },
+  exit: { opacity: 0, y: -12, transition: { duration: 0.35 } },
 };
 
-const skipButtonVariants: Variants = {
+const skipVariants: Variants = {
   initial: { opacity: 0 },
-  animate: { opacity: 1 }
+  animate: { opacity: 1, transition: { delay: 1.0, duration: 0.4 } },
 };
 
-// Funzione helper per il primo render (SSR/CSR safe)
-const getInitialMobileState = () => typeof window !== 'undefined' ? window.innerWidth < 768 : false;
-
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntroProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const [isMobile, setIsMobile] = useState<boolean>(getInitialMobileState);
-  const [imageLoaded, setImageLoaded] = useState(false);
 
-  // 1. Rilevamento Device Efficiente
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize, { passive: true });
-    return () => window.removeEventListener('resize', handleResize);
+  const isMobile = useRef(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  ).current;
+
+  // Ref to the <img> DOM node — we toggle its opacity via CSS class,
+  // avoiding a React re-render and the associated layout thrash.
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  const canCloseRef = useRef(false);
+  const closedRef   = useRef(false);
+
+  const close = useCallback(() => {
+    if (closedRef.current) return;
+    closedRef.current = true;
+    setIsVisible(false);
   }, []);
 
-  // 2. Precaricamento Condizionale (Scarica SOLO quello che serve)
   useEffect(() => {
-    setImageLoaded(false); // Reset al cambio device se avviene
-    const targetUrl = isMobile ? MOBILE_IMAGE_URL : DESKTOP_IMAGE_URL;
-    
-    const img = new Image();
-    img.src = targetUrl;
-    // @ts-ignore - Proprietá supportata dai browser moderni per dare priorità di rete
-    img.fetchPriority = 'high';
-    
-    img.onload = () => setImageLoaded(true);
+    const src = isMobile ? MOBILE_IMAGE_SRC : DESKTOP_IMAGE_SRC;
 
-    // Fallback di sicurezza: se la rete è troppo lenta, mostriamo comunque il contenuto dopo 2s
-    const safetyTimer = setTimeout(() => setImageLoaded(true), 2000);
+    // Preload via JS Image() so the browser caches it before the <img> needs it.
+    // The <img> is already in the DOM with opacity:0 — when the cache is warm
+    // the browser paints it in the SAME frame as the class switch, no jank.
+    const preload = new Image() as ImgWithFetchPriority;
+    preload.fetchPriority = "high";
+    preload.decoding = "sync";
+    preload.src = src;
+
+    const onReady = () => {
+      // Flip CSS class — no React state, no re-render, no layout pass.
+      // The `transition: opacity 0.9s` defined inline on the <img> handles the fade.
+      imgRef.current?.classList.add("img-loaded");
+      setTimeout(() => { canCloseRef.current = true; }, MIN_DISPLAY_AFTER_LOAD_MS);
+    };
+
+    if (preload.complete) {
+      // Already in browser cache (e.g. second visit)
+      onReady();
+    } else {
+      preload.onload = onReady;
+    }
+
+    const safetyTimer = setTimeout(() => {
+      imgRef.current?.classList.add("img-loaded");
+      canCloseRef.current = true;
+    }, IMAGE_TIMEOUT_MS);
+
+    const hardCapTimer = setTimeout(() => {
+      canCloseRef.current ? close() : setTimeout(close, 300);
+    }, HARD_CAP_MS);
 
     return () => {
-      img.onload = null;
+      preload.onload = null;
       clearTimeout(safetyTimer);
+      clearTimeout(hardCapTimer);
     };
-  }, [isMobile]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 3. Timer di Uscita Globale
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(false), 3500);
-    return () => clearTimeout(timer);
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
   }, []);
 
-  // 4. Lock dello Scroll Sicuro
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, []);
-
-  const handleExitComplete = useCallback(() => {
-    onComplete();
-  }, [onComplete]);
+  const handleExitComplete = useCallback(() => onComplete(), [onComplete]);
+  const handleSkip = useCallback(() => {
+    canCloseRef.current = true;
+    close();
+  }, [close]);
 
   return (
     <AnimatePresence mode="wait" onExitComplete={handleExitComplete}>
@@ -115,31 +133,34 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
           variants={isMobile ? mobileContainerVariants : desktopContainerVariants}
           initial="initial"
           exit="exit"
-          style={{ willChange: 'transform, opacity', touchAction: 'none' }}
+          style={{ willChange: "transform, opacity", touchAction: "none" }}
         >
-          {/* IMMAGINE DI SFONDO SINGOLA E DINAMICA */}
-          <div className="absolute inset-0 w-full h-full bg-brand-stone">
-            {imageLoaded && (
-              <motion.img
-                key={isMobile ? 'mobile-bg' : 'desktop-bg'}
-                src={isMobile ? MOBILE_IMAGE_URL : DESKTOP_IMAGE_URL}
-                alt=""
-                aria-hidden="true"
-                className="w-full h-full object-cover object-center"
-                custom={isMobile}
-                variants={imageVariants}
-                initial="initial"
-                animate="animate"
-                loading="eager"
-                fetchPriority="high"
-                style={{ willChange: 'transform, opacity' }}
-              />
-            )}
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-          </div>
+          {/* ── Background image ──────────────────────────────────────────────
+              Always in the DOM from the first render with opacity:0.
+              The browser can start decoding immediately — no insertion jank.
+              Opacity is flipped via CSS class (no React state = no re-render).
+              No scale transform: opacity-only fade is ~3x cheaper on mobile GPU. */}
+          <img
+            ref={imgRef}
+            src={isMobile ? MOBILE_IMAGE_SRC : DESKTOP_IMAGE_SRC}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            decoding="sync"
+            fetchPriority="high"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{
+              opacity: 0,
+              // CSS transition instead of Framer Motion — avoids JS animation frame overhead
+              transition: "opacity 0.9s ease-out",
+            }}
+          />
+          {/* img-loaded class sets opacity:1 — injected once by the preload callback */}
+          <style>{`.img-loaded { opacity: 1 !important; }`}</style>
 
-          {/* CONTENUTO BRANDING */}
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+
+          {/* ── Branding ──────────────────────────────────────────────────── */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 pointer-events-none">
             <motion.div
               variants={contentVariants}
@@ -147,19 +168,14 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
               animate="animate"
               exit="exit"
               className="text-center"
-              transition={{ delay: 0.4, duration: 0.8 }}
-              style={{ willChange: 'transform, opacity' }}
             >
-              <div className="relative mb-4">
-                <img
-                  src="/altour-logo.png"
-                  alt="Logo Altour Italy"
-                  className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-2xl shadow-2xl border border-white/20 mb-6"
-                  loading="eager"
-                  fetchPriority="high"
-                />
-              </div>
-
+              <img
+                src="/altour-logo.png"
+                alt="Logo Altour Italy"
+                className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-2xl shadow-2xl border border-white/20 mb-6"
+                loading="eager"
+                decoding="sync"
+              />
               <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter drop-shadow-xl mb-2">
                 Altour
               </h1>
@@ -169,13 +185,12 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
             </motion.div>
           </div>
 
-          {/* Bottone Salta */}
+          {/* ── Skip ──────────────────────────────────────────────────────── */}
           <motion.button
-            variants={skipButtonVariants}
+            variants={skipVariants}
             initial="initial"
             animate="animate"
-            transition={{ delay: 1.0, duration: 0.5 }}
-            onClick={() => setIsVisible(false)}
+            onClick={handleSkip}
             aria-label="Salta introduzione"
             className="absolute bottom-8 right-8 text-white/50 hover:text-white text-[15px] font-black uppercase tracking-widest transition-colors z-20 px-4 py-3 min-w-[44px] min-h-[44px] flex items-center cursor-pointer"
           >

@@ -125,13 +125,16 @@ export default function EscursioniPage({
   onBookingClick,
 }: EscursioniPageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
+  // Fix #1: quiz uses a shuffled copy so the displayed grid keeps date order
+  const quizPoolRef = useRef<Escursione[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Filtri e Paginazione
   const [activeFilter, setActiveFilter] = useState<"tutte" | "giornata" | "tour">("tutte");
-  const ITEMS_PER_LOAD = 3;
+  // Fix #8: load 6 items at a time on desktop (fills 2×3 grid), 3 on mobile (3 scroll pages)
+  const ITEMS_PER_LOAD = typeof window !== "undefined" && window.innerWidth >= 1024 ? 6 : 3;
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
 
   // Quiz States
@@ -145,9 +148,8 @@ export default function EscursioniPage({
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const quizRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setVisibleCount(ITEMS_PER_LOAD);
-  }, [activeFilter]);
+  // Fix #3: visibleCount reset is synchronous inside the click handler (see filter buttons below).
+  // The useEffect approach caused a 1-frame flash where old count + new filter were both active.
 
   useEffect(() => {
     async function fetchEscursioni() {
@@ -155,17 +157,32 @@ export default function EscursioniPage({
         .from("escursioni")
         .select("*")
         .order("data", { ascending: true });
-      // FIX: casting per includere la colonna aggiunta manualmente
-      if (data) setEscursioni([...data].sort(() => Math.random() - 0.5) as Escursione[]);
+      if (data) {
+        const typed = data as Escursione[];
+        // Fix #1: display grid respects date order from Supabase.
+        // Quiz pool is a separately shuffled copy so results vary between attempts.
+        setEscursioni(typed);
+        quizPoolRef.current = [...typed].sort(() => Math.random() - 0.5);
+      }
       setLoading(false);
     }
     fetchEscursioni();
   }, []);
 
+  // Fix #2: guard prevents double-tap from advancing two questions at once.
+  const processingAnswerRef = useRef(false);
+
   const handleAnswer = (option: string) => {
+    if (processingAnswerRef.current) return;
+    processingAnswerRef.current = true;
     setPressedOption(option);
+
+    // Only the visual feedback reset is deferred — all state updates happen synchronously.
     setTimeout(() => {
       setPressedOption(null);
+      processingAnswerRef.current = false;
+    }, 160);
+
     const newAnswers = [...answers, option];
 
     if (currentQuestion < QUIZ_QUESTIONS.length - 1) {
@@ -174,14 +191,15 @@ export default function EscursioniPage({
       return;
     }
 
-    if (escursioni.length === 0) { setQuizStep("intro"); return; }
+    const pool = quizPoolRef.current;
+    if (pool.length === 0) { setQuizStep("intro"); return; }
 
     const [compagnia, livello, luogo, sforzo, cerca, tempo] = newAnswers;
 
-    let bestMatch = escursioni[0];
+    let bestMatch = pool[0];
     let maxScore = -Infinity;
 
-    escursioni.forEach((esc) => {
+    pool.forEach((esc) => {
       let score = 0;
       const t = esc.titolo?.toLowerCase() || "";
       const d = esc.descrizione?.toLowerCase() || "";
@@ -263,7 +281,6 @@ export default function EscursioniPage({
     setShownSuggestions(prev => [...prev, bestMatch.id]);
     setSuggestedHike(bestMatch);
     setQuizStep("result");
-    }, 160);
   };
 
   const filteredEscursioni = escursioni.filter((esc) =>
@@ -301,7 +318,7 @@ export default function EscursioniPage({
           {(["tutte", "giornata", "tour"] as const).map((f) => (
             <button
               key={f}
-              onClick={() => setActiveFilter(f)}
+              onClick={() => { setActiveFilter(f); setVisibleCount(ITEMS_PER_LOAD); }}
               className={`px-8 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${
                 activeFilter === f
                   ? "bg-white text-brand-stone shadow-md scale-105"
@@ -321,13 +338,18 @@ export default function EscursioniPage({
             key="quiz-strip"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8, height: 0, marginBottom: 0 }}
+            exit={{ opacity: 0, y: -8, paddingBottom: 0, marginBottom: 0, scaleY: 0.92 }}
             transition={{ duration: 0.28, ease: "easeInOut" }}
+            style={{ transformOrigin: "top", overflow: "hidden" }}
             className="rounded-[1.75rem] mb-10 cursor-pointer group bg-stone-100/80 border border-stone-200/60 hover:border-brand-sky/30 hover:bg-stone-100 transition-all"
             onClick={() => {
               setQuizStarted(true);
               setQuizStep("intro");
-              setTimeout(() => quizRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+              setTimeout(() => {
+                if (!quizRef.current) return;
+                const top = quizRef.current.getBoundingClientRect().top + window.scrollY - 80;
+                window.scrollTo({ top, behavior: "smooth" });
+              }, 60);
             }}
           >
             <div className="flex items-center justify-between gap-4 px-6 py-5 md:px-8 md:py-6">
@@ -385,12 +407,10 @@ export default function EscursioniPage({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9 }}
               key={esc.id}
-              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5"
+              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5 active:scale-[0.98]"
               style={{
                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
               }}
-              onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 8px 16px -2px rgba(0,0,0,0.10), 0 24px 48px -8px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.05)")}
-              onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)")}
             >
               <div className="h-48 md:h-56 relative overflow-hidden">
                 {esc.immagine_url && (
@@ -422,11 +442,15 @@ export default function EscursioniPage({
                 <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
                   {esc.titolo}
                 </h3>
-                <p className={`text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 flex-grow leading-relaxed ${
-                  esc.is_italic ? "italic font-serif" : "font-medium"
-                }`}>
-                  {esc.descrizione}
-                </p>
+                <div className="relative mb-6 flex-grow">
+                  <p className={`text-stone-500 text-xs md:text-sm line-clamp-3 leading-relaxed ${
+                    esc.is_italic ? "italic font-serif" : "font-medium"
+                  }`}>
+                    {esc.descrizione}
+                  </p>
+                  {/* Fix #7: fade masks the line-clamp cut — works on all fonts including italic serif */}
+                  <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+                </div>
 
                 <div className="flex gap-2">
                   <button
@@ -442,7 +466,7 @@ export default function EscursioniPage({
                     onClick={() => onBookingClick(esc.titolo)}
                     className="flex-[1.5] py-4 min-h-[48px] rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                   >
-                    Richiedi Informazioni <ArrowRight size={12} />
+                    Richiedi Info <ArrowRight size={12} />
                   </button>
                 </div>
               </div>
@@ -509,8 +533,12 @@ export default function EscursioniPage({
             <AnimatePresence>
               {quizStep !== "intro" && (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  // Fix #4: delay matches half the collage collapse duration (0.4s → delay 0.22s)
+                  // so content never appears while the collage is still mid-collapse
+                  transition={{ delay: 0.22, duration: 0.3, ease: "easeOut" }}
                   className="p-7 bg-[#faf9f7]"
                 >
                   {quizStep === "questions" && (
@@ -548,7 +576,15 @@ export default function EscursioniPage({
                       <h4 className="text-xl font-black text-brand-stone uppercase mb-7 tracking-tight italic">{suggestedHike.titolo}</h4>
                       <div className="flex flex-col gap-3">
                         <button onClick={() => { setSelectedActivity(suggestedHike); setIsDetailOpen(true); }} className="bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95">Visualizza</button>
-                        <button onClick={() => { setQuizStep("intro"); setCurrentQuestion(0); setAnswers([]); }} className="text-stone-400 font-black uppercase text-[9px] py-2 flex items-center justify-center gap-2"><RefreshCcw size={12} /> Rifai il test</button>
+                        <button onClick={() => {
+                          setQuizStep("intro"); setCurrentQuestion(0); setAnswers([]);
+                          // Fix #5: scroll back to quiz top so user sees collage reappear
+                          setTimeout(() => {
+                            if (!quizRef.current) return;
+                            const top = quizRef.current.getBoundingClientRect().top + window.scrollY - 80;
+                            window.scrollTo({ top, behavior: "smooth" });
+                          }, 60);
+                        }} className="text-stone-400 font-black uppercase text-[9px] py-2 flex items-center justify-center gap-2"><RefreshCcw size={12} /> Rifai il test</button>
                       </div>
                     </div>
                   )}
