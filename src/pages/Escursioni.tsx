@@ -487,7 +487,7 @@ export default function EscursioniPage({
                     onClick={() => onBookingClick(esc.titolo)}
                     className="flex-[1.5] py-4 min-h-[48px] rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                   >
-                    Richiedi Informazioni <ArrowRight size={12} />
+                    Richiedi Info <ArrowRight size={12} />
                   </button>
                 </div>
               </div>
