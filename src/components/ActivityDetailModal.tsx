@@ -13,6 +13,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface Activity {
   id: string;
@@ -30,8 +31,6 @@ interface Activity {
   attrezzatura?: string | null;
   data?: string | null;
   _tipo?: 'corso' | 'campo' | null;
-  is_italic?: boolean | null;
-  // Mini-mappa: colonne lat/lng da Supabase
   lat?: number | null;
   lng?: number | null;
 }
@@ -45,23 +44,18 @@ interface ActivityDetailModalProps {
 
 const IMG_FALLBACK = "/altour-logo.png";
 
-// ── Mini-mappa OpenStreetMap iframe (zero dipendenze) ─────────────────────────
-// Usa l'embed ufficiale OSM con marker integrato nell'URL.
-// bbox calcolato attorno al punto con un padding di ~1km per mostrare contesto.
 function MiniMap({ lat, lng, titolo }: { lat: number; lng: number; titolo: string }) {
-  const delta = 0.018; // ~2km di contesto attorno al punto
+  const delta = 0.018;
   const bbox = `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`;
   const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
 
   return (
     <div className="rounded-2xl overflow-hidden border border-stone-100 relative">
-      {/* Header della sezione */}
       <div className="flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-100">
         <MapPin size={13} className="text-brand-sky shrink-0" />
         <span className="text-[10px] font-black uppercase tracking-widest text-brand-stone">
           Dove andiamo
         </span>
-        {/* Link apri in OSM — utile su mobile per navigare */}
         <a
           href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=13`}
           target="_blank"
@@ -72,8 +66,6 @@ function MiniMap({ lat, lng, titolo }: { lat: number; lng: number; titolo: strin
           Apri mappa →
         </a>
       </div>
-
-      {/* iframe OSM — pointer-events: none la rende statica (non scrollabile) */}
       <div className="relative h-48">
         <iframe
           title={`Mappa — ${titolo}`}
@@ -81,19 +73,10 @@ function MiniMap({ lat, lng, titolo }: { lat: number; lng: number; titolo: strin
           width="100%"
           height="100%"
           loading="lazy"
-          style={{
-            border: "none",
-            display: "block",
-            // Rende la mappa non interattiva su mobile:
-            // l'utente non resta intrappolato nello scroll dell'iframe
-            pointerEvents: "none",
-          }}
-          // Attributo sandbox permissivo solo per la visualizzazione
+          style={{ border: "none", display: "block", pointerEvents: "none" }}
           sandbox="allow-scripts allow-same-origin"
           aria-label={`Mappa del punto di partenza: ${titolo}`}
         />
-        {/* Overlay trasparente che cattura tap e apre OSM in tab — 
-            meglio che un iframe interattivo che ingoia lo scroll mobile */}
         <a
           href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=13`}
           target="_blank"
@@ -257,14 +240,17 @@ export default function ActivityDetailModal({
               {/* Corpo scrollabile */}
               <div className="flex-grow overflow-y-auto px-6 py-5 md:px-12 md:py-8 space-y-6">
 
-                {/* Descrizione */}
-                <p className={`text-stone-600 leading-relaxed text-sm md:text-base ${
-                  activity.is_italic
-                    ? "italic font-serif text-stone-500 border-l-2 border-brand-sky/20 pl-4 py-1"
-                    : "font-medium"
-                }`}>
-                  {activity.descrizione_estesa || activity.descrizione}
-                </p>
+                {/* Descrizione — Markdown: *corsivo*, **grassetto**, paragrafi */}
+                <div className="text-stone-600 leading-relaxed text-sm md:text-base font-medium
+                    prose prose-sm max-w-none
+                    prose-p:my-1
+                    prose-strong:text-brand-stone prose-strong:font-black
+                    prose-em:text-stone-500 prose-em:font-serif
+                    prose-a:text-brand-sky prose-a:no-underline hover:prose-a:underline">
+                  <ReactMarkdown>
+                    {activity.descrizione_estesa || activity.descrizione || ""}
+                  </ReactMarkdown>
+                </div>
 
                 {activity.attrezzatura_consigliata && (
                   <div className="p-4 md:p-6 bg-brand-glacier rounded-2xl border border-stone-100">
@@ -298,7 +284,6 @@ export default function ActivityDetailModal({
                   </div>
                 )}
 
-                {/* ── Mini-mappa ─────────────────────────────────────────── */}
                 {hasMap && (
                   <MiniMap
                     lat={activity.lat!}

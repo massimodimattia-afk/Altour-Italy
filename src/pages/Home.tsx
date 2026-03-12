@@ -158,7 +158,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             decoding="async"
             onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/10 via-[70%] to-[#f5f2ed] to-[98%]" />
+          {/* Opzione A — trasparente in alto, fade verso sfondo solo da metà in giù */}
+          {/* Stessa luminosità dell'intro (bg-black/20) + fade verso sfondo solo nell'ultimo 20% */}
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[78%] to-[#f5f2ed]" />
         </div>
 
         <div className="relative z-10 text-center max-w-5xl w-full px-2 mt-[-5vh]">

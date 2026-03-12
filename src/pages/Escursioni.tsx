@@ -9,7 +9,6 @@ import { ArrowRight, RefreshCcw, Star, ChevronDown, Calendar, X } from "lucide-r
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
-  is_italic?: boolean | null;
   lat?: number | null;
   lng?: number | null;
 };
@@ -28,7 +27,6 @@ interface Activity {
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
   data?: string | null;
-  is_italic?: boolean | null;
 }
 
 interface EscursioniPageProps {
@@ -453,9 +451,7 @@ export default function EscursioniPage({
                   {esc.titolo}
                 </h3>
                 <div className="relative mb-6 flex-grow">
-                  <p className={`text-stone-500 text-xs md:text-sm line-clamp-3 leading-relaxed ${
-                    esc.is_italic ? "italic font-serif" : "font-medium"
-                  }`}>
+                  <p className="text-stone-500 text-xs md:text-sm line-clamp-3 leading-relaxed font-medium">
                     {esc.descrizione}
                   </p>
                   {/* Fix #7: fade masks the line-clamp cut — works on all fonts including italic serif */}
@@ -476,7 +472,7 @@ export default function EscursioniPage({
                     onClick={() => onBookingClick(esc.titolo)}
                     className="flex-[1.5] py-4 min-h-[48px] rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                   >
-                    Richiedi Info <ArrowRight size={12} />
+                    Richiedi Informazioni <ArrowRight size={12} />
                   </button>
                 </div>
               </div>
