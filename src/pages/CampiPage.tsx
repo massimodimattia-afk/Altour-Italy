@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
+import ReactMarkdown from "react-markdown";
 
 const FILOSOFIA_COLORS: Record<string, string> = {
   "Avventura": "#e94544",
@@ -228,9 +229,11 @@ export default function CampiPage({ onBookingClick }: CampiPageProps) {
                     {campo.titolo}
                   </h2>
                   {/* Anteprima usa sempre descrizione (breve) */}
-                  <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow">
-                    {campo.descrizione}
-                  </p>
+                  <div className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow prose prose-sm max-w-none prose-p:my-0 prose-em:font-serif prose-strong:font-black prose-strong:text-[#44403c]">
+                    <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
+                      {campo.descrizione ?? ""}
+                    </ReactMarkdown>
+                  </div>
 
                   <div className="mt-auto pt-6 border-t border-stone-100 flex flex-col gap-4">
                     <div className="flex justify-between items-center mb-2">

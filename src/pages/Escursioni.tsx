@@ -4,6 +4,7 @@ import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, RefreshCcw, Star, ChevronDown, Calendar, X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 // FIX: Estendiamo il tipo per includere la nuova colonna Supabase
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
@@ -24,9 +25,13 @@ interface Activity {
   difficolta?: string | null;
   durata?: string | null;
   lunghezza?: number | null;
+  categoria?: string | null;
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
   data?: string | null;
+  _tipo?: 'corso' | 'campo' | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 interface EscursioniPageProps {
@@ -451,9 +456,11 @@ export default function EscursioniPage({
                   {esc.titolo}
                 </h3>
                 <div className="relative mb-6 flex-grow">
-                  <p className="text-stone-500 text-xs md:text-sm line-clamp-3 leading-relaxed font-medium">
-                    {esc.descrizione}
-                  </p>
+                <div className="text-stone-500 text-xs md:text-sm line-clamp-3 leading-relaxed font-medium prose prose-sm max-w-none prose-p:my-0 prose-em:font-serif prose-strong:font-black prose-strong:text-[#44403c]">
+                  <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
+                    {esc.descrizione ?? ""}
+                  </ReactMarkdown>
+                </div>
                   {/* Fix #7: fade masks the line-clamp cut — works on all fonts including italic serif */}
                   <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-white to-transparent pointer-events-none" />
                 </div>
@@ -472,7 +479,7 @@ export default function EscursioniPage({
                     onClick={() => onBookingClick(esc.titolo)}
                     className="flex-[1.5] py-4 min-h-[48px] rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
                   >
-                    Richiedi Informazioni <ArrowRight size={12} />
+                    Richiedi Info <ArrowRight size={12} />
                   </button>
                 </div>
               </div>
@@ -826,7 +833,7 @@ export default function EscursioniPage({
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        onBook={onBookingClick}
+        onBook={(title: string) => onBookingClick(title)}
       />
     </div>
   );
