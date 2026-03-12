@@ -15,6 +15,12 @@ import {
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 
+function normalizeMarkdown(text: string): string {
+  return text
+    .replace(/\*\s+/g, "*")
+    .replace(/\s+\*/g, "*");
+}
+
 interface Activity {
   id: string;
   titolo: string;
@@ -248,7 +254,7 @@ export default function ActivityDetailModal({
                     prose-em:text-stone-500 prose-em:font-serif
                     prose-a:text-brand-sky prose-a:no-underline hover:prose-a:underline">
                   <ReactMarkdown>
-                    {activity.descrizione_estesa || activity.descrizione || ""}
+                    {normalizeMarkdown(activity.descrizione_estesa || activity.descrizione || "")}
                   </ReactMarkdown>
                 </div>
 

@@ -3,6 +3,12 @@ import { supabase } from "../lib/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import ReactMarkdown from "react-markdown";
 
+function normalizeMarkdown(text: string): string {
+  return text
+    .replace(/\*\s+/g, "*")
+    .replace(/\s+\*/g, "*");
+}
+
 const FILOSOFIA_COLORS: Record<string, string> = {
   "Avventura": "#e94544",
   "Benessere": "#a5d9c9",
@@ -229,9 +235,9 @@ export default function CampiPage({ onBookingClick }: CampiPageProps) {
                     {campo.titolo}
                   </h2>
                   {/* Anteprima usa sempre descrizione (breve) */}
-                  <div className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 font-medium flex-grow prose prose-sm max-w-none prose-p:my-0 prose-em:font-serif prose-strong:font-black prose-strong:text-[#44403c]">
+                  <div className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 leading-relaxed font-medium flex-grow [&_em]:italic [&_em]:font-serif [&_strong]:font-black [&_strong]:text-[#44403c]">
                     <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
-                      {campo.descrizione ?? ""}
+                      {normalizeMarkdown(campo.descrizione ?? "")}
                     </ReactMarkdown>
                   </div>
 
