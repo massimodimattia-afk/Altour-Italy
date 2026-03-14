@@ -111,6 +111,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         const { data: allHikes } = await supabase
           .from("escursioni")
           .select("*")
+          .eq("is_active", true)
           .order("data", { ascending: true });
         const { data: crs } = await supabase.from("corsi").select("*").limit(2);
         if (allHikes) {
@@ -359,7 +360,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               onClick={() => onNavigate("corsi")}
               className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
             >
-              Vedi tutti i corsi <TrendingUp size={14} />
+              Vedi tutte le proposte <TrendingUp size={14} />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">

@@ -169,6 +169,7 @@ export default function EscursioniPage({
       const { data } = await supabase
         .from("escursioni")
         .select("*")
+        .eq("is_active", true)
         .order("data", { ascending: true });
       if (data) {
         const typed = data as Escursione[];
@@ -469,8 +470,7 @@ export default function EscursioniPage({
                       {normalizeMarkdown(esc.descrizione ?? "")}
                     </ReactMarkdown>
                   </div>
-                  {/* Fix #7: fade masks the line-clamp cut — works on all fonts including italic serif */}
-                  <div className="absolute bottom-0 left-0 right-0 h-5 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+
                 </div>
 
                 <div className="flex gap-2">
