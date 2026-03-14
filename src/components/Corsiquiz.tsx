@@ -179,79 +179,218 @@ function LearningPath({ recommended, completed }: { recommended: Level; complete
 // ─── Backpack SVG ──────────────────────────────────────────────────────────────
 function BackpackSVG({ glowing }: { glowing: boolean }) {
   return (
-    <svg viewBox="0 0 140 168" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-      <defs>
-        <radialGradient id="bgl" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#81ccb0" stopOpacity="0.28"/>
-          <stop offset="100%" stopColor="#81ccb0" stopOpacity="0"/>
-        </radialGradient>
-        <linearGradient id="bd" x1="0.1" y1="0" x2="0.3" y2="1">
-          <stop offset="0%" stopColor="#c4a898"/>
-          <stop offset="100%" stopColor="#8a6a58"/>
-        </linearGradient>
-        <linearGradient id="bf" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#d4b4a0"/>
-          <stop offset="100%" stopColor="#b08070"/>
-        </linearGradient>
-        <linearGradient id="bs" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#9a7060"/>
-          <stop offset="100%" stopColor="#6e5040"/>
-        </linearGradient>
-        <filter id="bsh" x="-8%" y="-4%" width="116%" height="116%">
-          <feDropShadow dx="0" dy="5" stdDeviation="7" floodColor="#00000020"/>
-        </filter>
-        <clipPath id="bc">
-          <rect x="18" y="44" width="104" height="108" rx="18"/>
-        </clipPath>
-      </defs>
+    <motion.div
+      className="w-full h-full"
+      animate={glowing
+        ? { rotate: [0, -1.2, 1.2, -0.8, 0.8, 0], scale: [1, 1.04, 1.04, 1.02, 1] }
+        : { rotate: [0, -0.8, 0.8, -0.5, 0], scale: 1 }
+      }
+      transition={glowing
+        ? { duration: 0.7, ease: "easeInOut" }
+        : { duration: 5, repeat: Infinity, ease: "easeInOut", repeatType: "reverse" as const }
+      }
+      style={{ transformOrigin: "50% 15%" }}
+    >
+      <svg viewBox="0 0 140 180" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" style={{ overflow: "visible" }}>
+        <defs>
+          {/* Glow esterno verde */}
+          <radialGradient id="bgl2" cx="50%" cy="55%" r="50%">
+            <stop offset="0%" stopColor="#81ccb0" stopOpacity="0.35"/>
+            <stop offset="70%" stopColor="#81ccb0" stopOpacity="0.1"/>
+            <stop offset="100%" stopColor="#81ccb0" stopOpacity="0"/>
+          </radialGradient>
+          {/* Corpo — gradiente diagonale per effetto 3D luce da sinistra-alto */}
+          <linearGradient id="bd2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"   stopColor="#d4b09c"/>
+            <stop offset="40%"  stopColor="#b8907a"/>
+            <stop offset="100%" stopColor="#7a5a48"/>
+          </linearGradient>
+          {/* Faccia destra del corpo — più scura per profondità */}
+          <linearGradient id="bdside" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#9a7060"/>
+            <stop offset="100%" stopColor="#6e5040"/>
+          </linearGradient>
+          {/* Tasca frontale */}
+          <linearGradient id="bf2" x1="0.1" y1="0" x2="0.9" y2="1">
+            <stop offset="0%"   stopColor="#ddc0aa"/>
+            <stop offset="100%" stopColor="#a87862"/>
+          </linearGradient>
+          {/* Spallacci */}
+          <linearGradient id="bs2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%"  stopColor="#a88070"/>
+            <stop offset="100%" stopColor="#6a4e3c"/>
+          </linearGradient>
+          {/* Shimmer — riflesso luce che scorre */}
+          <linearGradient id="shimmer" x1="0" y1="0" x2="1" y2="0.3">
+            <stop offset="0%"   stopColor="rgba(255,255,255,0)"/>
+            <stop offset="45%"  stopColor="rgba(255,255,255,0.13)"/>
+            <stop offset="55%"  stopColor="rgba(255,255,255,0.22)"/>
+            <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
+          </linearGradient>
+          {/* Ombra proiettata sotto */}
+          <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="rgba(0,0,0,0.28)"/>
+            <stop offset="100%" stopColor="rgba(0,0,0,0)"/>
+          </radialGradient>
+          {/* Filter ombra corpo */}
+          <filter id="bsh2" x="-12%" y="-6%" width="124%" height="124%">
+            <feDropShadow dx="2" dy="6" stdDeviation="8" floodColor="#00000030"/>
+            <feDropShadow dx="-1" dy="2" stdDeviation="3" floodColor="#00000015"/>
+          </filter>
+          {/* Filter glow verde quando pieno */}
+          <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feColorMatrix in="blur" type="matrix"
+              values="0.5 0 0 0 0  0 0.8 0 0 0.69  0 0 0.69 0 0.44  0 0 0 0.6 0" result="glow"/>
+            <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <clipPath id="bc2">
+            <rect x="16" y="46" width="106" height="110" rx="18"/>
+          </clipPath>
+          <clipPath id="frontClip">
+            <rect x="24" y="102" width="90" height="46" rx="13"/>
+          </clipPath>
+        </defs>
 
-      {glowing && (
-        <ellipse cx="70" cy="98" rx="60" ry="66" fill="url(#bgl)">
-          <animate attributeName="rx" values="56;64;56" dur="1.8s" repeatCount="indefinite"/>
+        {/* Ombra a terra */}
+        <ellipse cx="70" cy="174" rx="44" ry="7" fill="url(#groundShadow)">
+          {glowing
+            ? <animate attributeName="rx" values="44;50;44" dur="1.8s" repeatCount="indefinite"/>
+            : <animate attributeName="rx" values="44;40;44" dur="5s" repeatCount="indefinite"/>
+          }
         </ellipse>
-      )}
 
-      {/* Spallacci */}
-      <path d="M46 20 C42 20 38 24 38 30 L38 52 C38 56 41 58 45 58 L53 58 C57 58 60 56 60 52 L60 30 C60 24 56 20 52 20 Z" fill="url(#bs)"/>
-      <path d="M88 20 C84 20 80 24 80 30 L80 52 C80 56 83 58 87 58 L95 58 C99 58 102 56 102 52 L102 30 C102 24 98 20 94 20 Z" fill="url(#bs)"/>
-      <line x1="49" y1="28" x2="49" y2="50" stroke="rgba(0,0,0,0.1)" strokeWidth="1" strokeDasharray="3 3"/>
-      <line x1="91" y1="28" x2="91" y2="50" stroke="rgba(0,0,0,0.1)" strokeWidth="1" strokeDasharray="3 3"/>
+        {/* Glow ambientale quando pieno */}
+        {glowing && (
+          <ellipse cx="70" cy="100" rx="62" ry="68" fill="url(#bgl2)"
+            filter="url(#glowFilter)">
+            <animate attributeName="rx" values="58;66;58" dur="1.8s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.7;1;0.7" dur="1.8s" repeatCount="indefinite"/>
+          </ellipse>
+        )}
 
-      {/* Manico */}
-      <path d="M58 24 C58 17 82 17 82 24" stroke="#d4b4a0" strokeWidth="4" fill="none" strokeLinecap="round"/>
-      <path d="M58 24 C58 17 82 17 82 24" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        {/* ── Spallacci ── */}
+        {/* Ombra sotto spallacci per profondità */}
+        <path d="M45 22 C41 22 36 27 36 33 L36 54 C36 58 39 60 43 60 L55 60 C59 60 62 58 62 54 L62 33 C62 27 57 22 53 22 Z"
+          fill="rgba(0,0,0,0.12)" transform="translate(1,3)"/>
+        <path d="M87 22 C83 22 78 27 78 33 L78 54 C78 58 81 60 85 60 L97 60 C101 60 104 58 104 54 L104 33 C104 27 99 22 95 22 Z"
+          fill="rgba(0,0,0,0.12)" transform="translate(1,3)"/>
+        {/* Spallacci */}
+        <path d="M45 22 C41 22 36 27 36 33 L36 54 C36 58 39 60 43 60 L55 60 C59 60 62 58 62 54 L62 33 C62 27 57 22 53 22 Z"
+          fill="url(#bs2)"/>
+        <path d="M87 22 C83 22 78 27 78 33 L78 54 C78 58 81 60 85 60 L97 60 C101 60 104 58 104 54 L104 33 C104 27 99 22 95 22 Z"
+          fill="url(#bs2)"/>
+        {/* Highlight spallacci */}
+        <path d="M46 24 C43 24 40 28 40 33 L40 46" stroke="rgba(255,255,255,0.18)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <path d="M88 24 C85 24 82 28 82 33 L82 46" stroke="rgba(255,255,255,0.18)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+        {/* Cuciture */}
+        <line x1="49" y1="30" x2="49" y2="52" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" strokeDasharray="2.5 2.5"/>
+        <line x1="91" y1="30" x2="91" y2="52" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" strokeDasharray="2.5 2.5"/>
 
-      {/* Corpo */}
-      <rect x="18" y="44" width="104" height="108" rx="18" fill="url(#bd)" filter="url(#bsh)"/>
-      <path d="M18 56 C18 44 28 44 36 44 L104 44 C112 44 122 44 122 56 L122 70 C90 76 50 76 18 70 Z" fill="rgba(255,255,255,0.08)" clipPath="url(#bc)"/>
+        {/* ── Manico ── */}
+        <path d="M57 26 C57 17 83 17 83 26" stroke="#8a6a58" strokeWidth="5.5" fill="none" strokeLinecap="round"/>
+        <path d="M57 26 C57 17 83 17 83 26" stroke="#c4a090" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+        <path d="M57 26 C57 17 83 17 83 26" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
 
-      {/* Tasche laterali */}
-      <rect x="8"   y="72" width="14" height="48" rx="7" fill="#7a5e4e"/>
-      <rect x="118" y="72" width="14" height="48" rx="7" fill="#7a5e4e"/>
-      <line x1="15"  y1="80" x2="15"  y2="112" stroke="rgba(0,0,0,0.12)" strokeWidth="1" strokeDasharray="2 3"/>
-      <line x1="125" y1="80" x2="125" y2="112" stroke="rgba(0,0,0,0.12)" strokeWidth="1" strokeDasharray="2 3"/>
+        {/* ── Corpo principale ── */}
+        {/* Ombra dx per effetto 3D — bordo destro scuro */}
+        <rect x="110" y="46" width="12" height="110" rx="0"
+          fill="rgba(0,0,0,0.12)"
+          style={{ mask: "none" }}/>
+        {/* Corpo */}
+        <rect x="16" y="46" width="106" height="110" rx="18"
+          fill="url(#bd2)" filter="url(#bsh2)"/>
+        {/* Bordo scuro destro per profondità */}
+        <path d="M122 60 L122 150 C122 158 116 156 112 156 L112 60 Z"
+          fill="rgba(0,0,0,0.09)" clipPath="url(#bc2)"/>
+        {/* Highlight diagonale — luce da sinistra-alto */}
+        <path d="M16 56 C16 46 26 46 34 46 L106 46 C114 46 122 46 122 56 L122 72 C94 80 46 80 16 72 Z"
+          fill="rgba(255,255,255,0.11)" clipPath="url(#bc2)"/>
+        {/* Shimmer animato */}
+        <rect x="16" y="46" width="106" height="110" rx="18" fill="url(#shimmer)" clipPath="url(#bc2)">
+          <animateTransform attributeName="transform" type="translate"
+            values="-106,0; 106,0; -106,0" dur="4s" repeatCount="indefinite"/>
+        </rect>
 
-      {/* Cinghia */}
-      <rect x="18" y="74" width="104" height="6" rx="3" fill="rgba(0,0,0,0.07)"/>
-      <rect x="62" y="71" width="16" height="12" rx="4" fill="#9a7060"/>
-      <rect x="65" y="74" width="10"  height="6" rx="2" fill="#8a6050"/>
+        {/* ── Tasche laterali ── */}
+        {/* Ombra sx tasche */}
+        <rect x="5" y="74" width="15" height="50" rx="7.5" fill="#5a4030" opacity="0.4" transform="translate(1,2)"/>
+        <rect x="120" y="74" width="15" height="50" rx="7.5" fill="#5a4030" opacity="0.4" transform="translate(1,2)"/>
+        {/* Tasche */}
+        <rect x="5"   y="74" width="15" height="50" rx="7.5" fill="#8a6858"/>
+        <rect x="120" y="74" width="15" height="50" rx="7.5" fill="#7a5848"/>
+        {/* Highlight tasche */}
+        <path d="M7 82 C7 76 10 74 13 74" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M122 82 C122 76 125 74 128 74" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        {/* Cuciture tasche */}
+        <line x1="12"  y1="83" x2="12"  y2="116" stroke="rgba(0,0,0,0.14)" strokeWidth="0.8" strokeDasharray="2 3"/>
+        <line x1="128" y1="83" x2="128" y2="116" stroke="rgba(0,0,0,0.14)" strokeWidth="0.8" strokeDasharray="2 3"/>
 
-      {/* Tasca frontale */}
-      <rect x="26" y="100" width="88" height="44" rx="12" fill="url(#bf)"/>
-      <path d="M36 100 Q70 94 104 100" stroke="rgba(0,0,0,0.14)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-      <path d="M36 100 Q70 94 104 100" stroke="rgba(255,255,255,0.16)" strokeWidth="1" fill="none" strokeLinecap="round" strokeDasharray="4 3"/>
-      <rect x="66" y="91" width="8" height="9" rx="3" fill="#e0cfc6"/>
-      <rect x="68" y="93" width="4" height="5" rx="1.5" fill="#c8b4a8"/>
-      <path d="M26 108 C26 100 32 100 38 100 L102 100 C108 100 114 100 114 108 L114 116 C90 120 50 120 26 116 Z" fill="rgba(255,255,255,0.06)" clipPath="url(#bc)"/>
+        {/* ── Cinghia di compressione ── */}
+        <rect x="16" y="76" width="106" height="7" rx="3.5" fill="rgba(0,0,0,0.10)"/>
+        <rect x="16" y="76" width="106" height="3.5" rx="2" fill="rgba(255,255,255,0.06)"/>
+        {/* Fibbia centrale */}
+        <rect x="60" y="72" width="20" height="15" rx="4" fill="#a07868"/>
+        <rect x="62" y="74" width="16" height="11" rx="3" fill="#8a6858"/>
+        <rect x="64" y="76" width="12" height="7" rx="2" fill="#7a5848"/>
+        <line x1="70" y1="76" x2="70" y2="83" stroke="rgba(0,0,0,0.2)" strokeWidth="1"/>
 
-      {/* Patch — montagna stilizzata */}
-      <rect x="54" y="56" width="32" height="20" rx="5" fill="rgba(90,170,221,0.11)" stroke="rgba(90,170,221,0.32)" strokeWidth="1.5"/>
-      <path d="M60 70 L70 58 L80 70 Z" fill="rgba(90,170,221,0.42)" stroke="rgba(90,170,221,0.55)" strokeWidth="0.8" strokeLinejoin="round"/>
-      <path d="M65 70 L70 63 L75 70" fill="rgba(255,255,255,0.28)" stroke="none"/>
+        {/* ── Tasca frontale ── */}
+        {/* Ombra tasca */}
+        <rect x="24" y="104" width="90" height="46" rx="13" fill="rgba(0,0,0,0.12)" transform="translate(1,2)"/>
+        {/* Tasca */}
+        <rect x="24" y="102" width="90" height="46" rx="13" fill="url(#bf2)"/>
+        {/* Highlight tasca */}
+        <path d="M24 112 C24 102 31 102 37 102 L103 102 C109 102 114 102 114 112 L114 122 C90 128 50 128 24 122 Z"
+          fill="rgba(255,255,255,0.08)" clipPath="url(#frontClip)"/>
+        {/* Bordo scuro dx tasca */}
+        <path d="M112 108 L112 144 C112 148 108 148 105 148 L105 108 Z"
+          fill="rgba(0,0,0,0.07)" clipPath="url(#frontClip)"/>
+        {/* Shimmer tasca — più veloce */}
+        <rect x="24" y="102" width="90" height="46" rx="13" fill="url(#shimmer)" clipPath="url(#frontClip)">
+          <animateTransform attributeName="transform" type="translate"
+            values="-90,0; 90,0; -90,0" dur="3s" begin="1s" repeatCount="indefinite"/>
+        </rect>
 
-      {/* Cucitura decorativa */}
-      <path d="M30 136 Q70 132 110 136" stroke="rgba(0,0,0,0.07)" strokeWidth="1" fill="none" strokeDasharray="3 4"/>
-    </svg>
+        {/* ── Zip tasca ── */}
+        <path d="M35 102 Q70 95 105 102" stroke="rgba(0,0,0,0.18)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <path d="M35 102 Q70 95 105 102" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none" strokeLinecap="round" strokeDasharray="4 3"/>
+        {/* Cursore zip con animazione idle */}
+        <g>
+          <animateTransform attributeName="transform" type="translate"
+            values="0,0; 2,0; 0,0; -1,0; 0,0" dur="6s" repeatCount="indefinite"/>
+          <rect x="65" y="92" width="10" height="12" rx="4" fill="#e8d8cc"/>
+          <rect x="67" y="94" width="6" height="8" rx="2.5" fill="#d0bcb0"/>
+          <circle cx="70" cy="98" r="1.5" fill="#b8a090"/>
+        </g>
+
+        {/* ── Patch montagna ── */}
+        <rect x="52" y="58" width="36" height="24" rx="6"
+          fill="rgba(90,170,221,0.12)" stroke="rgba(90,170,221,0.35)" strokeWidth="1.5"/>
+        {/* Montagna con neve */}
+        <path d="M58 78 L70 60 L82 78 Z"
+          fill="rgba(90,170,221,0.4)" stroke="rgba(90,170,221,0.6)" strokeWidth="0.8" strokeLinejoin="round"/>
+        <path d="M65 78 L70 66 L75 78" fill="rgba(255,255,255,0.35)" stroke="none"/>
+        {/* Picco neve */}
+        <path d="M67 66 L70 60 L73 66 C71 65 69 65 67 66 Z" fill="rgba(255,255,255,0.7)"/>
+        {/* Shimmer patch */}
+        <rect x="52" y="58" width="36" height="24" rx="6" fill="url(#shimmer)" clipPath="url(#bc2)">
+          <animateTransform attributeName="transform" type="translate"
+            values="-36,0; 36,0; -36,0" dur="5s" begin="2s" repeatCount="indefinite"/>
+        </rect>
+
+        {/* ── Cuciture decorative ── */}
+        <path d="M28 148 Q70 144 112 148" stroke="rgba(0,0,0,0.07)" strokeWidth="1" fill="none" strokeDasharray="3 4"/>
+        <path d="M20 90 L20 140" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" fill="none"/>
+        <path d="M120 90 L120 140" stroke="rgba(0,0,0,0.06)" strokeWidth="1.5" fill="none"/>
+
+        {/* ── Rivetti angoli ── */}
+        <circle cx="22" cy="50"  r="2.5" fill="#9a7a6a" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8"/>
+        <circle cx="118" cy="50" r="2.5" fill="#7a5a4a" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8"/>
+        <circle cx="22" cy="152" r="2.5" fill="#9a7a6a" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8"/>
+        <circle cx="118" cy="152" r="2.5" fill="#7a5a4a" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8"/>
+      </svg>
+    </motion.div>
   );
 }
 
