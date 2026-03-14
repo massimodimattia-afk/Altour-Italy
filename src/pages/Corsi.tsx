@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
-import CorsiQuiz from "../components/CorsiQuiz";
+import ZainoQuiz from "../components/Corsiquiz";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Sparkles, BookOpen, Mountain, Tag } from "lucide-react";
 
@@ -225,6 +225,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const coursesGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchCorsi() {
@@ -285,7 +286,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div ref={coursesGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {!error && corsi.length === 0 ? (
           <div className="col-span-3 py-24 text-center">
             <p className="text-stone-300 font-black uppercase tracking-widest text-sm">
@@ -373,7 +374,11 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
           </h2>
           <div className="h-1.5 w-10 bg-brand-sky rounded-full mt-3" />
         </div>
-        <CorsiQuiz onCourseClick={(_level) => onBookingClick("Corsi Altour", "info")} />
+        <ZainoQuiz onScrollToCourses={() => {
+            setTimeout(() => {
+              coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }, 80);
+          }} />
       </div>
 
       <ActivityDetailModal
