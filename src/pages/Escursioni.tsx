@@ -147,7 +147,7 @@ export default function EscursioniPage({
   // Filtri e Paginazione
   const [activeFilter, setActiveFilter] = useState<"tutte" | "giornata" | "tour">("tutte");
   // Fix #8: load 6 items at a time on desktop (fills 2×3 grid), 3 on mobile (3 scroll pages)
-  const ITEMS_PER_LOAD = typeof window !== "undefined" && window.innerWidth >= 1024 ? 6 : 3;
+  const ITEMS_PER_LOAD = typeof window !== "undefined" && window.innerWidth >= 1024 ? 6 : 2;
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
 
   // Quiz States
@@ -512,8 +512,8 @@ export default function EscursioniPage({
         </div>
       )}
 
-      {/* --- QUIZ BOX --- */}
-      <section ref={quizRef} className="max-w-4xl mx-auto mt-16 md:mt-32 relative px-2">
+      {/* --- QUIZ BOX — su mobile solo dopo click Inizia --- */}
+      <section ref={quizRef} className={`max-w-4xl mx-auto mt-16 md:mt-32 relative px-2 ${!quizStarted ? "hidden md:block" : ""}`}>
         <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
         <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
 

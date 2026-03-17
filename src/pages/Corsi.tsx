@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
@@ -75,7 +76,9 @@ function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
-// ── Pricing block ─────────────────────────────────────────────────────────────
+// ── Pricing block — toggle tre opzioni ────────────────────────────────────────
+type PricingOption = "bundle" | "teorico" | "pratico";
+
 function PricingBlock({
   corso,
   onBook,
@@ -92,6 +95,8 @@ function PricingBlock({
       ? sumParts - corso.prezzo_bundle
       : 0;
 
+  const [selected, setSelected] = useState<PricingOption>("bundle");
+
   if (!hasModular) {
     return (
       <div className="flex gap-3">
@@ -103,7 +108,7 @@ function PricingBlock({
         </button>
         <button
           onClick={() => onBook(corso.titolo, "prenota")}
-          className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white hover:bg-[#0284c7]"
+          className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white"
         >
           Richiedi Info
         </button>
@@ -111,87 +116,74 @@ function PricingBlock({
     );
   }
 
+  // Opzioni disponibili
+  const opts: { key: PricingOption; label: string; price: number | null | undefined; icon: React.ReactNode }[] = [
+    ...(corso.prezzo_bundle != null ? [{ key: "bundle" as PricingOption, label: "Tutto", price: corso.prezzo_bundle, icon: <Sparkles size={10} /> }] : []),
+    ...(corso.prezzo_teorico != null ? [{ key: "teorico" as PricingOption, label: "Teoria", price: corso.prezzo_teorico, icon: <BookOpen size={10} /> }] : []),
+    ...(corso.prezzo_pratico != null ? [{ key: "pratico" as PricingOption, label: "Pratica", price: corso.prezzo_pratico, icon: <Mountain size={10} /> }] : []),
+  ];
+
+  const currentOpt = opts.find(o => o.key === selected) ?? opts[0];
+  const bookLabel =
+    selected === "bundle" ? `${corso.titolo} — Pacchetto Completo`
+    : selected === "teorico" ? `${corso.titolo} — Modulo Teorico`
+    : `${corso.titolo} — Uscita Didattica`;
+
   return (
-    <div className="space-y-2.5">
-      {corso.prezzo_bundle != null && (
-        <div
-          className="rounded-2xl p-4 border"
-          style={{
-            background: "linear-gradient(135deg, #5aaadd0f 0%, #81ccb00f 100%)",
-            borderColor: "#5aaadd40",
-          }}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-1.5">
-              <Sparkles size={11} style={{ color: "#5aaadd" }} />
-              <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#5aaadd" }}>
-                Pacchetto completo
-              </span>
-            </div>
-            <span className="text-xl font-black text-[#44403c]">
-              €{corso.prezzo_bundle}
-            </span>
-          </div>
-          {saveAmount > 0 && (
-            <div className="mb-3">
-              <span
-                className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full text-white"
-                style={{ background: "#81ccb0" }}
-              >
-                Risparmia €{saveAmount}
-              </span>
-            </div>
-          )}
-          <button
-            onClick={() => onBook(`${corso.titolo} — Pacchetto Completo`, "prenota")}
-            className="w-full min-h-[44px] py-3 rounded-xl font-black uppercase text-[9px] tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-transform"
-            style={{
-              background: "linear-gradient(135deg, #5aaadd, #3d8fb8)",
-              boxShadow: "0 4px 14px rgba(90,170,221,0.3)",
-            }}
-          >
-            Acquista tutto <ArrowRight size={11} />
-          </button>
-        </div>
-      )}
-      <div className="grid grid-cols-2 gap-2">
-        {corso.prezzo_teorico != null && (
-          <div
-            className="rounded-xl p-3 border border-stone-100 bg-white"
-            style={{ boxShadow: "0 2px 8px rgba(159,130,112,0.08)" }}
-          >
-            <div className="flex items-center gap-1 mb-1.5">
-              <BookOpen size={10} className="text-stone-400" />
-              <span className="text-[8px] font-black uppercase tracking-widest text-stone-400">Teoria</span>
-            </div>
-            <p className="text-base font-black text-[#44403c] mb-2">€{corso.prezzo_teorico}</p>
+    <div className="space-y-3">
+      {/* Toggle */}
+      <div className="flex rounded-2xl p-1 gap-1" style={{ background: "rgba(0,0,0,0.04)" }}>
+        {opts.map(opt => {
+          const isActive = selected === opt.key;
+          const isBundle = opt.key === "bundle";
+          return (
             <button
-              onClick={() => onBook(`${corso.titolo} — Modulo Teorico`, "prenota")}
-              className="w-full min-h-[40px] py-2 rounded-lg font-black uppercase text-[8px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95"
+              key={opt.key}
+              onClick={() => setSelected(opt.key)}
+              className="relative flex-1 flex flex-col items-center justify-center py-2.5 px-1 rounded-xl transition-all duration-200 active:scale-95 focus:outline-none"
+              style={{
+                background: isActive ? "white" : "transparent",
+                boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.10)" : "none",
+              }}
             >
-              Scegli
+              {/* Badge risparmio solo sul bundle */}
+              {isBundle && saveAmount > 0 && (
+                <span
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full text-white whitespace-nowrap"
+                  style={{ background: "#81ccb0" }}
+                >
+                  −€{saveAmount}
+                </span>
+              )}
+              <span className="flex items-center gap-1 mb-0.5" style={{ color: isActive ? (isBundle ? "#5aaadd" : "#9f8270") : "#a8a29e" }}>
+                {opt.icon}
+                <span className="text-[8px] font-black uppercase tracking-widest">{opt.label}</span>
+              </span>
+              <span className="text-sm font-black" style={{ color: isActive ? "#44403c" : "#a8a29e" }}>
+                €{opt.price}
+              </span>
             </button>
-          </div>
-        )}
-        {corso.prezzo_pratico != null && (
-          <div
-            className="rounded-xl p-3 border border-stone-100 bg-white"
-            style={{ boxShadow: "0 2px 8px rgba(159,130,112,0.08)" }}
-          >
-            <div className="flex items-center gap-1 mb-1.5">
-              <Mountain size={10} className="text-stone-400" />
-              <span className="text-[8px] font-black uppercase tracking-widest text-stone-400">Pratica</span>
-            </div>
-            <p className="text-base font-black text-[#44403c] mb-2">€{corso.prezzo_pratico}</p>
-            <button
-              onClick={() => onBook(`${corso.titolo} — Uscita Didattica`, "prenota")}
-              className="w-full min-h-[40px] py-2 rounded-lg font-black uppercase text-[8px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95"
-            >
-              Scegli
-            </button>
-          </div>
-        )}
+          );
+        })}
       </div>
+
+      {/* CTA unico */}
+      <button
+        onClick={() => onBook(bookLabel, "prenota")}
+        className="w-full min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all"
+        style={{
+          background: selected === "bundle"
+            ? "linear-gradient(135deg, #5aaadd, #3d8fb8)"
+            : "linear-gradient(135deg, #9f8270, #7a6050)",
+          boxShadow: selected === "bundle"
+            ? "0 4px 14px rgba(90,170,221,0.3)"
+            : "0 4px 14px rgba(159,130,112,0.25)",
+        }}
+      >
+        {selected === "bundle" ? <Sparkles size={11} /> : selected === "teorico" ? <BookOpen size={11} /> : <Mountain size={11} />}
+        Richiedi Info — €{currentOpt.price}
+        <ArrowRight size={11} />
+      </button>
     </div>
   );
 }
@@ -225,6 +217,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const coursesGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -362,8 +355,10 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         )}
       </div>
 
-      {/* ── Quiz zaino ─────────────────────────────────────────────────── */}
-      <div className="mt-20 md:mt-32">
+      {/* ── Quiz zaino — inline desktop, drawer mobile ─────────────────── */}
+
+      {/* Desktop: inline come prima */}
+      <div className="hidden md:block mt-32">
         <div className="mb-10">
           <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">
             Non sai da dove iniziare?
@@ -375,10 +370,92 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
           <div className="h-1.5 w-10 bg-brand-sky rounded-full mt-3" />
         </div>
         <ZainoQuiz onScrollToCourses={() => {
-            setTimeout(() => {
-              coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }, 80);
-          }} />
+          setTimeout(() => {
+            coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 80);
+        }} />
+      </div>
+
+      {/* Mobile: bottone sticky + bottom drawer */}
+      <div className="md:hidden">
+        {/* Bottone fisso in basso */}
+        <AnimatePresence>
+          {!drawerOpen && (
+            <motion.button
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 80, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 340, damping: 28 }}
+              onClick={() => setDrawerOpen(true)}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-6 py-4 rounded-full text-white font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-transform"
+              style={{
+                background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
+                boxShadow: "0 8px 32px rgba(90,170,221,0.35)",
+              }}
+            >
+              <Sparkles size={14} />
+              Trova il tuo corso
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* Backdrop */}
+        <AnimatePresence>
+          {drawerOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              onClick={() => setDrawerOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Drawer */}
+        <AnimatePresence>
+          {drawerOpen && (
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] overflow-hidden"
+              style={{
+                background: "#f5f2ed",
+                maxHeight: "92dvh",
+                boxShadow: "0 -8px 40px rgba(0,0,0,0.18)",
+              }}
+            >
+              {/* Handle + header */}
+              <div className="flex flex-col items-center pt-3 pb-1 px-5">
+                <div className="w-10 h-1 rounded-full bg-stone-300 mb-3" />
+                <div className="flex items-center justify-between w-full mb-2">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky">
+                    Non sai da dove iniziare?
+                  </p>
+                  <button
+                    onClick={() => setDrawerOpen(false)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 active:scale-90 transition-transform"
+                    style={{ background: "rgba(0,0,0,0.06)" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              {/* Quiz scrollabile */}
+              <div className="overflow-y-auto px-4 pb-8" style={{ maxHeight: "calc(92dvh - 72px)" }}>
+                <ZainoQuiz onScrollToCourses={() => {
+                  setDrawerOpen(false);
+                  setTimeout(() => {
+                    coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 380);
+                }} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <ActivityDetailModal

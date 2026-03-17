@@ -103,6 +103,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   useEffect(() => {
     async function loadData() {
@@ -113,10 +114,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           .select("*")
           .eq("is_active", true)
           .order("data", { ascending: true });
-        const { data: crs } = await supabase.from("corsi").select("*").limit(2);
+        const { data: crs } = await supabase.from("corsi").select("*").order("posizione", { ascending: true });
         if (allHikes) {
           const shuffled = [...allHikes].sort(() => Math.random() - 0.5);
-          setFeaturedHikes(shuffled.slice(0, 3) as Escursione[]);
+          setFeaturedHikes(shuffled.slice(0, isMobile ? 2 : 3) as Escursione[]);
         }
         if (crs) setCourses(crs as Corso[]);
       } catch (e) {
@@ -236,13 +237,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {featuredHikes.map((esc) => (
+          {featuredHikes.map((esc, idx) => (
             <div
               key={esc.id}
-              // Fix #9: rimossi onMouseEnter/Leave (non funzionano su touch).
-              // Fix #10: aggiunto active:scale per feedback tattile.
-              // Shadow gestita solo via className con hover: di Tailwind.
-              className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5 active:scale-[0.99]"
+              className={`bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5 active:scale-[0.99]${idx >= 2 ? " hidden md:flex" : ""}`}
               style={{
                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
               }}
@@ -360,11 +358,11 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               onClick={() => onNavigate("corsi")}
               className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
             >
-              Vedi tutte le proposte <TrendingUp size={14} />
+              Vedi tutti i corsi <TrendingUp size={14} />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-            {courses.map((corso) => (
+            {courses.slice(0, isMobile ? 1 : 2).map((corso) => (
               <div key={corso.id} className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col group">
                 <div className="h-40 md:h-48 relative overflow-hidden">
                   <img

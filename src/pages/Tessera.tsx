@@ -908,7 +908,7 @@ export default function Tessera() {
 
   const { currentLevelLabel, totalPages, vouchersCount, progressInCycle, toNextVoucher } = stats!;
   // Last 3 escursioni in reverse chronological order
-  const ultimeEscursioni = [...(userTessera.escursioni_completate ?? [])].reverse().slice(0, 3);
+  
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] pb-20 text-stone-800">
@@ -990,47 +990,6 @@ export default function Tessera() {
         </div>
 
         {/* ── ULTIME ESCURSIONI ─────────────────────────────────────────────── */}
-        {ultimeEscursioni.length > 0 && (
-          <div className="mt-4 md:mt-5 bg-white rounded-[2rem] overflow-hidden border border-stone-100/80 shadow-sm">
-            <div className="px-5 pt-4 pb-3 flex items-center justify-between">
-              <p className="text-[10px] font-black uppercase tracking-widest text-stone-700">Ultime Escursioni</p>
-              <span className="text-[9px] font-black uppercase tracking-widest text-stone-300">
-                {userTessera.escursioni_completate?.length ?? 0} totali
-              </span>
-            </div>
-            <div className="h-px bg-stone-50 mx-5" />
-            <div className="px-4 py-3 divide-y divide-stone-50">
-              {ultimeEscursioni.map((e, i) => {
-                const filo = getFilosofiaName(e.colore);
-                const color = e.colore || DEFAULT_BOOT_COLOR;
-                return (
-                  <motion.div
-                    key={i}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedBoot(e)}
-                    className="flex items-center gap-3 py-3 cursor-pointer"
-                  >
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}18` }}>
-                      <IconaScarponeCustom size={20} color={color} isActive={true} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-black uppercase tracking-tight text-stone-800 truncate leading-tight">{e.titolo}</p>
-                      <p className="text-[9px] font-bold text-stone-300 uppercase tracking-widest mt-0.5">
-                        {new Date(e.data).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" })}
-                      </p>
-                    </div>
-                    {filo && (
-                      <span className="text-[9px] font-black uppercase tracking-wide px-2.5 py-1 rounded-full flex-shrink-0" style={{ backgroundColor: `${color}18`, color }}>
-                        {filo.split(" ")[0]}
-                      </span>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* ── RISCATTA ──────────────────────────────────────────────────────── */}
         <button
           onClick={() => { setRedeemStep("INPUT"); setShowRedeem(true); }}
@@ -1089,20 +1048,28 @@ export default function Tessera() {
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-stone-700 leading-none">Collezione Filosofie</p>
-                {/* #1 — subtitle was text-[8px] */}
                 <p className="text-[9px] font-bold text-stone-400 uppercase tracking-wide mt-0.5 leading-none">5 escursioni per categoria</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-12 rounded-full bg-stone-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-stone-700 transition-all duration-700" style={{ width: `${(earnedBadges.length / Object.keys(BADGE_NAMES).length) * 100}%` }} />
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 tabular-nums">
+            <div className="flex flex-col items-end gap-1 flex-shrink-0 min-w-[80px]">
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[8px] font-black uppercase tracking-widest text-stone-400 tabular-nums">
                   {earnedBadges.length}/{Object.keys(BADGE_NAMES).length}
                 </span>
+                <span className="text-[8px] font-black tabular-nums" style={{ color: "#81ccb0" }}>
+                  {Math.round((earnedBadges.length / Object.keys(BADGE_NAMES).length) * 100)}%
+                </span>
               </div>
-              <ChevronDown size={15} className={`text-stone-300 transition-transform duration-300 ${badgeOpen ? "rotate-180" : ""}`} />
+              <div className="h-2 w-full rounded-full bg-stone-100 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: "linear-gradient(90deg, #81ccb0, #5aaadd)" }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(earnedBadges.length / Object.keys(BADGE_NAMES).length) * 100}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                />
+              </div>
+              <ChevronDown size={13} className={`text-stone-300 transition-transform duration-300 ${badgeOpen ? "rotate-180" : ""} self-end`} />
             </div>
           </button>
 
@@ -1149,20 +1116,28 @@ export default function Tessera() {
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-stone-700 leading-none">Traguardi Speciali</p>
-                {/* #1 — subtitle was text-[8px] */}
                 <p className="text-[9px] font-bold text-stone-400 uppercase tracking-wide mt-0.5 leading-none">Sfide di esplorazione</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-12 rounded-full bg-stone-100 overflow-hidden">
-                  <div className="h-full rounded-full bg-stone-700 transition-all duration-700" style={{ width: `${(earnedAchievements.length / ACHIEVEMENT_BADGES.length) * 100}%` }} />
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 tabular-nums">
+            <div className="flex flex-col items-end gap-1 flex-shrink-0 min-w-[80px]">
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[8px] font-black uppercase tracking-widest text-stone-400 tabular-nums">
                   {earnedAchievements.length}/{ACHIEVEMENT_BADGES.length}
                 </span>
+                <span className="text-[8px] font-black tabular-nums" style={{ color: "#f4d98c" }}>
+                  {Math.round((earnedAchievements.length / ACHIEVEMENT_BADGES.length) * 100)}%
+                </span>
               </div>
-              <ChevronDown size={15} className={`text-stone-300 transition-transform duration-300 ${traguardiOpen ? "rotate-180" : ""}`} />
+              <div className="h-2 w-full rounded-full bg-stone-100 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: "linear-gradient(90deg, #f4d98c, #9f8270)" }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(earnedAchievements.length / ACHIEVEMENT_BADGES.length) * 100}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+                />
+              </div>
+              <ChevronDown size={13} className={`text-stone-300 transition-transform duration-300 ${traguardiOpen ? "rotate-180" : ""} self-end`} />
             </div>
           </button>
 
