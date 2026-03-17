@@ -52,7 +52,7 @@ const LEVEL_META: Record<Level, { label: string; color: string }> = {
 
 const ITEMS: Item[] = [
   { id: "map",       emoji: "🗺️", label: "Cartina",    level: "base",       zone: "left",   zoneRow: 1, modules: ["Lettura e interpretazione di una carta geografica"] },
-  { id: "bag",       emoji: "🎒", label: "Zaino",       level: "base",       zone: "left",   zoneRow: 2, modules: ["Abbigliamento", "Attrezzatura I"] },
+  { id: "boots",    emoji: "🥾", label: "Scarponi",    level: "base",       zone: "left",   zoneRow: 2, modules: ["Calzature"] },
   { id: "poles",     emoji: "🥢", label: "Bastoncini",  level: "base",       zone: "left",   zoneRow: 3, modules: ["Calzature"] },
   { id: "compass",   emoji: "🧭", label: "Bussola",     level: "intermedio", zone: "bottom",             modules: ["Orientamento strumentale", "Sentieristica"] },
   { id: "altimeter", emoji: "⏱️", label: "Altimetro",   level: "intermedio", zone: "bottom",             modules: ["Allenamento", "Alimentazione"] },
@@ -177,251 +177,121 @@ function LearningPath({ recommended, completed }: { recommended: Level; complete
 }
 
 // ─── Backpack SVG ──────────────────────────────────────────────────────────────
-function BackpackSVG({ glowing }: { glowing: boolean }) {
+function BackpackSVG({ glowing, itemCount }: { glowing: boolean; itemCount: number }) {
   return (
+    // Layer 1 — respiro idle
     <motion.div
-      className="w-full h-full"
-      animate={glowing
-        ? { rotate: [0, -1.2, 1.2, -0.8, 0.8, 0], scale: [1, 1.04, 1.04, 1.02, 1] }
-        : { rotate: [0, -0.8, 0.8, -0.5, 0], scale: 1 }
-      }
-      transition={glowing
-        ? { duration: 0.7, ease: "easeInOut" }
-        : { duration: 5, repeat: Infinity, ease: "easeInOut", repeatType: "reverse" as const }
-      }
-      style={{ transformOrigin: "50% 15%" }}
+      animate={{}}
+      transition={{}}
+      style={{ transformOrigin: "50% 10%", position: "relative" }}
     >
-      <svg viewBox="0 0 140 180" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" style={{ overflow: "visible" }}>
-        <defs>
-          {/* Glow esterno verde */}
-          <radialGradient id="bgl2" cx="50%" cy="55%" r="50%">
-            <stop offset="0%" stopColor="#81ccb0" stopOpacity="0.35"/>
-            <stop offset="70%" stopColor="#81ccb0" stopOpacity="0.1"/>
-            <stop offset="100%" stopColor="#81ccb0" stopOpacity="0"/>
-          </radialGradient>
-          {/* Corpo — gradiente diagonale per effetto 3D luce da sinistra-alto */}
-          <linearGradient id="bd2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%"   stopColor="#d4b09c"/>
-            <stop offset="40%"  stopColor="#b8907a"/>
-            <stop offset="100%" stopColor="#7a5a48"/>
-          </linearGradient>
-          {/* Faccia destra del corpo — più scura per profondità */}
-          <linearGradient id="bdside" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#9a7060"/>
-            <stop offset="100%" stopColor="#6e5040"/>
-          </linearGradient>
-          {/* Tasca frontale */}
-          <linearGradient id="bf2" x1="0.1" y1="0" x2="0.9" y2="1">
-            <stop offset="0%"   stopColor="#ddc0aa"/>
-            <stop offset="100%" stopColor="#a87862"/>
-          </linearGradient>
-          {/* Spallacci */}
-          <linearGradient id="bs2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%"  stopColor="#a88070"/>
-            <stop offset="100%" stopColor="#6a4e3c"/>
-          </linearGradient>
-          {/* Shimmer — riflesso luce che scorre */}
-          <linearGradient id="shimmer" x1="0" y1="0" x2="1" y2="0.3">
-            <stop offset="0%"   stopColor="rgba(255,255,255,0)"/>
-            <stop offset="45%"  stopColor="rgba(255,255,255,0.13)"/>
-            <stop offset="55%"  stopColor="rgba(255,255,255,0.22)"/>
-            <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
-          </linearGradient>
-          {/* Ombra proiettata sotto */}
-          <radialGradient id="groundShadow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%"   stopColor="rgba(0,0,0,0.28)"/>
-            <stop offset="100%" stopColor="rgba(0,0,0,0)"/>
-          </radialGradient>
-          {/* Filter ombra corpo */}
-          <filter id="bsh2" x="-12%" y="-6%" width="124%" height="124%">
-            <feDropShadow dx="2" dy="6" stdDeviation="8" floodColor="#00000030"/>
-            <feDropShadow dx="-1" dy="2" stdDeviation="3" floodColor="#00000015"/>
-          </filter>
-          {/* Filter glow verde quando pieno */}
-          <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="4" result="blur"/>
-            <feColorMatrix in="blur" type="matrix"
-              values="0.5 0 0 0 0  0 0.8 0 0 0.69  0 0 0.69 0 0.44  0 0 0 0.6 0" result="glow"/>
-            <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <clipPath id="bc2">
-            <rect x="16" y="46" width="106" height="110" rx="18"/>
-          </clipPath>
-          <clipPath id="frontClip">
-            <rect x="24" y="102" width="90" height="46" rx="13"/>
-          </clipPath>
-        </defs>
+      {/* Layer 2 — peso fisico */}
+      <motion.div
+        key={itemCount}
+        initial={false}
+        animate={itemCount > 0
+          ? { y: [0, 7, -2, 1, 0], scaleY: [1, 1.04, 0.97, 1.01, 1], scaleX: [1, 0.98, 1.02, 1, 1] }
+          : {}}
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        style={{ transformOrigin: "50% 100%", position: "relative" }}
+      >
+        {/* Layer 3 — bounce glow quando pieno */}
+        <motion.div
+          animate={glowing
+            ? { scale: [1, 1.03, 1.02, 1.04, 1], rotate: [0, -1, 1, -0.6, 0] }
+            : { scale: 1 }}
+          transition={glowing ? { duration: 0.65 } : {}}
+          style={{ position: "relative" }}
+        >
+          {/* Glow verde Altour */}
+          <AnimatePresence>
+            {glowing && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0.3, 0.65, 0.3] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.8, repeat: Infinity }}
+                style={{
+                  position: "absolute", inset: "-20%", borderRadius: "50%", zIndex: 0,
+                  background: "radial-gradient(ellipse at 50% 55%, rgba(129,204,176,0.6) 0%, rgba(129,204,176,0.2) 45%, transparent 70%)",
+                  filter: "blur(16px)", pointerEvents: "none",
+                }}
+              />
+            )}
+          </AnimatePresence>
 
-        {/* Ombra a terra */}
-        <ellipse cx="70" cy="174" rx="44" ry="7" fill="url(#groundShadow)">
-          {glowing
-            ? <animate attributeName="rx" values="44;50;44" dur="1.8s" repeatCount="indefinite"/>
-            : <animate attributeName="rx" values="44;40;44" dur="5s" repeatCount="indefinite"/>
-          }
-        </ellipse>
+          {/* Ombra a terra dinamica */}
+          <motion.div
+            animate={{
+              scaleX: glowing ? 1.2 : itemCount > 0 ? 1.05 : 0.85,
+              opacity: glowing ? 0.45 : 0.22,
+            }}
+            transition={{ duration: 0.4 }}
+            style={{
+              position: "absolute", bottom: "-4%", left: "15%", right: "15%",
+              height: "12px", borderRadius: "50%",
+              background: "radial-gradient(ellipse, rgba(60,100,60,0.4) 0%, transparent 70%)",
+              filter: "blur(4px)", zIndex: 0, pointerEvents: "none",
+            }}
+          />
 
-        {/* Glow ambientale quando pieno */}
-        {glowing && (
-          <ellipse cx="70" cy="100" rx="62" ry="68" fill="url(#bgl2)"
-            filter="url(#glowFilter)">
-            <animate attributeName="rx" values="58;66;58" dur="1.8s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" values="0.7;1;0.7" dur="1.8s" repeatCount="indefinite"/>
-          </ellipse>
-        )}
-
-        {/* ── Spallacci ── */}
-        {/* Ombra sotto spallacci per profondità */}
-        <path d="M45 22 C41 22 36 27 36 33 L36 54 C36 58 39 60 43 60 L55 60 C59 60 62 58 62 54 L62 33 C62 27 57 22 53 22 Z"
-          fill="rgba(0,0,0,0.12)" transform="translate(1,3)"/>
-        <path d="M87 22 C83 22 78 27 78 33 L78 54 C78 58 81 60 85 60 L97 60 C101 60 104 58 104 54 L104 33 C104 27 99 22 95 22 Z"
-          fill="rgba(0,0,0,0.12)" transform="translate(1,3)"/>
-        {/* Spallacci */}
-        <path d="M45 22 C41 22 36 27 36 33 L36 54 C36 58 39 60 43 60 L55 60 C59 60 62 58 62 54 L62 33 C62 27 57 22 53 22 Z"
-          fill="url(#bs2)"/>
-        <path d="M87 22 C83 22 78 27 78 33 L78 54 C78 58 81 60 85 60 L97 60 C101 60 104 58 104 54 L104 33 C104 27 99 22 95 22 Z"
-          fill="url(#bs2)"/>
-        {/* Highlight spallacci */}
-        <path d="M46 24 C43 24 40 28 40 33 L40 46" stroke="rgba(255,255,255,0.18)" strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <path d="M88 24 C85 24 82 28 82 33 L82 46" stroke="rgba(255,255,255,0.18)" strokeWidth="2" fill="none" strokeLinecap="round"/>
-        {/* Cuciture */}
-        <line x1="49" y1="30" x2="49" y2="52" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" strokeDasharray="2.5 2.5"/>
-        <line x1="91" y1="30" x2="91" y2="52" stroke="rgba(0,0,0,0.12)" strokeWidth="0.8" strokeDasharray="2.5 2.5"/>
-
-        {/* ── Manico ── */}
-        <path d="M57 26 C57 17 83 17 83 26" stroke="#8a6a58" strokeWidth="5.5" fill="none" strokeLinecap="round"/>
-        <path d="M57 26 C57 17 83 17 83 26" stroke="#c4a090" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
-        <path d="M57 26 C57 17 83 17 83 26" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-
-        {/* ── Corpo principale ── */}
-        {/* Ombra dx per effetto 3D — bordo destro scuro */}
-        <rect x="110" y="46" width="12" height="110" rx="0"
-          fill="rgba(0,0,0,0.12)"
-          style={{ mask: "none" }}/>
-        {/* Corpo */}
-        <rect x="16" y="46" width="106" height="110" rx="18"
-          fill="url(#bd2)" filter="url(#bsh2)"/>
-        {/* Bordo scuro destro per profondità */}
-        <path d="M122 60 L122 150 C122 158 116 156 112 156 L112 60 Z"
-          fill="rgba(0,0,0,0.09)" clipPath="url(#bc2)"/>
-        {/* Highlight diagonale — luce da sinistra-alto */}
-        <path d="M16 56 C16 46 26 46 34 46 L106 46 C114 46 122 46 122 56 L122 72 C94 80 46 80 16 72 Z"
-          fill="rgba(255,255,255,0.11)" clipPath="url(#bc2)"/>
-        {/* Shimmer animato */}
-        <rect x="16" y="46" width="106" height="110" rx="18" fill="url(#shimmer)" clipPath="url(#bc2)">
-          <animateTransform attributeName="transform" type="translate"
-            values="-106,0; 106,0; -106,0" dur="4s" repeatCount="indefinite"/>
-        </rect>
-
-        {/* ── Tasche laterali ── */}
-        {/* Ombra sx tasche */}
-        <rect x="5" y="74" width="15" height="50" rx="7.5" fill="#5a4030" opacity="0.4" transform="translate(1,2)"/>
-        <rect x="120" y="74" width="15" height="50" rx="7.5" fill="#5a4030" opacity="0.4" transform="translate(1,2)"/>
-        {/* Tasche */}
-        <rect x="5"   y="74" width="15" height="50" rx="7.5" fill="#8a6858"/>
-        <rect x="120" y="74" width="15" height="50" rx="7.5" fill="#7a5848"/>
-        {/* Highlight tasche */}
-        <path d="M7 82 C7 76 10 74 13 74" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        <path d="M122 82 C122 76 125 74 128 74" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        {/* Cuciture tasche */}
-        <line x1="12"  y1="83" x2="12"  y2="116" stroke="rgba(0,0,0,0.14)" strokeWidth="0.8" strokeDasharray="2 3"/>
-        <line x1="128" y1="83" x2="128" y2="116" stroke="rgba(0,0,0,0.14)" strokeWidth="0.8" strokeDasharray="2 3"/>
-
-        {/* ── Cinghia di compressione ── */}
-        <rect x="16" y="76" width="106" height="7" rx="3.5" fill="rgba(0,0,0,0.10)"/>
-        <rect x="16" y="76" width="106" height="3.5" rx="2" fill="rgba(255,255,255,0.06)"/>
-        {/* Fibbia centrale */}
-        <rect x="60" y="72" width="20" height="15" rx="4" fill="#a07868"/>
-        <rect x="62" y="74" width="16" height="11" rx="3" fill="#8a6858"/>
-        <rect x="64" y="76" width="12" height="7" rx="2" fill="#7a5848"/>
-        <line x1="70" y1="76" x2="70" y2="83" stroke="rgba(0,0,0,0.2)" strokeWidth="1"/>
-
-        {/* ── Tasca frontale ── */}
-        {/* Ombra tasca */}
-        <rect x="24" y="104" width="90" height="46" rx="13" fill="rgba(0,0,0,0.12)" transform="translate(1,2)"/>
-        {/* Tasca */}
-        <rect x="24" y="102" width="90" height="46" rx="13" fill="url(#bf2)"/>
-        {/* Highlight tasca */}
-        <path d="M24 112 C24 102 31 102 37 102 L103 102 C109 102 114 102 114 112 L114 122 C90 128 50 128 24 122 Z"
-          fill="rgba(255,255,255,0.08)" clipPath="url(#frontClip)"/>
-        {/* Bordo scuro dx tasca */}
-        <path d="M112 108 L112 144 C112 148 108 148 105 148 L105 108 Z"
-          fill="rgba(0,0,0,0.07)" clipPath="url(#frontClip)"/>
-        {/* Shimmer tasca — più veloce */}
-        <rect x="24" y="102" width="90" height="46" rx="13" fill="url(#shimmer)" clipPath="url(#frontClip)">
-          <animateTransform attributeName="transform" type="translate"
-            values="-90,0; 90,0; -90,0" dur="3s" begin="1s" repeatCount="indefinite"/>
-        </rect>
-
-        {/* ── Zip tasca ── */}
-        <path d="M35 102 Q70 95 105 102" stroke="rgba(0,0,0,0.18)" strokeWidth="2" fill="none" strokeLinecap="round"/>
-        <path d="M35 102 Q70 95 105 102" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none" strokeLinecap="round" strokeDasharray="4 3"/>
-        {/* Cursore zip con animazione idle */}
-        <g>
-          <animateTransform attributeName="transform" type="translate"
-            values="0,0; 2,0; 0,0; -1,0; 0,0" dur="6s" repeatCount="indefinite"/>
-          <rect x="65" y="92" width="10" height="12" rx="4" fill="#e8d8cc"/>
-          <rect x="67" y="94" width="6" height="8" rx="2.5" fill="#d0bcb0"/>
-          <circle cx="70" cy="98" r="1.5" fill="#b8a090"/>
-        </g>
-
-        {/* ── Patch montagna ── */}
-        <rect x="52" y="58" width="36" height="24" rx="6"
-          fill="rgba(90,170,221,0.12)" stroke="rgba(90,170,221,0.35)" strokeWidth="1.5"/>
-        {/* Montagna con neve */}
-        <path d="M58 78 L70 60 L82 78 Z"
-          fill="rgba(90,170,221,0.4)" stroke="rgba(90,170,221,0.6)" strokeWidth="0.8" strokeLinejoin="round"/>
-        <path d="M65 78 L70 66 L75 78" fill="rgba(255,255,255,0.35)" stroke="none"/>
-        {/* Picco neve */}
-        <path d="M67 66 L70 60 L73 66 C71 65 69 65 67 66 Z" fill="rgba(255,255,255,0.7)"/>
-        {/* Shimmer patch */}
-        <rect x="52" y="58" width="36" height="24" rx="6" fill="url(#shimmer)" clipPath="url(#bc2)">
-          <animateTransform attributeName="transform" type="translate"
-            values="-36,0; 36,0; -36,0" dur="5s" begin="2s" repeatCount="indefinite"/>
-        </rect>
-
-        {/* ── Cuciture decorative ── */}
-        <path d="M28 148 Q70 144 112 148" stroke="rgba(0,0,0,0.07)" strokeWidth="1" fill="none" strokeDasharray="3 4"/>
-        <path d="M20 90 L20 140" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" fill="none"/>
-        <path d="M120 90 L120 140" stroke="rgba(0,0,0,0.06)" strokeWidth="1.5" fill="none"/>
-
-        {/* ── Rivetti angoli ── */}
-        <circle cx="22" cy="50"  r="2.5" fill="#9a7a6a" stroke="rgba(255,255,255,0.2)" strokeWidth="0.8"/>
-        <circle cx="118" cy="50" r="2.5" fill="#7a5a4a" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8"/>
-        <circle cx="22" cy="152" r="2.5" fill="#9a7a6a" stroke="rgba(255,255,255,0.15)" strokeWidth="0.8"/>
-        <circle cx="118" cy="152" r="2.5" fill="#7a5a4a" stroke="rgba(0,0,0,0.1)" strokeWidth="0.8"/>
-      </svg>
+          {/* Immagine zaino PNG trasparente */}
+          <img
+            src="/zaino.png"
+            alt="Zaino da trekking"
+            draggable={false}
+            style={{
+              width: "100%",
+              height: "auto",
+              display: "block",
+              position: "relative",
+              zIndex: 1,
+              filter: glowing
+                ? `drop-shadow(0 0 14px rgba(129,204,176,0.8)) brightness(1.05)`
+                : `drop-shadow(0 ${4 + itemCount * 2}px ${8 + itemCount * 3}px rgba(60,100,60,0.22))`,
+              transition: "filter 0.4s ease",
+            }}
+          />
+        </motion.div>
+      </motion.div>
     </motion.div>
   );
 }
 
-// ─── Item Card ────────────────────────────────────────────────────────────────
+
 function ItemCard({ item, isIn, isDisabled, onToggle }: {
   item: Item; isIn: boolean; isDisabled: boolean; onToggle: () => void;
 }) {
   return (
     <motion.button
-      layoutId={`cq-${item.id}`}
       onClick={() => !isDisabled && onToggle()}
-      animate={{
-        opacity: isIn ? 0 : isDisabled ? 0.22 : 1,
-        scale:   isIn ? 0.3 : 1,
-        pointerEvents: isIn ? "none" : "auto",
-      }}
-      transition={{ duration: 0.22, ease: "easeInOut" }}
-      whileHover={!isIn && !isDisabled ? { scale: 1.08, y: -2 } : {}}
-      whileTap={!isIn && !isDisabled ? { scale: 0.91 } : {}}
-      className="flex flex-col items-center gap-1.5 focus:outline-none w-full"
+      animate={{ opacity: isDisabled ? 0.25 : 1, scale: isDisabled ? 0.92 : 1 }}
+      transition={{ duration: 0.18 }}
+      whileHover={!isDisabled ? { scale: 1.08, y: -2 } : {}}
+      whileTap={!isDisabled ? { scale: 0.91 } : {}}
+      className="flex flex-col items-center gap-1.5 focus:outline-none w-full relative"
     >
       <div
-        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl"
+        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl relative transition-all duration-200"
         style={{
-          background: "white",
-          boxShadow: "0 3px 12px rgba(159,130,112,0.13), 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1.5px rgba(159,130,112,0.16)",
+          background: isIn ? "rgba(129,204,176,0.15)" : "white",
+          boxShadow: isIn
+            ? "0 0 0 2.5px #81ccb0, 0 3px 12px rgba(129,204,176,0.25)"
+            : "0 3px 12px rgba(159,130,112,0.13), 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1.5px rgba(159,130,112,0.16)",
         }}
       >
         {item.emoji}
+        {/* Checkmark quando selezionato */}
+        {isIn && (
+          <motion.span
+            initial={{ scale: 0 }} animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center text-[9px] font-black"
+            style={{ background: "#81ccb0" }}
+          >✓</motion.span>
+        )}
       </div>
-      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-stone-400 text-center leading-tight w-full px-0.5">
+      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-center leading-tight w-full px-0.5"
+        style={{ color: isIn ? "#81ccb0" : undefined }}>
         {item.label}
       </span>
     </motion.button>
@@ -449,7 +319,6 @@ export default function ZainoQuiz({
   const discover = () => { setProfile(getProfile(selected)); setShowResult(true); };
   const reset    = () => { setSelected([]); setShowResult(false); setProfile(null); };
 
-  // Moduli unici degli oggetti selezionati (aggiornati live durante la selezione)
   const activeModules = [...new Set(
     selected.flatMap(id => ITEMS.find(i => i.id === id)?.modules ?? [])
   )];
@@ -470,14 +339,8 @@ export default function ZainoQuiz({
 
       <AnimatePresence mode="wait">
         {!showResult ? (
-
-          /* ── QUIZ ── */
-          <motion.div
-            key="quiz"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.3 }}
+          <motion.div key="quiz" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.3 }}
             className="p-5 sm:p-7 md:p-8"
           >
             <div className="mb-5">
@@ -494,9 +357,7 @@ export default function ZainoQuiz({
               </p>
             </div>
 
-            {/* Zona principale: sinistra | zaino | destra */}
             <div className="flex gap-2 sm:gap-4 items-center mb-3">
-
               <div className="flex flex-col gap-3 sm:gap-4 items-center w-14 sm:w-16 shrink-0">
                 {leftItems.map(item => (
                   <ItemCard key={item.id} item={item}
@@ -506,48 +367,47 @@ export default function ZainoQuiz({
                 ))}
               </div>
 
-              {/* Zaino */}
-              <div className="flex-1 flex flex-col items-center">
-                <div className="relative w-full max-w-[148px] sm:max-w-[168px] mx-auto" style={{ aspectRatio: "140/168" }}>
-                  <BackpackSVG glowing={isFull} />
-                  <div className="absolute bottom-[14%] left-1/2 -translate-x-1/2 flex gap-1.5">
-                    {[0, 1, 2].map(i => {
-                      const slotItem = ITEMS.find(it => it.id === selected[i]);
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="relative w-full mx-auto" style={{ maxWidth: "520px" }}>
+                  <BackpackSVG glowing={isFull} itemCount={selected.length} />
+                </div>
+                {/* Strip oggetti selezionati */}
+                <div className="flex gap-2 mt-3 min-h-[44px] items-center justify-center">
+                  <AnimatePresence>
+                    {selected.map((id) => {
+                      const item = ITEMS.find(i => i.id === id);
                       return (
-                        <motion.div key={i}
-                          animate={slotItem ? { scale: [1, 1.14, 1] } : {}}
-                          transition={{ duration: 0.26 }}
-                          className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center"
+                        <motion.button
+                          key={id}
+                          initial={{ opacity: 0, scale: 0.5, y: 8 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.5, y: 8 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 24 }}
+                          onClick={() => toggle(id)}
+                          className="relative w-11 h-11 rounded-2xl flex items-center justify-center text-2xl focus:outline-none active:scale-90"
                           style={{
-                            background: slotItem ? "rgba(255,255,255,0.93)" : "rgba(255,255,255,0.22)",
-                            border: slotItem ? "1.5px solid rgba(129,204,176,0.55)" : "1.5px dashed rgba(255,255,255,0.42)",
-                            boxShadow: slotItem ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
+                            background: "white",
+                            boxShadow: "0 2px 8px rgba(129,204,176,0.3), 0 0 0 2px #81ccb0",
                           }}
+                          title={`Rimuovi ${item?.label}`}
                         >
-                          {slotItem && (
-                            <motion.button
-                              layoutId={`cq-${slotItem.id}`}
-                              onClick={() => toggle(slotItem.id)}
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ type: "spring", stiffness: 480, damping: 24 }}
-                              className="text-base sm:text-lg leading-none focus:outline-none"
-                            >
-                              {slotItem.emoji}
-                            </motion.button>
-                          )}
-                        </motion.div>
+                          {item?.emoji}
+                          {/* X badge */}
+                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-stone-400 text-white flex items-center justify-center text-[9px] font-black leading-none">✕</span>
+                        </motion.button>
                       );
                     })}
-                  </div>
+                  </AnimatePresence>
+                  {selected.length === 0 && (
+                    <p className="text-[9px] font-medium text-stone-300 tracking-wide">Nessun oggetto selezionato</p>
+                  )}
                 </div>
                 <div className="flex gap-2 mt-2">
                   {[0, 1, 2].map(i => (
                     <motion.div key={i}
                       animate={{ backgroundColor: i < selected.length ? "#81ccb0" : "#d6d3d1", scale: i < selected.length ? 1.3 : 1 }}
                       transition={{ duration: 0.22 }}
-                      className="w-2 h-2 rounded-full"
-                    />
+                      className="w-2 h-2 rounded-full" />
                   ))}
                 </div>
                 <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mt-1">{selected.length}/3</p>
@@ -563,7 +423,6 @@ export default function ZainoQuiz({
               </div>
             </div>
 
-            {/* Riga intermedio */}
             <div className="flex justify-center gap-3 sm:gap-6 py-3 px-2 rounded-2xl mb-4"
               style={{ background: "rgba(90,170,221,0.06)", border: "1px dashed rgba(90,170,221,0.2)" }}>
               {bottomItems.map(item => (
@@ -574,14 +433,10 @@ export default function ZainoQuiz({
               ))}
             </div>
 
-            {/* Anteprima moduli attivi — feedback live */}
             <AnimatePresence>
               {activeModules.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.28 }}
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.28 }}
                   className="overflow-hidden mb-4"
                 >
                   <div className="rounded-2xl p-3.5"
@@ -591,10 +446,8 @@ export default function ZainoQuiz({
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {activeModules.map((mod, i) => (
-                        <motion.span key={mod}
-                          initial={{ opacity: 0, scale: 0.85 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: i * 0.04 }}
+                        <motion.span key={mod} initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
                           className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full"
                           style={{ background: "rgba(129,204,176,0.12)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.28)" }}
                         >
@@ -607,13 +460,10 @@ export default function ZainoQuiz({
               )}
             </AnimatePresence>
 
-            {/* CTA */}
             <AnimatePresence>
               {isFull && (
-                <motion.button
-                  initial={{ opacity: 0, y: 12, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8 }}
+                <motion.button initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8 }}
                   transition={{ type: "spring", stiffness: 280, damping: 22 }}
                   onClick={discover}
                   className="w-full min-h-[52px] py-4 rounded-2xl font-black uppercase text-xs tracking-widest text-white flex items-center justify-center gap-3 active:scale-95 transition-transform"
@@ -634,24 +484,15 @@ export default function ZainoQuiz({
           </motion.div>
 
         ) : (
-
-          /* ── RESULT ── */
-          <motion.div
-            key="result"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+          <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: "easeOut" }}
             className="p-5 sm:p-7 md:p-10"
           >
             <div className="h-px w-full rounded-full mb-5 opacity-40"
               style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }} />
 
-            {/* Profile hero */}
             <div className="text-center mb-5">
-              <motion.div
-                initial={{ scale: 0, rotate: -12 }}
-                animate={{ scale: 1, rotate: 0 }}
+              <motion.div initial={{ scale: 0, rotate: -12 }} animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.1 }}
                 className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-[1.5rem] flex items-center justify-center text-3xl sm:text-4xl mb-3"
                 style={{ background: "white", boxShadow: `0 8px 28px ${accentColor}33, 0 0 0 1.5px ${accentColor}40` }}
@@ -669,7 +510,6 @@ export default function ZainoQuiz({
               </p>
             </div>
 
-            {/* Items recap */}
             <div className="flex justify-center gap-3 mb-5">
               {selected.map((id, idx) => {
                 const item = ITEMS.find(i => i.id === id);
@@ -688,7 +528,6 @@ export default function ZainoQuiz({
               })}
             </div>
 
-            {/* Percorso formativo visivo */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }}
               className="rounded-2xl p-4 mb-4"
               style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}
@@ -702,7 +541,6 @@ export default function ZainoQuiz({
               />
             </motion.div>
 
-            {/* Descrizione + prerequisito */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.30 }}
               className="rounded-2xl p-4 mb-4"
               style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)", borderLeft: `3px solid ${accentColor}` }}
@@ -720,7 +558,6 @@ export default function ZainoQuiz({
               )}
             </motion.div>
 
-            {/* Prerequisiti come checklist — solo per intermedio e avanzato */}
             {profile && PREREQUISITES[profile.recommendedLevel].length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.38 }}
                 className="rounded-2xl p-4 mb-4"
@@ -731,12 +568,8 @@ export default function ZainoQuiz({
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-3">
                   {PREREQUISITES[profile.recommendedLevel].map((prereq, i) => (
-                    <motion.div key={prereq}
-                      initial={{ opacity: 0, x: -6 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.42 + i * 0.04 }}
-                      className="flex items-center gap-2"
-                    >
+                    <motion.div key={prereq} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.42 + i * 0.04 }} className="flex items-center gap-2">
                       <CheckCircle2 size={12} style={{ color: accentColor, flexShrink: 0 }} />
                       <span className="text-[10px] font-medium text-stone-500 leading-tight">{prereq}</span>
                     </motion.div>
@@ -745,7 +578,6 @@ export default function ZainoQuiz({
               </motion.div>
             )}
 
-            {/* Moduli attivati dagli oggetti */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.44 }}
               className="rounded-2xl p-4 mb-4"
               style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}
@@ -755,9 +587,7 @@ export default function ZainoQuiz({
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {activeModules.map((mod, i) => (
-                  <motion.span key={mod}
-                    initial={{ opacity: 0, scale: 0.88 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                  <motion.span key={mod} initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.48 + i * 0.04 }}
                     className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full"
                     style={{ background: `${accentColor}14`, color: accentColor, border: `1px solid ${accentColor}30` }}
@@ -768,7 +598,6 @@ export default function ZainoQuiz({
               </div>
             </motion.div>
 
-            {/* CTA — scroll alla griglia corsi */}
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
               className="rounded-2xl p-4 mb-4 flex items-center justify-between gap-3"
               style={{ background: `${accentColor}10`, border: `1.5px solid ${accentColor}28` }}
