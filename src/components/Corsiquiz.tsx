@@ -302,7 +302,7 @@ function ItemCard({ item, isIn, isDisabled, onToggle }: {
 export default function ZainoQuiz({
   onScrollToCourses,
 }: {
-  onScrollToCourses?: () => void;
+  onScrollToCourses?: (level?: string) => void;
 }) {
   const [selected, setSelected]     = useState<string[]>([]);
   const [showResult, setShowResult] = useState(false);
@@ -613,7 +613,7 @@ export default function ZainoQuiz({
               <button
                 className="min-h-[48px] px-5 py-3 rounded-xl font-black uppercase text-[9px] tracking-widest text-white flex items-center gap-2 active:scale-95 transition-transform shrink-0"
                 style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`, boxShadow: `0 4px 16px ${accentColor}40` }}
-                onClick={() => { onScrollToCourses?.(); }}
+                onClick={() => { onScrollToCourses?.(profile?.recommendedLevel); }}
               >
                 Vedi i corsi <ArrowRight size={11} />
               </button>

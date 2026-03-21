@@ -297,17 +297,21 @@ export default function EscursioniPage({
     setQuizStep("result");
   };
 
-  // Fix mobile #1: banner click goes straight to questions — no extra tap
+  // Banner click: mostra il box con la copertina (intro), senza saltare alle domande
   const startQuiz = () => {
     setQuizStarted(true);
     setCurrentQuestion(0);
     setAnswers([]);
-    setQuizStep("questions");
-    setTimeout(() => {
-      if (!quizRef.current) return;
-      const top = quizRef.current.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top, behavior: "smooth" });
-    }, 60);
+    setQuizStep("intro");
+    // Attende due frame: primo per rendere il box visibile (rimuove hidden),
+    // secondo per misurare la posizione reale dopo il layout
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!quizRef.current) return;
+        const top = quizRef.current.getBoundingClientRect().top + window.scrollY - 72;
+        window.scrollTo({ top, behavior: "smooth" });
+      });
+    });
   };
 
   // Fix mobile #2: key changes per-question so AnimatePresence fires on each answer
