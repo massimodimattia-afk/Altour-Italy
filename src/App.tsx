@@ -26,18 +26,30 @@ const VALID_PAGES: PageType[] = [
   'legal-privacy', 'legal-cookie', 'legal-termini',
 ];
 
+const INTRO_TS_KEY  = "altour-intro-ts";
+const LAST_PAGE_KEY = "altour-last-page";
+const DAY_MS        = 24 * 60 * 60 * 1000;
+
+function shouldShowIntro(): boolean {
+  const ts = localStorage.getItem(INTRO_TS_KEY);
+  if (!ts) return true;
+  return Date.now() - parseInt(ts, 10) > DAY_MS;
+}
+
 function App() {
-  const [showIntro, setShowIntro] = useState(() => {
-    return !sessionStorage.getItem('intro-seen');
+  const [showIntro, setShowIntro]     = useState(() => shouldShowIntro());
+  const [currentPage, setCurrentPage] = useState<PageType>(() => {
+    const saved = localStorage.getItem(LAST_PAGE_KEY) as PageType | null;
+    return saved && VALID_PAGES.includes(saved) ? saved : "home";
   });
-  const [currentPage, setCurrentPage] = useState<PageType>('home');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen]   = useState(false);
   const [selectedTitle, setSelectedTitle] = useState('');
-  const [bookingMode, setBookingMode] = useState<'info' | 'prenota'>('info');
+  const [bookingMode, setBookingMode]   = useState<'info' | 'prenota'>('info');
 
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: 0, behavior: prefersReduced ? 'instant' : 'smooth' });
+    localStorage.setItem(LAST_PAGE_KEY, currentPage);
   }, [currentPage]);
 
   const handleNavigate = (page: string) => {
@@ -58,30 +70,21 @@ function App() {
   };
 
   const handleIntroComplete = () => {
-    sessionStorage.setItem('intro-seen', '1');
+    localStorage.setItem(INTRO_TS_KEY, String(Date.now()));
     setShowIntro(false);
   };
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'home':
-        return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'escursioni':
-        return <Escursioni onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'corsi':
-        return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'tessera':
-        return <Tessera />;
-      case 'campi':
-        return <Campi onBookingClick={openBooking} />;
-      case 'legal-privacy':
-        return <Legal initialTab="privacy" />;
-      case 'legal-cookie':
-        return <Legal initialTab="cookie" />;
-      case 'legal-termini':
-        return <Legal initialTab="termini" />;
-      default:
-        return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'home':           return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'escursioni':     return <Escursioni onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'corsi':          return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'tessera':        return <Tessera />;
+      case 'campi':          return <Campi onBookingClick={openBooking} />;
+      case 'legal-privacy':  return <Legal initialTab="privacy" />;
+      case 'legal-cookie':   return <Legal initialTab="cookie" />;
+      case 'legal-termini':  return <Legal initialTab="termini" />;
+      default:               return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
     }
   };
 
@@ -94,10 +97,7 @@ function App() {
       <Header currentPage={currentPage} onNavigate={handleNavigate} />
 
       <main className="flex-grow relative">
-        <div
-          key={currentPage}
-          className="animate-[fadeIn_0.5s_ease-out]"
-        >
+        <div key={currentPage} className="animate-[fadeIn_0.5s_ease-out]">
           {renderPage()}
         </div>
       </main>
@@ -112,8 +112,6 @@ function App() {
       )}
 
       <Footer onNavigate={handleNavigate} />
-
-      {/* PWAPrompt va dentro il return, in fondo al div root */}
       <PWAPrompt />
     </div>
   );
