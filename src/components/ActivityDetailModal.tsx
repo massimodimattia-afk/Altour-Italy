@@ -243,13 +243,6 @@ export default function ActivityDetailModal({
                       {activity.lunghezza}
                     </div>
                   )}
-                  {activity.min_partecipanti != null && (
-                    <div className="flex items-center gap-1 flex-shrink-0 px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(129,204,176,0.12)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.28)" }}>
-                      <Users size={10} />
-                      Min. {activity.min_partecipanti}
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -319,6 +312,14 @@ export default function ActivityDetailModal({
                   <span className="text-2xl md:text-4xl font-black text-brand-stone leading-none">
                     {activity.prezzo != null ? `€${activity.prezzo}` : "—"}
                   </span>
+                  {activity.min_partecipanti != null && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Users size={9} style={{ color: "#81ccb0" }} />
+                      <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: "#81ccb0" }}>
+                        Min. {activity.min_partecipanti} persone
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => { onBook(activity.titolo, 'prenota'); onClose(); }}

@@ -426,7 +426,7 @@ export default function EscursioniPage({
         <AnimatePresence mode="popLayout">
 
 
-          {visibleEscursioni.map((esc) => (
+          {visibleEscursioni.map((esc, idx) => (
             <motion.div
               layout
               initial={{ opacity: 0, y: 20 }}
@@ -438,13 +438,13 @@ export default function EscursioniPage({
                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
               }}
             >
-              <div className="h-48 md:h-56 relative overflow-hidden">
+              <div className="aspect-[16/9] md:h-56 md:aspect-auto relative overflow-hidden">
                 {esc.immagine_url && (
                   <img
                     src={esc.immagine_url}
                     alt={esc.titolo}
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                    loading={idx < 2 ? "eager" : "lazy"}
                     decoding="async"
                   />
                 )}

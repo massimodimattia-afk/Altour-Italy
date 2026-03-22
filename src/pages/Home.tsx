@@ -28,7 +28,7 @@ interface HomeProps {
 
 const SkeletonCard = () => (
   <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col">
-    <div className="h-48 md:h-56 bg-stone-100 animate-pulse" />
+    <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-100 animate-pulse" />
     <div className="p-5 md:p-8 flex flex-col gap-3">
       <div className="h-2 w-24 bg-stone-100 rounded animate-pulse" />
       <div className="h-5 w-3/4 bg-stone-200 rounded animate-pulse" />
@@ -245,12 +245,12 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
               }}
             >
-              <div className="h-48 md:h-56 relative overflow-hidden">
+              <div className="aspect-[16/9] md:h-56 md:aspect-auto relative overflow-hidden">
                 <img
                   src={esc.immagine_url || IMG_FALLBACK}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   alt={esc.titolo}
-                  loading="lazy"
+                  loading={idx < 2 ? "eager" : "lazy"}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-sky/80 via-brand-sky to-brand-sky/30" />
@@ -364,12 +364,12 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {courses.slice(0, isMobile ? 1 : 2).map((corso) => (
               <div key={corso.id} className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden flex flex-col group">
-                <div className="h-40 md:h-48 relative overflow-hidden">
+                <div className="aspect-[16/9] md:h-48 md:aspect-auto relative overflow-hidden">
                   <img
                     src={corso.immagine_url || IMG_FALLBACK}
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover"
                     alt={corso.titolo}
-                    loading="lazy"
+                    loading="eager"
                     decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />

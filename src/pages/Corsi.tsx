@@ -191,7 +191,7 @@ function PricingBlock({
 
 const SkeletonCard = () => (
   <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col">
-    <div className="h-48 md:h-56 bg-stone-100 animate-pulse" />
+    <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-100 animate-pulse" />
     <div className="p-5 md:p-8 flex flex-col gap-4">
       <div className="h-6 w-3/4 bg-stone-200 rounded animate-pulse" />
       <div className="space-y-2">
@@ -394,13 +394,13 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                 )}
               </AnimatePresence>
               {/* Image */}
-              <div className="h-48 md:h-56 bg-stone-200 relative overflow-hidden">
+              <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-200 relative overflow-hidden">
                 {corso.immagine_url && (
                   <img
                     src={corso.immagine_url}
                     alt={corso.titolo}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    loading={corso.posizione === 1 ? "eager" : "lazy"}
                     decoding="async"
                     onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
                   />
