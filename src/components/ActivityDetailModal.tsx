@@ -11,6 +11,7 @@ import {
   Route,
   Mountain,
   MapPin,
+  Users,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
@@ -39,6 +40,7 @@ interface Activity {
   _tipo?: 'corso' | 'campo' | null;
   lat?: number | null;
   lng?: number | null;
+  min_partecipanti?: number | null;
 }
 
 interface ActivityDetailModalProps {
@@ -164,7 +166,7 @@ export default function ActivityDetailModal({
             </button>
 
             {/* ── Gallery ─────────────────────────────────────────────────── */}
-            <div className="md:w-1/2 relative bg-stone-100 h-52 md:h-auto md:min-h-full flex-shrink-0">
+            <div className="md:w-1/2 relative bg-stone-100 h-40 md:h-auto md:min-h-full flex-shrink-0">
               {images.length > 0 ? (
                 <>
                   <img
@@ -217,27 +219,35 @@ export default function ActivityDetailModal({
             <div className="md:w-1/2 flex flex-col overflow-hidden">
 
               {/* Header fisso */}
-              <div className="px-6 pt-6 pb-4 md:px-12 md:pt-10 md:pb-6 border-b border-stone-100 flex-shrink-0">
-                <h2 className="text-xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-tight mb-3 pr-8">
+              <div className="px-4 pt-4 pb-3 md:px-12 md:pt-10 md:pb-6 border-b border-stone-100 flex-shrink-0">
+                <h2 className="text-base md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-tight mb-2 pr-8">
                   {activity.titolo}
                 </h2>
-                <div className="flex flex-wrap gap-3 text-[10px] font-black uppercase tracking-widest text-stone-400">
+                {/* Pills — scroll orizzontale su mobile, wrap su desktop */}
+                <div className="flex md:flex-wrap gap-2 md:gap-3 text-[10px] font-black uppercase tracking-widest text-stone-400 overflow-x-auto pb-0.5 md:pb-0 scrollbar-none">
                   {activity.difficolta && (
-                    <div className="flex items-center gap-1.5">
-                      <Mountain size={12} className="text-brand-sky" />
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Mountain size={11} className="text-brand-sky" />
                       {activity.difficolta}
                     </div>
                   )}
                   {activity.durata && (
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={12} className="text-brand-sky" />
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Clock size={11} className="text-brand-sky" />
                       {activity.durata}
                     </div>
                   )}
                   {activity.lunghezza && (
-                    <div className="flex items-center gap-1.5">
-                      <LunghezzaIcon size={12} className="text-brand-sky" />
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <LunghezzaIcon size={11} className="text-brand-sky" />
                       {activity.lunghezza}
+                    </div>
+                  )}
+                  {activity.min_partecipanti != null && (
+                    <div className="flex items-center gap-1 flex-shrink-0 px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(129,204,176,0.12)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.28)" }}>
+                      <Users size={10} />
+                      Min. {activity.min_partecipanti}
                     </div>
                   )}
                 </div>
@@ -301,24 +311,21 @@ export default function ActivityDetailModal({
               </div>
 
               {/* Footer CTA fisso */}
-              <div className="flex-shrink-0 px-6 py-5 md:px-12 md:py-8 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                <div className="flex sm:flex-col items-baseline sm:items-start gap-2 sm:gap-0">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 hidden sm:block">
-                    Quota di partecipazione
+              <div className="flex-shrink-0 px-4 py-3 md:px-12 md:py-8 border-t border-stone-100 flex items-center gap-3">
+                <div className="flex flex-col items-start shrink-0">
+                  <span className="text-[8px] font-black uppercase tracking-widest text-stone-400 leading-none mb-0.5">
+                    Quota
                   </span>
-                  <span className="text-3xl md:text-4xl font-black text-brand-stone leading-none">
+                  <span className="text-2xl md:text-4xl font-black text-brand-stone leading-none">
                     {activity.prezzo != null ? `€${activity.prezzo}` : "—"}
-                  </span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-stone-400 sm:hidden">
-                    quota
                   </span>
                 </div>
                 <button
                   onClick={() => { onBook(activity.titolo, 'prenota'); onClose(); }}
-                  className="flex-grow bg-brand-sky hover:bg-brand-stone text-white px-6 py-4 md:py-5 rounded-2xl font-black uppercase text-xs md:text-sm tracking-widest transition-all duration-300 shadow-xl shadow-brand-sky/20 flex items-center justify-center gap-3 active:scale-95"
+                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white px-4 py-3.5 md:py-5 rounded-2xl font-black uppercase text-[10px] md:text-sm tracking-widest transition-all duration-300 shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
                 >
                   Prenota Ora
-                  <TrendingUp size={18} />
+                  <TrendingUp size={15} />
                 </button>
               </div>
 
