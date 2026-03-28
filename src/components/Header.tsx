@@ -10,11 +10,10 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navItems = [
-    { id: "home", label: "Home" },
-    { id: "escursioni", label: "Escursioni" },
-    { id: "corsi", label: "Accademia" },
-    { id: "campi", label: "Campi" },
-    { id: "tessera", label: "La Mia Tessera" },
+    { id: "home",     label: "Home" },
+    { id: "corsi",    label: "Accademia" },
+    { id: "attivita", label: "Attività Outdoor" },
+    { id: "tessera",  label: "La Mia Tessera" },
   ];
 
   const handleMobileClick = (id: string) => {
@@ -23,10 +22,10 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
   };
 
   return (
-    // CAMBIO COLORE: bg-[#2a2723] come il footer
     <header className="sticky top-0 z-50 bg-[#2a2723] backdrop-blur-md border-b border-white/5 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Logo e Nome */}
+
+        {/* Logo */}
         <div
           className="flex items-center gap-3 cursor-pointer group"
           onClick={() => onNavigate("home")}
@@ -41,28 +40,27 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
           </span>
         </div>
 
-        {/* Menu Desktop */}
+        {/* Nav Desktop */}
         <nav className="hidden md:flex items-center gap-8">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
               className={`text-[11px] uppercase font-bold tracking-[0.2em] transition-all relative py-2
-                ${
-                  currentPage === item.id
-                    ? "text-brand-sky"
-                    : "text-stone-300 hover:text-white"
+                ${currentPage === item.id
+                  ? "text-brand-sky"
+                  : "text-stone-300 hover:text-white"
                 }`}
             >
               {item.label}
               {currentPage === item.id && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-sky animate-in fade-in zoom-in duration-300"></span>
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-sky animate-in fade-in zoom-in duration-300" />
               )}
             </button>
           ))}
         </nav>
 
-        {/* Pulsante Hamburger */}
+        {/* Hamburger */}
         <button
           className="md:hidden text-white p-2 hover:bg-white/5 rounded-lg transition-colors"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -72,26 +70,18 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
         </button>
       </div>
 
-      {/* Menu Mobile Dropdown - UNIFORMATO AL COLORE FOOTER */}
-      <div
-        className={`
-        md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-[#2a2723]
-        ${isMenuOpen ? "max-h-[300px] opacity-100 border-t border-white/5" : "max-h-0 opacity-0"}
-      `}
-      >
+      {/* Menu Mobile */}
+      <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-[#2a2723]
+        ${isMenuOpen ? "max-h-[280px] opacity-100 border-t border-white/5" : "max-h-0 opacity-0"}`}>
         <div className="flex flex-col p-6 gap-5">
           {navItems.map((item, index) => (
             <button
               key={item.id}
               onClick={() => handleMobileClick(item.id)}
-              style={{
-                transitionDelay: isMenuOpen ? `${index * 75}ms` : "0ms",
-              }}
-              className={`
-                text-left text-sm uppercase font-black tracking-[0.2em] transition-all duration-500
+              style={{ transitionDelay: isMenuOpen ? `${index * 75}ms` : "0ms" }}
+              className={`text-left text-sm uppercase font-black tracking-[0.2em] transition-all duration-500
                 ${isMenuOpen ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"}
-                ${currentPage === item.id ? "text-brand-sky" : "text-stone-300"}
-              `}
+                ${currentPage === item.id ? "text-brand-sky" : "text-stone-300"}`}
             >
               {item.label}
             </button>

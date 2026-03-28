@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import Escursioni from './pages/Escursioni';
+import AttivitaPage from './pages/AttivitaPage';
 import Corsi from './pages/Corsi';
 import Tessera from './pages/Tessera';
-import Campi from './pages/CampiPage';
 import Legal from './pages/Legal';
 import BookingModal from './components/BookingModal';
 import AltourImmersiveIntro from './components/AltourImmersiveIntro';
@@ -13,22 +12,20 @@ import PWAPrompt from "./components/PWAprompt";
 
 type PageType =
   | 'home'
-  | 'escursioni'
   | 'corsi'
+  | 'attivita'
   | 'tessera'
-  | 'campi'
   | 'legal-privacy'
   | 'legal-cookie'
   | 'legal-termini';
 
 const VALID_PAGES: PageType[] = [
-  'home', 'escursioni', 'corsi', 'tessera', 'campi',
+  'home', 'corsi', 'attivita', 'tessera',
   'legal-privacy', 'legal-cookie', 'legal-termini',
 ];
 
-const INTRO_TS_KEY  = "altour-intro-ts";
-const LAST_PAGE_KEY = "altour-last-page";
-const DAY_MS        = 24 * 60 * 60 * 1000;
+const INTRO_TS_KEY = "altour-intro-ts";
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function shouldShowIntro(): boolean {
   const ts = localStorage.getItem(INTRO_TS_KEY);
@@ -37,11 +34,8 @@ function shouldShowIntro(): boolean {
 }
 
 function App() {
-  const [showIntro, setShowIntro]     = useState(() => shouldShowIntro());
-  const [currentPage, setCurrentPage] = useState<PageType>(() => {
-    const saved = localStorage.getItem(LAST_PAGE_KEY) as PageType | null;
-    return saved && VALID_PAGES.includes(saved) ? saved : "home";
-  });
+  const [showIntro, setShowIntro]       = useState(() => shouldShowIntro());
+  const [currentPage, setCurrentPage]   = useState<PageType>("home");
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const [selectedTitle, setSelectedTitle] = useState('');
   const [bookingMode, setBookingMode]   = useState<'info' | 'prenota'>('info');
@@ -49,12 +43,17 @@ function App() {
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: 0, behavior: prefersReduced ? 'instant' : 'smooth' });
-    localStorage.setItem(LAST_PAGE_KEY, currentPage);
   }, [currentPage]);
 
   const handleNavigate = (page: string) => {
-    if (VALID_PAGES.includes(page as PageType)) {
-      setCurrentPage(page as PageType);
+    // Redirect vecchi slug per retrocompatibilità
+    const redirect: Record<string, PageType> = {
+      escursioni: 'attivita',
+      campi: 'attivita',
+    };
+    const target = redirect[page] ?? page;
+    if (VALID_PAGES.includes(target as PageType)) {
+      setCurrentPage(target as PageType);
     }
   };
 
@@ -76,15 +75,14 @@ function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'home':           return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'escursioni':     return <Escursioni onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'corsi':          return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'tessera':        return <Tessera />;
-      case 'campi':          return <Campi onBookingClick={openBooking} />;
-      case 'legal-privacy':  return <Legal initialTab="privacy" />;
-      case 'legal-cookie':   return <Legal initialTab="cookie" />;
-      case 'legal-termini':  return <Legal initialTab="termini" />;
-      default:               return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'home':          return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'corsi':         return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'attivita':      return <AttivitaPage onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'tessera':       return <Tessera />;
+      case 'legal-privacy': return <Legal initialTab="privacy" />;
+      case 'legal-cookie':  return <Legal initialTab="cookie" />;
+      case 'legal-termini': return <Legal initialTab="termini" />;
+      default:              return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
     }
   };
 

@@ -179,7 +179,7 @@ export default function AltourImmersiveIntro({ onComplete }: AltourImmersiveIntr
                 transition={{ delay: 0.7, duration: 0.5 }}
                 className="mt-4 text-[11px] font-bold uppercase tracking-[0.3em] text-white/50"
               >
-                Esperienze nell&apos;outdoor
+                Formazione ed attività outdoor
               </motion.p>
             </motion.div>
           </div>

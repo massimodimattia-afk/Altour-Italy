@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, RotateCcw, ArrowRight, ChevronRight, CheckCircle2, Circle } from "lucide-react";
+import { Sparkles, RotateCcw, ArrowRight, ChevronRight, CheckCircle2 } from "lucide-react";
 
 // ─── Altour brand ─────────────────────────────────────────────────────────────
 type Level = "base" | "intermedio" | "avanzato";
@@ -24,8 +24,9 @@ interface Profile {
   accent: string;
   recommendedLevel: Level;
   prerequisiteMessage?: string;
-  // livelli già acquisiti (per la progress path)
   completedLevels: Level[];
+  aphorism: string;
+  aphorismAuthor: string;
 }
 
 // ─── Prerequisiti per livello ─────────────────────────────────────────────────
@@ -64,45 +65,59 @@ const ITEMS: Item[] = [
 
 const PROFILES: Record<string, Profile> = {
   base: {
-    id: "base", name: "Il Principiante Pronto", subtitle: "Curioso · Motivato · In partenza",
+    id: "base", name: "Il Principiante Pronto", subtitle: "Curiosità e inizio",
     description: "Hai l'equipaggiamento giusto per muovere i primi passi. La montagna ti aspetta — inizia dalle fondamenta.",
     icon: "🗺️", accent: "#81ccb0", recommendedLevel: "base", completedLevels: [],
+    aphorism: "Un viaggio di mille miglia inizia con un solo passo.",
+    aphorismAuthor: "Lao Tzu",
   },
   intermedio: {
-    id: "intermedio", name: "L'Escursionista Formato", subtitle: "Consapevole · Autonomo · Preciso",
+    id: "intermedio", name: "L'Escursionista Formato", subtitle: "Consapevolezza e tecnica",
     description: "Hai le basi solide e stai sviluppando tecnica. È il momento di alzare l'asticella con gli strumenti giusti.",
     icon: "🧭", accent: "#5aaadd", recommendedLevel: "intermedio", completedLevels: ["base"],
     prerequisiteMessage: "Per affrontare il corso intermedio è utile aver già acquisito le conoscenze base.",
+    aphorism: "Alcune strade portano più ad un destino che a una destinazione.",
+    aphorismAuthor: "Jules Verne",
   },
   avanzato: {
-    id: "avanzato", name: "L'Alpinista Compiuto", subtitle: "Esperto · Tecnico · Pronto a guidare",
+    id: "avanzato", name: "L'Alpinista Compiuto", subtitle: "Esperienza e leadership",
     description: "Il tuo kit parla da solo. Sei pronto per le condizioni più impegnative e la formazione avanzata.",
     icon: "🧥", accent: "#9f8270", recommendedLevel: "avanzato", completedLevels: ["base", "intermedio"],
     prerequisiteMessage: "Il corso avanzato richiede le conoscenze dei livelli base e intermedio.",
+    aphorism: "Per me la montagna ha una grande nobiltà di fondo, un luogo che nobilita chi fa la fatica di affrontarlo. È una scuola di valori un po' vecchi ma necessari, come la capacità di far fatica, l'ostinazione.",
+    aphorismAuthor: "Paolo Cognetti",
   },
   gap: {
-    id: "gap", name: "L'Esploratore con il Gap", subtitle: "Ambizioso · Coraggioso · Da consolidare",
+    id: "gap", name: "L'Esploratore con il Gap", subtitle: "Ambizione da consolidare",
     description: "Hai entusiasmo e visione avanzata, ma mancano gli strumenti del livello intermedio. Costruisci prima quelle fondamenta.",
     icon: "🧭", accent: "#f4d98c", recommendedLevel: "intermedio", completedLevels: ["base"],
     prerequisiteMessage: "Prima di passare al livello avanzato, consolida il percorso intermedio.",
+    aphorism: "Ci sarà più vita da sperimentare domani. E il giorno dopo, e il giorno dopo ancora. Respira, riposa, pratica l'idea di abbastanza. Pratica l'idea di vivere bene e solo un po' più lentamente.",
+    aphorismAuthor: "Shauna Niequist",
   },
   transizione_base: {
-    id: "transizione_base", name: "Il Trekker in Crescita", subtitle: "In transizione · Determinato · Curioso",
+    id: "transizione_base", name: "Il Trekker in Crescita", subtitle: "Evoluzione e scoperta",
     description: "Stai costruendo un kit serio. Hai le basi e inizi a guardare oltre — è il momento giusto per il salto.",
     icon: "🧭", accent: "#5aaadd", recommendedLevel: "intermedio", completedLevels: ["base"],
     prerequisiteMessage: "Hai già le conoscenze base — sei pronto per il livello intermedio.",
+    aphorism: "Non ci sono altri giorni che questi nostri giorni. Che mi sia dato di non sprecarli, di non sprecare nulla di ciò che sono e di ciò che potrei essere.",
+    aphorismAuthor: "Italo Calvino",
   },
   transizione_avanzato: {
-    id: "transizione_avanzato", name: "L'Alpinista in Divenire", subtitle: "Tecnico · Ambizioso · Quasi pronto",
+    id: "transizione_avanzato", name: "L'Alpinista in Divenire", subtitle: "Tecnica e audacia",
     description: "Il tuo kit mescola tecnica e audacia. Hai quasi tutto ciò che serve — manca solo il passo formale.",
     icon: "🧥", accent: "#9f8270", recommendedLevel: "avanzato", completedLevels: ["base", "intermedio"],
     prerequisiteMessage: "Hai già le conoscenze base e intermedio — sei pronto per affrontare il livello avanzato.",
+    aphorism: "Non è perché le cose sono difficili che non osiamo, è perché non osiamo che sono difficili.",
+    aphorismAuthor: "Lucio Anneo Seneca",
   },
   completo: {
-    id: "completo", name: "L'Escursionista Completo", subtitle: "Versatile · Equilibrato · Pronto a tutto",
+    id: "completo", name: "L'Escursionista Completo", subtitle: "Versatilità ed equilibrio",
     description: "Il tuo zaino racconta di chi non si ferma a un solo livello. Hai la visione d'insieme del percorso.",
     icon: "⛰️", accent: "#5aaadd", recommendedLevel: "avanzato", completedLevels: ["base", "intermedio"],
     prerequisiteMessage: "Hai già le conoscenze base e intermedio — sei pronto per affrontare il corso avanzato completo.",
+    aphorism: "È stato bello, pensare, progettare, costruire, sognare, andare, perdersi, tornare. Quanti verbi ha il mondo. Fra le miriadi di pianeti e di stelle essere proprio qui nati e vissuti dentro questo cielo qui, con i piedi poggiati su un punto della terra.",
+    aphorismAuthor: "Mariangela Gualtieri",
   },
 };
 
@@ -123,60 +138,6 @@ function getProfile(ids: string[]): Profile {
 }
 
 // ─── Progress Path component ──────────────────────────────────────────────────
-function LearningPath({ recommended, completed }: { recommended: Level; completed: Level[] }) {
-  const levels: Level[] = ["base", "intermedio", "avanzato"];
-  return (
-    <div className="flex items-center gap-0 w-full">
-      {levels.map((lv, idx) => {
-        const isDone  = completed.includes(lv);
-        const isRec   = lv === recommended;
-        const meta    = LEVEL_META[lv];
-        return (
-          <div key={lv} className="flex items-center flex-1 min-w-0">
-            <div className="flex flex-col items-center flex-1 min-w-0">
-              <motion.div
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.1 + idx * 0.1, type: "spring", stiffness: 300, damping: 22 }}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-sm mb-1.5"
-                style={{
-                  background: isDone ? `${meta.color}20` : isRec ? meta.color : "rgba(0,0,0,0.04)",
-                  border: `2px solid ${isDone || isRec ? meta.color : "#d6d3d1"}`,
-                  boxShadow: isRec ? `0 0 0 3px ${meta.color}25` : "none",
-                }}
-              >
-                {isDone
-                  ? <CheckCircle2 size={14} style={{ color: meta.color }} />
-                  : isRec
-                    ? <span className="text-white text-[10px] font-black">→</span>
-                    : <Circle size={12} className="text-stone-300" />
-                }
-              </motion.div>
-              <span
-                className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-center leading-tight"
-                style={{ color: isDone || isRec ? meta.color : "#a8a29e" }}
-              >
-                {meta.label}
-              </span>
-              {isRec && (
-                <span className="text-[7px] font-black uppercase tracking-widest mt-0.5"
-                  style={{ color: meta.color }}>
-                  consigliato
-                </span>
-              )}
-            </div>
-            {idx < 2 && (
-              <div className="w-6 sm:w-8 h-0.5 mx-0.5 shrink-0 rounded-full"
-                style={{ background: completed.includes(levels[idx + 1]) || levels[idx + 1] === recommended ? LEVEL_META[levels[idx + 1]].color + "50" : "#e7e5e4" }} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Backpack SVG ──────────────────────────────────────────────────────────────
 function BackpackSVG({ glowing, itemCount }: { glowing: boolean; itemCount: number }) {
   return (
     // Layer 1 — respiro idle
@@ -488,39 +449,18 @@ export default function ZainoQuiz({
             exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: "easeOut" }}
             className="p-5 sm:p-7 md:p-10"
           >
-            <div className="h-px w-full rounded-full mb-5 opacity-40"
-              style={{ background: `linear-gradient(90deg, ${accentColor}, transparent)` }} />
-
-            <div className="text-center mb-5">
-              <motion.div initial={{ scale: 0, rotate: -12 }} animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.1 }}
-                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-[1.5rem] flex items-center justify-center text-3xl sm:text-4xl mb-3"
-                style={{ background: "white", boxShadow: `0 8px 28px ${accentColor}33, 0 0 0 1.5px ${accentColor}40` }}
-              >
-                {profile?.icon}
-              </motion.div>
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1.5" style={{ color: accentColor }}>
-                Il tuo profilo formativo
-              </p>
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-[#44403c] uppercase tracking-tighter leading-tight mb-1">
-                {profile?.name}
-              </h3>
-              <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">
-                {profile?.subtitle}
-              </p>
-            </div>
-
+            {/* Oggetti scelti */}
             <div className="flex justify-center gap-3 mb-5">
               {selected.map((id, idx) => {
                 const item = ITEMS.find(i => i.id === id);
                 return (
                   <motion.div key={id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.12 + idx * 0.07 }} className="flex flex-col items-center gap-1">
-                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-xl sm:text-2xl"
-                      style={{ background: "white", boxShadow: "0 2px 10px rgba(159,130,112,0.12), 0 0 0 1.5px rgba(159,130,112,0.15)" }}>
+                    transition={{ delay: 0.06 + idx * 0.07 }} className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl"
+                      style={{ background: "white", boxShadow: "0 2px 10px rgba(159,130,112,0.12), 0 0 0 2px rgba(129,204,176,0.4)" }}>
                       {item?.emoji}
                     </div>
-                    <span className="text-[8px] font-black uppercase tracking-wider text-stone-400 text-center leading-tight max-w-[48px]">
+                    <span className="text-[8px] font-black uppercase tracking-wider text-stone-400 text-center leading-tight max-w-[52px]">
                       {item?.label}
                     </span>
                   </motion.div>
@@ -528,38 +468,57 @@ export default function ZainoQuiz({
               })}
             </div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.22 }}
+            {/* Aforisma */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+              className="rounded-2xl p-4 mb-4 text-center"
+              style={{ background: `${accentColor}0c`, border: `1px solid ${accentColor}22` }}
+            >
+              <p className="text-sm sm:text-base leading-relaxed italic font-serif text-stone-600 mb-2">
+                &#8220;{profile?.aphorism}&#8221;
+              </p>
+              <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: accentColor }}>
+                — {profile?.aphorismAuthor}
+              </p>
+            </motion.div>
+
+            {/* Moduli attivati con badge corso */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
               className="rounded-2xl p-4 mb-4"
               style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}
             >
               <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-3">
-                Il tuo percorso formativo
+                Argomenti che hai attivato
               </p>
-              <LearningPath
-                recommended={profile?.recommendedLevel ?? "base"}
-                completed={profile?.completedLevels ?? []}
-              />
+              <div className="flex flex-col gap-2">
+                {activeModules.map((mod, i) => {
+                  const ownerItem = ITEMS.find(it => it.modules.includes(mod));
+                  const modLevel  = ownerItem?.level ?? "base";
+                  const levelMeta = LEVEL_META[modLevel];
+                  return (
+                    <motion.div key={mod}
+                      initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.33 + i * 0.05 }}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: levelMeta.color }} />
+                        <span className="text-[11px] font-bold text-stone-600 leading-tight">{mod}</span>
+                      </div>
+                      <span
+                        className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex-shrink-0"
+                        style={{ background: `${levelMeta.color}18`, color: levelMeta.color, border: `1px solid ${levelMeta.color}30` }}
+                      >
+                        {levelMeta.label}
+                      </span>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.30 }}
-              className="rounded-2xl p-4 mb-4"
-              style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)", borderLeft: `3px solid ${accentColor}` }}
-            >
-              <p className="text-stone-500 text-sm leading-relaxed italic font-serif">
-                "{profile?.description}"
-              </p>
-              {profile?.prerequisiteMessage && (
-                <div className="flex items-start gap-2 mt-3 pt-3 border-t border-stone-100">
-                  <ChevronRight size={12} className="shrink-0 mt-0.5" style={{ color: accentColor }} />
-                  <p className="text-[10px] font-black uppercase tracking-widest leading-snug" style={{ color: accentColor }}>
-                    {profile.prerequisiteMessage}
-                  </p>
-                </div>
-              )}
-            </motion.div>
-
+            {/* Preparazione consigliata */}
             {profile && PREREQUISITES[profile.recommendedLevel].length > 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.38 }}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.44 }}
                 className="rounded-2xl p-4 mb-4"
                 style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}
               >
@@ -569,45 +528,34 @@ export default function ZainoQuiz({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-1.5 gap-x-3">
                   {PREREQUISITES[profile.recommendedLevel].map((prereq, i) => (
                     <motion.div key={prereq} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.42 + i * 0.04 }} className="flex items-center gap-2">
-                      <CheckCircle2 size={12} style={{ color: accentColor, flexShrink: 0 }} />
+                      transition={{ delay: 0.48 + i * 0.03 }} className="flex items-center gap-2">
+                      <CheckCircle2 size={11} style={{ color: accentColor, flexShrink: 0 }} />
                       <span className="text-[10px] font-medium text-stone-500 leading-tight">{prereq}</span>
                     </motion.div>
                   ))}
                 </div>
+                {profile.prerequisiteMessage && (
+                  <div className="flex items-start gap-2 mt-3 pt-3 border-t border-stone-100">
+                    <ChevronRight size={11} className="shrink-0 mt-0.5" style={{ color: accentColor }} />
+                    <p className="text-[9px] font-medium leading-snug text-stone-400 italic">
+                      {profile.prerequisiteMessage}
+                    </p>
+                  </div>
+                )}
               </motion.div>
             )}
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.44 }}
-              className="rounded-2xl p-4 mb-4"
-              style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}
-            >
-              <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-2.5">
-                Moduli collegati agli oggetti scelti
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {activeModules.map((mod, i) => (
-                  <motion.span key={mod} initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.48 + i * 0.04 }}
-                    className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full"
-                    style={{ background: `${accentColor}14`, color: accentColor, border: `1px solid ${accentColor}30` }}
-                  >
-                    {mod}
-                  </motion.span>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
+            {/* CTA */}
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.52 }}
               className="rounded-2xl p-4 mb-4 flex items-center justify-between gap-3"
               style={{ background: `${accentColor}10`, border: `1.5px solid ${accentColor}28` }}
             >
               <div className="min-w-0">
                 <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-0.5">
-                  Livello consigliato
+                  Pronti a partire?
                 </p>
-                <p className="text-xl font-black uppercase tracking-tighter" style={{ color: accentColor }}>
-                  {profile ? LEVEL_META[profile.recommendedLevel].label : ""}
+                <p className="text-sm font-black text-[#44403c] leading-tight">
+                  Scopri dove studiare questi argomenti
                 </p>
               </div>
               <button
@@ -615,7 +563,7 @@ export default function ZainoQuiz({
                 style={{ background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`, boxShadow: `0 4px 16px ${accentColor}40` }}
                 onClick={() => { onScrollToCourses?.(profile?.recommendedLevel); }}
               >
-                Vedi i corsi <ArrowRight size={11} />
+                I corsi <ArrowRight size={11} />
               </button>
             </motion.div>
 
@@ -627,6 +575,7 @@ export default function ZainoQuiz({
             </button>
           </motion.div>
         )}
+        )
       </AnimatePresence>
     </div>
   );
