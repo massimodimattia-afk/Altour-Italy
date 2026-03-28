@@ -284,140 +284,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* ── 3. ATTIVITÀ OUTDOOR ─────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 py-12 md:py-20">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-4 px-2">
-          <div className="max-w-md">
-            <h2 className="text-2xl md:text-4xl font-black text-stone-900 uppercase tracking-tight leading-tight">
-              Scegli la meta, <br className="hidden md:block" /> noi pensiamo al resto.
-            </h2>
-            <div className="h-1 w-12 bg-brand-sky mt-3" />
-          </div>
-          <button
-            onClick={() => onNavigate("attivita")}
-            className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
-          >
-            Vedi tutte <TrendingUp size={14} />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {featuredActivities.map((activity, idx) => {
-            const isEsc = (activity as any)._tipo === "escursione";
-            const esc   = isEsc ? activity as Escursione : null;
-            return (
-            <div
-              key={activity.id}
-              className={`bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5 active:scale-[0.99]${idx >= 2 ? " hidden md:flex" : ""}`}
-              style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)" }}
-            >
-              <div className="aspect-[16/9] md:h-56 md:aspect-auto relative overflow-hidden">
-                <img
-                  src={activity.immagine_url || IMG_FALLBACK}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  alt={activity.titolo}
-                  loading={idx < 2 ? "eager" : "lazy"}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-sky/80 via-brand-sky to-brand-sky/30" />
-                {/* Badge tipo */}
-                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm"
-                  style={{ background: isEsc ? "rgba(90,170,221,0.85)" : "rgba(159,130,112,0.85)", color: "white" }}>
-                  {isEsc ? "Escursione" : "Campo"}
-                </div>
-                {esc && <FilosofiaBadge value={esc.filosofia} />}
-              </div>
-              <div className="p-5 md:p-8 flex flex-col flex-grow">
-                <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
-                  <Calendar size={12} className="mr-1.5" />
-                  {esc?.data
-                    ? new Date(esc.data).toLocaleDateString("it-IT", { day: "2-digit", month: "long" })
-                    : (activity as any).durata ?? "Su richiesta"}
-                </p>
-                <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
-                  {activity.titolo}
-                </h3>
-                <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 flex-grow leading-relaxed font-medium">
-                  {activity.descrizione}
-                </p>
-                <div className="flex gap-2 md:gap-3">
-                  <button
-                    onClick={() => openDetails(activity)}
-                    className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
-                  >
-                    Dettagli
-                  </button>
-                  <button
-                    onClick={() => onBookingClick(activity.titolo)}
-                    className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7] active:scale-95"
-                  >
-                    Richiedi Info
-                  </button>
-                </div>
-              </div>
-            </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── 4. TAILOR-MADE ──────────────────────────────────────────────────── */}
-      <section className="max-w-4xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative"
-        >
-          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
-          <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
-            <div className="flex flex-col md:flex-row min-h-[280px]">
-              <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
-                <img
-                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Box_avventura.webp"
-                  alt="Escursione personalizzata Altour nelle Dolomiti"
-                  className="absolute inset-0 w-full h-full object-cover object-[center_30%]"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
-                <div className="absolute bottom-6 left-8 text-white z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp size={14} className="text-brand-sky" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Progetti Personalizzati</span>
-                  </div>
-                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
-                    Su misura, <br /> per te.
-                  </h3>
-                </div>
-              </div>
-              <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-3 block">
-                  Progetti Personalizzati
-                </span>
-                <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
-                  Avventura{" "}
-                  <span className="text-brand-sky italic font-light tracking-normal">su misura.</span>
-                </h2>
-                <p className="text-stone-500 text-sm font-medium max-w-sm leading-relaxed mb-8">
-                  Hai un'idea specifica? Progettiamo tour privati e team building
-                  tracciando la rotta insieme a te.
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => onBookingClick("Esperienza su Misura")}
-                  className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-brand-sky transition-all flex items-center justify-center gap-3"
-                >
-                  Contattaci <Send size={14} />
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ── 5. VOUCHER ──────────────────────────────────────────────────────── */}
+      {/* ── 3. VOUCHER ──────────────────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 py-12 md:py-20">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -514,6 +381,139 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 </motion.button>
               </div>
 
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── 4. ATTIVITÀ OUTDOOR ─────────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 py-12 md:py-20">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-4 px-2">
+          <div className="max-w-md">
+            <h2 className="text-2xl md:text-4xl font-black text-stone-900 uppercase tracking-tight leading-tight">
+              Scegli la meta, <br className="hidden md:block" /> noi pensiamo al resto.
+            </h2>
+            <div className="h-1 w-12 bg-brand-sky mt-3" />
+          </div>
+          <button
+            onClick={() => onNavigate("attivita")}
+            className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
+          >
+            Vedi tutte <TrendingUp size={14} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {featuredActivities.map((activity, idx) => {
+            const isEsc = (activity as any)._tipo === "escursione";
+            const esc   = isEsc ? activity as Escursione : null;
+            return (
+            <div
+              key={activity.id}
+              className={`bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden flex flex-col group transition-all duration-300 hover:-translate-y-1.5 active:scale-[0.99]${idx >= 2 ? " hidden md:flex" : ""}`}
+              style={{ boxShadow: "0 4px 6px -1px rgba(0,0,0,0.06), 0 10px 30px -5px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)" }}
+            >
+              <div className="aspect-[16/9] md:h-56 md:aspect-auto relative overflow-hidden">
+                <img
+                  src={activity.immagine_url || IMG_FALLBACK}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  alt={activity.titolo}
+                  loading={idx < 2 ? "eager" : "lazy"}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-brand-sky/80 via-brand-sky to-brand-sky/30" />
+                {/* Badge tipo */}
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm"
+                  style={{ background: isEsc ? "rgba(90,170,221,0.85)" : "rgba(159,130,112,0.85)", color: "white" }}>
+                  {isEsc ? "Escursione" : "Campo"}
+                </div>
+                {esc && <FilosofiaBadge value={esc.filosofia} />}
+              </div>
+              <div className="p-5 md:p-8 flex flex-col flex-grow">
+                <p className="text-brand-sky font-bold text-[10px] uppercase mb-2 flex items-center">
+                  <Calendar size={12} className="mr-1.5" />
+                  {esc?.data
+                    ? new Date(esc.data).toLocaleDateString("it-IT", { day: "2-digit", month: "long" })
+                    : (activity as any).durata ?? "Su richiesta"}
+                </p>
+                <h3 className="text-lg md:text-xl font-black mb-3 md:mb-4 text-brand-stone uppercase line-clamp-2">
+                  {activity.titolo}
+                </h3>
+                <p className="text-stone-500 text-xs md:text-sm mb-6 line-clamp-3 flex-grow leading-relaxed font-medium">
+                  {activity.descrizione}
+                </p>
+                <div className="flex gap-2 md:gap-3">
+                  <button
+                    onClick={() => openDetails(activity)}
+                    className="flex-1 bg-white border-2 border-stone-900 text-stone-900 py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+                  >
+                    Dettagli
+                  </button>
+                  <button
+                    onClick={() => onBookingClick(activity.titolo)}
+                    className="flex-[1.5] py-4 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all bg-brand-sky text-white shadow-lg hover:bg-[#0284c7] active:scale-95"
+                  >
+                    Richiedi Info
+                  </button>
+                </div>
+              </div>
+            </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── 5. TAILOR-MADE ──────────────────────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto px-4 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative"
+        >
+          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
+          <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
+            <div className="flex flex-col md:flex-row min-h-[280px]">
+              <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
+                <img
+                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Box_avventura.webp"
+                  alt="Escursione personalizzata Altour nelle Dolomiti"
+                  className="absolute inset-0 w-full h-full object-cover object-[center_30%]"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
+                <div className="absolute bottom-6 left-8 text-white z-10">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp size={14} className="text-brand-sky" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Progetti Personalizzati</span>
+                  </div>
+                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
+                    Su misura, <br /> per te.
+                  </h3>
+                </div>
+              </div>
+              <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-3 block">
+                  Progetti Personalizzati
+                </span>
+                <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
+                  Avventura{" "}
+                  <span className="text-brand-sky italic font-light tracking-normal">su misura.</span>
+                </h2>
+                <p className="text-stone-500 text-sm font-medium max-w-sm leading-relaxed mb-8">
+                  Hai un'idea specifica? Progettiamo tour privati e team building
+                  tracciando la rotta insieme a te.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => onBookingClick("Esperienza su Misura")}
+                  className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-brand-sky transition-all flex items-center justify-center gap-3"
+                >
+                  Contattaci <Send size={14} />
+                </motion.button>
+              </div>
             </div>
           </div>
         </motion.div>
