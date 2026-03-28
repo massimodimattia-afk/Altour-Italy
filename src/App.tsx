@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import AttivitaPage from './pages/AttivitaPage';
+import AttivitaPage from './pages/Attivitapage';
 import Corsi from './pages/Corsi';
 import Tessera from './pages/Tessera';
 import Legal from './pages/Legal';

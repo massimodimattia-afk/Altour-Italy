@@ -1,1 +1,25 @@
+# Dipendenze (MOLTO IMPORTANTE: pesa centinaia di MB)
+node_modules/
+
+# Build (I file compilati che mandavi prima, meglio farli generare a Vercel)
+dist/
+dist-ssr/
+*.local
+
+# Vercel e log locali
 .vercel
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Variabili d'ambiente (Contengono password o chiavi segrete)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# File di sistema
+.DS_Store
+Thumbs.db
