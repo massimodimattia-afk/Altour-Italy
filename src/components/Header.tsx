@@ -25,20 +25,26 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
     <header className="sticky top-0 z-50 bg-[#2a2723] backdrop-blur-md border-b border-white/5 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
 
-        {/* Logo */}
-        <div
-          className="flex items-center gap-3 cursor-pointer group"
-          onClick={() => onNavigate("home")}
-        >
-          <img
-            src="/altour-logo.png"
-            className="h-10 w-auto rounded-lg shadow-sm border border-white/10"
-            alt="Logo"
-          />
-          <span className="text-white font-black tracking-tighter text-lh group-hover:text-brand-sky transition-colors">
-            Altour italy
-          </span>
-        </div>
+     {/* Logo */}
+<div
+  className="flex items-center gap-3 cursor-pointer group"
+  onClick={() => onNavigate("home")}
+>
+  <img
+    src="/altour-logo.png"
+    className="h-10 w-auto rounded-lg shadow-sm border border-white/10"
+    alt="Logo"
+  />
+  {/* Testo su desktop */}
+  <div className="hidden md:flex flex-col">
+    <span className="text-white font-black tracking-tighter group-hover:text-brand-sky transition-colors">
+      Altour italy
+    </span>
+    <span className="text-white/80 font-light text-xs tracking-normal mt-0.5">
+      Formazione ed Attività Outdoor
+    </span>
+  </div>
+</div>
 
         {/* Nav Desktop */}
         <nav className="hidden md:flex items-center gap-8">
