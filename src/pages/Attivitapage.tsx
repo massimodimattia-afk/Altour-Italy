@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Calendar, Mountain, Clock,
+  Calendar, Clock,
   ChevronDown, ArrowRight, RefreshCcw, Star, X,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -38,7 +38,7 @@ type FilterKey = "tutte" | "giornata" | "tour" | "campi";
 
 interface AttivitaPageProps {
   onNavigate: (page: string) => void;
-  onBookingClick: (title: string, mode?: "info" | "prenota") => void;
+  onBookingClick: (title: string) => void;
 }
 
 // ─── Quiz ─────────────────────────────────────────────────────────────────────
@@ -69,6 +69,15 @@ const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const IMG_FALLBACK = "/altour-logo.png";
+
+function formatMarkdown(text: string | null): string {
+  if (!text) return "";
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/__(.*?)__/g, "<strong>$1</strong>")
+    .replace(/_(.*?)_/g, "<em>$1</em>");
+}
 const ITEMS_PER_LOAD = typeof window !== "undefined" && window.innerWidth >= 1024 ? 6 : 4;
 
 const FILOSOFIA_COLORS: Record<string, string> = {
@@ -109,12 +118,12 @@ function campoToDetail(campo: Campo) {
 
 // ─── Card componente mobile-first ─────────────────────────────────────────────
 function ActivityCard({
-  activity, idx, onDetails, onBookingClick,
+  activity, idx, onDetails, onBook,
 }: {
   activity: Activity;
   idx: number;
   onDetails: () => void;
-  onBookingClick: (title: string, type?: "info" | "prenota") => void;
+  onBook: () => void;
 }) {
   const isEsc = activity._tipo === "escursione";
   const esc   = isEsc ? activity as Escursione : null;
@@ -140,17 +149,6 @@ function ActivityCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-        {/* Badge tipo — in basso a sinistra sull'immagine */}
-        <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest"
-          style={{
-            background: isEsc
-              ? (esc?.categoria?.toLowerCase() === "tour" ? "rgba(244,217,140,0.92)" : "rgba(90,170,221,0.92)")
-              : "rgba(159,130,112,0.92)",
-            color: isEsc && esc?.categoria?.toLowerCase() === "tour" ? "#7a5e00" : "white",
-          }}>
-          {isEsc ? (esc?.categoria?.toLowerCase() === "tour" ? "Tour" : "Escursione") : "Campo Estivo"}
-        </div>
-
         {esc && <FilosofiaBadge value={esc.filosofia} />}
       </div>
 
@@ -169,38 +167,32 @@ function ActivityCard({
               <Clock size={9} />{activity.durata}
             </span>
           )}
-          {(activity as any).difficolta && (
-            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
-              <Mountain size={9} />{(activity as any).difficolta}
-            </span>
-          )}
         </div>
 
         <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
           {activity.titolo}
         </h3>
-        <p className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium">
-          {activity.descrizione}
-        </p>
+        <p
+          className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium"
+          dangerouslySetInnerHTML={{ __html: formatMarkdown(activity.descrizione) }}
+        />
 
-       {/* Footer card — solo CTA (prezzo rimosso) */}
-<div className="flex items-center gap-2 pt-3 border-t border-stone-50">
-  <div className="flex gap-2 w-full">
-    <button
-      onClick={onDetails}
-      className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95"
-    >
-      Dettagli
-    </button>
-    <button
-      onClick={() => onBookingClick(activity.titolo, "info")}
-      className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95"
-    >
-      Richiedi Info
-    </button>
-   </div>
-  </div>
- </div>
+        {/* Footer card */}
+        <div className="flex gap-2 pt-3 border-t border-stone-50">
+          <button
+            onClick={onDetails}
+            className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95"
+          >
+            Dettagli
+          </button>
+          <button
+            onClick={onBook}
+            className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95"
+          >
+            Richiedi Info
+          </button>
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -411,31 +403,30 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
       {/* ── Filtri sticky ─────────────────────────────────────────────────── */}
       <div className="sticky top-16 z-20 bg-[#f5f2ed]/95 backdrop-blur-sm border-b border-stone-200/60 py-3">
         <div className="max-w-6xl mx-auto px-4">
-  {/* Su mobile: griglia 2 colonne; su desktop: flex orizzontale con scroll */}
-  <div className="grid grid-cols-2 gap-2 md:flex md:gap-2 md:overflow-x-auto md:pb-0.5 md:scrollbar-none">
-    {FILTERS.map(f => {
-      const isActive = activeFilter === f.key;
-      return (
-        <button
-          key={f.key}
-          onClick={() => { setActiveFilter(f.key); setVisibleCount(ITEMS_PER_LOAD); }}
-          className="flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-full font-black uppercase text-[9px] tracking-widest transition-all duration-200 active:scale-95 md:flex-shrink-0"
-          style={isActive
-            ? { background: f.color ?? "#5aaadd", color: f.key === "tour" ? "#7a5e00" : "white", boxShadow: `0 4px 12px ${(f.color ?? "#5aaadd")}40` }
-            : { background: "white", color: "#a8a29e", border: "1.5px solid #e7e5e4" }
-          }
-        >
-          {f.label}
-          {f.count > 0 && (
-            <span className="text-[8px] font-black opacity-70">
-              {f.count}
-            </span>
-          )}
-        </button>
-      );
-    })}
-  </div>
-</div>
+          <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+            {FILTERS.map(f => {
+              const isActive = activeFilter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => { setActiveFilter(f.key); setVisibleCount(ITEMS_PER_LOAD); }}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-black uppercase text-[9px] tracking-widest transition-all duration-200 active:scale-95"
+                  style={isActive
+                    ? { background: f.color ?? "#5aaadd", color: f.key === "tour" ? "#7a5e00" : "white", boxShadow: `0 4px 12px ${(f.color ?? "#5aaadd")}40` }
+                    : { background: "white", color: "#a8a29e", border: "1.5px solid #e7e5e4" }
+                  }
+                >
+                  {f.label}
+                  {f.count > 0 && (
+                    <span className="text-[8px] font-black opacity-70">
+                      {f.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-20">
@@ -506,7 +497,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                   activity={activity}
                   idx={idx}
                   onDetails={() => openDetails(activity)}
-                  onBookingClick={() => onBookingClick(activity.titolo, "info")}
+                  onBook={() => onBookingClick(activity.titolo)}
                 />
               ))}
             </AnimatePresence>
@@ -615,7 +606,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                               className="w-full min-h-[48px] bg-brand-stone text-white rounded-2xl font-black uppercase text-xs tracking-widest active:scale-[0.97]">
                               Visualizza dettagli
                             </button>
-                            <button onClick={() => onBookingClick(suggestedHike.titolo, "info")}
+                            <button onClick={() => onBookingClick(suggestedHike.titolo)}
                               className="w-full min-h-[48px] bg-brand-sky text-white rounded-2xl font-black uppercase text-xs tracking-widest active:scale-[0.97] flex items-center justify-center gap-2">
                               Richiedi Info <ArrowRight size={13} />
                             </button>
@@ -724,7 +715,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={() => { setIsDetailOpen(false); setTimeout(() => setSelectedActivity(null), 300); }}
-        onBookingClick={(title: string) => onBookingClick(title, "info")}
+        onBookingClick={onBookingClick}
       />
     </div>
   );
