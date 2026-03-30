@@ -34,11 +34,11 @@ interface Campo {
 }
 
 type Activity = Escursione | Campo;
-type FilterKey = "tutte" | "giornata" | "tour" | "campi";
+type FilterKey = "tutte" | "mezza_giornata" | "intera_giornata" | "tour" | "campi";
 
 interface AttivitaPageProps {
   onNavigate: (page: string) => void;
-  onBookingClick: (title: string) => void;
+  onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
 
 // ─── Quiz ─────────────────────────────────────────────────────────────────────
@@ -337,8 +337,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
 
   // Filtering
   const allActivities: Activity[] = [
-    ...escursioni.filter(e => e.categoria?.toLowerCase() !== "tour"),
-    ...escursioni.filter(e => e.categoria?.toLowerCase() === "tour"),
+    ...escursioni,
     ...campi,
   ].sort((a, b) => {
     const da = (a as any).data ? new Date((a as any).data).getTime() : Infinity;
@@ -348,20 +347,22 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
 
   const filtered = (() => {
     switch (activeFilter) {
-      case "giornata": return escursioni.filter(e => e.categoria?.toLowerCase() !== "tour");
-      case "tour":     return escursioni.filter(e => e.categoria?.toLowerCase() === "tour");
-      case "campi":    return campi;
-      default:         return allActivities;
+      case "mezza_giornata":  return escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza"));
+      case "intera_giornata": return escursioni.filter(e => e.categoria?.toLowerCase().includes("intera"));
+      case "tour":            return escursioni.filter(e => e.categoria?.toLowerCase() === "tour");
+      case "campi":           return campi;
+      default:                return allActivities;
     }
   })();
 
   const visible = filtered.slice(0, visibleCount);
 
-  const FILTERS: { key: FilterKey; label: string; count: number; color?: string }[] = [
-    { key: "tutte",    label: "Tutte",         count: allActivities.length },
-    { key: "giornata", label: "Escursioni",     count: escursioni.filter(e => e.categoria?.toLowerCase() !== "tour").length },
-    { key: "tour",     label: "Tour",           count: escursioni.filter(e => e.categoria?.toLowerCase() === "tour").length, color: "#f4d98c" },
-    { key: "campi",    label: "Campi Estivi",   count: campi.length, color: "#9f8270" },
+  const FILTERS: { key: FilterKey; label: string; count: number; color?: string; textColor?: string }[] = [
+    { key: "tutte",          label: "Tutte",           count: allActivities.length },
+    { key: "mezza_giornata", label: "Mezza giornata",  count: escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza")).length },
+    { key: "intera_giornata",label: "Intera giornata", count: escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera")).length },
+    { key: "tour",           label: "Tour",            count: escursioni.filter(e => e.categoria?.toLowerCase() === "tour").length, color: "#f4d98c", textColor: "#7a5e00" },
+    { key: "campi",          label: "Campi Estivi",    count: campi.length, color: "#9f8270" },
   ];
 
   const openDetails = (a: Activity) => {
@@ -403,7 +404,38 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
       {/* ── Filtri sticky ─────────────────────────────────────────────────── */}
       <div className="sticky top-16 z-20 bg-[#f5f2ed]/95 backdrop-blur-sm border-b border-stone-200/60 py-3">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+
+          {/* Mobile — select nativo */}
+          <div className="md:hidden relative">
+            <select
+              value={activeFilter}
+              onChange={e => { setActiveFilter(e.target.value as FilterKey); setVisibleCount(ITEMS_PER_LOAD); }}
+              className="w-full appearance-none bg-white border border-stone-200 rounded-2xl px-4 py-2.5 font-black uppercase text-[10px] tracking-widest text-brand-stone shadow-sm focus:outline-none focus:border-brand-sky"
+              style={{ paddingLeft: activeFilter !== "tutte" ? "2.25rem" : "1rem" }}
+            >
+              {FILTERS.map(f => (
+                <option key={f.key} value={f.key}>
+                  {f.label}{f.count > 0 ? ` (${f.count})` : ""}
+                </option>
+              ))}
+            </select>
+            {/* Freccia */}
+            <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2.5 4.5L6 8L9.5 4.5" stroke="#9f8270" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            {/* Pallino colore filtro attivo */}
+            {activeFilter !== "tutte" && (
+              <div
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
+                style={{ background: FILTERS.find(f => f.key === activeFilter)?.color ?? "#5aaadd" }}
+              />
+            )}
+          </div>
+
+          {/* Desktop — pill */}
+          <div className="hidden md:flex gap-2">
             {FILTERS.map(f => {
               const isActive = activeFilter === f.key;
               return (
@@ -412,20 +444,17 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                   onClick={() => { setActiveFilter(f.key); setVisibleCount(ITEMS_PER_LOAD); }}
                   className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-black uppercase text-[9px] tracking-widest transition-all duration-200 active:scale-95"
                   style={isActive
-                    ? { background: f.color ?? "#5aaadd", color: f.key === "tour" ? "#7a5e00" : "white", boxShadow: `0 4px 12px ${(f.color ?? "#5aaadd")}40` }
+                    ? { background: f.color ?? "#5aaadd", color: f.textColor ?? "white", boxShadow: `0 4px 12px ${(f.color ?? "#5aaadd")}40` }
                     : { background: "white", color: "#a8a29e", border: "1.5px solid #e7e5e4" }
                   }
                 >
                   {f.label}
-                  {f.count > 0 && (
-                    <span className="text-[8px] font-black opacity-70">
-                      {f.count}
-                    </span>
-                  )}
+                  {f.count > 0 && <span className="text-[8px] font-black opacity-70">{f.count}</span>}
                 </button>
               );
             })}
           </div>
+
         </div>
       </div>
 
@@ -433,7 +462,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
 
         {/* ── Banner quiz ───────────────────────────────────────────────────── */}
         <AnimatePresence>
-          {!quizStarted && !bannerDismissed && (activeFilter === "tutte" || activeFilter === "giornata") && (
+          {!quizStarted && !bannerDismissed && (activeFilter === "tutte" || activeFilter === "mezza_giornata" || activeFilter === "intera_giornata") && (
             <motion.div
               key="quiz-banner"
               initial={{ opacity: 0, y: -6 }}
@@ -715,7 +744,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={() => { setIsDetailOpen(false); setTimeout(() => setSelectedActivity(null), 300); }}
-        onBookingClick={onBookingClick}
+        onBookingClick={(title: string) => onBookingClick(title)}
       />
     </div>
   );

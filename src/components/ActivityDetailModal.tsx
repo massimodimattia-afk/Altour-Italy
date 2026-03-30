@@ -21,7 +21,7 @@ export interface Activity {
   difficolta?: string | null;
   durata?: string | null;
   lunghezza?: number | null;
-  dislivello?: number | null;
+  dislivello?: string | null;
   categoria?: string | null;
   filosofia?: string | null;
   attrezzatura_consigliata?: string | null;
