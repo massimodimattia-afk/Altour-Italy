@@ -65,6 +65,8 @@ const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
   "Speciali":              { cerca: "Tempo di qualità", compagnia: "Gruppo" },
   "Tra mare e cielo":      { luogo: "Mare, lago o fiume", cerca: "Panorami" },
   "Trek urbano":           { tempo: "Ore", sforzo: "Leggero" },
+  "Tracce sulla neve":     { luogo: "Vette", sforzo: "Intenso", tempo: "Giorno" },
+  "Cielo stellato":        { cerca: "Panorami", tempo: "Tour", compagnia: "Solo" },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -85,12 +87,13 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Cammini": "#e3c45d", "Educazione all'aperto": "#01aa9f", "Eventi": "#ffc0cb",
   "Formazione": "#002f59", "Immersi nel verde": "#358756", "Luoghi dello spirito": "#c8a3c9",
   "Novità": "#75c43c", "Speciali": "#b8163c", "Tra mare e cielo": "#7aaecd", "Trek urbano": "#f39452",
+  "Tracce sulla neve": "#a8cce0", "Cielo stellato": "#1e2855",
 };
 
 function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   if (!value || !FILOSOFIA_COLORS[value]) return null;
   const color = FILOSOFIA_COLORS[value];
-  const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
+  const dark = ["#002f59", "#946a52", "#b8163c", "#358756", "#1e2855"];
   const bg = dark.includes(color) ? `${color}aa` : `${color}cc`;
   return (
     <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm"

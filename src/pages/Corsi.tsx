@@ -33,10 +33,12 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Speciali": "#b8163c",
   "Tra mare e cielo": "#7aaecd",
   "Trek urbano": "#f39452",
+  "Tracce sulla neve": "#a8cce0",
+  "Cielo stellato": "#1e2855",
 };
 
 function getFilosofiaOpacity(color: string): string {
-  const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
+  const dark = ["#002f59", "#946a52", "#b8163c", "#358756", "#1e2855"];
   return dark.includes(color) ? `${color}aa` : `${color}cc`;
 }
 
@@ -82,10 +84,10 @@ type PricingOption = "bundle" | "teorico" | "pratico";
 
 function PricingBlock({
   corso,
-  onBookingClick,
+  onBook,
 }: {
   corso: Corso;
-  onBookingClick: (title: string, mode?: "info" | "prenota") => void;
+  onBook: (title: string, mode?: "info" | "prenota") => void;
 }) {
   const hasModular =
     corso.prezzo_teorico != null || corso.prezzo_pratico != null;
@@ -102,13 +104,13 @@ function PricingBlock({
     return (
       <div className="flex gap-3">
         <button
-          onClick={() => onBookingClick(corso.titolo, "info")}
+          onClick={() => onBook(corso.titolo, "info")}
           className="flex-1 min-h-[48px] bg-white border-2 border-stone-900 text-stone-900 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
         >
           Dettagli
         </button>
         <button
-          onClick={() => onBookingClick(corso.titolo, "prenota")}
+          onClick={() => onBook(corso.titolo, "prenota")}
           className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white"
         >
           Richiedi Info
@@ -170,7 +172,7 @@ function PricingBlock({
 
       {/* CTA unico */}
       <button
-        onClick={() => onBookingClick(bookLabel, "prenota")}
+        onClick={() => onBook(bookLabel, "prenota")}
         className="w-full min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all"
         style={{
           background: selected === "bundle"
@@ -440,7 +442,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
 
                 {/* Pricing */}
                 <div className="mt-auto pt-5 border-t border-stone-100">
-                  <PricingBlock corso={corso} onBookingClick={onBookingClick}  />
+                  <PricingBlock corso={corso} onBook={onBookingClick} />
 
                   {/* Bottone dettagli sempre visibile sotto */}
                   <button
@@ -471,10 +473,10 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
           <div className="h-16 w-px bg-gradient-to-t from-transparent to-stone-200" />
         </div>
         <div className="mb-10">
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Trova la tua strada</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Trova il tuo percorso</p>
           <h2 className="text-3xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-1">
             Costruisci il tuo<br />
-            <span className="font-light italic" style={{ color: "#9f8270" }}>percorso ideale.</span>
+            <span className="font-light italic" style={{ color: "#9f8270" }}>zaino ideale.</span>
           </h2>
           <div className="h-1.5 w-10 bg-brand-sky rounded-full mt-3" />
         </div>

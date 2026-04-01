@@ -42,6 +42,8 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Speciali":               "#b8163c",
   "Tra mare e cielo":       "#7aaecd",
   "Trek urbano":            "#f39452",
+  "Tracce sulla neve":      "#a8cce0",
+  "Cielo stellato":         "#1e2855",
 };
 
 const DEFAULT_BOOT_COLOR = "#5aaadd";
@@ -61,6 +63,8 @@ const BADGE_NAMES: Record<string, string> = {
   "Speciali":               "Leggenda",
   "Tra mare e cielo":       "Navigatore",
   "Trek urbano":            "Flaneur",
+  "Tracce sulla neve":      "Segugio della Neve",
+  "Cielo stellato":         "Astronomo",
 };
 
 const BADGE_EMOJI: Record<string, string> = {
@@ -77,6 +81,8 @@ const BADGE_EMOJI: Record<string, string> = {
   "Speciali":               "🌟",
   "Tra mare e cielo":       "🌊",
   "Trek urbano":            "🏙",
+  "Tracce sulla neve":      "❄️",
+  "Cielo stellato":         "🌠",
 };
 
 const FILOSOFIA_ALIAS: Record<string, string> = {
@@ -1071,10 +1077,10 @@ export default function Tessera() {
                 <Gift size={22} className="text-amber-600" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase text-amber-700 tracking-widest leading-none mb-1">Storico voucher</p>
+                <p className="text-[10px] font-black uppercase text-amber-700 tracking-widest leading-none mb-1">Premio sbloccato 🎉</p>
                 <h4 className="text-sm md:text-base font-black uppercase text-amber-900 leading-tight">
                   {vouchersCount} Voucher {vouchersCount === 1 ? "da" : "da"} 10 €&nbsp;
-                  <span className="font-bold">{vouchersCount === 1 ? "maturato" : "maturati"}</span>
+                  <span className="font-bold">{vouchersCount === 1 ? "disponibile" : "disponibili"}</span>
                 </h4>
               </div>
             </div>

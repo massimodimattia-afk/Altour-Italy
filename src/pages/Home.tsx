@@ -78,10 +78,12 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Speciali":               "#b8163c",
   "Tra mare e cielo":       "#7aaecd",
   "Trek urbano":            "#f39452",
+  "Tracce sulla neve":      "#a8cce0",
+  "Cielo stellato":         "#1e2855",
 };
 
 function getFilosofiaOpacity(color: string): string {
-  const dark = ["#002f59", "#946a52", "#b8163c", "#358756"];
+  const dark = ["#002f59", "#946a52", "#b8163c", "#358756", "#1e2855"];
   return dark.includes(color) ? `${color}aa` : `${color}cc`;
 }
 
@@ -355,7 +357,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       key={amount}
                       whileHover={{ y: -2, scale: 1.04 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`, 'info')}
+                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`)}
                       className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-all border-2 ${
                         highlight
                           ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100"
@@ -384,7 +386,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <motion.button
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato", 'info')}
+                  onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato")}
                   className="w-full bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2"
                 >
                   <Gift size={12} />
