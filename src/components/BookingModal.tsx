@@ -94,7 +94,7 @@ export default function BookingModal({
       setFormError(validationError);
       return;
     }
-
+       
     setIsSubmitting(true);
     setFormError(null);
     const payload = {
