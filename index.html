@@ -2,26 +2,92 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
+    
+    <!-- Core Meta Tags -->
+    <title>Altour Italy - Formazione ed Attività Outdoor</title>
     <meta name="description" content="Formazione ed attività outdoor in montagna con Altour Italy. Guide esperte, corsi professionali e avventure indimenticabili." />
-    <meta name="theme-color" content="#047857" />
+    <meta name="keywords" content="Altour, escursioni, formazione outdoor, corsi montagna, trekking, guide alpine, attività natura, outdoor education" />
+    <meta name="author" content="Altour Italy" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/svg+xml" href="/logo-optimized.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#0ea5e9" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Altour Italy" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
-    <title>Altour Italy - Formazione ed Attività Outdoor</title>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Altour Italy" />
+    
+    <!-- Open Graph / Social Media -->
     <meta property="og:title" content="Altour Italy - Formazione ed Attività Outdoor" />
-    <meta property="og:description" content="Esperienze autentiche in natura con guide esperte" />
-    <meta property="og:image" content="https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg" />
+    <meta property="og:description" content="Esperienze autentiche in natura con guide esperte. Scopri escursioni, corsi e avventure su misura per te." />
+    <meta property="og:image" content="https://altour-italy.vercel.app/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Paesaggio montano Altour Italy - Escursioni e formazione outdoor" />
+    <meta property="og:url" content="https://altour-italy.vercel.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:site_name" content="Altour Italy" />
+    
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Altour Italy - Formazione ed Attività Outdoor" />
     <meta name="twitter:description" content="Esperienze autentiche in natura con guide esperte" />
-    <meta name="twitter:image" content="https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg" />
+    <meta name="twitter:image" content="https://altour-italy.vercel.app/og-image.jpg" />
+    <meta name="twitter:site" content="@altouritaly" />
+    
+    <!-- Preconnect & Preload per performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://rpzbiqzjyculxquespos.supabase.co" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link rel="preload" href="/altour-logo.png" as="image" />
+    <link rel="preload" href="/logo-optimized.svg" as="image" type="image/svg+xml" />
+    
+    <!-- Font (opzionale, se usata) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+    
+    <!-- Content Security Policy (previene avvisi Google Play Protect) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https://*.supabase.co https://rpzbiqzjyculxquespos.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com;" />
   </head>
   <body>
     <div id="root"></div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator && !location.hostname.includes('localhost')) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(registration => {
+              console.log('Service Worker registrato con successo:', registration.scope);
+            })
+            .catch(error => {
+              console.log('Service Worker registrazione fallita:', error);
+            });
+        });
+      }
+      
+      // Gestione installazione PWA
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Puoi mostrare un banner personalizzato qui se vuoi
+        console.log('PWA installabile');
+      });
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

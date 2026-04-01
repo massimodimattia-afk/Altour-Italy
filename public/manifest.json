@@ -1,39 +1,80 @@
 {
   "name": "Altour Italy",
   "short_name": "Altour",
-  "description": "Escursioni e formazione outdoor - Altour Italy",
+  "description": "Formazione attività outdoor - Scopri le nostre proposte",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#1c1917",
-  "theme_color": "#0ea5e7",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#f5f2ed",
+  "theme_color": "#0ea5e9",
   "orientation": "portrait-primary",
   "lang": "it-IT",
-  "categories": ["travel", "sports", "education"],
+  "categories": ["travel", "sports", "education", "lifestyle"],
   "icons": [
     {
-      "src": "/altour-logo.png",
+      "src": "/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "/altour-logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/altour-logo.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/altour-logo-maskable.png",
-      "sizes": "512x512",
+      "src": "/icon-384.png",
+      "sizes": "384x384",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-home.webp",
+      "sizes": "1080x1920",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Schermata principale Altour Italy"
+    },
+    {
+      "src": "/screenshot-activities.webp",
+      "sizes": "1080x1920",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Attività outdoor disponibili"
     }
   ],
   "shortcuts": [
@@ -41,15 +82,31 @@
       "name": "La mia Tessera",
       "short_name": "Tessera",
       "description": "Accedi alla tua tessera Altour",
-      "url": "/?page=tessera",
-      "icons": [{ "src": "/altour-logo.png", "sizes": "192x192" }]
+      "url": "/tessera",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Escursioni",
-      "short_name": "Escursioni",
+      "name": "Attività Outdoor",
+      "short_name": "Attività",
       "description": "Scopri le prossime avventure",
-      "url": "/?page=escursioni",
-      "icons": [{ "src": "/altour-logo.png", "sizes": "192x192" }]
+      "url": "/attivita",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Accademia",
+      "short_name": "Corsi",
+      "description": "Formazione e corsi di outdoor",
+      "url": "/corsi",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
