@@ -357,7 +357,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       key={amount}
                       whileHover={{ y: -2, scale: 1.04 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`)}
+                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`, 'info')}
                       className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-all border-2 ${
                         highlight
                           ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100"
@@ -386,7 +386,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <motion.button
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato")}
+                  onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato", 'info')}
                   className="w-full bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2"
                 >
                   <Gift size={12} />

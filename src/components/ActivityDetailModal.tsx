@@ -188,7 +188,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   </span>
                 </div>
                 <button
-                  onClick={() => onBookingClick(activity.titolo)}
+                  onClick={() => onBookingClick(activity.titolo, 'prenota')}
                   className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-3.5 md:py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
                 >
                   Prenota Ora <TrendingUp size={15} />
