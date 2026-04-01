@@ -37,7 +37,7 @@ interface ActivityDetailModalProps {
   activity: Activity | null;
   isOpen: boolean;
   onClose: () => void;
-  onBookingClick: (title: string) => void;
+  onBookingClick: (title: string, mode?: 'info' | 'prenota') => void;
 }
 
 const IMG_FALLBACK = "/altour-logo.png";
@@ -134,14 +134,14 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                       <Mountain size={12} className="text-brand-sky" /> {activity.difficolta}
                     </span>
                   )}
-                  {activity.dislivello != null && (
-                    <span className="flex items-center gap-1">
-                      <ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m
-                    </span>
-                  )}
                   {activity.lunghezza != null && (
                     <span className="flex items-center gap-1">
                       <LunghezzaIcon size={12} className="text-brand-sky" /> {activity.lunghezza}
+                    </span>
+                  )}
+                    {activity.dislivello != null && (
+                    <span className="flex items-center gap-1">
+                      <ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m
                     </span>
                   )}
                   {activity.min_partecipanti != null && (
@@ -170,7 +170,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                       <Backpack size={14} className="text-brand-sky" />
                       {activity._tipo === 'corso' ? "Di cosa parleremo"
                         : activity._tipo === 'campo' ? "Attività previste"
-                        : "Attrezzatura consigliata"}
+                        : "Equipaggiamento consigliato"}
                     </h4>
                     {formatEquipmentList(activity.attrezzatura)}
                   </div>

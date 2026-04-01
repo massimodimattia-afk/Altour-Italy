@@ -123,7 +123,7 @@ function ActivityCard({
   activity: Activity;
   idx: number;
   onDetails: () => void;
-  onBook: () => void;
+  onBook: (mode?: 'info' | 'prenota') => void;
 }) {
   const isEsc = activity._tipo === "escursione";
   const esc   = isEsc ? activity as Escursione : null;
@@ -186,7 +186,7 @@ function ActivityCard({
             Dettagli
           </button>
           <button
-            onClick={onBook}
+            onClick={() => onBook('info')}
             className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95"
           >
             Richiedi Info
@@ -348,7 +348,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   const filtered = (() => {
     switch (activeFilter) {
       case "mezza_giornata":  return escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza"));
-      case "intera_giornata": return escursioni.filter(e => e.categoria?.toLowerCase().includes("intera"));
+      case "intera_giornata": return escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera"));
       case "tour":            return escursioni.filter(e => e.categoria?.toLowerCase() === "tour");
       case "campi":           return campi;
       default:                return allActivities;
@@ -526,7 +526,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                   activity={activity}
                   idx={idx}
                   onDetails={() => openDetails(activity)}
-                  onBook={() => onBookingClick(activity.titolo)}
+                  onBook={(mode) => onBookingClick(activity.titolo, mode)}
                 />
               ))}
             </AnimatePresence>
@@ -635,7 +635,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                               className="w-full min-h-[48px] bg-brand-stone text-white rounded-2xl font-black uppercase text-xs tracking-widest active:scale-[0.97]">
                               Visualizza dettagli
                             </button>
-                            <button onClick={() => onBookingClick(suggestedHike.titolo)}
+                            <button onClick={() => onBookingClick(suggestedHike.titolo, 'info')}
                               className="w-full min-h-[48px] bg-brand-sky text-white rounded-2xl font-black uppercase text-xs tracking-widest active:scale-[0.97] flex items-center justify-center gap-2">
                               Richiedi Info <ArrowRight size={13} />
                             </button>
@@ -744,7 +744,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={() => { setIsDetailOpen(false); setTimeout(() => setSelectedActivity(null), 300); }}
-        onBookingClick={(title: string) => onBookingClick(title)}
+        onBookingClick={(title, mode) => onBookingClick(title, mode)}
       />
     </div>
   );

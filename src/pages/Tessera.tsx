@@ -581,6 +581,7 @@ export default function Tessera() {
   const [redeemError, setRedeemError] = useState("");
   const [redeemAttempts, setRedeemAttempts] = useState(0);
   const [pendingActivity, setPendingActivity] = useState<{ titolo: string; filosofia?: string | null; categoria?: string; difficolta?: string } | null>(null);
+  const [pendingCodeId, setPendingCodeId] = useState<string | null>(null);
   const [pendingColor, setPendingColor] = useState<string>(DEFAULT_BOOT_COLOR);
   const [chosenColor, setChosenColor] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastData | null>(null);
@@ -710,7 +711,7 @@ export default function Tessera() {
   const closeRedeem = useCallback(() => {
     if (isSaving) return;
     setShowRedeem(false); setRedeemCode(""); setRedeemStep("INPUT"); setRedeemError("");
-    setSaveError(""); setPendingActivity(null); setPendingColor(DEFAULT_BOOT_COLOR); setChosenColor(null);
+    setSaveError(""); setPendingActivity(null); setPendingCodeId(null); setPendingColor(DEFAULT_BOOT_COLOR); setChosenColor(null);
     setNewlyUnlockedBadge(null); setNewlyUnlockedAchievement(null);
     setRedeemAttempts(0);
   }, [isSaving]);
@@ -721,12 +722,45 @@ export default function Tessera() {
     const normalized = redeemCode.toUpperCase().trim();
     if (!REDEEM_CODE_REGEX.test(normalized)) { setRedeemError("Formato codice non valido."); return; }
     setIsVerifying(true); setRedeemError(""); setRedeemAttempts((n) => n + 1);
-    const { data, error } = await supabase.from("escursioni").select("titolo, codice_riscatto, filosofia, categoria, difficolta").eq("codice_riscatto", normalized).single();
-    if (error || !data) { setRedeemError("Codice non valido."); setIsVerifying(false); }
-    else {
-      if (userTessera?.escursioni_completate?.some((e) => e.titolo === data.titolo)) { setRedeemError("Hai già riscattato questa escursione."); setIsVerifying(false); return; }
-      setPendingActivity(data); setPendingColor(getFilosofiaColor(data.filosofia)); setRedeemStep("REVEAL"); setIsVerifying(false);
+
+    // Cerca il codice nella tabella dedicata, join con escursioni per i dati
+    const { data, error } = await supabase
+      .from("codici_riscatto")
+      .select("id, codice, used_by, escursioni(titolo, filosofia, categoria, difficolta)")
+      .eq("codice", normalized)
+      .single();
+
+    if (error || !data) {
+      setRedeemError("Codice non valido.");
+      setIsVerifying(false);
+      return;
     }
+    // Codice già usato da un altro utente
+    if (data.used_by && data.used_by !== userTessera?.codice_tessera) {
+      setRedeemError("Questo codice è già stato utilizzato.");
+      setIsVerifying(false);
+      return;
+    }
+    // Codice già usato da questo stesso utente
+    if (data.used_by === userTessera?.codice_tessera) {
+      setRedeemError("Hai già riscattato questo scarpone.");
+      setIsVerifying(false);
+      return;
+    }
+    const escRaw = data.escursioni;
+    const esc = (Array.isArray(escRaw) ? escRaw[0] : escRaw) as { titolo: string; filosofia?: string | null; categoria?: string; difficolta?: string } | null;
+    if (!esc) { setRedeemError("Dati attività non trovati."); setIsVerifying(false); return; }
+    // Check duplicato sulla tessera (sicurezza extra)
+    if (userTessera?.escursioni_completate?.some((e) => e.titolo === esc.titolo)) {
+      setRedeemError("Hai già riscattato questa escursione.");
+      setIsVerifying(false);
+      return;
+    }
+    setPendingActivity(esc);
+    setPendingCodeId(data.id);
+    setPendingColor(getFilosofiaColor(esc.filosofia));
+    setRedeemStep("REVEAL");
+    setIsVerifying(false);
   };
 
   const saveVetta = async () => {
@@ -750,6 +784,15 @@ export default function Tessera() {
     if (justUnlocked) updatePayload.badges_filosofia = [...(userTessera.badges_filosofia ?? []), justUnlocked];
     const { data, error } = await supabase.from("tessere").update(updatePayload).eq("id", userTessera.id).select();
     if (error || !data) { setSaveError("Errore nel salvataggio. Riprova."); setIsSaving(false); return; }
+
+    // Marca il codice come usato (atomico — se fallisce logga ma non blocca)
+    if (pendingCodeId) {
+      await supabase
+        .from("codici_riscatto")
+        .update({ used_by: userTessera.codice_tessera, used_at: new Date().toISOString() })
+        .eq("id", pendingCodeId)
+        .is("used_by", null); // solo se ancora libero (sicurezza race condition)
+    }
     const updatedTessera = data[0] as UserTessera;
     setUserTessera(updatedTessera);
     const newCount = updatedTessera.escursioni_completate?.length || 1;
@@ -776,11 +819,9 @@ export default function Tessera() {
     const count = userTessera.escursioni_completate?.length || 0;
     const totalPages = Math.max(1, Math.ceil(count / SLOTS_PER_PAGE));
     const vouchersCount = Math.floor(count / SLOTS_PER_PAGE);
-    const progressInCycle = count % SLOTS_PER_PAGE;
-    const toNextVoucher = SLOTS_PER_PAGE - progressInCycle;
     const completedTessere = Math.floor(count / SLOTS_PER_PAGE);
     const currentLevelLabel = TESSERA_LEVELS[Math.min(completedTessere, TESSERA_LEVELS.length - 1)];
-    return { count, currentLevelLabel, totalPages, vouchersCount, progressInCycle, toNextVoucher };
+    return { count, currentLevelLabel, totalPages, vouchersCount };
   }, [userTessera]);
 
   const { badgeCounts, earnedBadges } = useMemo(() => {
@@ -906,7 +947,7 @@ export default function Tessera() {
     </div>
   );
 
-  const { currentLevelLabel, totalPages, vouchersCount, progressInCycle, toNextVoucher } = stats!;
+  const { currentLevelLabel, totalPages, vouchersCount } = stats!;
   // Last 3 escursioni in reverse chronological order
   
 
@@ -991,27 +1032,33 @@ export default function Tessera() {
 
         {/* ── ULTIME ESCURSIONI ─────────────────────────────────────────────── */}
         {/* ── RISCATTA ──────────────────────────────────────────────────────── */}
-        <button
+        <motion.button
           onClick={() => { setRedeemStep("INPUT"); setShowRedeem(true); }}
-          className="w-full mt-4 md:mt-5 bg-[#5aaadd] text-white py-5 md:py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-sky-100/60 flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:bg-[#0284c7]"
+          whileTap={{ scale: 0.97 }}
+          className="w-full mt-4 md:mt-5 relative overflow-hidden rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+          style={{
+            background: "linear-gradient(135deg, #5aaadd 0%, #3b91c4 100%)",
+            boxShadow: "0 8px 28px rgba(90,170,221,0.35), 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2)",
+            padding: "1.25rem 1.5rem",
+          }}
         >
-          <Plus size={20} strokeWidth={3} /><span className="text-sm md:text-base">Riscatta Scarpone</span>
-        </button>
-
-        {/* ── PROGRESS BAR VOUCHER ──────────────────────────────────────────── */}
-        {/* #1 — label text: was text-[8px], now text-[10px] */}
-        <div className="mt-4 md:mt-5 bg-white/70 rounded-[2rem] p-4 md:p-5 border border-white/50 shadow-sm">
-          <div className="flex justify-between items-center mb-2.5">
-            <span className="text-[10px] font-black uppercase text-stone-400 tracking-widest">Prossimo voucher</span>
-            <span className="text-[10px] font-black uppercase text-stone-400 tracking-widest">
-              {progressInCycle}/{SLOTS_PER_PAGE}
-              {toNextVoucher < SLOTS_PER_PAGE && <span className="text-sky-400 ml-1">· mancano {toNextVoucher}</span>}
-            </span>
+          {/* Shimmer */}
+          <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-500"
+            style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%)" }} />
+          <div className="relative flex items-center gap-3 text-white">
+            <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <Plus size={18} strokeWidth={3} />
+            </div>
+            <div className="text-left">
+              <span className="block text-[8px] font-black uppercase tracking-[0.2em] text-white/60 leading-none mb-0.5">
+                Hai partecipato a un'escursione?
+              </span>
+              <span className="block text-sm font-black uppercase tracking-wide leading-none">
+                Riscatta il tuo Scarpone
+              </span>
+            </div>
           </div>
-          <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
-            <motion.div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-500" initial={{ width: 0 }} animate={{ width: `${(progressInCycle / 8) * 100}%` }} transition={{ duration: 0.8, ease: "easeOut" }} />
-          </div>
-        </div>
+        </motion.button>
 
         {/* ── VOUCHER ───────────────────────────────────────────────────────── */}
         {/* #5 — redesign: da border-dashed pallido a card con gradiente amber */}
@@ -1024,10 +1071,10 @@ export default function Tessera() {
                 <Gift size={22} className="text-amber-600" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase text-amber-700 tracking-widest leading-none mb-1">Premio sbloccato 🎉</p>
+                <p className="text-[10px] font-black uppercase text-amber-700 tracking-widest leading-none mb-1">Storico voucher</p>
                 <h4 className="text-sm md:text-base font-black uppercase text-amber-900 leading-tight">
                   {vouchersCount} Voucher {vouchersCount === 1 ? "da" : "da"} 10 €&nbsp;
-                  <span className="font-bold">{vouchersCount === 1 ? "disponibile" : "disponibili"}</span>
+                  <span className="font-bold">{vouchersCount === 1 ? "maturato" : "maturati"}</span>
                 </h4>
               </div>
             </div>

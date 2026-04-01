@@ -440,7 +440,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
 
                 {/* Pricing */}
                 <div className="mt-auto pt-5 border-t border-stone-100">
-                  <PricingBlock corso={corso} onBookingClick={(title: string) => onBookingClick(title, "info")} />
+                  <PricingBlock corso={corso} onBookingClick={onBookingClick}  />
 
                   {/* Bottone dettagli sempre visibile sotto */}
                   <button
@@ -563,7 +563,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={handleCloseDetail}
-        onBookingClick={(title: string) => onBookingClick(title, "info")}
+        onBookingClick={onBookingClick}
       />
     </div>
   );

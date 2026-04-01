@@ -35,7 +35,7 @@ type FeaturedActivity = Escursione | Campo;
 
 interface HomeProps {
   onNavigate: (page: string) => void;
-  onBookingClick: (title: string) => void;
+  onBookingClick: (title: string, mode?: 'info' | 'prenota') => void;
 }
 
 const SkeletonCard = () => (
@@ -169,7 +169,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       <section className="relative h-[80vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458.webp"
+            src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp"
             className="w-full h-full object-cover object-[center_20%] brightness-[0.8] contrast-[1.02] transition-transform duration-[20s] scale-105"
             alt="Dolomiti Altour Italy"
             loading="eager"
@@ -282,7 +282,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       Dettagli
                     </button>
                     <button
-                      onClick={() => onBookingClick(corso.titolo)}
+                      onClick={() => onBookingClick(corso.titolo, 'info')}
                       className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95"
                     >
                       Richiedi Info
@@ -355,7 +355,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       key={amount}
                       whileHover={{ y: -2, scale: 1.04 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`)}
+                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`, 'info')}
                       className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-all border-2 ${
                         highlight
                           ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100"
@@ -384,7 +384,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <motion.button
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato")}
+                  onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato", 'info')}
                   className="w-full bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2"
                 >
                   <Gift size={12} />
@@ -469,7 +469,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                         Dettagli
                       </button>
                       <button
-                        onClick={() => onBookingClick(activity.titolo)}
+                        onClick={() => onBookingClick(activity.titolo, 'info')}
                         className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95"
                       >
                         Richiedi Info
@@ -527,7 +527,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => onBookingClick("Esperienza su Misura")}
+                  onClick={() => onBookingClick("Esperienza su Misura", 'info')}
                   className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-brand-sky transition-all flex items-center justify-center gap-3"
                 >
                   Contattaci <Send size={14} />
