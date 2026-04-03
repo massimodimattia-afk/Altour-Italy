@@ -9,6 +9,7 @@ import {
   Send,
   Shield,
   Users,
+  ArrowRight,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
@@ -249,7 +250,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               onClick={() => onNavigate("corsi")}
               className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
             >
-              Vedi tutti i corsi <TrendingUp size={14} />
+              Vedi tutto <
+                TrendingUp size={14} />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -297,107 +299,117 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </section>
 
-      {/* ── 3. VOUCHER ──────────────────────────────────────────────────────── */}
-      <section className="max-w-4xl mx-auto px-4 py-12 md:py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative"
-        >
-          <div className="absolute -inset-1 bg-gradient-to-r from-brand-sky/20 to-brand-stone/5 rounded-[2.5rem] blur-2xl opacity-50" />
-          <div className="relative bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-stone-50">
-            <div className="flex flex-col md:flex-row min-h-[360px]">
-
-              {/* Immagine */}
-              <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
-                <img
-                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
-                  alt="Paesaggio innevato Trentino — Gift Experience Altour"
-                  className="absolute inset-0 w-full h-full object-cover object-center"
-                  onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
-                <div className="absolute bottom-6 left-8 text-white z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star size={14} className="text-brand-sky fill-brand-sky" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Gift Experience</span>
-                  </div>
-                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
-                    Regala un'<br />avventura.
-                  </h3>
-                </div>
-              </div>
-
-              {/* Contenuto */}
-              <div className="w-full md:w-3/5 p-8 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
-                <p className="text-stone-500 text-sm font-medium leading-relaxed mb-6">
-                  Un'emozione da regalare a chi ami — utilizzabile per ogni tipo di esperienza Altour.
-                </p>
-
-                {/* Fix #4: label leggibile (text-[10px] invece di text-[8px]) */}
-                <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-4">
-                  Scegli l'importo
-                </p>
-
-                {/*
-                  Fix #1: rimossa scritta "scegli →" dai bottoni
-                  Fix #2: 3 colonne su mobile (2 righe da 3) invece di 2 (3 righe da 2)
-                          — bottoni più larghi, più facili da toccare
-                  Fix #3: tag "Starter/Premium" spostati dentro il bottone (non absolute -top-2)
-                          — non fuoriescono su mobile e non richiedono overflow:visible sul parent
-                  Fix #5: nessun feedback "selezionato" per non bloccare l'UX —
-                          il tap apre direttamente il form come prima, ma senza testo di supporto inutile
-                */}
-                <div className="grid grid-cols-3 gap-2.5 mb-5">
-                  {PRESET_VOUCHERS.map(({ amount, tag, highlight }) => (
-                    <motion.button
-                      key={amount}
-                      whileHover={{ y: -2, scale: 1.04 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`, 'info')}
-                      className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-all border-2 ${
-                        highlight
-                          ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100"
-                          : "border-stone-200 bg-white text-brand-stone hover:border-brand-sky hover:text-brand-sky hover:shadow-sm"
-                      }`}
-                    >
-                      <span className="text-base font-black leading-none">{amount}€</span>
-                      {/* Fix #3: tag inline sotto il prezzo, non absolute */}
-                      {tag && (
-                        <span className={`text-[7px] font-black uppercase tracking-wider mt-1 ${
-                          highlight ? "text-white/75" : "text-stone-400"
-                        }`}>
-                          {tag}
-                        </span>
-                      )}
-                    </motion.button>
-                  ))}
-                </div>
-
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1 h-px bg-stone-200" />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-stone-300">oppure</span>
-                  <div className="flex-1 h-px bg-stone-200" />
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato", 'info')}
-                  className="w-full bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2"
-                >
-                  <Gift size={12} />
-                  Importo personalizzato
-                </motion.button>
-              </div>
-
+     {/* ── 3. VOUCHER PREMIUM ───────────────────────────────────────────────────── */}
+<section className="max-w-4xl mx-auto px-4 py-12 md:py-20">
+  <motion.div
+    initial={{ opacity: 0, y: 24 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    className="relative"
+  >
+    <div className="absolute -inset-2 bg-gradient-to-r from-brand-sky/5 via-amber-400/5 to-brand-sky/5 rounded-[3rem] blur-2xl" />
+    
+    <div className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-xl overflow-hidden border border-stone-100">
+      <div className="flex flex-col md:flex-row">
+        
+        {/* ─── LATO SINISTRO: IMMAGINE (OVERLAY ORIGINALE RIPRISTINATO) ─── */}
+        <div className="w-full md:w-2/5 relative h-56 md:h-auto overflow-hidden">
+          <img
+            src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp"
+            alt="Gift Experience Altour"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            loading="lazy"
+            decoding="async"
+            onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
+          />
+          {/* Overlay originale (gradiente dal basso) */}
+          <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
+          
+          {/* Contenuto overlay sull'immagine */}
+          <div className="absolute bottom-6 left-8 text-white z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <Star size={14} className="text-brand-sky fill-brand-sky" />
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/90">
+                Gift Experience
+              </span>
             </div>
+            <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
+              Regala un'<br />avventura.
+            </h3>
           </div>
-        </motion.div>
-      </section>
+        </div>
+        
+        {/* ─── LATO DESTRO: SELEZIONE IMPORTI ─── */}
+        <div className="w-full md:w-3/5 p-6 md:p-8 lg:p-10 bg-[#faf9f7]">
+          
+          {/* Header */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-[1px] w-6 bg-brand-sky" />
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky">
+                Voucher Regalo
+              </span>
+            </div>
+            <h4 className="text-lg md:text-xl font-black text-brand-stone uppercase tracking-tight">
+              Scegli l'importo
+            </h4>
+            <p className="text-[10px] text-stone-400 mt-1">
+              Utilizzabile per tutte le esperienze Altour
+            </p>
+          </div>
+          
+          {/* Griglia importi */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-5">
+            {PRESET_VOUCHERS.map(({ amount, tag, highlight }) => (
+              <motion.button
+                key={amount}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`, 'info')}
+                className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-all border-2 ${
+                  highlight
+                    ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100"
+                    : "border-stone-200 bg-white text-brand-stone hover:border-brand-sky hover:text-brand-sky hover:shadow-sm"
+                }`}
+              >
+                <span className="text-base font-black leading-none">{amount}€</span>
+                {tag && (
+                  <span className={`text-[7px] font-black uppercase tracking-wider mt-1 ${
+                    highlight ? "text-white/75" : "text-stone-400"
+                  }`}>
+                    {tag}
+                  </span>
+                )}
+              </motion.button>
+            ))}
+          </div>
+          
+          {/* Separatore */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-1 h-px bg-stone-200" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-stone-300">oppure</span>
+            <div className="flex-1 h-px bg-stone-200" />
+          </div>
+          
+          {/* Importo personalizzato - con colore brand Altour */}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato", 'info')}
+            className="w-full bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg hover:bg-brand-sky transition-all flex items-center justify-center gap-2"
+          >
+            <Gift size={12} />
+            Importo personalizzato
+          </motion.button>
+          
+          {/* Nota informativa */}
+          <p className="text-[8px] text-stone-300 text-center mt-4">
+            Valido 12 mesi per tutte le esperienze Altour
+          </p>
+        </div>
+        
+      </div>
+    </div>
+  </motion.div>
+</section>
 
       {/* ── 4. ATTIVITÀ OUTDOOR ─────────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 py-12 md:py-20">
@@ -448,11 +460,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                     {(activity as any).durata && (
                       <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
                         <Clock size={9} />{(activity as any).durata}
-                      </span>
-                    )}
-                    {(activity as any).difficolta && (
-                      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
-                        <Mountain size={9} />{(activity as any).difficolta}
                       </span>
                     )}
                   </div>

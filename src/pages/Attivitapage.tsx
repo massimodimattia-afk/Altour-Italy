@@ -155,7 +155,12 @@ function ActivityCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-        {esc && <FilosofiaBadge value={esc.filosofia} />}
+        {/* Badge filosofia - per escursioni usa 'filosofia', per campi usa 'slug' */}
+{isEsc ? (
+  esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
+) : (
+  (activity as Campo).slug && <FilosofiaBadge value={(activity as Campo).slug} />
+)}
       </div>
 
       {/* Contenuto */}
@@ -573,7 +578,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
               onClick={() => setVisibleCount(v => v + ITEMS_PER_LOAD)}
               className="flex items-center gap-2 px-6 py-3.5 bg-white rounded-2xl font-black uppercase text-[9px] tracking-widest text-stone-500 border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95 shadow-sm"
             >
-              <ChevronDown size={13} />
+              <ArrowRight size={13} />
               Altre {Math.min(ITEMS_PER_LOAD, filtered.length - visibleCount)}
             </button>
           </div>
@@ -623,7 +628,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                             onClick={() => { setCurrentQuestion(p => p - 1); setAnswers(p => p.slice(0, -1)); }}
                             className={`text-[10px] font-black uppercase tracking-widest py-2 pr-3 ${currentQuestion > 0 ? "text-stone-400" : "invisible"}`}
                           >
-                            ← Indietro
+                            <ArrowRight size={13} /> Indietro
                           </button>
                           <div className="flex items-center gap-1.5">
                             {QUIZ_QUESTIONS.map((_, i) => (
@@ -665,8 +670,8 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                           <h4 className="text-base font-black text-brand-stone uppercase italic leading-tight mb-4">{suggestedHike.titolo}</h4>
                           <div className="flex flex-col gap-2.5">
                             <button onClick={() => { setSelectedActivity(suggestedHike); setIsDetailOpen(true); }}
-                              className="w-full min-h-[48px] bg-brand-stone text-white rounded-2xl font-black uppercase text-xs tracking-widest active:scale-[0.97]">
-                              Visualizza dettagli
+                              className="w-full min-h-[48px] bg-brand-stone text-white rounded-2xl font-black uppercase text-xs tracking-widest active:scale-[0.97] flex items-center justify-center gap-2">
+                              Visualizza dettagli <ArrowRight size={13} />
                             </button>
                             <button onClick={() => onBookingClick(suggestedHike.titolo, 'info')}
                               className="w-full min-h-[48px] bg-brand-sky text-white rounded-2xl font-black uppercase text-xs tracking-widest active:scale-[0.97] flex items-center justify-center gap-2">
@@ -702,7 +707,9 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                           <motion.div key="q" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
                             <div className="flex justify-between items-center mb-6 gap-3">
                               {currentQuestion > 0
-                                ? <button onClick={() => { setCurrentQuestion(p => p - 1); setAnswers(p => p.slice(0, -1)); }} className="text-stone-400 text-[9px] font-black uppercase tracking-widest shrink-0">← Indietro</button>
+                                ? <button onClick={() => { setCurrentQuestion(p => p - 1); setAnswers(p => p.slice(0, -1)); }} className="text-stone-400 text-[9px] font-black uppercase tracking-widest shrink-0 flex items-center gap-2">
+                                  <ArrowRight size={13} /> Indietro
+                                </button>
                                 : <span />}
                               <div className="h-1 flex-grow bg-stone-200 rounded-full">
                                 <motion.div className="h-full bg-brand-sky rounded-full" animate={{ width: `${((currentQuestion + 1) / QUIZ_QUESTIONS.length) * 100}%` }} />
@@ -730,7 +737,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                             <div className="flex flex-col gap-3">
                               <button onClick={() => { setSelectedActivity(suggestedHike); setIsDetailOpen(true); }}
                                 className="bg-brand-stone text-white py-3.5 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95">
-                                Visualizza
+                                Visualizza <ArrowRight size={12} />
                               </button>
                               <button onClick={() => { setQuizStep("intro"); setCurrentQuestion(0); setAnswers([]); }}
                                 className="text-stone-400 font-black uppercase text-[9px] py-2 flex items-center justify-center gap-2">
