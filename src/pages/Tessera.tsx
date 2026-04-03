@@ -116,9 +116,9 @@ interface AchievementBadge {
 }
 
 const ACHIEVEMENT_BADGES: AchievementBadge[] = [
-  { id: "streak_tour", name: "Lupo dei Cammini", emoji: "🐺", description: "3 tour completati", color: "#e94544",
-    check: (e) => e.filter(x => x.categoria === "tour").length >= 3,
-    progress: (e) => ({ current: Math.min(e.filter(x => x.categoria === "tour").length, 3), total: 3 }) },
+  { id: "streak_tour", name: "Lupo dei Cammini", emoji: "🐺", description: "5 tour completati", color: "#e94544",
+    check: (e) => e.filter(x => x.categoria === "tour").length >= 5,
+    progress: (e) => ({ current: Math.min(e.filter(x => x.categoria === "tour").length, 5), total: 5 }) },
   { id: "assiduo", name: "Assiduo", emoji: "🎯", description: "8 giornate completate", color: "#01aa9f",
     check: (e) => e.filter(x => x.categoria === "giornata").length >= 8,
     progress: (e) => ({ current: Math.min(e.filter(x => x.categoria === "giornata").length, 8), total: 8 }) },

@@ -2,14 +2,12 @@ import { useEffect, useState } from "react";
 import {
   Calendar,
   Clock,
-  Mountain,
   TrendingUp,
   Gift,
   Star,
   Send,
   Shield,
   Users,
-  ArrowRight,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
@@ -30,6 +28,7 @@ interface Campo {
   immagine_url: string | null;
   prezzo?: number | null;
   durata?: string | null;
+  slug?: string | null;
   _tipo: "campo";
 }
 type FeaturedActivity = Escursione | Campo;
@@ -132,7 +131,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       try {
         const [{ data: allHikes }, { data: allCampi }, { data: crs }] = await Promise.all([
           supabase.from("escursioni").select("*").eq("is_active", true).order("data", { ascending: true }),
-          supabase.from("campi").select("id, titolo, descrizione, immagine_url, prezzo, durata"),
+          supabase.from("campi").select("id, titolo, descrizione, immagine_url, prezzo, durata, slug"),
           supabase.from("corsi").select("*").order("posizione", { ascending: true }),
         ]);
         const hikes = ((allHikes ?? []) as any[]).map(e => ({ ...e, _tipo: "escursione" as const }));
@@ -447,7 +446,12 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                     decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-                  {esc && <FilosofiaBadge value={esc.filosofia} />}
+                  {/* Badge filosofia */}
+{isEsc ? (
+  esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
+) : (
+  (activity as Campo).slug && <FilosofiaBadge value={(activity as Campo).slug} />
+)}
                 </div>
                 <div className="p-4 md:p-5 flex flex-col flex-grow">
                   <div className="flex items-center gap-2.5 mb-2 flex-wrap">
