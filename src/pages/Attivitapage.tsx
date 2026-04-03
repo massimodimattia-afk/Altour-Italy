@@ -30,6 +30,7 @@ interface Campo {
   durata?: string | null;
   difficolta?: string | null;
   lunghezza?: number | null;
+  filosofia?: string | null;
   _tipo: "campo";
 }
 
@@ -43,30 +44,30 @@ interface AttivitaPageProps {
 
 // ─── Quiz ─────────────────────────────────────────────────────────────────────
 const QUIZ_QUESTIONS = [
-  { q: "Con chi verrai?",   options: ["Solo", "Coppia", "Gruppo"] },
-  { q: "Livello Trekking?", options: ["Base", "Medio", "Pro"] },
-  { q: "Luogo ideale?",     options: ["Mare, lago o fiume", "Vette", "Boschi", "Prati o spazi aperti"] },
-  { q: "Sforzo fisico?",    options: ["Leggero", "Medio", "Intenso"] },
-  { q: "Cosa cerchi?",      options: ["Panorami", "Pace", "Tempo di qualità", "Racconto"] },
-  { q: "Quanto tempo?",     options: ["Ore", "Giorno", "Tour"] },
+  { q: "Con chi verrai?",                  options: ["Solo", "Coppia", "Famiglia", "Gruppo di amici"] },
+  { q: "Con quale frequenza esci in natura?", options: ["Mai", "1/3 volte l'anno", "Ogni mese", "Ogni settimana"] },
+  { q: "Luogo ideale?",                    options: ["Presenza di acqua", "Panoramico", "Bosco", "Poco frequentato"] },
+  { q: "Sforzo fisico?",                   options: ["Basso", "Moderato", "Medio", "Intenso"] },
+  { q: "Quanto tempo?",                    options: ["Mezza giornata", "Intera giornata", "Più giorni", "Una settimana"] },
+  { q: "Cosa cerchi?",                     options: ["Conoscere la meta", "Pace e serenità", "Tempo di qualità", "Nuove amicizie"] },
 ];
 
 const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
-  "Avventura":             { cerca: "Tempo di qualità", sforzo: "Intenso", livello: "Pro" },
-  "Benessere":             { cerca: "Pace", sforzo: "Leggero", compagnia: "Coppia" },
-  "Borghi più belli":      { luogo: "Boschi", tempo: "Giorno", cerca: "Racconto" },
-  "Cammini":               { luogo: "Boschi", tempo: "Tour", cerca: "Pace" },
-  "Educazione all'aperto": { livello: "Base", compagnia: "Gruppo" },
-  "Eventi":                { compagnia: "Gruppo", tempo: "Giorno" },
-  "Formazione":            { livello: "Base", tempo: "Tour", cerca: "Racconto" },
-  "Immersi nel verde":     { luogo: "Boschi", cerca: "Pace" },
-  "Luoghi dello spirito":  { cerca: "Pace", compagnia: "Solo" },
-  "Novità":                { cerca: "Tempo di qualità", compagnia: "Gruppo", tempo: "Giorno" },
-  "Speciali":              { cerca: "Tempo di qualità", compagnia: "Gruppo" },
-  "Tra mare e cielo":      { luogo: "Mare, lago o fiume", cerca: "Panorami" },
-  "Trek urbano":           { tempo: "Ore", sforzo: "Leggero" },
-  "Tracce sulla neve":     { luogo: "Vette", sforzo: "Intenso", tempo: "Giorno" },
-  "Cielo stellato":        { cerca: "Panorami", tempo: "Tour", compagnia: "Solo" },
+  "Avventura":             { cerca: "Tempo di qualità", sforzo: "Intenso",    frequenza: "Ogni settimana" },
+  "Benessere":             { cerca: "Pace e serenità",  sforzo: "Basso",      compagnia: "Coppia" },
+  "Borghi più belli":      { luogo: "Bosco",            tempo: "Intera giornata", cerca: "Conoscere la meta" },
+  "Cammini":               { luogo: "Bosco",            tempo: "Più giorni",  cerca: "Pace e serenità" },
+  "Educazione all'aperto": { frequenza: "Mai",          compagnia: "Famiglia" },
+  "Eventi":                { compagnia: "Gruppo di amici", tempo: "Intera giornata" },
+  "Formazione":            { frequenza: "Mai",          tempo: "Più giorni",  cerca: "Conoscere la meta" },
+  "Immersi nel verde":     { luogo: "Bosco",            cerca: "Pace e serenità" },
+  "Luoghi dello spirito":  { cerca: "Pace e serenità",  compagnia: "Solo" },
+  "Novità":                { cerca: "Tempo di qualità", compagnia: "Gruppo di amici", tempo: "Intera giornata" },
+  "Speciali":              { cerca: "Tempo di qualità", compagnia: "Gruppo di amici" },
+  "Tra mare e cielo":      { luogo: "Presenza di acqua", cerca: "Conoscere la meta" },
+  "Trek urbano":           { tempo: "Mezza giornata",   sforzo: "Basso" },
+  "Tracce sulla neve":     { luogo: "Panoramico",       sforzo: "Intenso",    tempo: "Intera giornata" },
+  "Cielo stellato":        { cerca: "Pace e serenità",  tempo: "Una settimana", compagnia: "Solo" },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -115,7 +116,9 @@ function campoToDetail(campo: Campo) {
     immagine_url: campo.immagine_url, gallery_urls: null,
     difficolta: campo.difficolta ?? null, durata: campo.durata ?? null,
     lunghezza: campo.lunghezza ?? null, attrezzatura_consigliata: null,
-    attrezzatura: campo.servizi?.join(", ") ?? null, _tipo: "campo" as const,
+    attrezzatura: campo.servizi?.join(", ") ?? null,
+    filosofia: campo.filosofia ?? null,
+    _tipo: "campo" as const,
   };
 }
 
@@ -278,7 +281,8 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
 
     const pool = quizPoolRef.current;
     if (!pool.length) { setQuizStep("intro"); return; }
-    const [compagnia, livello, luogo, sforzo, cerca, tempo] = newAnswers;
+    // Ordine domande: compagnia, frequenza, luogo, sforzo, tempo, cerca
+    const [compagnia, frequenza, luogo, sforzo, tempo, cerca] = newAnswers;
     let bestMatch = pool[0], maxScore = -Infinity;
 
     pool.forEach(esc => {
@@ -289,35 +293,61 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
       const cat = esc.categoria?.toLowerCase() || "";
       const fs = FILOSOFIA_QUIZ_MAP[esc.filosofia ?? ""] ?? {};
 
+      // Segnali filosofia
       if (fs.compagnia === compagnia) score += 8;
-      if (fs.livello === livello)     score += 8;
+      if (fs.frequenza === frequenza) score += 8;
       if (fs.luogo === luogo)         score += 8;
       if (fs.sforzo === sforzo)       score += 8;
-      if (fs.cerca === cerca)         score += 8;
       if (fs.tempo === tempo)         score += 8;
+      if (fs.cerca === cerca)         score += 8;
 
+      // Frequenza → difficoltà DB
       if (diffDB) {
-        if (livello === "Base")  { if (diffDB === "Facile") score += 10; else if (diffDB === "Facile-Media") score += 5; else if (diffDB === "Media") score -= 8; else score -= 15; }
-        if (livello === "Medio") { if (diffDB === "Media") score += 10; else if (diffDB === "Facile-Media" || diffDB === "Media-Impegnativa") score += 7; else if (diffDB === "Facile") score += 3; }
-        if (livello === "Pro")   { if (diffDB === "Impegnativa") score += 10; else if (diffDB === "Media-Impegnativa") score += 8; else if (diffDB === "Media") score += 4; }
+        if (frequenza === "Mai" || frequenza === "1/3 volte l'anno") {
+          if (diffDB === "Facile") score += 10;
+          else if (diffDB === "Facile-Media") score += 5;
+          else if (diffDB === "Media") score -= 8;
+          else score -= 15;
+        }
+        if (frequenza === "Ogni mese") {
+          if (diffDB === "Media") score += 10;
+          else if (diffDB === "Facile-Media" || diffDB === "Media-Impegnativa") score += 7;
+          else if (diffDB === "Facile") score += 3;
+        }
+        if (frequenza === "Ogni settimana") {
+          if (diffDB === "Impegnativa") score += 10;
+          else if (diffDB === "Media-Impegnativa") score += 8;
+          else if (diffDB === "Media") score += 4;
+        }
       }
-      if (tempo === "Ore" && cat === "giornata") score += 8;
-      else if (tempo === "Giorno" && cat === "giornata") score += 8;
-      else if (tempo === "Tour" && cat === "tour") score += 8;
+
+      // Tempo → categoria DB
+      if (tempo === "Mezza giornata" && cat.includes("mezza")) score += 8;
+      else if (tempo === "Intera giornata" && (cat === "giornata" || cat.includes("intera"))) score += 8;
+      else if (tempo === "Più giorni" && (cat === "giornata" || cat === "tour")) score += 5;
+      else if (tempo === "Una settimana" && cat === "tour") score += 8;
       else if (cat) score -= 5;
 
+      // Sforzo → difficoltà DB
       if (diffDB) {
-        if (sforzo === "Leggero" && (diffDB === "Facile" || diffDB === "Facile-Media")) score += 4;
-        if (sforzo === "Medio"   && (diffDB === "Facile-Media" || diffDB === "Media"))  score += 4;
-        if (sforzo === "Intenso" && (diffDB === "Media-Impegnativa" || diffDB === "Impegnativa")) score += 4;
+        if (sforzo === "Basso"     && (diffDB === "Facile" || diffDB === "Facile-Media")) score += 4;
+        if (sforzo === "Moderato"  && (diffDB === "Facile-Media" || diffDB === "Media"))  score += 4;
+        if (sforzo === "Medio"     && diffDB === "Media") score += 4;
+        if (sforzo === "Intenso"   && (diffDB === "Media-Impegnativa" || diffDB === "Impegnativa")) score += 4;
       }
-      const luogoL = luogo.toLowerCase();
-      if (luogoL === "mare, lago o fiume" && (t.includes("lago") || t.includes("mare") || d.includes("acqua"))) score += 4;
-      if (luogoL === "vette"  && (t.includes("cima") || t.includes("vetta") || d.includes("panorama"))) score += 4;
-      if (luogoL === "boschi" && (d.includes("bosco") || d.includes("foresta"))) score += 4;
-      if (cerca === "Panorami" && d.includes("panoram")) score += 3;
-      if (cerca === "Pace"     && d.includes("pace"))    score += 3;
-      if (cerca === "Racconto" && d.includes("storia"))  score += 3;
+
+      // Luogo → parole chiave titolo/descrizione
+      if (luogo === "Presenza di acqua" && (t.includes("lago") || t.includes("mare") || t.includes("fiume") || d.includes("acqua"))) score += 4;
+      if (luogo === "Panoramico"        && (t.includes("cima") || t.includes("vetta") || d.includes("panoram"))) score += 4;
+      if (luogo === "Bosco"             && (d.includes("bosco") || d.includes("foresta"))) score += 4;
+      if (luogo === "Poco frequentato"  && (d.includes("nascost") || d.includes("solitari") || d.includes("selvag"))) score += 4;
+
+      // Cosa cerchi → parole chiave descrizione
+      if (cerca === "Pace e serenità"    && d.includes("pace"))    score += 3;
+      if (cerca === "Conoscere la meta"  && (d.includes("storia") || d.includes("cultura") || d.includes("scopri"))) score += 3;
+      if (cerca === "Tempo di qualità"   && (d.includes("esperienz") || d.includes("emoziont"))) score += 3;
+      if (cerca === "Nuove amicizie"     && (d.includes("grup") || d.includes("insieme") || d.includes("social"))) score += 3;
+
       if (shownSuggestions.includes(esc.id)) score -= 12;
       score += Math.random() * 1.5;
       if (score > maxScore) { maxScore = score; bestMatch = esc; }
