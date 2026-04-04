@@ -21,7 +21,8 @@ export interface Activity {
   difficolta?: string | null;
   durata?: string | null;
   lunghezza?: number | null;
-  dislivello?: string | null;
+  lunghezza_tour?: string | null;
+  dislivello?: number | null;
   categoria?: string | null;
   filosofia?: string | null;
   attrezzatura_consigliata?: string | null;
@@ -74,7 +75,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
 
   const images = [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[];
   const hasMap = Boolean(activity.lat && activity.lng);
-  const LunghezzaIcon = activity.categoria?.toLowerCase() === "tour" ? Route : Ruler;
+  const isTour = activity.categoria?.toLowerCase() === "tour";
 
   const formatEquipmentList = (equipment: string) => {
     const items = equipment.split(/[,\n]+/).map(s => s.trim()).filter(s => s);
@@ -123,36 +124,41 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             {/* Content */}
             <div className="md:w-1/2 flex flex-col overflow-hidden bg-white">
 
-              {/* Header — titolo + badge tecnici (senza durata) */}
+              {/* Header — titolo + badge tecnici */}
               <div className="px-6 pt-6 pb-4 border-b border-stone-50">
                 <h2 className="text-xl md:text-2xl font-black text-brand-stone uppercase leading-tight mb-2">
                   {activity.titolo}
                 </h2>
                 <div className="flex flex-wrap gap-3 text-[10px] font-black uppercase text-stone-400">
+
+                  {/* Difficolta — sempre visibile se presente */}
                   {activity.difficolta && (
                     <span className="flex items-center gap-1">
                       <Mountain size={12} className="text-brand-sky" /> {activity.difficolta}
                     </span>
                   )}
-                  {activity.lunghezza != null && (
-                    <span className="flex items-center gap-1">
-                      <LunghezzaIcon size={12} className="text-brand-sky" /> {activity.lunghezza}
-                    </span>
-                  )}
-                    {activity.dislivello != null && (
+
+                  {/* Dislivello — sempre visibile se presente */}
+                  {!isTour && activity.dislivello != null && (
                     <span className="flex items-center gap-1">
                       <ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m
                     </span>
                   )}
-                  {activity.min_partecipanti != null && (
-                    <div
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(129,204,176,0.12)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.28)" }}
-                    >
-                      <Users size={10} />
-                      Min. {activity.min_partecipanti} persone
-                    </div>
+
+                  {/* Lunghezza numerica (km) — solo per NON-tour */}
+                  {!isTour && activity.lunghezza != null && (
+                    <span className="flex items-center gap-1">
+                      <Ruler size={12} className="text-brand-sky" /> {activity.lunghezza} km
+                    </span>
                   )}
+
+                  {/* Lunghezza testuale — solo per tour */}
+                  {isTour && activity.lunghezza_tour && (
+                    <span className="flex items-center gap-1">
+                      <Route size={12} className="text-brand-sky" /> {activity.lunghezza_tour}
+                    </span>
+                  )}
+
                 </div>
               </div>
 
@@ -169,7 +175,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
                       <Backpack size={14} className="text-brand-sky" />
                       {activity._tipo === 'corso' ? "Di cosa parleremo"
-                        : activity._tipo === 'campo' ? "Attività previste"
+                        : activity._tipo === 'campo' ? "Attivita previste"
                         : "Equipaggiamento consigliato"}
                     </h4>
                     {formatEquipmentList(activity.attrezzatura)}
@@ -179,13 +185,18 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} titolo={activity.titolo} />}
               </div>
 
-              {/* Footer */}
+              {/* Footer — quota + min_partecipanti + CTA */}
               <div className="px-4 py-3 md:px-6 md:py-6 border-t border-stone-100 flex items-center gap-3 bg-stone-50/50">
                 <div className="shrink-0">
                   <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-0.5">Quota</span>
                   <span className="text-2xl font-black text-brand-stone leading-none">
                     €{activity.prezzo || "—"}
                   </span>
+                  {activity.min_partecipanti != null && (
+                    <span className="flex items-center gap-1 mt-1 text-[8px] font-black uppercase tracking-wide" style={{ color: "#81ccb0" }}>
+                      <Users size={9} /> min. {activity.min_partecipanti} pers.
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => onBookingClick(activity.titolo, 'prenota')}

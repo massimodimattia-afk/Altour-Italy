@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Calendar, Clock,
-  ChevronDown, ArrowRight, RefreshCcw, Star, X,
+  Calendar, Clock, ArrowRight, RefreshCcw, Star, X,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
