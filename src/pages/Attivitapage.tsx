@@ -30,6 +30,8 @@ interface Campo {
   difficolta?: string | null;
   lunghezza?: number | null;
   filosofia?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   _tipo: "campo";
 }
 
@@ -264,6 +266,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         servizi: typeof row.servizi === "string" ? safeParseArray(row.servizi) : row.servizi,
         slug: row.slug, prezzo: row.prezzo ?? null, durata: row.durata ?? null,
         difficolta: row.difficolta ?? null, lunghezza: row.lunghezza ?? null,
+        lat: row.lat ?? null, lng: row.lng ?? null,
         _tipo: "campo" as const,
       })));
       setLoading(false);

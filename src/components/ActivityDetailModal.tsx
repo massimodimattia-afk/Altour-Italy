@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, TrendingUp, 
-  Briefcase as Backpack, Ruler, Route, Mountain, MapPin, Users, ArrowUp
+  Briefcase as Backpack, Ruler, Route, Mountain, MapPin, Users, ArrowUp, ExternalLink
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
@@ -43,20 +43,48 @@ interface ActivityDetailModalProps {
 
 const IMG_FALLBACK = "/altour-logo.png";
 
-function MiniMap({ lat, lng, titolo }: { lat: number; lng: number; titolo: string }) {
-  const delta = 0.018;
-  const bbox = `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`;
-  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+function MiniMap({ lat, lng }: { lat: number; lng: number }) {
+  // 1. Assicuriamoci che siano numeri per evitare crash della mappa (NaN)
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  
+  if (isNaN(nLat) || isNaN(nLng) || (nLat === 0 && nLng === 0)) return null;
+
+  // 2. Calcolo area per OpenStreetMap
+  const delta = 0.005;
+  const bbox = `${nLng - delta},${nLat - delta},${nLng + delta},${nLat + delta}`;
+  const osmSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${nLat},${nLng}`;
+  
+  // 3. Link ufficiale e sicuro per Google Maps
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${nLat},${nLng}`;
+  
   return (
-    <div className="rounded-2xl overflow-hidden border border-stone-100 relative mt-4">
-      <div className="flex items-center gap-2 px-4 py-3 bg-stone-50 border-b border-stone-100">
-        <MapPin size={13} className="text-brand-sky shrink-0" />
-        <span className="text-[10px] font-black uppercase tracking-widest text-brand-stone">Punto di partenza</span>
+    <div className="rounded-2xl overflow-hidden border border-stone-100 relative mt-4 shadow-sm">
+      <div className="flex items-center justify-between px-4 py-3 bg-stone-50 border-b border-stone-100">
+        <div className="flex items-center gap-2">
+          <MapPin size={13} className="text-brand-sky shrink-0" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-brand-stone">Punto di partenza</span>
+        </div>
+        <a 
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[9px] font-black uppercase text-brand-sky flex items-center gap-1 hover:text-brand-stone transition-colors"
+        >
+          Apri App <ExternalLink size={10} />
+        </a>
       </div>
-      <div className="relative h-48">
-        <iframe title={titolo} src={src} width="100%" height="100%" style={{ border: "none" }} />
-        <a href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
-          target="_blank" rel="noopener noreferrer" className="absolute inset-0 z-10" />
+      
+      {/* Contenitore Mappa OpenStreetMap */}
+      <div className="relative h-48 bg-stone-100 w-full">
+        <iframe 
+          title="Mappa punto di partenza"
+          src={osmSrc} 
+          width="100%" 
+          height="100%" 
+          style={{ border: "none" }}
+          loading="lazy"
+        />
       </div>
     </div>
   );
@@ -131,28 +159,28 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 </h2>
                 <div className="flex flex-wrap gap-3 text-[10px] font-black uppercase text-stone-400">
 
-                  {/* Difficolta — sempre visibile se presente */}
+                  {/* Difficolta */}
                   {activity.difficolta && (
                     <span className="flex items-center gap-1">
                       <Mountain size={12} className="text-brand-sky" /> {activity.difficolta}
                     </span>
                   )}
 
-                  {/* Dislivello — sempre visibile se presente */}
+                  {/* Dislivello */}
                   {!isTour && activity.dislivello != null && (
                     <span className="flex items-center gap-1">
                       <ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m
                     </span>
                   )}
 
-                  {/* Lunghezza numerica (km) — solo per NON-tour */}
+                  {/* Lunghezza numerica */}
                   {!isTour && activity.lunghezza != null && (
                     <span className="flex items-center gap-1">
                       <Ruler size={12} className="text-brand-sky" /> {activity.lunghezza} km
                     </span>
                   )}
 
-                  {/* Lunghezza testuale — solo per tour */}
+                  {/* Lunghezza testuale */}
                   {isTour && activity.lunghezza_tour && (
                     <span className="flex items-center gap-1">
                       <Route size={12} className="text-brand-sky" /> {activity.lunghezza_tour}
@@ -182,10 +210,11 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   </div>
                 )}
 
-                {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} titolo={activity.titolo} />}
+                {/* Qui carica la Mappa Corretta */}
+                {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} />}
               </div>
 
-              {/* Footer — quota + min_partecipanti + CTA */}
+              {/* Footer */}
               <div className="px-4 py-3 md:px-6 md:py-6 border-t border-stone-100 flex items-center gap-3 bg-stone-50/50">
                 <div className="shrink-0">
                   <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-0.5">Quota</span>
