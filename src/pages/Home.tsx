@@ -9,6 +9,7 @@ import {
   Send,
   Shield,
   Users,
+  ArrowRight,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
@@ -168,73 +169,121 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
     <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
 
       {/* ── 1. HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative h-[80vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
-        <div className="absolute inset-0">
+      <section className="relative h-[100svh] md:h-screen flex items-center justify-center overflow-hidden">
+
+        {/* Sfondo con zoom animato all'ingresso */}
+        <motion.div
+          className="absolute inset-0"
+          initial={{ scale: 1.08 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
           <img
             src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458.webp"
-            className="w-full h-full object-cover object-[center_20%] brightness-[0.8] contrast-[1.02] transition-transform duration-[20s] scale-105"
+            className="absolute inset-0 w-full h-full object-cover object-[center_20%]"
             alt="Dolomiti Altour Italy"
             loading="eager"
             fetchPriority="high"
             decoding="async"
             onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
           />
-          {/* Opzione A — trasparente in alto, fade verso sfondo solo da metà in giù */}
-          {/* Stessa luminosità dell'intro (bg-black/20) + fade verso sfondo solo nell'ultimo 20% */}
-          <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[78%] to-[#f5f2ed]" />
-        </div>
+        </motion.div>
 
-        <div className="relative z-10 text-center max-w-5xl w-full px-2 mt-[-5vh]">
+        {/* Overlay: fade-in separato per non aspettare lo zoom */}
+        <motion.div
+          className="absolute inset-0 bg-black/30"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1.0 }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[70%] to-[#f5f2ed]" />
+
+        {/* Contenuto */}
+        <div className="relative z-10 text-center max-w-4xl w-full px-4 flex flex-col items-center">
+
+          {/* Logo */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative inline-block mb-6 md:mb-10"
+            initial={{ opacity: 0, scale: 0.85, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
+            className="relative inline-block mb-5 md:mb-7"
           >
-            {/* Fix #6: blur contenuto dentro l'elemento, non overflow su mobile */}
-            <div className="absolute inset-0 bg-white/5 rounded-full blur-2xl opacity-40" />
+            <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl opacity-60" />
             <img
               src="/altour-logo.png"
-              className="relative w-20 h-20 md:w-44 md:h-44 mx-auto rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-white/10 object-cover"
-              alt="Logo Altour"
+              className="relative w-20 h-20 md:w-36 md:h-36 mx-auto rounded-[1.5rem] md:rounded-[2rem] shadow-2xl border border-white/15 object-cover"
+              alt="Logo Altour Italy"
             />
           </motion.div>
 
-          <div className="flex flex-col items-center mb-10 md:mb-12">
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-2xl leading-none"
-            >
+          {/* Titolo */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.5, ease: "easeOut" }}
+            className="mb-3"
+          >
+            <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter drop-shadow-2xl leading-none">
               Altour
-            </motion.h1>
-            {/* Fix #7: text-xs su mobile invece di text-[10px], tracking ridotto */}
-            <p className="text-xs md:text-2xl font-bold uppercase tracking-[0.3em] md:tracking-[0.5em] text-stone-200 opacity-90 mt-2">
+            </h1>
+            <p className="text-sm md:text-xl font-bold uppercase tracking-[0.4em] text-white/75 mt-2">
               Italy
             </p>
-          </div>
+          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
+          {/* Claim */}
+          <motion.p
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white/10 backdrop-blur-xl py-4 md:py-6 px-2 md:px-8 rounded-[1.5rem] md:rounded-full border border-white/20 shadow-2xl mx-auto max-w-4xl"
+            transition={{ duration: 0.6, delay: 0.7, ease: "easeOut" }}
+            className="text-white/65 text-sm md:text-base font-medium max-w-xs md:max-w-md mx-auto mb-8 leading-relaxed"
           >
-            <div className="grid grid-cols-3 gap-0 divide-x divide-white/10">
+            Formazione ed attività outdoor.
+          </motion.p>
+
+          {/* CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.9, ease: "easeOut" }}
+            className="flex flex-col sm:flex-row items-stretch gap-3 w-full max-w-sm mx-auto mb-10 md:mb-12"
+          >
+            <button
+              onClick={() => onNavigate("attivitapage")}
+              className="flex-1 flex items-center justify-center gap-2 bg-white/12 hover:bg-white/22 backdrop-blur-md text-white font-black uppercase text-[10px] tracking-widest py-4 px-5 rounded-2xl border border-white/25 active:scale-95 transition-all"
+            >
+              Esplora Attività <ArrowRight size={12} />
+            </button>
+            <button
+              onClick={() => onNavigate("corsi")}
+              className="flex-1 flex items-center justify-center gap-2 bg-white/12 hover:bg-white/22 backdrop-blur-md text-white font-black uppercase text-[10px] tracking-widest py-4 px-5 rounded-2xl border border-white/25 active:scale-95 transition-all"
+            >
+              Vai all'Accademia <ArrowRight size={12} />
+            </button>
+          </motion.div>
+
+          {/* Stats bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1.1, ease: "easeOut" }}
+            className="bg-white/10 backdrop-blur-xl py-4 px-4 md:px-8 rounded-[1.5rem] md:rounded-full border border-white/20 shadow-xl w-full max-w-md mx-auto"
+          >
+            <div className="grid grid-cols-3 gap-0 divide-x divide-white/15">
               {[
-                { value: "10 anni", label: "Esperienza", icon: <TrendingUp size={14} /> },
-                { value: "AIGAE",   label: "Guide",       icon: <Shield size={14} /> },
-                { value: "800+",    label: "Tesserati",   icon: <Users size={14} /> },
-              ].map((stat, index) => (
-                <div key={index} className="flex flex-col items-center justify-center px-1">
+                { value: "10 anni", label: "Esperienza", icon: <TrendingUp size={13} /> },
+                { value: "AIGAE",   label: "Guide",       icon: <Shield size={13} /> },
+                { value: "800+",    label: "Tesserati",   icon: <Users size={13} /> },
+              ].map((stat, i) => (
+                <div key={i} className="flex flex-col items-center justify-center px-2">
                   <div className="text-brand-sky mb-1 md:hidden">{stat.icon}</div>
-                  <p className="text-xs md:text-2xl font-black text-white leading-none">{stat.value}</p>
-                  {/* Fix #8: text-[9px] invece di text-[7px] — soglia minima leggibilità */}
-                  <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-stone-300 font-bold mt-1">{stat.label}</p>
+                  <p className="text-sm md:text-xl font-black text-white leading-none">{stat.value}</p>
+                  <p className="text-[9px] uppercase tracking-wider text-white/50 font-bold mt-1">{stat.label}</p>
                 </div>
               ))}
             </div>
           </motion.div>
+
         </div>
       </section>
 
@@ -249,7 +298,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               onClick={() => onNavigate("corsi")}
               className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
             >
-              Vedi tutti i corsi <TrendingUp size={14} />
+              Vedi tutto <TrendingUp size={14} />
             </button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">

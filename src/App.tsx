@@ -7,34 +7,23 @@ import Corsi from './pages/Corsi';
 import Tessera from './pages/Tessera';
 import Legal from './pages/Legal';
 import BookingModal from './components/BookingModal';
-import AltourImmersiveIntro from './components/AltourImmersiveIntro';
 import PWAPrompt from "./components/PWAprompt";
 
 type PageType =
   | 'home'
   | 'corsi'
-  | 'attivita'
+  | 'attivitapage'
   | 'tessera'
   | 'legal-privacy'
   | 'legal-cookie'
   | 'legal-termini';
 
 const VALID_PAGES: PageType[] = [
-  'home', 'corsi', 'attivita', 'tessera',
+  'home', 'corsi', 'attivitapage', 'tessera',
   'legal-privacy', 'legal-cookie', 'legal-termini',
 ];
 
-const INTRO_TS_KEY = "altour-intro-ts";
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-function shouldShowIntro(): boolean {
-  const ts = localStorage.getItem(INTRO_TS_KEY);
-  if (!ts) return true;
-  return Date.now() - parseInt(ts, 10) > DAY_MS;
-}
-
 function App() {
-  const [showIntro, setShowIntro]       = useState(() => shouldShowIntro());
   const [currentPage, setCurrentPage]   = useState<PageType>("home");
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const [selectedTitle, setSelectedTitle] = useState('');
@@ -46,10 +35,9 @@ function App() {
   }, [currentPage]);
 
   const handleNavigate = (page: string) => {
-    // Redirect vecchi slug per retrocompatibilità
     const redirect: Record<string, PageType> = {
-      escursioni: 'attivita',
-      campi: 'attivita',
+      escursioni: 'attivitapage',
+      campi: 'attivitapage',
     };
     const target = redirect[page] ?? page;
     if (VALID_PAGES.includes(target as PageType)) {
@@ -68,16 +56,11 @@ function App() {
     setTimeout(() => setSelectedTitle(''), 300);
   };
 
-  const handleIntroComplete = () => {
-    localStorage.setItem(INTRO_TS_KEY, String(Date.now()));
-    setShowIntro(false);
-  };
-
   const renderPage = () => {
     switch (currentPage) {
       case 'home':          return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'corsi':         return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'attivita':      return <AttivitaPage onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'attivitapage':      return <AttivitaPage onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'tessera':       return <Tessera />;
       case 'legal-privacy': return <Legal initialTab="privacy" />;
       case 'legal-cookie':  return <Legal initialTab="cookie" />;
@@ -88,10 +71,6 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 font-sans antialiased">
-      {showIntro && (
-        <AltourImmersiveIntro onComplete={handleIntroComplete} />
-      )}
-
       <Header currentPage={currentPage} onNavigate={handleNavigate} />
 
       <main className="flex-grow relative">
