@@ -171,7 +171,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       <section className="relative h-[80vh] md:h-screen flex items-center justify-center py-10 px-4 md:px-8 overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458%20(1).webp"
+            src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458.webp"
             className="w-full h-full object-cover object-[center_20%] brightness-[0.8] contrast-[1.02] transition-transform duration-[20s] scale-105"
             alt="Dolomiti Altour Italy"
             loading="eager"

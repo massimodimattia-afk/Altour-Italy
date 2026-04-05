@@ -725,19 +725,38 @@ export default function Tessera() {
     if (!REDEEM_CODE_REGEX.test(normalized)) { setRedeemError("Formato codice non valido."); return; }
     setIsVerifying(true); setRedeemError(""); setRedeemAttempts((n) => n + 1);
 
-    // 1 — Verifica il codice
+    // 1 — Trova l'escursione che contiene questo codice nell'array codici_riscatto
     const { data, error } = await supabase
-      .from("codici_riscatto")
-      .select("id, codice, used_by, titolo, filosofia, categoria, difficolta")
-      .eq("codice", normalized)
+      .from("escursioni")
+      .select("id, titolo, filosofia, categoria, difficolta, codici_usati")
+      .contains("codici_riscatto", [normalized])
       .single();
 
     if (error || !data) { setRedeemError("Codice non valido."); setIsVerifying(false); return; }
-    if (data.used_by && data.used_by !== userTessera.codice_tessera) { setRedeemError("Questo codice è già stato utilizzato."); setIsVerifying(false); return; }
-    if (data.used_by === userTessera.codice_tessera) { setRedeemError("Hai già riscattato questo scarpone."); setIsVerifying(false); return; }
-    if (userTessera.escursioni_completate?.some((e) => e.titolo === data.titolo)) { setRedeemError("Hai già riscattato questa escursione."); setIsVerifying(false); return; }
 
-    // 2 — Salva direttamente senza step intermedio
+    // Codice già usato da qualcuno
+    if ((data.codici_usati as string[] | null)?.includes(normalized)) {
+      setRedeemError("Questo codice è già stato utilizzato.");
+      setIsVerifying(false);
+      return;
+    }
+    // Utente ha già questa escursione sulla tessera
+    if (userTessera.escursioni_completate?.some((e) => e.titolo === data.titolo)) {
+      setRedeemError("Hai già riscattato questa escursione.");
+      setIsVerifying(false);
+      return;
+    }
+
+    // 2 — Marca il codice come usato (atomico via RPC — guard race condition)
+    const { data: marked } = await supabase
+      .rpc("usa_codice_riscatto", { p_esc_id: data.id, p_codice: normalized });
+    if (!marked) {
+      setRedeemError("Questo codice è già stato utilizzato.");
+      setIsVerifying(false);
+      return;
+    }
+
+    // 3 — Salva sulla tessera
     navigator.vibrate?.(50);
     const color = getFilosofiaColor(data.filosofia);
     const newEntry: EscursioneCompletata = {
@@ -759,13 +778,6 @@ export default function Tessera() {
 
     const { data: saved, error: saveErr } = await supabase.from("tessere").update(updatePayload).eq("id", userTessera.id).select();
     if (saveErr || !saved) { setRedeemError("Errore nel salvataggio. Riprova."); setIsVerifying(false); return; }
-
-    // Marca il codice come usato — atomico, con guard race condition
-    await supabase
-      .from("codici_riscatto")
-      .update({ used_by: userTessera.codice_tessera, used_at: new Date().toISOString() })
-      .eq("id", data.id)
-      .is("used_by", null);
 
     const updatedTessera = saved[0] as UserTessera;
     setUserTessera(updatedTessera);
