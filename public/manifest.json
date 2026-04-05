@@ -1,8 +1,8 @@
 {
   "name": "Altour Italy",
   "short_name": "Altour",
-  "description": "Formazione attività outdoor - Scopri le nostre proposte",
-  "start_url": "/",
+  "description": "Formazione e attività outdoor in montagna con guide esperte",
+  "start_url": "/?utm_source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
@@ -10,6 +10,7 @@
   "theme_color": "#0ea5e9",
   "orientation": "portrait-primary",
   "lang": "it-IT",
+  "dir": "ltr",
   "categories": ["travel", "sports", "education", "lifestyle"],
   "icons": [
     {
@@ -46,19 +47,25 @@
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icon-384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
@@ -83,21 +90,39 @@
       "short_name": "Tessera",
       "description": "Accedi alla tua tessera Altour",
       "url": "/tessera",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Attività Outdoor",
       "short_name": "Attività",
       "description": "Scopri le prossime avventure",
       "url": "/attivita",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Accademia",
       "short_name": "Corsi",
       "description": "Formazione e corsi di outdoor",
       "url": "/corsi",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "prefer_related_applications": false,
@@ -105,8 +130,5 @@
   "handle_links": "preferred",
   "launch_handler": {
     "client_mode": ["focus-existing", "auto"]
-  },
-  "edge_side_panel": {
-    "preferred_width": 400
   }
 }
