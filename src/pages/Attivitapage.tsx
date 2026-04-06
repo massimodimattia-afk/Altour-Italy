@@ -38,7 +38,7 @@ interface Campo {
 type Activity = Escursione | Campo;
 type FilterKey = "tutte" | "mezza_giornata" | "intera_giornata" | "tour" | "campi";
 
-interface AttivitaPageProps {
+interface AttivitapageProps {
   onNavigate: (page: string) => void;
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
@@ -226,7 +226,7 @@ const SkeletonCard = () => (
 );
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
+export default function Attivitapage({ onBookingClick }: AttivitapageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
   const [campi, setCampi]           = useState<Campo[]>([]);
   const [loading, setLoading]       = useState(true);

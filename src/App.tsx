@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import AttivitaPage from './pages/Attivitapage';
+import Attivitapage from './pages/Attivitapage';
 import Corsi from './pages/Corsi';
 import Tessera from './pages/Tessera';
 import Legal from './pages/Legal';
@@ -60,7 +60,7 @@ function App() {
     switch (currentPage) {
       case 'home':          return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'corsi':         return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'attivitapage':      return <AttivitaPage onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'attivitapage':      return <Attivitapage onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'tessera':       return <Tessera />;
       case 'legal-privacy': return <Legal initialTab="privacy" />;
       case 'legal-cookie':  return <Legal initialTab="cookie" />;

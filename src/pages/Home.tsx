@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   Calendar,
   Clock,
-  Mountain,
   TrendingUp,
   Gift,
   Star,
@@ -499,12 +498,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                         <Clock size={9} />{(activity as any).durata}
                       </span>
                     )}
-                    {(activity as any).difficolta && (
-                      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
-                        <Mountain size={9} />{(activity as any).difficolta}
-                      </span>
-                    )}
-                  </div>
+                    </div>
                   <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
                     {activity.titolo}
                   </h3>
