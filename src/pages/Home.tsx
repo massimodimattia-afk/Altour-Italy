@@ -138,7 +138,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         const campi = ((allCampi ?? []) as any[]).map(c => ({ ...c, _tipo: "campo" as const }));
         const mixed = [...hikes, ...campi].sort(() => Math.random() - 0.5);
         setFeaturedActivities(mixed.slice(0, isMobile ? 2 : 3));
-        if (crs) setCourses(crs as Corso[]);
+        if (crs) {
+        const corsiConTipo = (crs as any[]).map(c => ({ ...c, _tipo: "corso" as const }));
+        setCourses(corsiConTipo);
+      }
       } catch (e) {
         console.error(e);
       }

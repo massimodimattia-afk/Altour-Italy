@@ -154,7 +154,7 @@ function scoreEscursione(esc: Escursione, selectedItems: string[]): number {
     if (cerca) {
       if (cerca === "Pace e serenità"   && d.includes("pace")) score += 3;
       if (cerca === "Conoscere la meta" && (d.includes("storia") || d.includes("cultura") || d.includes("scopri"))) score += 3;
-      if (cerca === "Tempo di qualità"  && (d.includes("esperienz") || d.includes("emoziont"))) score += 3;
+      if (cerca === "Tempo di qualità"  && (d.includes("esperienz") || d.includes("emozione"))) score += 3;
     }
   });
 
@@ -294,7 +294,7 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
   const currentProfile = PROFILI[profile];
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto mt-12 md:mt-20 rounded-[2.5rem] overflow-hidden border border-stone-100 shadow-2xl"
+    <div className="relative w-full max-w-2xl mx-auto mt-12 md:mt-25 rounded-[2.5rem] overflow-hidden border border-stone-100 shadow-2xl"
       style={{ background: "#faf9f7" }}>
 
       {/* Barra colorata in cima */}
@@ -346,7 +346,7 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
               {/* Centro: zaino */}
               <div className="flex-1 flex flex-col items-center">
                 <motion.div
-                  className="relative w-full max-w-[140px] sm:max-w-[160px]"
+                  className="relative w-full max-w-[300px] sm:max-w-[340px]"
                   animate={isFull
                     ? { filter: ["drop-shadow(0 0 0px #81ccb0)", "drop-shadow(0 0 14px #81ccb0)", "drop-shadow(0 0 8px #81ccb0)"] }
                     : { filter: "drop-shadow(0 0 0px #81ccb0)" }
@@ -539,6 +539,7 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
                   </span>
                   <div className="flex gap-2">
                     <button
+                      aria-label="Apri dettagli attivita"
                       onClick={() => { setSelectedActivity(recommended); setIsDetailOpen(true); }}
                       className="py-2.5 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95"
                     >

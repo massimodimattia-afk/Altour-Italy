@@ -166,17 +166,17 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     </span>
                   )}
 
-                  {/* Dislivello */}
-                  {!isTour && activity.dislivello != null && (
-                    <span className="flex items-center gap-1">
-                      <ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m
-                    </span>
-                  )}
-
                   {/* Lunghezza numerica */}
                   {!isTour && activity.lunghezza != null && (
                     <span className="flex items-center gap-1">
                       <Ruler size={12} className="text-brand-sky" /> {activity.lunghezza} km
+                    </span>
+                  )}
+                  
+                  {/* Dislivello */}
+                  {!isTour && activity.dislivello != null && (
+                    <span className="flex items-center gap-1">
+                      <ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m
                     </span>
                   )}
 
