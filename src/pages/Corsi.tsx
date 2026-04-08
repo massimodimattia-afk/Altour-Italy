@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
@@ -327,12 +326,6 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                   </ReactMarkdown>
                 </div>
 
-                {/* Durata */}
-                {corso.durata && (
-                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-4">
-                    {corso.durata}
-                  </p>
-                )}
 
                 {/* Pricing */}
                 <div className="mt-auto pt-5 border-t border-stone-100">

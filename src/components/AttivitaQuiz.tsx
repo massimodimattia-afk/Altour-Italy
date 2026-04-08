@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
 import ActivityDetailModal from "./ActivityDetailModal";
 
+
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
@@ -46,7 +47,7 @@ const ITEMS: Item[] = [
     hintTag: "Luoghi remoti",
   },
   {
-    id: "water", emoji: "💧", label: "Borraccia", zone: "bottom",
+    id: "water", emoji: "🧴", label: "Borraccia", zone: "bottom",
     hint: "Preferisci uscite brevi e accessibili a tutti. Ideale per escursioni in famiglia o senza troppe pretese fisiche.",
     hintTag: "Mezza giornata",
   },
@@ -232,63 +233,80 @@ function BackpackSVG({ glowing, itemCount }: { glowing: boolean; itemCount: numb
   );
 }
 
-// ─── Componente ItemCard Aggiornato ───────────────────────────────────────────
+// ─── Componente ItemCard Aggiornato con Safe Responsive Modal/Tooltip ────────────────
 // Sostituisci l'intero componente ItemCard nel tuo file AttivitaQuiz.tsx
 // (dovrebbe trovarsi intorno alla riga 210-360 del file originale)
 
-function ItemCard({ item, isIn, isDisabled, onAdd, onRemove }: { item: Item; isIn: boolean; isDisabled: boolean; onAdd: () => void; onRemove: () => void; }) {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const tooltipRef = useRef<HTMLDivElement>(null);
+function ItemCard({
+  item,
+  isIn,
+  isDisabled,
+  onAdd,
+  onRemove,
+}: {
+  item: Item;
+  isIn: boolean;
+  isDisabled: boolean;
+  onAdd: () => void;
+  onRemove: () => void;
+}) {
+  const [showPopup, setShowPopup] = useState(false);
+  const itemCardRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Chiudi il tooltip se si clicca fuori
+  // Rileva se il viewport è mobile
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
-        setShowTooltip(false);
-      }
-    }
-    if (showTooltip) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showTooltip]);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640); // Corrisponde al breakpoint 'sm' di Tailwind
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
-  // Logica di posizionamento intelligente (Mobile & Desktop)
-  // Su mobile (schermi < 640px), i tooltip laterali si aprono verso il basso o l'alto per non uscire dallo schermo.
-  // Su desktop, si aprono lateralmente. Gli oggetti in basso si aprono sempre verso l'alto.
-  const getTooltipPositionClasses = () => {
+  // Gestione dello scroll del body quando il modal mobile è aperto
+  useEffect(() => {
+    if (showPopup && isMobile) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showPopup, isMobile]);
+
+  // Logica di posizionamento intelligente per desktop tooltip
+  const getDesktopTooltipPositionClasses = () => {
     if (item.zone === "bottom") {
-      // Oggetti in basso: tooltip sempre sopra
       return "bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 origin-bottom";
     } else if (item.zone === "left") {
-      // Oggetti a sinistra: tooltip a destra su desktop, sotto su mobile
-      return "top-[calc(100%+8px)] left-1/2 -translate-x-1/2 origin-top sm:top-1/2 sm:-translate-y-1/2 sm:left-[calc(100%+12px)] sm:translate-x-0 sm:origin-left";
+      return "top-1/2 -translate-y-1/2 left-[calc(100%+12px)] origin-left";
     } else {
-      // Oggetti a destra: tooltip a sinistra su desktop, sotto su mobile
-      return "top-[calc(100%+8px)] left-1/2 -translate-x-1/2 origin-top sm:top-1/2 sm:-translate-y-1/2 sm:right-[calc(100%+12px)] sm:translate-x-0 sm:left-auto sm:origin-right";
+      return "top-1/2 -translate-y-1/2 right-[calc(100%+12px)] origin-right";
     }
   };
 
-  // Logica per la freccina del tooltip
-  const getArrowClasses = () => {
+  // Logica per la freccina del desktop tooltip
+  const getDesktopArrowClasses = () => {
     if (item.zone === "bottom") {
       return "bottom-[-4px] left-1/2 -translate-x-1/2 rotate-45";
     } else if (item.zone === "left") {
-      return "top-[-4px] left-1/2 -translate-x-1/2 rotate-45 sm:top-1/2 sm:-translate-y-1/2 sm:left-[-4px] sm:translate-x-0";
+      return "top-1/2 -translate-y-1/2 left-[-4px] rotate-45";
     } else {
-      return "top-[-4px] left-1/2 -translate-x-1/2 rotate-45 sm:top-1/2 sm:-translate-y-1/2 sm:right-[-4px] sm:translate-x-0 sm:left-auto";
+      return "top-1/2 -translate-y-1/2 right-[-4px] rotate-45";
     }
   };
 
   return (
-    <div className="relative" ref={tooltipRef}>
+    <div className="relative" ref={itemCardRef}>
       <motion.button
         whileHover={!isDisabled ? { scale: 1.05, y: -2 } : {}}
         whileTap={!isDisabled ? { scale: 0.95 } : {}}
         onClick={() => {
           if (isDisabled) return;
           if (isIn) onRemove();
-          else setShowTooltip(true);
+          else setShowPopup(true);
         }}
         className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-all duration-300 ${
           isIn
@@ -311,70 +329,127 @@ function ItemCard({ item, isIn, isDisabled, onAdd, onRemove }: { item: Item; isI
         )}
       </motion.button>
 
-      {/* Tooltip Intelligente */}
       <AnimatePresence>
-        {showTooltip && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.88 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.88 }}
-            transition={{ type: "spring", stiffness: 380, damping: 26 }}
-            className={`absolute z-[100] w-[220px] max-w-[85vw] sm:w-56 rounded-2xl p-3.5 sm:p-4 ${getTooltipPositionClasses()}`}
-            style={{
-              background: "white",
-              boxShadow: "0 12px 40px rgba(159,130,112,0.25), 0 0 0 1.5px rgba(159,130,112,0.15)",
-            }}
-          >
-            {/* Freccietta Dinamica */}
-            <div 
-              className={`absolute w-3 h-3 bg-white ${getArrowClasses()}`}
-              style={{ 
-                boxShadow: item.zone === "bottom" ? "2px 2px 2px rgba(159,130,112,0.05)" : "-1px -1px 2px rgba(159,130,112,0.12)",
-                zIndex: -1 
-              }} 
+        {showPopup && (
+          <>
+            {/* Backdrop per Mobile Modal e Desktop Tooltip (per chiusura click-outside) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={`fixed inset-0 z-[9998] ${isMobile ? "bg-black/60 backdrop-blur-md" : ""}`}
+              onClick={() => setShowPopup(false)}
             />
 
-            <div className="flex items-start justify-between gap-1.5 mb-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-lg sm:text-xl leading-none">{item.emoji}</span>
-                <span
-                  className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full leading-none"
-                  style={{ background: "rgba(129,204,176,0.15)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.3)" }}
+            {/* Contenuto del Popup (Modal su Mobile, Tooltip su Desktop) */}
+            <motion.div
+              initial={{ opacity: 0, scale: isMobile ? 0.95 : 0.88, y: isMobile ? 20 : 0 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: isMobile ? 0.95 : 0.88, y: isMobile ? 20 : 0 }}
+              transition={{ type: "spring", stiffness: 380, damping: 26 }}
+              className={`rounded-2xl p-3.5 sm:p-4 z-[9999] ${isMobile ? "fixed inset-0 flex items-center justify-center p-4" : `absolute w-[220px] sm:w-56 ${getDesktopTooltipPositionClasses()}`}`}
+              style={{
+                background: "white",
+                boxShadow: "0 12px 40px rgba(159,130,112,0.25), 0 0 0 1.5px rgba(159,130,112,0.15)",
+              }}
+            >
+              {/* Contenitore interno per il modal mobile */}
+              {isMobile ? (
+                <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl p-3.5 sm:p-4"
+                  style={{
+                    background: "white",
+                    boxShadow: "0 12px 40px rgba(159,130,112,0.25), 0 0 0 1.5px rgba(159,130,112,0.15)",
+                  }}
                 >
-                  {item.hintTag}
-                </span>
-              </div>
-              <button onClick={() => setShowTooltip(false)} className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0 p-1">
-                <X size={14} />
-              </button>
-            </div>
+                  <div className="flex items-start justify-between gap-1.5 mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg sm:text-xl leading-none">{item.emoji}</span>
+                      <span
+                        className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full leading-none"
+                        style={{ background: "rgba(129,204,176,0.15)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.3)" }}
+                      >
+                        {item.hintTag}
+                      </span>
+                    </div>
+                    <button onClick={() => setShowPopup(false)} className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0 p-1">
+                      <X size={14} />
+                    </button>
+                  </div>
 
-            <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed font-medium mb-3.5">
-              {item.hint}
-            </p>
+                  <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed font-medium mb-3.5">
+                    {item.hint}
+                  </p>
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowTooltip(false)}
-                className="flex-1 py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-stone-400 border border-stone-200 hover:border-stone-300 hover:bg-stone-50 active:scale-95 transition-all"
-              >
-                Annulla
-              </button>
-              <button
-                onClick={() => { setShowTooltip(false); onAdd(); }}
-                className="flex-[1.5] py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white active:scale-95 transition-all shadow-md"
-                style={{ background: "linear-gradient(135deg, #81ccb0, #5aa89a)" }}
-              >
-                Aggiungi ✓
-              </button>
-            </div>
-          </motion.div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowPopup(false)}
+                      className="flex-1 py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-stone-400 border border-stone-200 hover:border-stone-300 hover:bg-stone-50 active:scale-95 transition-all"
+                    >
+                      Annulla
+                    </button>
+                    <button
+                      onClick={() => { setShowPopup(false); onAdd(); }}
+                      className="flex-[1.5] py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white active:scale-95 transition-all shadow-md"
+                      style={{ background: "linear-gradient(135deg, #81ccb0, #5aa89a)" }}
+                    >
+                      Aggiungi ✓
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Freccietta per Desktop Tooltip */}
+                  <div
+                    className={`absolute w-3 h-3 bg-white ${getDesktopArrowClasses()}`}
+                    style={{
+                      boxShadow: item.zone === "bottom" ? "2px 2px 2px rgba(159,130,112,0.05)" : "-1px -1px 2px rgba(159,130,112,0.12)",
+                      zIndex: -1,
+                    }}
+                  />
+
+                  <div className="flex items-start justify-between gap-1.5 mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg sm:text-xl leading-none">{item.emoji}</span>
+                      <span
+                        className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full leading-none"
+                        style={{ background: "rgba(129,204,176,0.15)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.3)" }}
+                      >
+                        {item.hintTag}
+                      </span>
+                    </div>
+                    <button onClick={() => setShowPopup(false)} className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0 p-1">
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed font-medium mb-3.5">
+                    {item.hint}
+                  </p>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowPopup(false)}
+                      className="flex-1 py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-stone-400 border border-stone-200 hover:border-stone-300 hover:bg-stone-50 active:scale-95 transition-all"
+                    >
+                      Annulla
+                    </button>
+                    <button
+                      onClick={() => { setShowPopup(false); onAdd(); }}
+                      className="flex-[1.5] py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white active:scale-95 transition-all shadow-md"
+                      style={{ background: "linear-gradient(135deg, #81ccb0, #5aa89a)" }}
+                    >
+                      Aggiungi ✓
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
   );
 }
-
 
 // ─── Componente principale ──────────────────────────────────────────────────────
 interface AttivitaQuizProps {

@@ -130,7 +130,7 @@ function ActivityCard({
             </span>
           )}
           {activity.durata && (
-            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
+            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
               <Clock size={9} />{activity.durata}
             </span>
           )}

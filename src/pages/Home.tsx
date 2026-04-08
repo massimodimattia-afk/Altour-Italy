@@ -185,7 +185,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             className="absolute inset-0 w-full h-full object-cover object-[center_20%]"
             alt="Dolomiti Altour Italy"
             loading="eager"
-            fetchPriority="high"
+            fetchpriority="high"
             decoding="async"
             onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
           />

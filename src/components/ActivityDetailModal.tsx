@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, TrendingUp, 
-  Briefcase as Backpack, Ruler, Route, Mountain, MapPin, Users, ArrowUp, ExternalLink
+  Briefcase as Backpack, Ruler, Route, Mountain, MapPin, Users, ArrowUp, ExternalLink, Clock
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
@@ -165,6 +165,12 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                       <Mountain size={12} className="text-brand-sky" /> {activity.difficolta}
                     </span>
                   )}
+                  {/* Durata */}
+                   {activity.durata && (
+                    <span className="flex items-center gap-1">
+                    <Clock size={12} className="text-brand-sky" /> {activity.durata}
+                    </span>
+                    )}
 
                   {/* Lunghezza numerica */}
                   {!isTour && activity.lunghezza != null && (
