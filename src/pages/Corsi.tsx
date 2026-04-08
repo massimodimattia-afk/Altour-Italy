@@ -3,9 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
-import ZainoQuiz from "../components/Corsiquiz";
 import ReactMarkdown from "react-markdown";
-import { ArrowRight, Sparkles, BookOpen, Mountain, Tag } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, Mountain } from "lucide-react";
 
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   prezzo_teorico?: number | null;
@@ -220,29 +219,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerClosing, setDrawerClosing] = useState(false);
-  const [highlightedLevel, setHighlightedLevel] = useState<number | null>(null);
   const coursesGridRef = useRef<HTMLDivElement>(null);
-
-  // Chiude drawer con delay pill sincronizzato
-  const closeDrawer = () => {
-    setDrawerClosing(true);
-    setDrawerOpen(false);
-    setTimeout(() => setDrawerClosing(false), 400);
-  };
-
-  // Chiamato da ZainoQuiz quando l'utente ottiene il risultato
-  const handleQuizResult = (recommendedLevel: "base" | "intermedio" | "avanzato") => {
-    const levelMap: Record<string, number> = { base: 1, intermedio: 2, avanzato: 3 };
-    const pos = levelMap[recommendedLevel] ?? 1;
-    closeDrawer();
-    setTimeout(() => {
-      coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      setHighlightedLevel(pos);
-      setTimeout(() => setHighlightedLevel(null), 3000);
-    }, 420);
-  };
 
   useEffect(() => {
     async function fetchCorsi() {
@@ -297,58 +274,6 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         <div className="h-1.5 w-12 bg-brand-sky rounded-full" />
       </div>
 
-      {/* ── Banner ZainoQuiz ───────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="mb-10 rounded-[2rem] overflow-hidden relative"
-        style={{
-          background: "linear-gradient(135deg, #81ccb010 0%, #5aaadd12 50%, #f4d98c0e 100%)",
-          border: "1.5px solid rgba(129,204,176,0.25)",
-          boxShadow: "0 4px 24px rgba(129,204,176,0.10)",
-        }}
-      >
-        <div className="flex items-center gap-4 px-5 py-4 md:px-7 md:py-5">
-          {/* Icona zaino */}
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl md:text-3xl"
-            style={{ background: "rgba(129,204,176,0.15)" }}>
-            🎒
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-0.5" style={{ color: "#81ccb0" }}>
-              Non sai da dove iniziare?
-            </p>
-            <p className="text-sm md:text-base font-black text-[#44403c] uppercase tracking-tight leading-tight">
-              Costruisci il tuo zaino ideale
-            </p>
-            <p className="text-[10px] text-stone-400 font-medium mt-0.5 hidden md:block">
-              Scegli 3 oggetti e scopri il corso fatto per te
-            </p>
-          </div>
-          {/* CTA — mobile apre drawer, desktop scrolla al quiz */}
-          <button
-            onClick={() => {
-              if (window.innerWidth < 768) {
-                setDrawerOpen(true);
-              } else {
-                document.getElementById("zaino-quiz-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }
-            }}
-            className="flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white active:scale-95 transition-transform"
-            style={{
-              background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
-              boxShadow: "0 4px 14px rgba(90,170,221,0.25)",
-            }}
-          >
-            Inizia
-            <ArrowRight size={12} />
-          </button>
-        </div>
-        {/* Barra decorativa */}
-        <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #81ccb0, #5aaadd, #f4d98c)" }} />
-      </motion.div>
-
       {error && (
         <div className="mb-8 rounded-2xl border border-rose-100 bg-rose-50 px-6 py-4 text-rose-600 text-sm font-bold">
           {error}
@@ -363,38 +288,11 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
             </p>
           </div>
         ) : (
-          corsi.map((corso) => {
-            const isHighlighted = highlightedLevel !== null && corso.posizione === highlightedLevel;
-            return (
-            <motion.div
+          corsi.map((corso) => (
+            <div
               key={corso.id}
-              animate={isHighlighted ? {
-                boxShadow: [
-                  "0 0 0 0px rgba(129,204,176,0)",
-                  "0 0 0 4px rgba(129,204,176,0.8)",
-                  "0 0 0 4px rgba(129,204,176,0.4)",
-                  "0 0 0 4px rgba(129,204,176,0.8)",
-                  "0 0 0 2px rgba(129,204,176,0.3)",
-                ],
-              } : {}}
-              transition={{ duration: 2, ease: "easeInOut" }}
               className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500 relative"
             >
-              {/* Badge "Consigliato" quando evidenziato */}
-              <AnimatePresence>
-                {isHighlighted && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.9 }}
-                    className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[9px] font-black uppercase tracking-widest"
-                    style={{ background: "linear-gradient(135deg, #81ccb0, #5aaadd)", boxShadow: "0 4px 12px rgba(129,204,176,0.5)" }}
-                  >
-                    <Sparkles size={9} />
-                    Consigliato per te
-                  </motion.div>
-                )}
-              </AnimatePresence>
               {/* Image */}
               <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-200 relative overflow-hidden">
                 {corso.immagine_url && (
@@ -409,20 +307,16 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                 <FilosofiaBadge value={corso.categoria} />
-
-                {/* Bundle badge sull'immagine se ha prezzi modulari */}
-                {(corso.prezzo_teorico != null || corso.prezzo_pratico != null) && (
-                  <div
-                    className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white backdrop-blur-sm"
-                    style={{ background: "rgba(90,170,221,0.75)", border: "1px solid rgba(255,255,255,0.2)" }}
-                  >
-                    <Tag size={9} /> Moduli separati
-                  </div>
-                )}
               </div>
 
               {/* Body */}
               <div className="p-5 md:p-7 flex flex-col flex-grow">
+                <div className="flex items-center gap-2.5 mb-2">
+                  <span className="text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+                    Iscrizioni aperte
+                  </span>
+                </div>
+                
                 <h2 className="text-lg md:text-xl font-black mb-3 text-brand-stone uppercase line-clamp-2">
                   {corso.titolo}
                 </h2>
@@ -453,112 +347,9 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                   </button>
                 </div>
               </div>
-            </motion.div>
-            );
-          })
+            </div>
+          ))
         )}
-      </div>
-
-      {/* ── Quiz zaino — inline desktop, drawer mobile ─────────────────── */}
-
-      {/* Desktop: separatore + quiz inline */}
-      <div id="zaino-quiz-section" className="hidden md:block mt-24">
-        <div className="flex flex-col items-center mb-12">
-          <div className="h-16 w-px bg-gradient-to-b from-transparent to-stone-200" />
-          <div className="flex items-center gap-3 my-3">
-            <div className="h-px w-16 bg-stone-200" />
-            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-stone-300">Non sei sicuro da dove iniziare?</p>
-            <div className="h-px w-16 bg-stone-200" />
-          </div>
-          <div className="h-16 w-px bg-gradient-to-t from-transparent to-stone-200" />
-        </div>
-        <div className="mb-10">
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Trova il tuo percorso</p>
-          <h2 className="text-3xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-1">
-            Costruisci il tuo<br />
-            <span className="font-light italic" style={{ color: "#9f8270" }}>zaino ideale.</span>
-          </h2>
-          <div className="h-1.5 w-10 bg-brand-sky rounded-full mt-3" />
-        </div>
-        <ZainoQuiz onScrollToCourses={(level?: string) => {
-          if (level) handleQuizResult(level as "base" | "intermedio" | "avanzato");
-          else setTimeout(() => { coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80);
-        }} />
-      </div>
-
-      {/* Mobile: bottone pill sticky + bottom drawer */}
-      <div className="md:hidden">
-        <AnimatePresence>
-          {!drawerOpen && !drawerClosing && (
-            <motion.button
-              initial={{ y: 80, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 80, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 340, damping: 28 }}
-              onClick={() => setDrawerOpen(true)}
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-6 py-4 rounded-full text-white font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-transform"
-              style={{ background: "linear-gradient(135deg, #81ccb0, #5aaadd)", boxShadow: "0 8px 32px rgba(90,170,221,0.35)" }}
-            >
-              <Sparkles size={14} />
-              Trova il tuo corso
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {drawerOpen && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-              onClick={closeDrawer}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {drawerOpen && (
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              drag="y"
-              dragConstraints={{ top: 0 }}
-              dragElastic={{ top: 0, bottom: 0.4 }}
-              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 400) closeDrawer(); }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] flex flex-col"
-              style={{ background: "#f5f2ed", maxHeight: "92dvh", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)", touchAction: "none" }}
-            >
-              {/* Handle drag */}
-              <div className="flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
-                <div className="w-10 h-1 rounded-full bg-stone-300" />
-              </div>
-              {/* Header — titolo quiz diretto */}
-              <div className="flex items-center justify-between px-5 pb-3 flex-shrink-0">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-0.5">Trova il tuo percorso</p>
-                  <h3 className="text-lg font-black text-[#44403c] uppercase tracking-tight leading-tight">
-                    Cosa metti<br />
-                    <span className="font-light italic" style={{ color: "#9f8270" }}>nel tuo zaino?</span>
-                  </h3>
-                </div>
-                <button
-                  onClick={closeDrawer}
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-stone-400 active:scale-90 transition-transform flex-shrink-0"
-                  style={{ background: "rgba(0,0,0,0.06)" }}
-                >✕</button>
-              </div>
-              {/* Quiz scrollabile */}
-              <div className="overflow-y-auto px-4 pb-8 flex-1" style={{ touchAction: "pan-y" }}>
-                <ZainoQuiz onScrollToCourses={(level?: string) => {
-                  if (level) handleQuizResult(level as "base" | "intermedio" | "avanzato");
-                  else { closeDrawer(); setTimeout(() => { coursesGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }, 420); }
-                }} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       <ActivityDetailModal

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, ChevronDown } from "lucide-react";
+import { Calendar, Clock, ChevronDown, ArrowRight, Sparkles } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
@@ -98,39 +98,29 @@ function campoToDetail(campo: Campo) {
 function ActivityCard({
   activity, idx, onDetails, onBook,
 }: {
-  activity: Activity;
-  idx: number;
-  onDetails: () => void;
-  onBook: (mode?: "info" | "prenota") => void;
+  activity: Activity; idx: number;
+  onDetails: () => void; onBook: (mode?: "info" | "prenota") => void;
 }) {
   const isEsc = activity._tipo === "escursione";
   const esc   = isEsc ? activity as Escursione : null;
-
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+    <motion.div layout
+      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
       className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform"
       style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
     >
       <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
-        <img
-          src={activity.immagine_url || IMG_FALLBACK}
-          alt={activity.titolo}
+        <img src={activity.immagine_url || IMG_FALLBACK} alt={activity.titolo}
           className="absolute inset-0 w-full h-full object-cover"
-          loading={idx < 4 ? "eager" : "lazy"}
-          decoding="async"
-        />
+          loading={idx < 4 ? "eager" : "lazy"} decoding="async" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
         {isEsc
           ? esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
           : (activity as Campo).filosofia && <FilosofiaBadge value={(activity as Campo).filosofia} />
         }
       </div>
-
       <div className="p-4 md:p-5 flex flex-col flex-grow">
         <div className="flex items-center gap-2.5 mb-2 flex-wrap">
           {esc?.data && (
@@ -145,26 +135,18 @@ function ActivityCard({
             </span>
           )}
         </div>
-
         <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
           {activity.titolo}
         </h3>
-        <p
-          className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium"
-          dangerouslySetInnerHTML={{ __html: formatMarkdown(activity.descrizione) }}
-        />
-
+        <p className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium"
+          dangerouslySetInnerHTML={{ __html: formatMarkdown(activity.descrizione) }} />
         <div className="flex gap-2 pt-3 border-t border-stone-50">
-          <button
-            onClick={onDetails}
-            className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95"
-          >
+          <button onClick={onDetails}
+            className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95">
             Dettagli
           </button>
-          <button
-            onClick={() => onBook("info")}
-            className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95"
-          >
+          <button onClick={() => onBook("info")}
+            className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95">
             Richiedi Info
           </button>
         </div>
@@ -197,6 +179,14 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen]     = useState(false);
+  const [drawerClosing, setDrawerClosing] = useState(false);
+
+  const closeDrawer = () => {
+    setDrawerClosing(true);
+    setDrawerOpen(false);
+    setTimeout(() => setDrawerClosing(false), 400);
+  };
 
   useEffect(() => {
     async function load() {
@@ -204,9 +194,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         supabase.from("escursioni").select("*").eq("is_active", true).order("data", { ascending: true }),
         supabase.from("campi").select("*").order("created_at", { ascending: false }),
       ]);
-      if (escData) {
-        setEscursioni((escData as any[]).map(e => ({ ...e, _tipo: "escursione" as const })));
-      }
+      if (escData) setEscursioni((escData as any[]).map(e => ({ ...e, _tipo: "escursione" as const })));
       if (campiData) setCampi((campiData as any[]).map(row => ({
         id: row.id, created_at: row.created_at, titolo: row.titolo,
         descrizione: row.descrizione ?? null, descrizione_estesa: row.descrizione_estesa ?? null,
@@ -268,7 +256,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   return (
     <div className="bg-[#f5f2ed] min-h-screen">
 
-      {/* Header */}
+      {/* ── Header + Banner ───────────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 pt-8 pb-4">
         <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Esplora</p>
         <div className="flex items-end justify-between gap-4">
@@ -280,14 +268,60 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
             {filtered.length} {filtered.length === 1 ? "attività" : "attività"}
           </span>
         </div>
-        <div className="h-1 w-10 bg-brand-sky rounded-full mt-3" />
+        <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-8" />
+
+        {/* Banner quiz zaino — identico a Corsi */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="mb-2 rounded-[2rem] overflow-hidden relative"
+          style={{
+            background: "linear-gradient(135deg, #81ccb010 0%, #5aaadd12 50%, #f4d98c0e 100%)",
+            border: "1.5px solid rgba(129,204,176,0.25)",
+            boxShadow: "0 4px 24px rgba(129,204,176,0.10)",
+          }}
+        >
+          <div className="flex items-center gap-4 px-5 py-4 md:px-7 md:py-5">
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl md:text-3xl"
+              style={{ background: "rgba(129,204,176,0.15)" }}>
+              🎒
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-0.5" style={{ color: "#81ccb0" }}>
+                Non sai da dove iniziare?
+              </p>
+              <p className="text-sm md:text-base font-black text-[#44403c] uppercase tracking-tight leading-tight">
+                Costruisci il tuo zaino ideale
+              </p>
+              <p className="text-[10px] text-stone-400 font-medium mt-0.5 hidden md:block">
+                Scegli 3 oggetti e scopri l'escursione perfetta per te
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setDrawerOpen(true);
+                } else {
+                  document.getElementById("zaino-quiz-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
+              className="flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white active:scale-95 transition-transform"
+              style={{
+                background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
+                boxShadow: "0 4px 14px rgba(90,170,221,0.25)",
+              }}
+            >
+              Inizia <ArrowRight size={12} />
+            </button>
+          </div>
+          <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #81ccb0, #5aaadd, #f4d98c)" }} />
+        </motion.div>
       </div>
 
-      {/* Filtri sticky */}
+      {/* ── Filtri sticky ────────────────────────────────────────────────────── */}
       <div className="sticky top-16 z-20 bg-[#f5f2ed]/95 backdrop-blur-sm border-b border-stone-200/60 py-3">
         <div className="max-w-6xl mx-auto px-4">
-
-          {/* Mobile — select */}
           <div className="md:hidden relative">
             <select
               value={activeFilter}
@@ -296,9 +330,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
               style={{ paddingLeft: activeFilter !== "tutte" ? "2.25rem" : "1rem" }}
             >
               {FILTERS.map(f => (
-                <option key={f.key} value={f.key}>
-                  {f.label}{f.count > 0 ? ` (${f.count})` : ""}
-                </option>
+                <option key={f.key} value={f.key}>{f.label}{f.count > 0 ? ` (${f.count})` : ""}</option>
               ))}
             </select>
             <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2">
@@ -311,14 +343,11 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                 style={{ background: FILTERS.find(f => f.key === activeFilter)?.color ?? "#5aaadd" }} />
             )}
           </div>
-
-          {/* Desktop — pills */}
           <div className="hidden md:flex gap-2">
             {FILTERS.map(f => {
               const isActive = activeFilter === f.key;
               return (
-                <button
-                  key={f.key}
+                <button key={f.key}
                   onClick={() => { setActiveFilter(f.key); setVisibleCount(ITEMS_PER_LOAD); }}
                   className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-black uppercase text-[9px] tracking-widest transition-all duration-200 active:scale-95"
                   style={isActive
@@ -335,24 +364,19 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         </div>
       </div>
 
+      {/* ── Contenuto principale ─────────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-20">
 
-        {/* Griglia */}
         {visible.length === 0 && !loading ? (
           <div className="py-20 text-center">
             <p className="text-4xl mb-4">🏔️</p>
-            <p className="text-stone-400 font-black uppercase tracking-widest text-xs">
-              Nessuna attività disponibile al momento
-            </p>
+            <p className="text-stone-400 font-black uppercase tracking-widest text-xs">Nessuna attività disponibile al momento</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <AnimatePresence mode="popLayout">
               {visible.map((activity, idx) => (
-                <ActivityCard
-                  key={activity.id}
-                  activity={activity}
-                  idx={idx}
+                <ActivityCard key={activity.id} activity={activity} idx={idx}
                   onDetails={() => openDetails(activity)}
                   onBook={(mode) => onBookingClick(activity.titolo, mode)}
                 />
@@ -361,7 +385,6 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
           </div>
         )}
 
-        {/* Carica altro */}
         {visibleCount < filtered.length && (
           <div className="flex justify-center mt-8">
             <button
@@ -374,27 +397,92 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
           </div>
         )}
 
-        {/* ── Separatore + Quiz zaino ──────────────────────────────────────── */}
-        <div className="flex flex-col items-center mt-16 mb-8">
-          <div className="h-12 w-px bg-gradient-to-b from-transparent to-stone-200" />
-          <div className="flex items-center gap-3 my-2">
-            <div className="h-px w-12 bg-stone-200" />
-            <p className="text-[9px] font-black uppercase tracking-[0.25em] text-stone-300">Non sai da dove iniziare?</p>
-            <div className="h-px w-12 bg-stone-200" />
+        {/* ── Quiz zaino — desktop inline ───────────────────────────────── */}
+        <div id="zaino-quiz-section" className="hidden md:block mt-24">
+          <div className="flex flex-col items-center mb-12">
+            <div className="h-16 w-px bg-gradient-to-b from-transparent to-stone-200" />
+            <div className="flex items-center gap-3 my-3">
+              <div className="h-px w-16 bg-stone-200" />
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] text-stone-300">Non sai da dove iniziare?</p>
+              <div className="h-px w-16 bg-stone-200" />
+            </div>
+            <div className="h-16 w-px bg-gradient-to-t from-transparent to-stone-200" />
           </div>
-          <div className="h-12 w-px bg-gradient-to-t from-transparent to-stone-200" />
+          <div className="mb-10">
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Trova la tua escursione</p>
+            <h2 className="text-3xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-1">
+              Costruisci il tuo<br />
+              <span className="font-light italic" style={{ color: "#9f8270" }}>zaino ideale.</span>
+            </h2>
+            <div className="h-1.5 w-10 bg-brand-sky rounded-full mt-3" />
+          </div>
+          <AttivitaQuiz onBookingClick={onBookingClick} />
         </div>
 
-        <div className="mb-6 text-center">
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-1">Quiz escursione</p>
-          <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9]">
-            Cosa metti nel tuo<br />
-            <span className="font-light italic" style={{ color: "#9f8270" }}>zaino ideale?</span>
-          </h2>
-        </div>
+      </div>
 
-        <AttivitaQuiz onBookingClick={onBookingClick} />
+      {/* ── Mobile: pill sticky + bottom drawer ──────────────────────────── */}
+      <div className="md:hidden">
+        <AnimatePresence>
+          {!drawerOpen && !drawerClosing && (
+            <motion.button
+              initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 340, damping: 28 }}
+              onClick={() => setDrawerOpen(true)}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-6 py-4 rounded-full text-white font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-transform"
+              style={{ background: "linear-gradient(135deg, #81ccb0, #5aaadd)", boxShadow: "0 8px 32px rgba(90,170,221,0.35)" }}
+            >
+              <Sparkles size={14} /> Trova la tua escursione
+            </motion.button>
+          )}
+        </AnimatePresence>
 
+        <AnimatePresence>
+          {drawerOpen && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              onClick={closeDrawer}
+            />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {drawerOpen && (
+            <motion.div
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              drag="y"
+              dragConstraints={{ top: 0 }}
+              dragElastic={{ top: 0, bottom: 0.4 }}
+              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 400) closeDrawer(); }}
+              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] flex flex-col"
+              style={{ background: "#f5f2ed", maxHeight: "92dvh", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)", touchAction: "none" }}
+            >
+              <div className="flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
+                <div className="w-10 h-1 rounded-full bg-stone-300" />
+              </div>
+              <div className="flex items-center justify-between px-5 pb-3 flex-shrink-0">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-0.5">Trova la tua escursione</p>
+                  <h3 className="text-lg font-black text-[#44403c] uppercase tracking-tight leading-tight">
+                    Cosa metti<br />
+                    <span className="font-light italic" style={{ color: "#9f8270" }}>nel tuo zaino?</span>
+                  </h3>
+                </div>
+                <button
+                  onClick={closeDrawer}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-stone-400 active:scale-90 transition-transform flex-shrink-0"
+                  style={{ background: "rgba(0,0,0,0.06)" }}
+                >✕</button>
+              </div>
+              <div className="overflow-y-auto px-4 pb-8 flex-1" style={{ touchAction: "pan-y" }}>
+                <AttivitaQuiz onBookingClick={(title, mode) => { closeDrawer(); onBookingClick(title, mode); }} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <ActivityDetailModal

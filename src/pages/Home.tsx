@@ -240,7 +240,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             transition={{ duration: 0.6, delay: 0.7, ease: "easeOut" }}
             className="text-white/65 text-sm md:text-base font-medium max-w-xs md:max-w-md mx-auto mb-8 leading-relaxed"
           >
-            Formazione ed attività outdoor.
+            Formazione ed attività outdoor
           </motion.p>
 
           {/* CTA */}
@@ -460,7 +460,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             <div className="h-1 w-12 bg-brand-sky mt-3" />
           </div>
           <button
-            onClick={() => onNavigate("attivita")}
+            onClick={() => onNavigate("attivitapage")}
             className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
           >
             Vedi tutte <TrendingUp size={14} />

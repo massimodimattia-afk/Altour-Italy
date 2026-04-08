@@ -1058,10 +1058,10 @@ export default function Tessera() {
                 <Gift size={22} className="text-amber-600" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase text-amber-700 tracking-widest leading-none mb-1">Premio sbloccato 🎉</p>
+                <p className="text-[10px] font-black uppercase text-amber-700 tracking-widest leading-none mb-1">VOUCHER sbloccatI 🎉</p>
                 <h4 className="text-sm md:text-base font-black uppercase text-amber-900 leading-tight">
                   {vouchersCount} Voucher {vouchersCount === 1 ? "da" : "da"} 10 €&nbsp;
-                  <span className="font-bold">{vouchersCount === 1 ? "disponibile" : "disponibili"}</span>
+                  <span className="font-bold">{vouchersCount === 1 ? "Maturato" : "maturati"}</span>
                 </h4>
               </div>
             </div>
