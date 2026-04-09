@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, ChevronDown, ArrowRight, Sparkles } from "lucide-react";
+import { Calendar, Clock, ArrowRight, Sparkles, SlidersHorizontal } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
@@ -35,7 +35,7 @@ interface Campo {
 }
 
 type Activity = Escursione | Campo;
-type FilterKey = "tutte" | "mezza_giornata" | "intera_giornata" | "tour" | "campi";
+type FilterKey = "mezza_giornata" | "intera_giornata" | "tour" | "campi";
 
 interface AttivitaPageProps {
   onNavigate: (page: string) => void;
@@ -130,7 +130,7 @@ function ActivityCard({
             </span>
           )}
           {activity.durata && (
-            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
               <Clock size={9} />{activity.durata}
             </span>
           )}
@@ -175,7 +175,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
   const [campi, setCampi]           = useState<Campo[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [activeFilter, setActiveFilter] = useState<FilterKey>("tutte");
+  const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -216,24 +216,23 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     return da - db;
   });
 
-  const filtered = (() => {
+  const filtered: Activity[] = (() => {
+    if (!activeFilter) return allActivities;
     switch (activeFilter) {
       case "mezza_giornata":  return escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza"));
       case "intera_giornata": return escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera"));
       case "tour":            return escursioni.filter(e => e.categoria?.toLowerCase() === "tour");
       case "campi":           return campi;
-      default:                return allActivities;
     }
   })();
 
   const visible = filtered.slice(0, visibleCount);
 
-  const FILTERS: { key: FilterKey; label: string; count: number; color?: string; textColor?: string }[] = [
-    { key: "tutte",          label: "Tutte",          count: allActivities.length },
-    { key: "mezza_giornata", label: "Mezza giornata", count: escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza")).length },
-    { key: "intera_giornata",label: "Intera giornata",count: escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera")).length },
-    { key: "tour",           label: "Tour",           count: escursioni.filter(e => e.categoria?.toLowerCase() === "tour").length, color: "#f4d98c", textColor: "#7a5e00" },
-    { key: "campi",          label: "Campi Estivi",   count: campi.length, color: "#9f8270" },
+  const FILTERS: { key: FilterKey; label: string; emoji: string; count: number; color: string; textColor?: string }[] = [
+    { key: "mezza_giornata", label: "Mezza giornata", emoji: "🌤", count: escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza")).length,          color: "#5aaadd" },
+    { key: "intera_giornata",label: "Intera giornata", emoji: "☀️", count: escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera")).length, color: "#81ccb0" },
+    { key: "tour",           label: "Tour",           emoji: "🏔", count: escursioni.filter(e => e.categoria?.toLowerCase() === "tour").length,                 color: "#f4d98c", textColor: "#7a5e00" },
+    { key: "campi",          label: "Campi Estivi",   emoji: "⛺️", count: campi.length,                                                                        color: "#9f8270" },
   ];
 
   const openDetails = (a: Activity) => {
@@ -241,14 +240,26 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     setIsDetailOpen(true);
   };
 
+  const toggleFilter = (key: FilterKey) => {
+    setActiveFilter(prev => prev === key ? null : key);
+    setVisibleCount(ITEMS_PER_LOAD);
+  };
+
+  const activeFilterMeta = FILTERS.find(f => f.key === activeFilter);
+
   if (loading) return (
     <div className="max-w-6xl mx-auto px-4 pt-8 pb-20">
-      <div className="h-8 w-48 bg-stone-200 rounded animate-pulse mb-6" />
-      <div className="flex gap-2 mb-6 overflow-x-auto">
-        {[1,2,3,4].map(n => <div key={n} className="h-9 w-24 bg-stone-100 rounded-full animate-pulse shrink-0" />)}
+      {/* Skeleton header */}
+      <div className="h-10 w-52 bg-stone-200 rounded-2xl animate-pulse mb-2" />
+      <div className="h-4 w-32 bg-stone-100 rounded animate-pulse mb-8" />
+      {/* Skeleton banner */}
+      <div className="h-20 w-full bg-stone-100 rounded-[2rem] animate-pulse mb-6" />
+      {/* Skeleton pills */}
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+        {[1,2,3,4].map(n => <div key={n} className="h-14 w-28 bg-stone-100 rounded-2xl animate-pulse shrink-0" />)}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {[1,2,3,4].map(n => <SkeletonCard key={n} />)}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1,2,3].map(n => <SkeletonCard key={n} />)}
       </div>
     </div>
   );
@@ -256,8 +267,8 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   return (
     <div className="bg-[#f5f2ed] min-h-screen">
 
-      {/* ── Header + Banner ───────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 pt-8 pb-4">
+      {/* ── Header ────────────────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 pt-8 pb-0">
         <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Esplora</p>
         <div className="flex items-end justify-between gap-4">
           <h1 className="text-3xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9]">
@@ -265,17 +276,17 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
             <span className="text-brand-sky italic font-light">Outdoor.</span>
           </h1>
           <span className="text-[11px] font-black uppercase tracking-widest text-stone-400 pb-1 shrink-0">
-            {filtered.length} {filtered.length === 1 ? "attività" : "attività"}
+            {filtered.length} attività
           </span>
         </div>
-        <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-8" />
+        <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
-        {/* Banner quiz zaino — identico a Corsi */}
+        {/* ── Banner quiz zaino ─────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="mb-2 rounded-[2rem] overflow-hidden relative"
+          className="mb-6 rounded-[2rem] overflow-hidden"
           style={{
             background: "linear-gradient(135deg, #81ccb010 0%, #5aaadd12 50%, #f4d98c0e 100%)",
             border: "1.5px solid rgba(129,204,176,0.25)",
@@ -317,45 +328,107 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
           </div>
           <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #81ccb0, #5aaadd, #f4d98c)" }} />
         </motion.div>
+
+        {/* ── Filtri card — mobile orizzontale, desktop pills ─────────────── */}
+        {/* Mobile: card grandi scrollabili orizzontalmente */}
+        <div className="md:hidden -mx-4 px-4">
+          <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none">
+            {FILTERS.map((f, i) => {
+              const isActive = activeFilter === f.key;
+              return (
+                <motion.button
+                  key={f.key}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={() => toggleFilter(f.key)}
+                  className="flex-shrink-0 flex flex-col items-start gap-2 p-4 rounded-[1.5rem] w-32 active:scale-95 transition-all"
+                  style={isActive
+                    ? { background: f.color, boxShadow: `0 6px 20px ${f.color}50` }
+                    : { background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)" }
+                  }
+                >
+                  <span className="text-2xl">{f.emoji}</span>
+                  <div>
+                    <p className={`text-[9px] font-black uppercase tracking-wider leading-tight ${isActive ? "text-white" : "text-brand-stone"}`}
+                      style={isActive && f.textColor ? { color: f.textColor } : {}}>
+                      {f.label}
+                    </p>
+                    {f.count > 0 && (
+                      <p className={`text-[8px] font-bold mt-0.5 ${isActive ? "text-white/70" : "text-stone-400"}`}
+                        style={isActive && f.textColor ? { color: `${f.textColor}99` } : {}}>
+                        {f.count} {f.count === 1 ? "attività" : "attività"}
+                      </p>
+                    )}
+                  </div>
+                  {isActive && (
+                    <motion.div
+                      layoutId="mobile-filter-indicator"
+                      className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-white/30 flex items-center justify-center"
+                    >
+                      <span className="text-[8px] font-black" style={f.textColor ? { color: f.textColor } : { color: "white" }}>✓</span>
+                    </motion.div>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* Label filtro attivo su mobile */}
+          <AnimatePresence>
+            {activeFilter && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex items-center justify-between mb-4 overflow-hidden"
+              >
+                <div className="flex items-center gap-2 py-2">
+                  <div className="w-1.5 h-4 rounded-full" style={{ background: activeFilterMeta?.color }} />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">
+                    {activeFilterMeta?.label} — {filtered.length} risultati
+                  </span>
+                </div>
+                <button
+                  onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+                  className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-stone-600 transition-colors"
+                >
+                  Vedi tutti ✕
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* ── Filtri sticky ────────────────────────────────────────────────────── */}
-      <div className="sticky top-16 z-20 bg-[#f5f2ed]/95 backdrop-blur-sm border-b border-stone-200/60 py-3">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="md:hidden relative">
-            <select
-              value={activeFilter}
-              onChange={e => { setActiveFilter(e.target.value as FilterKey); setVisibleCount(ITEMS_PER_LOAD); }}
-              className="w-full appearance-none bg-white border border-stone-200 rounded-2xl px-4 py-2.5 font-black uppercase text-[10px] tracking-widest text-brand-stone shadow-sm focus:outline-none focus:border-brand-sky"
-              style={{ paddingLeft: activeFilter !== "tutte" ? "2.25rem" : "1rem" }}
-            >
-              {FILTERS.map(f => (
-                <option key={f.key} value={f.key}>{f.label}{f.count > 0 ? ` (${f.count})` : ""}</option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2.5 4.5L6 8L9.5 4.5" stroke="#9f8270" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            {activeFilter !== "tutte" && (
-              <div className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full"
-                style={{ background: FILTERS.find(f => f.key === activeFilter)?.color ?? "#5aaadd" }} />
-            )}
-          </div>
-          <div className="hidden md:flex gap-2">
+      {/* ── Filtri sticky desktop ─────────────────────────────────────────── */}
+      <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed]/95 backdrop-blur-sm border-b border-stone-200/60 py-3">
+        <div className="max-w-6xl mx-auto px-4 flex items-center gap-2">
+          {/* Reset — icona cliccabile al posto della pill "Tutte" */}
+          <button
+            onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+            title="Rimuovi filtro"
+            className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={activeFilter
+              ? { background: "white", border: "1.5px solid #e7e5e4", color: "#a8a29e" }
+              : { background: "#44403c", color: "white", boxShadow: "0 2px 8px rgba(68,64,60,0.2)" }
+            }
+          >
+            <SlidersHorizontal size={12} />
+          </button>
+          <div className="flex gap-2 overflow-x-auto">
             {FILTERS.map(f => {
               const isActive = activeFilter === f.key;
               return (
                 <button key={f.key}
-                  onClick={() => { setActiveFilter(f.key); setVisibleCount(ITEMS_PER_LOAD); }}
+                  onClick={() => toggleFilter(f.key)}
                   className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-black uppercase text-[9px] tracking-widest transition-all duration-200 active:scale-95"
                   style={isActive
-                    ? { background: f.color ?? "#5aaadd", color: f.textColor ?? "white", boxShadow: `0 4px 12px ${(f.color ?? "#5aaadd")}40` }
+                    ? { background: f.color, color: f.textColor ?? "white", boxShadow: `0 4px 12px ${f.color}40` }
                     : { background: "white", color: "#a8a29e", border: "1.5px solid #e7e5e4" }
                   }
                 >
-                  {f.label}
+                  {f.emoji} {f.label}
                   {f.count > 0 && <span className="text-[8px] font-black opacity-70">{f.count}</span>}
                 </button>
               );
@@ -364,40 +437,51 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         </div>
       </div>
 
-      {/* ── Contenuto principale ─────────────────────────────────────────────── */}
+      {/* ── Contenuto principale ──────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-20">
 
         {visible.length === 0 && !loading ? (
-          <div className="py-20 text-center">
-            <p className="text-4xl mb-4">🏔️</p>
-            <p className="text-stone-400 font-black uppercase tracking-widest text-xs">Nessuna attività disponibile al momento</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            <AnimatePresence mode="popLayout">
-              {visible.map((activity, idx) => (
-                <ActivityCard key={activity.id} activity={activity} idx={idx}
-                  onDetails={() => openDetails(activity)}
-                  onBook={(mode) => onBookingClick(activity.titolo, mode)}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-
-        {visibleCount < filtered.length && (
-          <div className="flex justify-center mt-8">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            className="py-20 text-center"
+          >
+            <p className="text-5xl mb-4">🏔️</p>
+            <p className="text-brand-stone font-black uppercase tracking-widest text-sm mb-2">Nessuna attività disponibile</p>
+            <p className="text-stone-400 text-xs font-medium mb-6">Non ci sono risultati per questo filtro al momento.</p>
             <button
-              onClick={() => setVisibleCount(v => v + ITEMS_PER_LOAD)}
-              className="flex items-center gap-2 px-6 py-3.5 bg-white rounded-2xl font-black uppercase text-[9px] tracking-widest text-stone-500 border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95 shadow-sm"
+              onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+              className="px-6 py-3 bg-brand-sky text-white rounded-2xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
             >
-              <ChevronDown size={13} />
-              Altre {Math.min(ITEMS_PER_LOAD, filtered.length - visibleCount)}
+              Vedi tutte le attività
             </button>
-          </div>
+          </motion.div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <AnimatePresence mode="popLayout">
+                {visible.map((activity, idx) => (
+                  <ActivityCard key={activity.id} activity={activity} idx={idx}
+                    onDetails={() => openDetails(activity)}
+                    onBook={(mode) => onBookingClick(activity.titolo, mode)}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {visibleCount < filtered.length && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => setVisibleCount(v => v + ITEMS_PER_LOAD)}
+                  className="flex items-center gap-2 px-6 py-3.5 bg-white rounded-2xl font-black uppercase text-[9px] tracking-widest text-stone-500 border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95 shadow-sm"
+                >
+                  Altre {Math.min(ITEMS_PER_LOAD, filtered.length - visibleCount)} attività
+                </button>
+              </div>
+            )}
+          </>
         )}
 
-        {/* ── Quiz zaino — desktop inline ───────────────────────────────── */}
+        {/* ── Quiz zaino desktop inline ─────────────────────────────────── */}
         <div id="zaino-quiz-section" className="hidden md:block mt-24">
           <div className="flex flex-col items-center mb-12">
             <div className="h-16 w-px bg-gradient-to-b from-transparent to-stone-200" />
