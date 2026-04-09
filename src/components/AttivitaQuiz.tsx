@@ -244,7 +244,7 @@ function ItemCard({
   onAdd,
   onRemove,
 }: {
-  item: Item;
+  item: any; // Usa il tuo tipo Item se definito
   isIn: boolean;
   isDisabled: boolean;
   onAdd: () => void;
@@ -254,48 +254,32 @@ function ItemCard({
   const itemCardRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Rileva se il viewport è mobile
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640); // Corrisponde al breakpoint 'sm' di Tailwind
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Gestione dello scroll del body quando il modal mobile è aperto
   useEffect(() => {
     if (showPopup && isMobile) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    return () => { document.body.style.overflow = "unset"; };
   }, [showPopup, isMobile]);
 
-  // Logica di posizionamento intelligente per desktop tooltip
   const getDesktopTooltipPositionClasses = () => {
-    if (item.zone === "bottom") {
-      return "bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 origin-bottom";
-    } else if (item.zone === "left") {
-      return "top-1/2 -translate-y-1/2 left-[calc(100%+12px)] origin-left";
-    } else {
-      return "top-1/2 -translate-y-1/2 right-[calc(100%+12px)] origin-right";
-    }
+    if (item.zone === "bottom") return "bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 origin-bottom";
+    if (item.zone === "left") return "top-1/2 -translate-y-1/2 left-[calc(100%+12px)] origin-left";
+    return "top-1/2 -translate-y-1/2 right-[calc(100%+12px)] origin-right";
   };
 
-  // Logica per la freccina del desktop tooltip
   const getDesktopArrowClasses = () => {
-    if (item.zone === "bottom") {
-      return "bottom-[-4px] left-1/2 -translate-x-1/2 rotate-45";
-    } else if (item.zone === "left") {
-      return "top-1/2 -translate-y-1/2 left-[-4px] rotate-45";
-    } else {
-      return "top-1/2 -translate-y-1/2 right-[-4px] rotate-45";
-    }
+    if (item.zone === "bottom") return "bottom-[-4px] left-1/2 -translate-x-1/2 rotate-45";
+    if (item.zone === "left") return "top-1/2 -translate-y-1/2 left-[-4px] rotate-45";
+    return "top-1/2 -translate-y-1/2 right-[-4px] rotate-45";
   };
 
   return (
@@ -332,73 +316,33 @@ function ItemCard({
       <AnimatePresence>
         {showPopup && (
           <>
-            {/* Backdrop per Mobile Modal e Desktop Tooltip (per chiusura click-outside) */}
+            {/* BACKDROP GLASSMORPHISM */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`fixed inset-0 z-[9998] ${isMobile ? "bg-black/60 backdrop-blur-md" : ""}`}
+              className={`fixed inset-0 z-[9998] ${isMobile ? "bg-stone-900/20 backdrop-blur-xl" : "bg-transparent"}`}
               onClick={() => setShowPopup(false)}
             />
 
-            {/* Contenuto del Popup (Modal su Mobile, Tooltip su Desktop) */}
+            {/* MODAL / TOOLTIP */}
             <motion.div
-              initial={{ opacity: 0, scale: isMobile ? 0.95 : 0.88, y: isMobile ? 20 : 0 }}
+              initial={{ opacity: 0, scale: isMobile ? 0.9 : 0.88, y: isMobile ? 40 : 0 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: isMobile ? 0.95 : 0.88, y: isMobile ? 20 : 0 }}
-              transition={{ type: "spring", stiffness: 380, damping: 26 }}
-              className={`rounded-2xl p-3.5 sm:p-4 z-[9999] ${isMobile ? "fixed inset-0 flex items-center justify-center p-4" : `absolute w-[220px] sm:w-56 ${getDesktopTooltipPositionClasses()}`}`}
-              style={{
-                background: "white",
-                boxShadow: "0 12px 40px rgba(159,130,112,0.25), 0 0 0 1.5px rgba(159,130,112,0.15)",
-              }}
+              exit={{ opacity: 0, scale: isMobile ? 0.9 : 0.88, y: isMobile ? 40 : 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className={`z-[9999] ${isMobile ? "fixed inset-0 flex items-center justify-center p-6" : `absolute w-56 ${getDesktopTooltipPositionClasses()}`}`}
+              onClick={(e) => isMobile && e.target === e.currentTarget && setShowPopup(false)}
             >
-              {/* Contenitore interno per il modal mobile */}
-              {isMobile ? (
-                <div className="w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl p-3.5 sm:p-4"
-                  style={{
-                    background: "white",
-                    boxShadow: "0 12px 40px rgba(159,130,112,0.25), 0 0 0 1.5px rgba(159,130,112,0.15)",
-                  }}
-                >
-                  <div className="flex items-start justify-between gap-1.5 mb-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg sm:text-xl leading-none">{item.emoji}</span>
-                      <span
-                        className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full leading-none"
-                        style={{ background: "rgba(129,204,176,0.15)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.3)" }}
-                      >
-                        {item.hintTag}
-                      </span>
-                    </div>
-                    <button onClick={() => setShowPopup(false)} className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0 p-1">
-                      <X size={14} />
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed font-medium mb-3.5">
-                    {item.hint}
-                  </p>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowPopup(false)}
-                      className="flex-1 py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-stone-400 border border-stone-200 hover:border-stone-300 hover:bg-stone-50 active:scale-95 transition-all"
-                    >
-                      Annulla
-                    </button>
-                    <button
-                      onClick={() => { setShowPopup(false); onAdd(); }}
-                      className="flex-[1.5] py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white active:scale-95 transition-all shadow-md"
-                      style={{ background: "linear-gradient(135deg, #81ccb0, #5aa89a)" }}
-                    >
-                      Aggiungi ✓
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Freccietta per Desktop Tooltip */}
+              <div 
+                className={`bg-white rounded-[2rem] p-5 sm:p-6 relative ${isMobile ? "w-full max-w-[320px]" : "w-full"}`}
+                style={{
+                  boxShadow: isMobile 
+                    ? "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(159,130,112,0.08)" 
+                    : "0 12px 40px rgba(159,130,112,0.25), 0 0 0 1.5px rgba(159,130,112,0.15)",
+                }}
+              >
+                {!isMobile && (
                   <div
                     className={`absolute w-3 h-3 bg-white ${getDesktopArrowClasses()}`}
                     style={{
@@ -406,43 +350,43 @@ function ItemCard({
                       zIndex: -1,
                     }}
                   />
+                )}
 
-                  <div className="flex items-start justify-between gap-1.5 mb-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg sm:text-xl leading-none">{item.emoji}</span>
-                      <span
-                        className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full leading-none"
-                        style={{ background: "rgba(129,204,176,0.15)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.3)" }}
-                      >
-                        {item.hintTag}
-                      </span>
-                    </div>
-                    <button onClick={() => setShowPopup(false)} className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0 p-1">
-                      <X size={14} />
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed font-medium mb-3.5">
-                    {item.hint}
-                  </p>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowPopup(false)}
-                      className="flex-1 py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-stone-400 border border-stone-200 hover:border-stone-300 hover:bg-stone-50 active:scale-95 transition-all"
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl leading-none">{item.emoji}</span>
+                    <span
+                      className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full leading-none"
+                      style={{ background: "rgba(129,204,176,0.12)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.2)" }}
                     >
-                      Annulla
-                    </button>
-                    <button
-                      onClick={() => { setShowPopup(false); onAdd(); }}
-                      className="flex-[1.5] py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-white active:scale-95 transition-all shadow-md"
-                      style={{ background: "linear-gradient(135deg, #81ccb0, #5aa89a)" }}
-                    >
-                      Aggiungi ✓
-                    </button>
+                      {item.hintTag}
+                    </span>
                   </div>
-                </>
-              )}
+                  <button onClick={() => setShowPopup(false)} className="text-stone-300 hover:text-stone-500 transition-colors p-1">
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <p className="text-xs sm:text-sm text-stone-500 leading-relaxed font-medium mb-5">
+                  {item.hint}
+                </p>
+
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={() => setShowPopup(false)}
+                    className="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-stone-400 border border-stone-100 hover:bg-stone-50 transition-all"
+                  >
+                    Chiudi
+                  </button>
+                  <button
+                    onClick={() => { setShowPopup(false); onAdd(); }}
+                    className="flex-[1.8] py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg active:scale-95 transition-all"
+                    style={{ background: "linear-gradient(135deg, #81ccb0, #5aa89a)", boxShadow: "0 8px 20px rgba(129,204,176,0.3)" }}
+                  >
+                    Aggiungi ✓
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </>
         )}

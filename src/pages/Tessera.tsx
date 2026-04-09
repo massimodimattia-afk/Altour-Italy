@@ -497,35 +497,67 @@ const TESSERA_LEVELS = [
   "Menestrello dei bastoncini","Duca degli scalatori","Custode del verde","Specialista dei sentieri",
   "Gnomo delle pigne","Spiritello degli stagni","Appassionato naturalista","Leggenda vivente",
 ];
+const PIN_LENGTH = 8;
 
+// --- Componente PinInput Aggiornato ---
 const PinInput = ({ value, onChange, onComplete }: { value: string; onChange: (v: string) => void; onComplete?: () => void }) => {
-  const ref0 = useRef<HTMLInputElement>(null);
-  const ref1 = useRef<HTMLInputElement>(null);
-  const ref2 = useRef<HTMLInputElement>(null);
-  const ref3 = useRef<HTMLInputElement>(null);
-  const refsRef = useRef([ref0, ref1, ref2, ref3]);
-  const refs = refsRef.current;
+  // Creiamo un array di ref per 8 input
+  const refs = useRef<Array<React.RefObject<HTMLInputElement>>>(Array.from({ length: PIN_LENGTH }, () => useRef(null)));
+
   const handleKey = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace") {
-      if (value[i]) { onChange(value.slice(0, i) + value.slice(i + 1)); }
-      else if (i > 0) { refs[i - 1].current?.focus(); onChange(value.slice(0, i - 1) + value.slice(i)); }
+      if (value[i]) { // Se c'è un valore nel campo corrente, lo cancella
+        onChange(value.slice(0, i) + value.slice(i + 1));
+      } else if (i > 0) { // Altrimenti, sposta il focus al campo precedente e cancella il suo valore
+        refs.current[i - 1].current?.focus();
+        onChange(value.slice(0, i - 1) + value.slice(i));
+      }
+    } else if (e.key === "ArrowLeft" && i > 0) {
+      refs.current[i - 1].current?.focus();
+    } else if (e.key === "ArrowRight" && i < PIN_LENGTH - 1) {
+      refs.current[i + 1].current?.focus();
     }
   };
+
   const handleChange = (i: number, raw: string) => {
-    const digit = raw.replace(/\D/g, "").slice(-1);
-    if (!digit) return;
-    const next = (value.slice(0, i) + digit + value.slice(i + 1)).slice(0, 4);
-    onChange(next);
-    if (i < 3) refs[i + 1].current?.focus();
-    else if (next.length === 4) onComplete?.();
+    const digit = raw.replace(/\D/g, "").slice(-1); // Prende solo l'ultima cifra numerica
+    if (!digit) return; // Se non è una cifra, non fa nulla
+
+    // Costruisce la nuova stringa del PIN
+    const newPinValue = (value.slice(0, i) + digit + value.slice(i + 1)).slice(0, PIN_LENGTH);
+    onChange(newPinValue);
+
+    // Sposta il focus al campo successivo se non è l'ultimo
+    if (i < PIN_LENGTH - 1) {
+      refs.current[i + 1].current?.focus();
+    } else if (newPinValue.length === PIN_LENGTH) { // Se il PIN è completo, chiama onComplete
+      onComplete?.();
+    }
   };
+
+  // Gestisce l'incollaggio di un PIN completo
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text').replace(/\D/g, '');
+    if (pasteData.length === PIN_LENGTH) {
+      onChange(pasteData);
+      onComplete?.();
+    } else if (pasteData.length < PIN_LENGTH) {
+      // Se il PIN incollato è più corto, riempi i campi disponibili
+      const newPinValue = (value.slice(0, 0) + pasteData + value.slice(pasteData.length)).slice(0, PIN_LENGTH);
+      onChange(newPinValue);
+      // Sposta il focus all'ultimo campo riempito
+      refs.current[pasteData.length - 1]?.current?.focus();
+    }
+  };
+
   return (
-    <div className="flex gap-3 justify-center">
-      {([ref0, ref1, ref2, ref3] as const).map((ref, i) => (
+    <div className="flex gap-2 sm:gap-3 justify-center flex-wrap">
+      {refs.current.map((ref, i) => (
         <input key={i} ref={ref} type="password" inputMode="numeric" maxLength={1} value={value[i] ?? ""}
           onChange={(e) => handleChange(i, e.target.value)} onKeyDown={(e) => handleKey(i, e)}
-          onFocus={(e) => e.target.select()}
-          className="w-14 h-14 text-center text-xl font-black bg-stone-50 border-2 border-stone-100 rounded-2xl outline-none focus:border-brand-sky focus:bg-white transition-all shadow-inner" />
+          onFocus={(e) => e.target.select()} onPaste={handlePaste}
+          className="w-10 h-10 sm:w-12 sm:h-12 text-center text-xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky focus:bg-white transition-all shadow-inner" />
       ))}
     </div>
   );
@@ -687,7 +719,7 @@ export default function Tessera() {
 
   async function handleVerifyPin() {
     if (!pendingTessera) return;
-    if (loginPin.length !== 4) { setLoginError("Inserisci 4 cifre."); return; }
+     if (loginPin.length !== PIN_LENGTH) { setLoginError(`Inserisci ${PIN_LENGTH} cifre.`); return; }
     if (loginPin !== pendingTessera.pin) { setLoginError("PIN errato."); setLoginAttempts((n) => n + 1); setLoginPin(""); return; }
     completeLogin(pendingTessera);
   }
