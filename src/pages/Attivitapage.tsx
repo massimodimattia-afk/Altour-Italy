@@ -246,7 +246,6 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     setVisibleCount(ITEMS_PER_LOAD);
   };
 
-  const activeFilterMeta = FILTERS.find(f => f.key === activeFilter);
 
   if (loading) return (
     <div className="max-w-6xl mx-auto px-4 pt-8 pb-20">
@@ -331,75 +330,46 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         </motion.div>
 
         {/* ── Filtri card — mobile orizzontale, desktop pills ─────────────── */}
-        {/* Mobile: card grandi scrollabili orizzontalmente */}
-        <div className="md:hidden -mx-4 px-4">
-          <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none">
-            {FILTERS.map((f, i) => {
-              const isActive = activeFilter === f.key;
-              return (
-                <motion.button
-                  key={f.key}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={() => toggleFilter(f.key)}
-                  className="flex-shrink-0 flex flex-col items-start gap-2 p-4 rounded-[1.5rem] w-32 active:scale-95 transition-all"
-                  style={isActive
-                    ? { background: f.color, boxShadow: `0 6px 20px ${f.color}50` }
-                    : { background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)" }
-                  }
-                >
-                  <span className="text-2xl">{f.emoji}</span>
-                  <div>
-                    <p className={`text-[9px] font-black uppercase tracking-wider leading-tight ${isActive ? "text-white" : "text-brand-stone"}`}
-                      style={isActive && f.textColor ? { color: f.textColor } : {}}>
-                      {f.label}
-                    </p>
-                    {f.count > 0 && (
-                      <p className={`text-[8px] font-bold mt-0.5 ${isActive ? "text-white/70" : "text-stone-400"}`}
-                        style={isActive && f.textColor ? { color: `${f.textColor}99` } : {}}>
-                        {f.count} {f.count === 1 ? "attività" : "attività"}
-                      </p>
-                    )}
-                  </div>
-                  {isActive && (
-                    <motion.div
-                      layoutId="mobile-filter-indicator"
-                      className="absolute bottom-2 right-2 w-4 h-4 rounded-full bg-white/30 flex items-center justify-center"
-                    >
-                      <span className="text-[8px] font-black" style={f.textColor ? { color: f.textColor } : { color: "white" }}>✓</span>
-                    </motion.div>
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-
-          {/* Label filtro attivo su mobile */}
-          <AnimatePresence>
-            {activeFilter && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex items-center justify-between mb-4 overflow-hidden"
-              >
-                <div className="flex items-center gap-2 py-2">
-                  <div className="w-1.5 h-4 rounded-full" style={{ background: activeFilterMeta?.color }} />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-stone-500">
-                    {activeFilterMeta?.label} — {filtered.length} risultati
-                  </span>
-                </div>
-                <button
-                  onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
-                  className="text-[9px] font-black uppercase tracking-widest text-stone-400 hover:text-stone-600 transition-colors"
-                >
-                  Vedi tutti ✕
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* ── Filtri mobile compatti (Sostituzione) ─────────────── */}
+<div className="md:hidden -mx-4 px-4 mb-6">
+  <div className="flex items-center justify-between mb-3 px-1">
+    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
+      Filtra attività
+    </span>
+    {activeFilter && (
+      <button 
+        onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+        className="text-[10px] font-black uppercase text-brand-sky"
+      >
+        Reset
+      </button>
+    )}
+  </div>
+  
+  <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+    {FILTERS.map((f) => {
+      const isActive = activeFilter === f.key;
+      return (
+        <button
+          key={f.key}
+          onClick={() => toggleFilter(f.key)}
+          className={`flex-shrink-0 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
+            isActive
+              ? "bg-brand-sky border-brand-sky text-white shadow-md shadow-sky-200"
+              : "bg-white border-stone-200 text-stone-500"
+          }`}
+        >
+          {f.label}
+          {f.count > 0 && (
+            <span className={`ml-2 opacity-60 ${isActive ? "text-white" : "text-stone-400"}`}>
+              {f.count}
+            </span>
+          )}
+        </button>
+      );
+    })}
+  </div>
+</div>
       </div>
 
       {/* ── Filtri sticky desktop ─────────────────────────────────────────── */}
