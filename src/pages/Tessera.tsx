@@ -658,6 +658,14 @@ export default function Tessera() {
         {!userTessera && (
           <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#f5f2ed]">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center">
+<button
+  onClick={() => window.location.href = '/'}
+  className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 shadow-sm hover:bg-stone-100 hover:border-stone-300 transition-all duration-200 active:scale-95"
+  aria-label="Torna alla home"
+>
+  <ChevronLeft size={14} />
+  <span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span>
+</button>
               <img 
         src="/altour-logo.png" 
         alt="Altour Italy" 

@@ -116,10 +116,11 @@ function ActivityCard({
           className="absolute inset-0 w-full h-full object-cover"
           loading={idx < 4 ? "eager" : "lazy"} decoding="async" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-        {isEsc
-          ? esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
-          : (activity as Campo).filosofia && <FilosofiaBadge value={(activity as Campo).filosofia} />
-        }
+{isEsc
+  ? esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
+  : ((activity as Campo).filosofia || (activity as Campo).slug) && 
+    <FilosofiaBadge value={(activity as Campo).filosofia || (activity as Campo).slug} />
+}
       </div>
       <div className="p-4 md:p-5 flex flex-col flex-grow">
         <div className="flex items-center gap-2.5 mb-2 flex-wrap">
@@ -130,7 +131,7 @@ function ActivityCard({
             </span>
           )}
           {activity.durata && (
-            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
+            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
               <Clock size={9} />{activity.durata}
             </span>
           )}

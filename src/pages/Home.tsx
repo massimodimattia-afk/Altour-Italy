@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  Calendar,
   Clock,
   TrendingUp,
   Gift,
@@ -14,6 +13,7 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion } from "framer-motion";
+import { CourseCard, Corso } from "../components/CourseCard";
 
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
@@ -21,7 +21,7 @@ type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   is_italic?: boolean | null;
   _tipo: "escursione";
 };
-type Corso = Database["public"]["Tables"]["corsi"]["Row"];
+
 interface Campo {
   id: string;
   titolo: string;
@@ -89,7 +89,6 @@ function getFilosofiaOpacity(color: string): string {
 
 function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   if (!value) return null;
-  // Fix #11: non mostrare il badge se il valore non è una filosofia riconosciuta
   if (!FILOSOFIA_COLORS[value]) return null;
   const color = FILOSOFIA_COLORS[value];
   const bg = getFilosofiaOpacity(color);
@@ -139,9 +138,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         const mixed = [...hikes, ...campi].sort(() => Math.random() - 0.5);
         setFeaturedActivities(mixed.slice(0, isMobile ? 2 : 3));
         if (crs) {
-        const corsiConTipo = (crs as any[]).map(c => ({ ...c, _tipo: "corso" as const }));
-        setCourses(corsiConTipo);
-      }
+          setCourses(crs as unknown as Corso[]);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -243,7 +241,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             Formazione ed attività outdoor
           </motion.p>
 
-          {/* CTA */}
+          {/* CTA - RIPRISTINATI DA ORIGINALE */}
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
@@ -264,7 +262,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             </button>
           </motion.div>
 
-          {/* Stats bar */}
+          {/* Stats bar - RIPRISTINATA DA ORIGINALE */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -286,69 +284,47 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             </div>
           </motion.div>
 
+                 
         </div>
       </section>
 
-      {/* ── 2. ACCADEMIA ────────────────────────────────────────────────────── */}
-      <section className="bg-stone-100 py-12 md:py-20 text-brand-stone">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-4">
-            <h2 className="text-4xl md:text-5xl font-light uppercase tracking-tighter leading-none text-brand-stone">
-              Accademia <span className="font-black">Altour</span><span className="text-brand-sky">.</span>
+      {/* ── 2. ACCADEMIA (CORSI) ────────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-1 w-8 bg-brand-sky rounded-full" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky">Accademia Altour</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9]">
+              Formazione <br />
+              <span className="text-brand-sky italic font-light tracking-normal">Professionale.</span>
             </h2>
-            <button
-              onClick={() => onNavigate("corsi")}
-              className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
-            >
-              Vedi tutto <TrendingUp size={14} />
-            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {courses.slice(0, isMobile ? 1 : 2).map((corso, idx) => (
-              <div key={corso.id} className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform"
-                style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}>
-                <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
-                  <img
-                    src={corso.immagine_url || IMG_FALLBACK}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    alt={corso.titolo}
-                    loading={idx === 0 ? "eager" : "lazy"}
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-                  <FilosofiaBadge value={corso.categoria} />
-                </div>
-                <div className="p-4 md:p-5 flex flex-col flex-grow">
-                  <div className="flex items-center gap-2.5 mb-2">
-                    <span className="text-[9px] font-bold uppercase tracking-wide text-brand-sky">Iscrizioni aperte</span>
-                  </div>
-                  <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">{corso.titolo}</h3>
-                  <p
-                    className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium"
-                    dangerouslySetInnerHTML={{ __html: formatMarkdown(corso.descrizione) }}
-                  />
-                  <div className="flex gap-2 pt-3 border-t border-stone-50">
-                    <button
-                      onClick={() => openDetails(corso)}
-                      className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95"
-                    >
-                      Dettagli
-                    </button>
-                    <button
-                      onClick={() => onBookingClick(corso.titolo, 'info')}
-                      className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95"
-                    >
-                      Richiedi Info
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <button
+            onClick={() => onNavigate("corsi")}
+            className="group flex items-center gap-3 text-stone-400 hover:text-brand-sky transition-colors"
+          >
+            <span className="text-[10px] font-black uppercase tracking-widest">Vedi tutti i corsi</span>
+            <div className="w-10 h-10 rounded-full border border-stone-200 flex items-center justify-center group-hover:border-brand-sky group-hover:bg-brand-sky group-hover:text-white transition-all">
+              <ArrowRight size={16} />
+            </div>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {courses.slice(0, 3).map((corso) => (
+            <CourseCard 
+              key={corso.id} 
+              corso={corso} 
+              onBookingClick={onBookingClick} 
+              openDetails={openDetails} 
+            />
+          ))}
         </div>
       </section>
 
-      {/* ── 3. VOUCHER ──────────────────────────────────────────────────────── */}
+      {/* ── 3. VOUCHER (RIPRISTINATO DA ORIGINALE) ──────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 py-12 md:py-20">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -388,20 +364,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   Un'emozione da regalare a chi ami — utilizzabile per ogni tipo di esperienza Altour.
                 </p>
 
-                {/* Fix #4: label leggibile (text-[10px] invece di text-[8px]) */}
                 <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-4">
                   Scegli l'importo
                 </p>
 
-                {/*
-                  Fix #1: rimossa scritta "scegli →" dai bottoni
-                  Fix #2: 3 colonne su mobile (2 righe da 3) invece di 2 (3 righe da 2)
-                          — bottoni più larghi, più facili da toccare
-                  Fix #3: tag "Starter/Premium" spostati dentro il bottone (non absolute -top-2)
-                          — non fuoriescono su mobile e non richiedono overflow:visible sul parent
-                  Fix #5: nessun feedback "selezionato" per non bloccare l'UX —
-                          il tap apre direttamente il form come prima, ma senza testo di supporto inutile
-                */}
                 <div className="grid grid-cols-3 gap-2.5 mb-5">
                   {PRESET_VOUCHERS.map(({ amount, tag, highlight }) => (
                     <motion.button
@@ -416,7 +382,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                       }`}
                     >
                       <span className="text-base font-black leading-none">{amount}€</span>
-                      {/* Fix #3: tag inline sotto il prezzo, non absolute */}
                       {tag && (
                         <span className={`text-[7px] font-black uppercase tracking-wider mt-1 ${
                           highlight ? "text-white/75" : "text-stone-400"
@@ -450,79 +415,87 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </motion.div>
       </section>
 
-      {/* ── 4. ATTIVITÀ OUTDOOR ─────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 py-12 md:py-20">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-4 px-2">
-          <div className="max-w-md">
-            <h2 className="text-2xl md:text-4xl font-black text-stone-900 uppercase tracking-tight leading-tight">
-              Scegli la meta, <br className="hidden md:block" /> noi pensiamo al resto.
+      {/* ── 4. ATTIVITÀ IN EVIDENZA ─────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 py-20 md:py-32">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-1 w-8 bg-brand-sky rounded-full" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky">Attività Outdoor</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9]">
+              Prossime <br />
+              <span className="text-brand-sky italic font-light tracking-normal">Avventure.</span>
             </h2>
-            <div className="h-1 w-12 bg-brand-sky mt-3" />
           </div>
           <button
             onClick={() => onNavigate("attivitapage")}
-            className="text-brand-sky font-black uppercase text-[10px] tracking-widest flex items-center gap-2 self-end md:self-auto"
+            className="group flex items-center gap-3 text-stone-400 hover:text-brand-sky transition-colors"
           >
-            Vedi tutte <TrendingUp size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Vedi tutte le attività</span>
+            <div className="w-10 h-10 rounded-full border border-stone-200 flex items-center justify-center group-hover:border-brand-sky group-hover:bg-brand-sky group-hover:text-white transition-all">
+              <ArrowRight size={16} />
+            </div>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {featuredActivities.map((activity, idx) => {
-            const isEsc = (activity as any)._tipo === "escursione";
-            const esc   = isEsc ? activity as Escursione : null;
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {featuredActivities.map((activity) => {
+            const isEscursione = activity._tipo === "escursione";
             return (
               <div
                 key={activity.id}
-                className={`bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform${idx >= 2 ? " hidden sm:flex" : ""}`}
-                style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
+                className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500"
               >
-                <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
-                  <img
-                    src={activity.immagine_url || IMG_FALLBACK}
-                    alt={activity.titolo}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    loading={idx < 2 ? "eager" : "lazy"}
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-                  {esc && <FilosofiaBadge value={esc.filosofia} />}
+                <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-200 relative overflow-hidden">
+                  {activity.immagine_url && (
+                    <img
+                      src={activity.immagine_url}
+                      alt={activity.titolo}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+                  {isEscursione && <FilosofiaBadge value={activity.filosofia} />}
                 </div>
-                <div className="p-4 md:p-5 flex flex-col flex-grow">
-                  <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-                    {esc?.data && (
-                      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
-                        <Calendar size={9} />
-                        {new Date(esc.data).toLocaleDateString("it-IT", { day: "2-digit", month: "short" })}
-                      </span>
+                <div className="p-5 md:p-7 flex flex-col flex-grow">
+                  <div className="flex items-center gap-3 mb-3">
+                    {isEscursione ? (
+                      <>
+                       <div className="w-1 h-1 rounded-full bg-stone-200" />
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+                          <Clock size={12} className="text-brand-sky" />
+                          {activity.durata || 'Giornata intera'}
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-[10px] font-black uppercase tracking-widest text-brand-sky">Campo Base</span>
                     )}
-                    {(activity as any).durata && (
-                      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
-                        <Clock size={9} />{(activity as any).durata}
-                      </span>
-                    )}
-                    </div>
-                  <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
+                  </div>
+                  <h3 className="text-lg md:text-xl font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-3">
                     {activity.titolo}
                   </h3>
                   <p
-                    className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium"
+                    className="text-stone-500 text-xs md:text-sm line-clamp-3 leading-relaxed mb-6 flex-grow font-medium"
                     dangerouslySetInnerHTML={{ __html: formatMarkdown(activity.descrizione) }}
                   />
-                  <div className="flex gap-2 pt-3 border-t border-stone-50">
-                      <button
-                        onClick={() => openDetails(activity)}
-                        className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95"
-                      >
-                        Dettagli
-                      </button>
-                      <button
-                        onClick={() => onBookingClick(activity.titolo, 'info')}
-                        className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95"
-                      >
-                        Richiedi Info
-                      </button>
-                    </div>
+                  <div className="flex gap-3 pt-5 border-t border-stone-100">
+                    <button
+                      onClick={() => openDetails(activity)}
+                      className="flex-1 py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95"
+                    >
+                      Dettagli
+                    </button>
+                    <button
+                      onClick={() => onBookingClick(activity.titolo, 'info')}
+                      className="flex-[1.5] py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-lg hover:bg-[#0284c7] transition-all active:scale-95"
+                    >
+                      Richiedi Info
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -595,7 +568,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         />
       )}
 
-      {/* Fix #12: delay ridotto da 1.2s a 0.6s — appare prima che l'utente inizi a scrollare */}
       <motion.a
         href="https://wa.me/393281613762"
         target="_blank"
