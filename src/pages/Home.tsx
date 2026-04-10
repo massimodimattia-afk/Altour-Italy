@@ -29,6 +29,7 @@ interface Campo {
   immagine_url: string | null;
   prezzo?: number | null;
   durata?: string | null;
+  slug?: string | null;
   _tipo: "campo";
 }
 type FeaturedActivity = Escursione | Campo;
@@ -130,7 +131,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       try {
         const [{ data: allHikes }, { data: allCampi }, { data: crs }] = await Promise.all([
           supabase.from("escursioni").select("*").eq("is_active", true).order("data", { ascending: true }),
-          supabase.from("campi").select("id, titolo, descrizione, immagine_url, prezzo, durata"),
+          supabase.from("campi").select("id, titolo, descrizione, immagine_url, prezzo, durata, slug"),
           supabase.from("corsi").select("*").order("posizione", { ascending: true }),
         ]);
         const hikes = ((allHikes ?? []) as any[]).map(e => ({ ...e, _tipo: "escursione" as const }));
@@ -146,7 +147,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [isMobile]);
 
   const openDetails = (activity: any) => {
     setSelectedActivity(activity);
@@ -201,20 +202,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         {/* Contenuto */}
         <div className="relative z-10 text-center max-w-4xl w-full px-4 flex flex-col items-center">
 
-          {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85, y: -10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
-            className="relative inline-block mb-5 md:mb-7"
-          >
-            <div className="absolute inset-0 bg-white/10 rounded-full blur-2xl opacity-60" />
-            <img
-              src="/altour-logo.png"
-              className="relative w-20 h-20 md:w-36 md:h-36 mx-auto rounded-[1.5rem] md:rounded-[2rem] shadow-2xl border border-white/15 object-cover"
-              alt="Logo Altour Italy"
-            />
-          </motion.div>
+       
 
           {/* Titolo */}
           <motion.div
@@ -313,14 +301,15 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {courses.slice(0, 3).map((corso) => (
-            <CourseCard 
-              key={corso.id} 
-              corso={corso} 
-              onBookingClick={onBookingClick} 
-              openDetails={openDetails} 
-            />
-          ))}
+{courses.slice(0, 3).map((corso, index) => (
+  <div key={corso.id} className={index > 0 ? "hidden md:block" : "block"}>
+    <CourseCard 
+      corso={corso} 
+      onBookingClick={onBookingClick} 
+      openDetails={openDetails} 
+    />
+  </div>
+))}
         </div>
       </section>
 
@@ -460,20 +449,31 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
                   {isEscursione && <FilosofiaBadge value={activity.filosofia} />}
-                </div>
+{/* BADGE PER CAMPI (Usando lo slug nel posto di Filosofia) */}
+  {!isEscursione && activity.slug && (
+    <FilosofiaBadge value={activity.slug} />
+  )}
+    </div>
                 <div className="p-5 md:p-7 flex flex-col flex-grow">
                   <div className="flex items-center gap-3 mb-3">
                     {isEscursione ? (
                       <>
                        <div className="w-1 h-1 rounded-full bg-stone-200" />
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-brand-sky uppercase tracking-wider">
                           <Clock size={12} className="text-brand-sky" />
                           {activity.durata || 'Giornata intera'}
                         </div>
                       </>
-                    ) : (
-                      <span className="text-[10px] font-black uppercase tracking-widest text-brand-sky">Campo Base</span>
-                    )}
+) : (
+  <div className="flex flex-col gap-1"> {/* Contenitore per allineare durata e slug */}
+    <div className="flex items-center gap-1.5 text-[10px] font-bold text-brand-sky uppercase tracking-wider">
+      <Clock size={12} />
+      {activity.durata || 'Campo'}
+    </div>
+    
+
+  </div>
+)}
                   </div>
                   <h3 className="text-lg md:text-xl font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-3">
                     {activity.titolo}

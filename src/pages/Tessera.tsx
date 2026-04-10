@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Mountain,
   Footprints,
+  Camera,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
@@ -32,7 +33,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Benessere":              "#a5d9c9",
   "Borghi più belli":       "#946a52",
   "Cammini":                "#e3c45d",
-  "Educazione all\"aperto":  "#01aa9f",
+  "Educazione all'aperto":  "#01aa9f",
   "Eventi":                 "#ffc0cb",
   "Formazione":             "#002f59",
   "Immersi nel verde":      "#358756",
@@ -50,7 +51,7 @@ const BADGE_NAMES: Record<string, string> = {
   "Benessere":              "Spirito Libero",
   "Borghi più belli":       "Custode dei Borghi",
   "Cammini":                "Pellegrino",
-  "Educazione all\"aperto":  "Maestro del Bosco",
+  "Educazione all'aperto":  "Maestro del Bosco",
   "Eventi":                 "Anima della Festa",
   "Formazione":             "Sapiente",
   "Immersi nel verde":      "Guardiano del Verde",
@@ -68,7 +69,7 @@ const BADGE_EMOJI: Record<string, string> = {
   "Benessere":              "🌿",
   "Borghi più belli":       "🏘",
   "Cammini":                "👣",
-  "Educazione all\"aperto":  "🌱",
+  "Educazione all'aperto":  "🌱",
   "Eventi":                 "✨",
   "Formazione":             "📖",
   "Immersi nel verde":      "🌲",
@@ -110,15 +111,8 @@ function getFilosofiaColor(name: string | null): string { return name ? (FILOSOF
 
 function parseJsonArray<T>(data: T[] | string | null | undefined): T[] {
   if (typeof data === 'string') {
-    try {
-      return JSON.parse(data) as T[];
-    } catch (e) {
-      console.error("Failed to parse JSON string:", data, e);
-      return [];
-    }
-  } else if (Array.isArray(data)) {
-    return data;
-  }
+    try { return JSON.parse(data) as T[]; } catch { return []; }
+  } else if (Array.isArray(data)) { return data; }
   return [];
 }
 
@@ -175,76 +169,33 @@ const BadgeChip = ({ filo, isUnlocked, count, onClick }: { filo: string; isUnloc
         <div
           className="relative w-[58px] h-[62px] md:w-[66px] md:h-[70px] rounded-[18px] flex flex-col items-center justify-center gap-0.5 overflow-hidden"
           style={isUnlocked
-            ? {
-                background: `linear-gradient(145deg, ${color}ee 0%, ${color} 60%, ${color}cc 100%)`,
-                boxShadow: `0 4px 14px ${color}55, 0 1px 0 rgba(255,255,255,0.3) inset, 0 -1px 0 rgba(0,0,0,0.12) inset`,
-              }
-            : {
-                background: "linear-gradient(145deg, #f7f6f4 0%, #edecea 100%)",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.8) inset",
-              }}
+            ? { background: `linear-gradient(145deg, ${color}ee 0%, ${color} 60%, ${color}cc 100%)`, boxShadow: `0 4px 14px ${color}55, 0 1px 0 rgba(255,255,255,0.3) inset, 0 -1px 0 rgba(0,0,0,0.12) inset` }
+            : { background: "linear-gradient(145deg, #f7f6f4 0%, #edecea 100%)", boxShadow: "0 2px 6px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.8) inset" }}
         >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: isUnlocked
-                ? "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 45%, rgba(0,0,0,0.06) 100%)"
-                : "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, transparent 60%)",
-            }}
-          />
-          <span
-            className="relative z-10 leading-none select-none"
-            style={{
-              fontSize: isUnlocked ? 26 : 22,
-              filter: isUnlocked ? "drop-shadow(0 1px 2px rgba(0,0,0,0.18))" : "grayscale(1) opacity(0.22)",
-            }}
-          >
+          <div className="absolute inset-0 pointer-events-none" style={{ background: isUnlocked ? "linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 45%, rgba(0,0,0,0.06) 100%)" : "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, transparent 60%)" }} />
+          <span className="relative z-10 leading-none select-none" style={{ fontSize: isUnlocked ? 26 : 22, filter: isUnlocked ? "drop-shadow(0 1px 2px rgba(0,0,0,0.18))" : "grayscale(1) opacity(0.22)" }}>
             {emoji}
           </span>
           {!isUnlocked && (
             <div className="relative z-10 w-[38px] h-[3px] rounded-full overflow-hidden bg-stone-200/80 mt-0.5">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: color }}
-                initial={{ width: 0 }}
-                animate={{ width: `${pct}%` }}
-                transition={{ duration: 0.7, ease: "easeOut" }}
-              />
+              <motion.div className="h-full rounded-full" style={{ background: color }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.7, ease: "easeOut" }} />
             </div>
           )}
-          {isUnlocked && (
-            <div className="absolute bottom-0 left-0 right-0 h-[3px]" style={{ background: "rgba(255,255,255,0.25)" }} />
-          )}
+          {isUnlocked && <div className="absolute bottom-0 left-0 right-0 h-[3px]" style={{ background: "rgba(255,255,255,0.25)" }} />}
         </div>
         {isUnlocked && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 14, delay: 0.08 }}
-            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white flex items-center justify-center"
-            style={{ boxShadow: `0 0 0 2px ${color}, 0 2px 6px ${color}55` }}
-          >
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 14, delay: 0.08 }} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-white flex items-center justify-center" style={{ boxShadow: `0 0 0 2px ${color}, 0 2px 6px ${color}55` }}>
             <CheckCircle2 size={10} style={{ color }} />
           </motion.div>
         )}
         {!isUnlocked && count > 0 && (
-          <div
-            className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full text-[8px] font-black tabular-nums leading-none whitespace-nowrap"
-            style={{
-              background: "white",
-              color: color,
-              boxShadow: `0 1px 4px rgba(0,0,0,0.12), 0 0 0 1.5px ${color}40`,
-            }}
-          >
+          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full text-[8px] font-black tabular-nums leading-none whitespace-nowrap" style={{ background: "white", color: color, boxShadow: `0 1px 4px rgba(0,0,0,0.12), 0 0 0 1.5px ${color}40` }}>
             {count}/{BADGE_THRESHOLD}
           </div>
         )}
       </div>
       <div className="text-center px-0.5 mt-1">
-        <span
-          className="text-[8px] md:text-[9px] font-black uppercase tracking-wide leading-tight line-clamp-2"
-          style={{ color: isUnlocked ? color : "#c4c2c0" }}
-        >
+        <span className="text-[8px] md:text-[9px] font-black uppercase tracking-wide leading-tight line-clamp-2" style={{ color: isUnlocked ? color : "#c4c2c0" }}>
           {name}
         </span>
       </div>
@@ -252,7 +203,7 @@ const BadgeChip = ({ filo, isUnlocked, count, onClick }: { filo: string; isUnloc
   );
 };
 
-// --- BadgeDetailPopup (popup dettaglio badge) ---
+// --- BadgeDetailPopup ---
 const BadgeDetailPopup = ({ filo, isUnlocked, count, onClose }: { filo: string; isUnlocked: boolean; count: number; onClose: () => void }) => {
   const color = FILOSOFIA_COLORS[filo] ?? "#44403c";
   const emoji = BADGE_EMOJI[filo] ?? "★";
@@ -261,66 +212,24 @@ const BadgeDetailPopup = ({ filo, isUnlocked, count, onClose }: { filo: string; 
   const pct = Math.min((count / BADGE_THRESHOLD) * 100, 100);
 
   return (
-    <div
-      className="fixed inset-0 z-[110] flex items-end md:items-center justify-center p-4 backdrop-blur-sm bg-black/40"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <motion.div
-        initial={{ y: 60, opacity: 0, scale: 0.96 }}
-        animate={{ y: 0, opacity: 1, scale: 1 }}
-        exit={{ y: 60, opacity: 0, scale: 0.96 }}
-        transition={{ type: "spring", stiffness: 380, damping: 28 }}
-        className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative"
-      >
-        <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 backdrop-blur-sm rounded-full text-stone-400 hover:text-stone-700 transition-colors">
-          <X size={16} />
-        </button>
-        <div
-          className="relative h-36 flex items-center justify-center overflow-hidden"
-          style={isUnlocked
-            ? { background: `linear-gradient(145deg, ${color}cc 0%, ${color} 60%, ${color}aa 100%)` }
-            : { background: "linear-gradient(145deg, #f0eeec 0%, #e8e5e2 100%)" }}
-        >
-          {isUnlocked && (
-            <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 60%, rgba(255,255,255,0.25) 0%, transparent 70%)` }} />
-          )}
+    <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center p-4 backdrop-blur-sm bg-black/40" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <motion.div initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 60, opacity: 0, scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 28 }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative">
+        <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 backdrop-blur-sm rounded-full text-stone-400 hover:text-stone-700 transition-colors"><X size={16} /></button>
+        <div className="relative h-36 flex items-center justify-center overflow-hidden" style={isUnlocked ? { background: `linear-gradient(145deg, ${color}cc 0%, ${color} 60%, ${color}aa 100%)` } : { background: "linear-gradient(145deg, #f0eeec 0%, #e8e5e2 100%)" }}>
+          {isUnlocked && <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 60%, rgba(255,255,255,0.25) 0%, transparent 70%)` }} />}
           <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 50%, rgba(0,0,0,0.06) 100%)" }} />
-          <motion.div
-            initial={{ scale: 0.5, rotate: -12, opacity: 0 }}
-            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.06 }}
-            className="relative z-10"
-            style={{
-              fontSize: 56,
-              lineHeight: 1,
-              filter: isUnlocked ? "drop-shadow(0 4px 12px rgba(0,0,0,0.22))" : "grayscale(1) opacity(0.3)",
-            }}
-          >
+          <motion.div initial={{ scale: 0.5, rotate: -12, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.06 }} className="relative z-10" style={{ fontSize: 56, lineHeight: 1, filter: isUnlocked ? "drop-shadow(0 4px 12px rgba(0,0,0,0.22))" : "grayscale(1) opacity(0.3)" }}>
             {emoji}
           </motion.div>
           {isUnlocked && (
             <>
-              <motion.span
-                initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 0.6, scale: 1 }}
-                transition={{ delay: 0.25 }}
-                className="absolute top-4 left-8 text-white/60 text-xs select-none"
-              >
-                ✦
-              </motion.span>
-              <motion.span
-                initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 0.4, scale: 1 }}
-                transition={{ delay: 0.35 }}
-                className="absolute bottom-5 right-7 text-white/40 text-[10px] select-none"
-              >
-                ✦
-              </motion.span>
+              <motion.span initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 0.6, scale: 1 }} transition={{ delay: 0.25 }} className="absolute top-4 left-8 text-white/60 text-xs select-none">✦</motion.span>
+              <motion.span initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 0.4, scale: 1 }} transition={{ delay: 0.35 }} className="absolute bottom-5 right-7 text-white/40 text-[10px] select-none">✦</motion.span>
             </>
           )}
         </div>
         <div className="px-8 py-6 text-center">
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1" style={{ color: isUnlocked ? color : "#c4c2c0" }}>
-            {isUnlocked ? "Badge Sbloccato ✓" : "Badge Bloccato"}
-          </p>
+          <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1" style={{ color: isUnlocked ? color : "#c4c2c0" }}>{isUnlocked ? "Badge Sbloccato ✓" : "Badge Bloccato"}</p>
           <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-0.5">{name}</h3>
           <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{filo}</p>
           {isUnlocked ? (
@@ -334,17 +243,9 @@ const BadgeDetailPopup = ({ filo, isUnlocked, count, onClose }: { filo: string; 
                 <span className="text-[9px] font-black tabular-nums" style={{ color }}>{count}/{BADGE_THRESHOLD}</span>
               </div>
               <div className="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: `linear-gradient(90deg, ${color}88, ${color})` }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${pct}%` }}
-                  transition={{ duration: 0.7, ease: "easeOut" }}
-                />
+                <motion.div className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${color}88, ${color})` }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.7, ease: "easeOut" }} />
               </div>
-              <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest mt-2">
-                Ancora {remaining} {remaining === 1 ? "escursione" : "escursioni"}
-              </p>
+              <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest mt-2">Ancora {remaining} {remaining === 1 ? "escursione" : "escursioni"}</p>
             </div>
           )}
         </div>
@@ -353,19 +254,14 @@ const BadgeDetailPopup = ({ filo, isUnlocked, count, onClose }: { filo: string; 
   );
 };
 
+// --- PinInput ---
 const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value: string; onChange: (v: string) => void; onComplete?: () => void; length?: number; disabled?: boolean }) => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  useEffect(() => {
-    inputRefs.current = Array(length).fill(null);
-  }, [length]);
-
+  useEffect(() => { inputRefs.current = Array(length).fill(null); }, [length]);
   useEffect(() => {
     if (disabled) return;
     const firstEmptyIndex = value.length;
-    if (firstEmptyIndex < length && inputRefs.current[firstEmptyIndex]) {
-      inputRefs.current[firstEmptyIndex]?.focus();
-    }
+    if (firstEmptyIndex < length && inputRefs.current[firstEmptyIndex]) inputRefs.current[firstEmptyIndex]?.focus();
   }, [value, length, disabled]);
 
   const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -376,12 +272,8 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
       newPin[index] = digit;
       const newPinStr = newPin.join('');
       onChange(newPinStr);
-      if (index + 1 < length) {
-        inputRefs.current[index + 1]?.focus();
-      }
-      if (index === length - 1 && newPinStr.length === length) {
-        setTimeout(() => onComplete?.(), 100);
-      }
+      if (index + 1 < length) inputRefs.current[index + 1]?.focus();
+      if (index === length - 1 && newPinStr.length === length) setTimeout(() => onComplete?.(), 100);
     }
     e.target.value = digit || "";
   };
@@ -390,23 +282,10 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
     if (disabled) return;
     if (e.key === "Backspace") {
       e.preventDefault();
-      if (value[index]) {
-        const newPin = value.split('');
-        newPin[index] = '';
-        onChange(newPin.join(''));
-      } else if (index > 0) {
-        const newPin = value.split('');
-        newPin[index - 1] = '';
-        onChange(newPin.join(''));
-        inputRefs.current[index - 1]?.focus();
-      }
-    } else if (e.key === "ArrowLeft" && index > 0) {
-      e.preventDefault();
-      inputRefs.current[index - 1]?.focus();
-    } else if (e.key === "ArrowRight" && index < length - 1) {
-      e.preventDefault();
-      inputRefs.current[index + 1]?.focus();
-    }
+      if (value[index]) { const p = value.split(''); p[index] = ''; onChange(p.join('')); }
+      else if (index > 0) { const p = value.split(''); p[index - 1] = ''; onChange(p.join('')); inputRefs.current[index - 1]?.focus(); }
+    } else if (e.key === "ArrowLeft" && index > 0) { e.preventDefault(); inputRefs.current[index - 1]?.focus(); }
+    else if (e.key === "ArrowRight" && index < length - 1) { e.preventDefault(); inputRefs.current[index + 1]?.focus(); }
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
@@ -416,55 +295,24 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
     if (pasted) {
       onChange(pasted);
       const lastIndex = Math.min(pasted.length, length) - 1;
-      if (lastIndex >= 0 && inputRefs.current[lastIndex]) {
-        inputRefs.current[lastIndex]?.focus();
-      }
-      if (pasted.length === length) {
-        setTimeout(() => onComplete?.(), 100);
-      }
+      if (lastIndex >= 0) inputRefs.current[lastIndex]?.focus();
+      if (pasted.length === length) setTimeout(() => onComplete?.(), 100);
     }
   };
 
   const firstRowCount = 3;
   const secondRowCount = 3;
-
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-3 justify-center">
         {Array.from({ length: firstRowCount }).map((_, i) => (
-          <input
-            key={i}
-            ref={el => inputRefs.current[i] = el}
-            type="password"
-            inputMode="numeric"
-            maxLength={1}
-            value={value[i] || ""}
-            onChange={(e) => handleChange(i, e)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
-            onPaste={handlePaste}
-            disabled={disabled}
-            className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner"
-          />
+          <input key={i} ref={el => inputRefs.current[i] = el} type="password" inputMode="numeric" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner" />
         ))}
       </div>
       <div className="flex gap-3 justify-center">
         {Array.from({ length: secondRowCount }).map((_, i) => {
           const idx = firstRowCount + i;
-          return (
-            <input
-              key={idx}
-              ref={el => inputRefs.current[idx] = el}
-              type="password"
-              inputMode="numeric"
-              maxLength={1}
-              value={value[idx] || ""}
-              onChange={(e) => handleChange(idx, e)}
-              onKeyDown={(e) => handleKeyDown(idx, e)}
-              onPaste={handlePaste}
-              disabled={disabled}
-              className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner"
-            />
-          );
+          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="password" inputMode="numeric" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner" />;
         })}
       </div>
     </div>
@@ -482,7 +330,7 @@ export default function Tessera() {
   const [loginStep, setLoginStep] = useState<"code" | "pin">("code");
   const [loginError, setLoginError] = useState("");
   const [pendingTessera, setPendingTessera] = useState<UserTessera | null>(null);
-  
+
   // Redeem states
   const [showRedeem, setShowRedeem] = useState(false);
   const [redeemStep, setRedeemStep] = useState<RedeemStep>("INPUT");
@@ -498,6 +346,51 @@ export default function Tessera() {
   const [selectedBoot, setSelectedBoot] = useState<EscursioneCompletata | null>(null);
   const [selectedBadge, setSelectedBadge] = useState<{ filo: string; isUnlocked: boolean; count: number } | null>(null);
   const [selectedAchievement, setSelectedAchievement] = useState<any | null>(null);
+
+  // ── Avatar upload ──────────────────────────────────────────────────────────
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userTessera) return;
+    setAvatarUploading(true);
+    try {
+      // Comprimi canvas a max 400×400 JPEG
+      const bitmap = await createImageBitmap(file);
+      const size = Math.min(bitmap.width, bitmap.height, 400);
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext("2d")!;
+      const sx = (bitmap.width - size) / 2;
+      const sy = (bitmap.height - size) / 2;
+      ctx.drawImage(bitmap, sx, sy, size, size, 0, 0, size, size);
+      const blob = await new Promise<Blob>((res) => canvas.toBlob(b => res(b!), "image/jpeg", 0.82));
+
+      const path = `avatars/${userTessera.id}.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      if (upErr) throw upErr;
+
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const freshUrl = `${pub.publicUrl}?t=${Date.now()}`;
+
+      const { error: dbErr } = await supabase
+        .from("tessere")
+        .update({ avatar_url: freshUrl })
+        .eq("id", userTessera.id);
+      if (dbErr) throw dbErr;
+
+      setUserTessera((prev) => prev ? { ...prev, avatar_url: freshUrl } : prev);
+    } catch (err) {
+      console.error("Errore upload avatar:", err);
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   const escursioniCompletateParsed = useMemo(() => parseJsonArray<EscursioneCompletata>(userTessera?.escursioni_completate), [userTessera?.escursioni_completate]);
   const badgesFilosofiaParsed = useMemo(() => parseJsonArray<string>(userTessera?.badges_filosofia), [userTessera?.badges_filosofia]);
@@ -518,27 +411,20 @@ export default function Tessera() {
   const earnedBadges = useMemo(() => userTessera ? computeEarnedBadges(escursioniCompletateParsed) : [], [userTessera, escursioniCompletateParsed]);
   const badgeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    escursioniCompletateParsed.forEach(e => {
-      const f = getFilosofiaName(e.colore);
-      if (f) counts[f] = (counts[f] || 0) + 1;
-    });
+    escursioniCompletateParsed.forEach(e => { const f = getFilosofiaName(e.colore); if (f) counts[f] = (counts[f] || 0) + 1; });
     return counts;
   }, [escursioniCompletateParsed]);
 
   useEffect(() => {
     const saved = localStorage.getItem(SESSION_KEY);
-    if (saved) {
-      const { code } = JSON.parse(saved);
-      fetchUser(code, true);
-    } else setLoading(false);
+    if (saved) { const { code } = JSON.parse(saved); fetchUser(code, true); }
+    else setLoading(false);
   }, []);
 
   async function fetchUser(codice: string, isSession = false) {
-    setLoading(true);
-    setLoginError("");
+    setLoading(true); setLoginError("");
     const { data, error } = await supabase.from("tessere").select("*, km_totali, dislivello_totali").eq("codice_tessera", codice.toUpperCase().trim()).single();
     if (error || !data) {
-      console.error("Errore fetchUser:", error);
       if (!isSession) setLoginError("Codice tessera non trovato.");
       setLoading(false);
     } else {
@@ -548,54 +434,31 @@ export default function Tessera() {
   }
 
   async function completeLogin(tessera: UserTessera) {
-    const { data } = await supabase
-      .from("tessere")
-      .select("*")
-      .eq("codice_tessera", tessera.codice_tessera)
-      .single();
+    const { data } = await supabase.from("tessere").select("*").eq("codice_tessera", tessera.codice_tessera).single();
     const clean = (data ?? tessera) as UserTessera;
-    const count = clean.escursioni_completate?.length || 0;
     setUserTessera(clean);
     localStorage.setItem(SESSION_KEY, JSON.stringify({ code: clean.codice_tessera, expires: Date.now() + 7 * 24 * 60 * 60 * 1000 }));
-    setCurrentPage(count === 0 ? 0 : Math.floor((count - 1) / SLOTS_PER_PAGE));
   }
 
   async function handleVerifyPin() {
     if (!pendingTessera) return;
-
-    const dbPinRaw = pendingTessera.pin;
-    const dbPin = dbPinRaw != null ? String(dbPinRaw).trim().replace(/\D/g, "") : "";
+    const dbPin = pendingTessera.pin != null ? String(pendingTessera.pin).trim().replace(/\D/g, "") : "";
     const enteredPin = loginPin.trim().replace(/\D/g, "");
-
-    console.log(`DB PIN: "${dbPin}" (${dbPin.length} cifre) - Entered: "${enteredPin}" (${enteredPin.length} cifre)`);
-
-    if (enteredPin.length !== PIN_LENGTH) {
-      setLoginError(`Inserisci ${PIN_LENGTH} cifre.`);
-      return;
-    }
-
-    if (enteredPin === dbPin) {
-      await completeLogin(pendingTessera);
-    } else {
-      setLoginError("PIN errato. Riprova.");
-      setLoginPin("");
-    }
+    if (enteredPin.length !== PIN_LENGTH) { setLoginError(`Inserisci ${PIN_LENGTH} cifre.`); return; }
+    if (enteredPin === dbPin) { await completeLogin(pendingTessera); }
+    else { setLoginError("PIN errato. Riprova."); setLoginPin(""); }
   }
 
   const handleLogout = () => {
     localStorage.removeItem(SESSION_KEY);
-    setUserTessera(null);
-    setLoginStep("code");
-    setLoginCode("");
-    setLoginPin("");
+    setUserTessera(null); setLoginStep("code"); setLoginCode(""); setLoginPin("");
   };
 
   const closeRedeem = useCallback(() => {
     if (isVerifying) return;
     setShowRedeem(false); setRedeemCode(""); setRedeemStep("INPUT"); setRedeemError("");
     setPendingActivity(null); setChosenColor(null);
-    setNewlyUnlockedBadge(null); setNewlyUnlockedAchievement(null);
-    setRedeemAttempts(0);
+    setNewlyUnlockedBadge(null); setNewlyUnlockedAchievement(null); setRedeemAttempts(0);
   }, [isVerifying]);
 
   const verifyCode = async () => {
@@ -603,50 +466,28 @@ export default function Tessera() {
     if (redeemAttempts >= MAX_REDEEM_ATTEMPTS) { setRedeemError("Troppi tentativi."); return; }
     const normalized = redeemCode.toUpperCase().trim();
     if (!REDEEM_CODE_REGEX.test(normalized)) { setRedeemError("Formato non valido."); return; }
-    
     setIsVerifying(true); setRedeemError(""); setRedeemAttempts(n => n + 1);
-
-    const { data, error } = await supabase
-      .from("escursioni")
-      .select("id, titolo, filosofia, categoria, difficolta, codici_usati")
-      .contains("codici_riscatto", [normalized])
-      .single();
-
-    if (error || !data) { console.error("Errore verifica codice:", error); setRedeemError("Codice non valido."); setIsVerifying(false); return; }
+    const { data, error } = await supabase.from("escursioni").select("id, titolo, filosofia, categoria, difficolta, codici_usati").contains("codici_riscatto", [normalized]).single();
+    if (error || !data) { setRedeemError("Codice non valido."); setIsVerifying(false); return; }
     if ((data.codici_usati as string[] | null)?.includes(normalized)) { setRedeemError("Codice già usato."); setIsVerifying(false); return; }
     if (escursioniCompletateParsed.some(e => e.titolo === data.titolo)) { setRedeemError("Già riscattato."); setIsVerifying(false); return; }
-
     const color = getFilosofiaColor(data.filosofia);
-    const newEntry: EscursioneCompletata = {
-      titolo: data.titolo,
-      colore: color,
-      data: new Date().toISOString(),
-      ...(data.categoria ? { categoria: data.categoria } : {}),
-      ...(data.difficolta ? { difficolta: data.difficolta } : {}),
-    };
-
+    const newEntry: EscursioneCompletata = { titolo: data.titolo, colore: color, data: new Date().toISOString(), ...(data.categoria ? { categoria: data.categoria } : {}), ...(data.difficolta ? { difficolta: data.difficolta } : {}) };
     const updatedList = [...escursioniCompletateParsed, newEntry];
     const oldBadges = computeEarnedBadges(escursioniCompletateParsed);
     const newBadges = computeEarnedBadges(updatedList);
     const justUnlocked = newBadges.find(b => !oldBadges.includes(b)) ?? null;
-    
     const oldAchievements = ACHIEVEMENT_BADGES.filter(ab => ab.check(escursioniCompletateParsed)).map(ab => ab.id);
     const newAchievements = ACHIEVEMENT_BADGES.filter(ab => ab.check(updatedList)).map(ab => ab.id);
     const justUnlockedAchievement = newAchievements.find(id => !oldAchievements.includes(id)) ?? null;
-
     const updatePayload: any = { escursioni_completate: updatedList };
     if (justUnlocked) updatePayload.badges_filosofia = [...badgesFilosofiaParsed, justUnlocked];
-
     const { data: saved, error: saveErr } = await supabase.from("tessere").update(updatePayload).eq("id", userTessera.id).select();
-    if (saveErr || !saved) { console.error("Errore salvataggio:", saveErr); setRedeemError("Errore salvataggio."); setIsVerifying(false); return; }
-
+    if (saveErr || !saved) { setRedeemError("Errore salvataggio."); setIsVerifying(false); return; }
     setUserTessera(saved[0] as UserTessera);
     setPendingActivity({ titolo: data.titolo, filosofia: data.filosofia ?? null, categoria: data.categoria ?? undefined, difficolta: data.difficolta ?? undefined });
-    setChosenColor(color);
-    setNewlyUnlockedBadge(justUnlocked);
-    setNewlyUnlockedAchievement(justUnlockedAchievement);
-    setRedeemStep("SUCCESS");
-    setIsVerifying(false);
+    setChosenColor(color); setNewlyUnlockedBadge(justUnlocked); setNewlyUnlockedAchievement(justUnlockedAchievement);
+    setRedeemStep("SUCCESS"); setIsVerifying(false);
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed]"><Loader2 className="animate-spin text-sky-500" /></div>;
@@ -658,20 +499,11 @@ export default function Tessera() {
         {!userTessera && (
           <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#f5f2ed]">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center">
-<button
-  onClick={() => window.location.href = '/'}
-  className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 shadow-sm hover:bg-stone-100 hover:border-stone-300 transition-all duration-200 active:scale-95"
-  aria-label="Torna alla home"
->
-  <ChevronLeft size={14} />
-  <span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span>
-</button>
-              <img 
-        src="/altour-logo.png" 
-        alt="Altour Italy" 
-        className="h-16 w-auto mx-auto mb-4 rounded-xl"
-        onError={(e) => { e.currentTarget.src = "/altour-logo.png"; }} // fallback se non trova
-      />
+              <button onClick={() => window.location.href = '/'} className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 shadow-sm hover:bg-stone-100 hover:border-stone-300 transition-all duration-200 active:scale-95" aria-label="Torna alla home">
+                <ChevronLeft size={14} />
+                <span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span>
+              </button>
+              <img src="/altour-logo.png" alt="Altour Italy" className="h-16 w-auto mx-auto mb-4 rounded-xl" onError={(e) => { e.currentTarget.src = "/altour-logo.png"; }} />
               <h1 className="text-2xl font-black uppercase mb-6">TESSERA ALTOUR</h1>
               {loginStep === "code" ? (
                 <div className="space-y-4">
@@ -737,9 +569,39 @@ export default function Tessera() {
                 <motion.div key="tessera" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }}>
                   <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
                     <div className="flex items-center gap-5 mb-8">
-                      <div className="w-20 h-20 rounded-[2rem] bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center shadow-inner">
-                        {userTessera.avatar_url ? <img src={userTessera.avatar_url} className="w-full h-full object-cover" alt="avatar" /> : <User size={32} className="text-stone-300" />}
+
+                      {/* ── Avatar con upload ─────────────────────────────── */}
+                      <div className="relative flex-shrink-0">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="w-20 h-20 rounded-[2rem] bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center shadow-inner cursor-pointer"
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Tocca per cambiare foto"
+                        >
+                          {userTessera.avatar_url
+                            ? <img src={userTessera.avatar_url} className="w-full h-full object-cover" alt="avatar" />
+                            : <User size={32} className="text-stone-300" />
+                          }
+                          {avatarUploading && (
+                            <div className="absolute inset-0 bg-black/30 rounded-[2rem] flex items-center justify-center">
+                              <Loader2 className="w-6 h-6 text-white animate-spin" />
+                            </div>
+                          )}
+                        </motion.div>
+                        {/* Bottone fotocamera */}
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={avatarUploading}
+                          className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center hover:bg-stone-50 active:scale-90 transition-all disabled:opacity-50"
+                          aria-label="Carica foto profilo"
+                        >
+                          <Camera size={13} className="text-stone-600" />
+                        </button>
+                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
                       </div>
+                      {/* ───────────────────────────────────────────────────── */}
+
                       <div>
                         <div className="flex items-center gap-1.5 text-sky-500 mb-1"><ShieldCheck size={14} /><span className="text-[10px] font-black uppercase tracking-wider">Escursionista Verificato</span></div>
                         <h2 className="text-2xl font-black uppercase leading-tight">{userTessera.nome_escursionista} {userTessera.cognome_escursionista}</h2>
@@ -778,7 +640,7 @@ export default function Tessera() {
                       <button disabled={currentPage >= (stats?.totalPages || 1) - 1} onClick={() => setCurrentPage(p => p + 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all"><ChevronRight size={20} /></button>
                     </div>
                   </div>
-                  
+
                   <motion.button onClick={() => setShowRedeem(true)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
                     <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
@@ -857,7 +719,6 @@ export default function Tessera() {
 
           {/* MODALS */}
           <AnimatePresence>
-            {/* Redeem Modal */}
             {showRedeem && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeRedeem} className="absolute inset-0 bg-stone-900/70 backdrop-blur-md" />
@@ -886,7 +747,6 @@ export default function Tessera() {
                         </div>
                         <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1">{pendingActivity?.titolo}</h3>
                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-4">Scarpone Riscattato! 🎉</p>
-                        
                         {newlyUnlockedBadge && (
                           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="w-full p-4 rounded-2xl mb-3 flex items-center gap-4 text-left" style={{ backgroundColor: `${FILOSOFIA_COLORS[newlyUnlockedBadge]}15` }}>
                             <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-lg" style={{ backgroundColor: FILOSOFIA_COLORS[newlyUnlockedBadge] }}>{BADGE_EMOJI[newlyUnlockedBadge]}</div>
@@ -896,7 +756,6 @@ export default function Tessera() {
                             </div>
                           </motion.div>
                         )}
-
                         {newlyUnlockedAchievement && (() => {
                           const ab = ACHIEVEMENT_BADGES.find(x => x.id === newlyUnlockedAchievement);
                           if (!ab) return null;
@@ -910,7 +769,6 @@ export default function Tessera() {
                             </motion.div>
                           );
                         })()}
-
                         <button onClick={closeRedeem} className="w-full mt-4 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg">Perfetto!</button>
                       </motion.div>
                     )}
@@ -919,7 +777,6 @@ export default function Tessera() {
               </div>
             )}
 
-            {/* Boot Detail Modal */}
             {selectedBoot && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBoot(null)} className="absolute inset-0 bg-stone-900/70 backdrop-blur-md" />
@@ -951,17 +808,10 @@ export default function Tessera() {
               </div>
             )}
 
-            {/* Badge Detail Modal */}
             {selectedBadge && (
-              <BadgeDetailPopup
-                filo={selectedBadge.filo}
-                isUnlocked={selectedBadge.isUnlocked}
-                count={selectedBadge.count}
-                onClose={() => setSelectedBadge(null)}
-              />
+              <BadgeDetailPopup filo={selectedBadge.filo} isUnlocked={selectedBadge.isUnlocked} count={selectedBadge.count} onClose={() => setSelectedBadge(null)} />
             )}
 
-            {/* Achievement Detail Modal */}
             {selectedAchievement && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedAchievement(null)} className="absolute inset-0 bg-stone-900/70 backdrop-blur-md" />

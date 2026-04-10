@@ -31,7 +31,8 @@ export interface Activity {
   _tipo?: 'escursione' | 'campo' | 'corso' | null;
   lat?: number | null;
   lng?: number | null;
-  min_partecipanti?: number | null;
+  slug?: string | null;
+  min_partecipanti?: number | null | null;
 }
 
 interface ActivityDetailModalProps {
