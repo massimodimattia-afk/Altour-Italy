@@ -330,38 +330,47 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         </motion.div>
 
         {/* ── Filtri card — mobile orizzontale, desktop pills ─────────────── */}
-        {/* ── Filtri mobile compatti (Sostituzione) ─────────────── */}
-<div className="md:hidden -mx-4 px-4 mb-6">
-  <div className="flex items-center justify-between mb-3 px-1">
-    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
-      Filtra attività
+{/* ── Filtri mobile "Segmented" Stylish ─────────────── */}
+<div className="md:hidden mb-10 mt-2 px-1">
+  <div className="flex justify-between items-center mb-4 px-1">
+    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
+      Tipo di Esperienza
     </span>
     {activeFilter && (
       <button 
         onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
-        className="text-[10px] font-black uppercase text-brand-sky"
+        className="text-[10px] font-black uppercase tracking-widest text-brand-sky border-b border-brand-sky/30 pb-0.5"
       >
-        Reset
+        Tutte
       </button>
     )}
   </div>
-  
-  <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+
+  <div className="flex flex-wrap gap-2">
     {FILTERS.map((f) => {
       const isActive = activeFilter === f.key;
       return (
         <button
           key={f.key}
           onClick={() => toggleFilter(f.key)}
-          className={`flex-shrink-0 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
+          className={`flex-1 min-w-[140px] flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 border ${
             isActive
-              ? "bg-brand-sky border-brand-sky text-white shadow-md shadow-sky-200"
-              : "bg-white border-stone-200 text-stone-500"
+              ? "bg-white border-stone-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)] translate-y-[-2px]"
+              : "bg-stone-200/40 border-transparent text-stone-500"
           }`}
         >
-          {f.label}
+          <div className="flex items-center gap-2.5">
+            <span 
+              className="w-2 h-2 rounded-full shadow-sm" 
+              style={{ backgroundColor: f.color }} 
+            />
+            <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? "text-brand-stone" : "text-stone-500"}`}>
+              {f.label}
+            </span>
+          </div>
+          
           {f.count > 0 && (
-            <span className={`ml-2 opacity-60 ${isActive ? "text-white" : "text-stone-400"}`}>
+            <span className="text-[8px] font-bold opacity-40">
               {f.count}
             </span>
           )}
