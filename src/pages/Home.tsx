@@ -305,7 +305,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
             onClick={() => onNavigate("corsi")}
             className="group flex items-center gap-3 text-stone-400 hover:text-brand-sky transition-colors"
           >
-            <span className="text-[10px] font-black uppercase tracking-widest">Vedi tutti i corsi</span>
+            <span className="text-[10px] font-black uppercase tracking-widest">Vedi tutto</span>
             <div className="w-10 h-10 rounded-full border border-stone-200 flex items-center justify-center group-hover:border-brand-sky group-hover:bg-brand-sky group-hover:text-white transition-all">
               <ArrowRight size={16} />
             </div>

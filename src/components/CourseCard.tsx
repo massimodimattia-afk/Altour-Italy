@@ -1,6 +1,8 @@
-import { Calendar, Clock, ArrowRight, } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { Sparkles, BookOpen, Mountain, ArrowRight } from "lucide-react";
 
 // Interfaccia Corso allineata al database reale
 export interface Corso {
@@ -50,37 +52,56 @@ function getCategoriaOpacity(color: string): string {
 
 const IMG_FALLBACK = "/altour-logo.png";
 
+function normalizeMarkdown(text: string): string {
+  if (!text) return "";
+  return text.replace(/\*\s+/g, "*").replace(/\s+\*/g, "*");
+}
+
+type PricingOption = "bundle" | "teorico" | "pratico";
+
 export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardProps) {
-  const [pricingMode, setPricingMode] = useState<'bundle' | 'teoria' | 'pratica'>('bundle');
+  const [selected, setSelected] = useState<PricingOption>("bundle");
   
+  const hasModular = corso.prezzo_teorico != null || corso.prezzo_pratico != null;
+  const sumParts = (Number(corso.prezzo_teorico) || 0) + (Number(corso.prezzo_pratico) || 0);
+  const saveAmount = corso.prezzo_bundle != null && sumParts > 0 ? sumParts - Number(corso.prezzo_bundle) : 0;
+
   const color = CATEGORIA_COLORS[corso.categoria || "Formazione"] || "#002f59";
   const bg = getCategoriaOpacity(color);
 
+  // Opzioni disponibili per il toggle
+  const opts: { key: PricingOption; label: string; price: number | null | undefined; icon: React.ReactNode }[] = [
+    ...(corso.prezzo_bundle != null ? [{ key: "bundle" as PricingOption, label: "Tutto", price: Number(corso.prezzo_bundle), icon: <Sparkles size={10} /> }] : []),
+    ...(corso.prezzo_teorico != null ? [{ key: "teorico" as PricingOption, label: "Teoria", price: Number(corso.prezzo_teorico), icon: <BookOpen size={10} /> }] : []),
+    ...(corso.prezzo_pratico != null ? [{ key: "pratico" as PricingOption, label: "Pratica", price: Number(corso.prezzo_pratico), icon: <Mountain size={10} /> }] : []),
+  ];
+
+  const currentOpt = opts.find(o => o.key === selected) ?? opts[0];
+  const bookLabel = selected === "bundle" ? `${corso.titolo} — Pacchetto Completo`
+    : selected === "teorico" ? `${corso.titolo} — Modulo Teorico`
+    : `${corso.titolo} — Uscita Didattica`;
+
   // Safe date formatting
   const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return "Da definire";
+    if (!dateStr) return null;
     try {
       return new Date(dateStr).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
     } catch (e) {
-      return "Da definire";
+      return null;
     }
   };
 
-  // Helper per ottenere il prezzo corrente in base al toggle
-  const getCurrentPrice = () => {
-    if (pricingMode === 'teoria') return corso.prezzo_teorico || 0;
-    if (pricingMode === 'pratica') return corso.prezzo_pratico || 0;
-    return corso.prezzo_bundle || corso.prezzo || 0;
-  };
+  const formattedDate = formatDate(corso.data_inizio);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="bg-white rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500"
+      className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500 relative"
     >
-      <div className="aspect-[16/9] bg-stone-200 relative overflow-hidden">
+      {/* Image */}
+      <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-200 relative overflow-hidden">
         {corso.immagine_url && (
           <img
             src={corso.immagine_url}
@@ -90,82 +111,140 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
             onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
         
         {/* Categoria Badge */}
         <div
-          className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md"
+          className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-sm"
           style={{
             backgroundColor: bg,
-            color: "white",
-            boxShadow: `0 4px 12px ${color}44`,
+            color: "rgba(255,255,255,0.95)",
+            textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+            boxShadow: `0 2px 12px ${color}55, inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px ${color}`,
           }}
         >
           {corso.categoria || "Formazione"}
         </div>
       </div>
 
-      <div className="p-6 md:p-8 flex flex-col flex-grow">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-            <Calendar size={12} className="text-brand-sky" />
-            {formatDate(corso.data_inizio)}
-          </div>
-          <div className="w-1 h-1 rounded-full bg-stone-200" />
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
-            <Clock size={12} className="text-brand-sky" />
-            {corso.durata || "3 Giorni"}
-          </div>
+      {/* Body */}
+      <div className="p-5 md:p-7 flex flex-col flex-grow">
+        {/* Iscrizioni aperte - badge */}
+        <div className="flex items-center gap-2.5 mb-2">
+          <span className="text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+            Iscrizioni aperte
+          </span>
+          {formattedDate && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-stone-300" />
+              <span className="text-[9px] font-bold uppercase tracking-wide text-stone-400">
+                {formattedDate}
+              </span>
+            </>
+          )}
         </div>
-
-        <h3 className="text-xl md:text-2xl font-black text-brand-stone uppercase leading-tight mb-4 group-hover:text-brand-sky transition-colors">
+        
+        <h2 className="text-lg md:text-xl font-black mb-3 text-brand-stone uppercase line-clamp-2">
           {corso.titolo}
-        </h3>
+        </h2>
 
-        {/* Pricing Toggle - Esattamente come in Accademia */}
-        <div className="flex p-1 bg-stone-50 rounded-xl mb-6">
-          <button
-            onClick={() => setPricingMode('bundle')}
-            className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${pricingMode === 'bundle' ? 'bg-white text-brand-sky shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-          >
-            Tutto
-          </button>
-          <button
-            onClick={() => setPricingMode('teoria')}
-            className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${pricingMode === 'teoria' ? 'bg-white text-brand-sky shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-          >
-            Teoria
-          </button>
-          <button
-            onClick={() => setPricingMode('pratica')}
-            className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${pricingMode === 'pratica' ? 'bg-white text-brand-sky shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}
-          >
-            Pratica
-          </button>
+        <div className="text-stone-500 text-xs md:text-sm mb-5 line-clamp-3 font-medium flex-grow [&_em]:italic [&_em]:font-serif [&_strong]:font-black [&_strong]:text-[#44403c]">
+          <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
+            {normalizeMarkdown(corso.descrizione ?? "")}
+          </ReactMarkdown>
         </div>
 
-        <div className="mt-auto pt-6 border-t border-stone-100 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-              {pricingMode === 'bundle' ? 'Pacchetto Completo' : pricingMode === 'teoria' ? 'Solo Teoria' : 'Solo Pratica'}
+        {/* Durata (opzionale) */}
+        {corso.durata && (
+          <div className="flex items-center gap-1.5 mb-4">
+            <Clock size={12} className="text-stone-400" />
+            <span className="text-[9px] font-bold uppercase tracking-wide text-stone-400">
+              {corso.durata}
             </span>
-            <span className="text-xl font-black text-brand-stone">€{getCurrentPrice()}</span>
           </div>
-          
-          <div className="flex gap-2">
-            <button
-              onClick={() => openDetails(corso)}
-              className="p-3 rounded-xl border-2 border-stone-100 text-stone-400 hover:border-brand-sky hover:text-brand-sky transition-all"
-            >
-              <ArrowRight size={18} />
-            </button>
-            <button
-              onClick={() => onBookingClick(corso.titolo, 'prenota')}
-              className="px-6 py-3 bg-brand-sky text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-brand-sky/20 hover:bg-brand-sky/90 transition-all active:scale-95"
-            >
-              Prenota
-            </button>
-          </div>
+        )}
+
+        {/* Pricing */}
+        <div className="mt-auto pt-5 border-t border-stone-100">
+          {hasModular ? (
+            <div className="space-y-3">
+              {/* Toggle prezzi */}
+              <div className="flex rounded-2xl p-1 gap-1" style={{ background: "rgba(0,0,0,0.04)" }}>
+                {opts.map(opt => {
+                  const isActive = selected === opt.key;
+                  const isBundle = opt.key === "bundle";
+                  return (
+                    <button
+                      key={opt.key}
+                      onClick={() => setSelected(opt.key)}
+                      className="relative flex-1 flex flex-col items-center justify-center py-2.5 px-1 rounded-xl transition-all duration-200 active:scale-95 focus:outline-none"
+                      style={{
+                        background: isActive ? "white" : "transparent",
+                        boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.10)" : "none",
+                      }}
+                    >
+                      {isBundle && saveAmount > 0 && (
+                        <span
+                          className="absolute -top-2 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full text-white whitespace-nowrap"
+                          style={{ background: "#81ccb0" }}
+                        >
+                          −€{saveAmount}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1 mb-0.5" style={{ color: isActive ? (isBundle ? "#5aaadd" : "#9f8270") : "#a8a29e" }}>
+                        {opt.icon}
+                        <span className="text-[8px] font-black uppercase tracking-widest">{opt.label}</span>
+                      </span>
+                      <span className="text-sm font-black" style={{ color: isActive ? "#44403c" : "#a8a29e" }}>
+                        €{opt.price}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* CTA Richiedi Info */}
+              <button
+                onClick={() => onBookingClick(bookLabel, "prenota")}
+                className="w-full min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all"
+                style={{
+                  background: selected === "bundle"
+                    ? "linear-gradient(135deg, #5aaadd, #3d8fb8)"
+                    : "linear-gradient(135deg, #9f8270, #7a6050)",
+                  boxShadow: selected === "bundle"
+                    ? "0 4px 14px rgba(90,170,221,0.3)"
+                    : "0 4px 14px rgba(159,130,112,0.25)",
+                }}
+              >
+                {selected === "bundle" ? <Sparkles size={11} /> : selected === "teorico" ? <BookOpen size={11} /> : <Mountain size={11} />}
+                Richiedi Info — €{currentOpt?.price || 0}
+                <ArrowRight size={11} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <button
+                onClick={() => onBookingClick(corso.titolo, "info")}
+                className="flex-1 min-h-[48px] bg-white border-2 border-stone-900 text-stone-900 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+              >
+                Dettagli
+              </button>
+              <button
+                onClick={() => onBookingClick(corso.titolo, "prenota")}
+                className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white"
+              >
+                Richiedi Info
+              </button>
+            </div>
+          )}
+
+          {/* Bottone Vedi programma completo */}
+          <button
+            onClick={() => openDetails(corso)}
+            className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
+          >
+            Vedi programma completo
+          </button>
         </div>
       </div>
     </motion.div>
