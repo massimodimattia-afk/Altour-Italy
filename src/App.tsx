@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AnimatePresence, motion, type Transition } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -24,51 +24,29 @@ const VALID_PAGES: PageType[] = [
   'legal-privacy', 'legal-cookie', 'legal-termini',
 ];
 
-// Varianti fuori dal componente → oggetto stabile, nessuna ri-creazione ad ogni render
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit:    { opacity: 0 },
-};
-
-const pageTransition: Transition = {
-  duration: 0.22,
-  ease: 'easeOut',
+// Mappa per redirect (compatibilità con vecchie route)
+const REDIRECT_MAP: Record<string, PageType> = {
+  escursioni: 'attivitapage',
+  campi: 'attivitapage',
 };
 
 function App() {
-  const [currentPage, setCurrentPage]     = useState<PageType>('home');
-  const [isModalOpen, setIsModalOpen]     = useState(false);
+  const [currentPage, setCurrentPage] = useState<PageType>("home");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTitle, setSelectedTitle] = useState('');
-  const [bookingMode, setBookingMode]     = useState<'info' | 'prenota'>('info');
+  const [bookingMode, setBookingMode] = useState<'info' | 'prenota'>('info');
 
-  // Scroll to top al cambio pagina — instant su iOS per evitare glitch
+  // Scroll to top al cambio pagina
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({ top: 0, behavior: prefersReduced ? 'instant' : 'instant' });
-    // Nota: 'smooth' su iOS Safari causa un secondo flickering durante lo scroll animato
-    // → usiamo sempre 'instant' e lasciamo la transizione opacity fare il lavoro visivo
+    window.scrollTo({ top: 0, behavior: prefersReduced ? 'instant' : 'smooth' });
   }, [currentPage]);
 
-  // Fix altezza viewport iOS: la barra URL che appare/scompare
-  // cambia window.innerHeight → impostiamo una CSS var una sola volta
-  useEffect(() => {
-    const setVh = () => {
-      document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-    };
-    setVh();
-    // resize solo su orientamento, non su scroll (evita re-render continui)
-    window.addEventListener('orientationchange', setVh);
-    return () => window.removeEventListener('orientationchange', setVh);
-  }, []);
-
   const handleNavigate = (page: string) => {
-    const redirect: Record<string, PageType> = {
-      escursioni: 'attivitapage',
-      campi:      'attivitapage',
-    };
-    const target = (redirect[page] ?? page) as PageType;
-    if (VALID_PAGES.includes(target)) setCurrentPage(target);
+    const target = REDIRECT_MAP[page] ?? page;
+    if (VALID_PAGES.includes(target as PageType)) {
+      setCurrentPage(target as PageType);
+    }
   };
 
   const openBooking = (title: string, mode: 'info' | 'prenota' = 'info') => {
@@ -79,7 +57,8 @@ function App() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setTimeout(() => setSelectedTitle(''), 300);
+    // Attendi la fine dell'animazione di uscita prima di pulire il titolo
+    setTimeout(() => setSelectedTitle(''), 500);
   };
 
   const renderPage = () => {
@@ -100,37 +79,23 @@ function App() {
       <Header currentPage={currentPage} onNavigate={handleNavigate} />
 
       <main className="flex-grow relative">
-        {/*
-          AnimatePresence mode="wait" → aspetta che la pagina uscente finisca
-          prima di montare quella entrante.
-          Questo evita il doppio-mount che causa flickering su iOS.
-
-          IMPORTANTE: willChange="opacity" è l'unica proprietà animata →
-          iOS crea un singolo compositing layer leggero, niente scale/translate.
-        */}
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={currentPage}
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={pageTransition}
-            style={{ willChange: 'opacity' }}
-          >
-            {renderPage()}
-          </motion.div>
-        </AnimatePresence>
+        {/* La chiave forza il remount della pagina al cambio route, ma evita animazioni conflittuali */}
+        <div key={currentPage} className="animate-[fadeIn_0.5s_ease-out]">
+          {renderPage()}
+        </div>
       </main>
 
-      {selectedTitle && (
-        <BookingModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          title={selectedTitle}
-          mode={bookingMode}
-        />
-      )}
+      {/* BookingModal gestito con AnimatePresence per animazioni di entrata/uscita */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <BookingModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            title={selectedTitle}
+            mode={bookingMode}
+          />
+        )}
+      </AnimatePresence>
 
       <Footer onNavigate={handleNavigate} />
       <PWAPrompt />
