@@ -14,27 +14,19 @@
     height: -webkit-fill-available;
     overscroll-behavior-y: none;
   }
-  
+
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: #292524;
     background-color: #fafaf9;
-    
     min-height: 100vh;
     min-height: -webkit-fill-available;
     overflow-x: hidden;
-    
-    /* ATTENZIONE: 
-       Abbiamo rimosso i transform e la perspective dal body!
-       Questo permette alle modali "fixed" di funzionare normalmente. 
-    */
   }
 }
 
 @layer utilities {
-  /* Questa è la classe magica da applicare SOLO al contenitore delle card 
-     che sfarfallano (es: il div grid che le avvolge) */
   .force-gpu {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
@@ -51,5 +43,46 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+}
+
+/* ... lascia intatta la parte @layer base e @layer utilities ... */
+
+/* iOS fix - patch anti-flickering (unificata) */
+@supports (-webkit-touch-callout: none) {
+  
+  /* 1. IL VERO FIX: Uccidi la sfocatura (blur) solo su iOS */
+  /* Safari non riesce a muovere un elemento e sfocare lo sfondo contemporaneamente senza sfarfallare */
+  .backdrop-blur-sm, 
+  .backdrop-blur-md, 
+  .backdrop-blur-lg,
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    /* Opzionale: aggiungi un colore solido scuro per compensare la mancanza del blur */
+    background-color: rgba(28, 25, 23, 0.95) !important; /* stone-900/95 */
+  }
+
+  /* 2. Forza accelerazione GPU solo sugli elementi dinamici chiave */
+  /* NOTA: Applicarlo a TUTTE le immagini o a TUTTI i .absolute può causare crash per memoria esaurita su iPhone vecchi */
+  .force-gpu,
+  .hero-zoom,
+  .modal-card {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* 3. Fix per scroll fluido */
+  .overflow-y-auto,
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* 4. Fix specifico per la modale (L'isolation isola i calcoli della GPU) */
+  .fixed.inset-0 {
+    transform: translateZ(0);
+    isolation: isolate;
   }
 }
