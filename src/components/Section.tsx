@@ -1,4 +1,3 @@
-// components/Section.tsx
 import React, { useRef, useEffect, useState, ElementType, useCallback } from "react";
 
 interface SectionProps {
@@ -11,28 +10,30 @@ interface SectionProps {
 }
 
 // ─── Rilevamento iOS ──────────────────────────────────────────────────────────
-// Eseguito una volta sola a livello di modulo, non ad ogni render.
-// Usiamo maxTouchPoints per coprire anche iPad su iOS 13+
-// che si maschera da macOS (navigator.platform = "MacIntel").
-const isIOS =
+// Esportato: Home.tsx (e altri) lo usano per decidere se montare
+// Framer Motion whileInView oppure un wrapper trasparente.
+//
+// maxTouchPoints > 1 copre iPad su iOS 13+ che si maschera da macOS
+// (navigator.platform === "MacIntel" su Safari iPadOS).
+export const isIOS =
   typeof navigator !== "undefined" &&
   (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
 
 // ─── Keyframes ────────────────────────────────────────────────────────────────
 //
-// FIX CRITICO: il `to` NON include transform.
+// IMPORTANTE: il `to` non include transform.
 //
-// Con fill-mode:both, il browser applica lo stato `to` inline sull'elemento
-// anche dopo che l'animazione è finita. Se `to` include
-// `transform: translate3d(0,0,0)`, quella proprietà rimane → stacking context
-// permanente → tutti i figli position:fixed vengono posizionati relativi
-// alla sezione invece che al viewport (es. modal, FAB, header).
+// Con fill-mode:both, al termine dell'animazione il browser mantiene lo
+// stato `to` come stile inline sull'elemento. Se `to` includesse
+// `transform: translate3d(0,0,0)`, quella proprietà rimarrebbe attiva
+// creando uno stacking context permanente → tutti i figli position:fixed
+// (modal, FAB, header) verrebbero posizionati relativi alla sezione
+// invece che al viewport.
 //
-// La soluzione: il `from` dichiara lo stato iniziale con transform,
-// il `to` dichiara solo opacity:1. Il browser interpola il transform
-// da 20px→0 durante l'animazione, e al termine non rimane nessun
-// transform inline sull'elemento.
+// Soluzione: `to` dichiara solo opacity:1. Il browser interpola il
+// transform da 20px→0 durante l'animazione, poi al termine non rimane
+// nessun transform inline. onAnimationEnd azzera anche l'animation stessa.
 const KEYFRAMES = `
   @keyframes sectionFadeUp {
     from {
@@ -70,7 +71,6 @@ export default function Section({
 }: SectionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(!animate);
-  // Traccia il completamento dell'animazione per rimuovere lo style
   const [animDone, setAnimDone] = useState(!animate);
 
   useEffect(() => {
@@ -80,9 +80,8 @@ export default function Section({
     const el = ref.current;
     if (!el) return;
 
-    // rootMargin adattivo: su viewport piccoli (-40px),
-    // su viewport grandi (-80px). Previene sezioni corte
-    // che non triggerano mai su mobile.
+    // rootMargin adattivo: viewport piccoli (mobile) → margine ridotto
+    // per evitare che sezioni corte non triggerino mai
     const margin = window.innerHeight < 700 ? "-40px 0px" : "-80px 0px";
 
     const observer = new IntersectionObserver(
@@ -99,38 +98,29 @@ export default function Section({
     return () => observer.disconnect();
   }, [animate]);
 
-  // Chiamato da onAnimationEnd — rimuove la CSS animation dall'elemento.
-  // Questo è fondamentale: dopo il completamento, l'elemento torna
-  // al suo stile naturale (opacity:1, nessun transform) senza
-  // nessuna proprietà residua che possa creare stacking context.
+  // Rimuove la CSS animation al termine: l'elemento torna al suo stile
+  // naturale (opacity:1, nessun transform) senza proprietà residue
   const handleAnimationEnd = useCallback(() => {
     setAnimDone(true);
-  }, [delay]);
-
-  // ─── Logica platform-aware ────────────────────────────────────────────────
-  //
-  // Su iOS: CSS animations (no JS rAF, no compositing layer permanente)
-  // Su Android/Desktop: Framer Motion funziona bene → questo wrapper
-  // passa solo children + className, senza interferire con FM.
-  //
-  // In pratica: su non-iOS il wrapper è trasparente — le animazioni
-  // FM definite nei componenti figli funzionano normalmente.
+  }, []);
 
   const getAnimStyle = (): React.CSSProperties => {
     if (!animate) return {};
 
-    // Non-iOS: nessuno stile di animazione dal wrapper.
-    // Framer Motion nei componenti figli gestisce tutto.
+    // Non-iOS: wrapper trasparente.
+    // Le animazioni Framer Motion definite nei componenti figli
+    // funzionano normalmente senza interferenze.
     if (!isIOS) return {};
 
     // iOS — animazione completata: rimuovi tutto.
-    // L'elemento è nello stato finale naturale (opacity:1, no transform).
+    // Nessun transform, nessun opacity inline → stato naturale del DOM.
     if (animDone) return {};
 
-    // iOS — elemento non ancora visibile
+    // iOS — elemento non ancora entrato nel viewport
     if (!visible) return { opacity: 0 };
 
-    // iOS — animazione in corso
+    // iOS — animazione in corso (no willChange esplicito:
+    // il browser lo gestisce internamente per la durata della CSS animation)
     return {
       animation: `sectionFadeUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${delay}s both`,
     };
@@ -145,9 +135,6 @@ export default function Section({
       ref={ref as React.Ref<HTMLDivElement>}
       className={`relative w-full ${className}`}
       style={{ ...getAnimStyle(), ...heightStyle }}
-      // onAnimationEnd è un evento DOM nativo — funziona su tutti i browser
-      // e viene chiamato esattamente quando la CSS animation termina.
-      // Usarlo per azzerare lo style è più affidabile di un setTimeout.
       onAnimationEnd={isIOS && animate ? handleAnimationEnd : undefined}
     >
       {children}
