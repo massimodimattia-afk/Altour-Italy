@@ -212,7 +212,7 @@ const BadgeDetailPopup = ({ filo, isUnlocked, count, onClose }: { filo: string; 
   const pct = Math.min((count / BADGE_THRESHOLD) * 100, 100);
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center p-4 backdrop-blur-sm bg-black/40" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <motion.div initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 60, opacity: 0, scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 28 }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative">
         <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 backdrop-blur-sm rounded-full text-stone-400 hover:text-stone-700 transition-colors"><X size={16} /></button>
         <div className="relative h-36 flex items-center justify-center overflow-hidden" style={isUnlocked ? { background: `linear-gradient(145deg, ${color}cc 0%, ${color} 60%, ${color}aa 100%)` } : { background: "linear-gradient(145deg, #f0eeec 0%, #e8e5e2 100%)" }}>
@@ -551,7 +551,7 @@ export default function Tessera() {
           </div>
 
           {/* TAB NAVIGATION */}
-          <div className="sticky top-0 z-40 bg-[#f5f2ed]/85 backdrop-blur-xl border-b border-stone-200/40 px-4 py-4 mb-8">
+          <div className="sticky top-0 z-40 bg-[#f5f2ed]/85 border-b border-stone-200/40 px-4 py-4 mb-8">
             <div className="max-w-xl mx-auto flex gap-3">
               {(["TESSERA", "BADGE", "TRAGUARDI"] as TabType[]).map((tab) => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
@@ -721,7 +721,7 @@ export default function Tessera() {
           <AnimatePresence>
             {showRedeem && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeRedeem} className="absolute inset-0 bg-stone-900/70 backdrop-blur-md" />
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeRedeem} className="absolute inset-0 bg-stone-900/70" />
                 <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="relative w-full max-w-sm bg-white rounded-[3rem] p-10 shadow-2xl overflow-hidden border border-white/20">
                   <button onClick={closeRedeem} disabled={isVerifying} className="absolute top-8 right-8 p-2.5 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
                   <AnimatePresence mode="wait">

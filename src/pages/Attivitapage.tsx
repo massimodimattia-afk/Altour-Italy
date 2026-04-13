@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import AttivitaQuiz from "../components/AttivitaQuiz";
+import { isIOS } from "../components/Section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
@@ -73,7 +74,7 @@ function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   const dark = ["#002f59", "#946a52", "#b8163c", "#358756", "#1e2855"];
   const bg = dark.includes(color) ? `${color}aa` : `${color}cc`;
   return (
-    <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest backdrop-blur-sm"
+    <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-[#f5f2ed]/95 backdrop-blur-sm border-b-[1px] border-[#f5f2ed]/95"
       style={{ backgroundColor: bg, color: "rgba(255,255,255,0.95)", textShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>
       {value}
     </div>
@@ -105,7 +106,7 @@ function ActivityCard({
   const esc   = isEsc ? activity as Escursione : null;
   return (
     <motion.div layout
-      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: isIOS ? 0 : 12 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
       className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform"
@@ -143,11 +144,11 @@ function ActivityCard({
           dangerouslySetInnerHTML={{ __html: formatMarkdown(activity.descrizione) }} />
         <div className="flex gap-2 pt-3 border-t border-stone-50">
           <button onClick={onDetails}
-            className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-all active:scale-95">
+            className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95">
             Dettagli
           </button>
           <button onClick={() => onBook("info")}
-            className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-all active:scale-95">
+            className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors active:scale-95">
             Richiedi Info
           </button>
         </div>
@@ -283,7 +284,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
 
         {/* ── Banner quiz zaino ─────────────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="mb-6 rounded-[2rem] overflow-hidden"
@@ -382,7 +383,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
       </div>
 
       {/* ── Filtri sticky desktop ─────────────────────────────────────────── */}
-      <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed]/95 backdrop-blur-sm border-b border-stone-200/60 py-3">
+      <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed] border-b border-stone-200/60 py-3">
         <div className="max-w-6xl mx-auto px-4 flex items-center gap-2">
           {/* Reset — icona cliccabile al posto della pill "Tutte" */}
           <button
