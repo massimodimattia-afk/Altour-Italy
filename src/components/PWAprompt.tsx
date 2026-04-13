@@ -1,6 +1,15 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, RefreshCw, X } from "lucide-react";
 import { usePWA } from "../hooks/usePWA";
+import { isIOS } from "../components/Section";
+
+export function iosClean(className: string): string {
+  if (!isIOS) return className;
+  return className
+    .split(" ")
+    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
+    .join(" ");
+}
 
 export default function PWAPrompt() {
   const { isInstallable, hasUpdate, promptInstall, dismissInstall, dismissUpdate } = usePWA();
