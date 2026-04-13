@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { isIOS } from "../components/Section";
 
 interface HeaderProps {
   currentPage: string;
   onNavigate: (page: string) => void;
+}
+
+export function iosClean(className: string): string {
+  if (!isIOS) return className;
+  return className
+    .split(" ")
+    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
+    .join(" ");
 }
 
 export default function Header({ currentPage, onNavigate }: HeaderProps) {
@@ -22,7 +31,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#2a2723] backdrop-blur-md border-b border-white/5 shadow-lg">
+    <header className={iosClean("sticky top-0 z-50 bg-[#2a2723] backdrop-filter border-b border-white/5 shadow-lg")}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
 
      {/* Logo */}
@@ -52,11 +61,11 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`text-[11px] uppercase font-bold tracking-[0.2em] transition-all relative py-2
+              className={iosClean(`text-[11px] uppercase font-bold tracking-[0.2em] transition-all relative py-2
                 ${currentPage === item.id
                   ? "text-brand-sky"
                   : "text-stone-300 hover:text-white"
-                }`}
+                }`)}
             >
               {item.label}
               {currentPage === item.id && (
@@ -85,9 +94,9 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
               key={item.id}
               onClick={() => handleMobileClick(item.id)}
               style={{ transitionDelay: isMenuOpen ? `${index * 75}ms` : "0ms" }}
-              className={`text-left text-sm uppercase font-black tracking-[0.2em] transition-all duration-500
+              className={iosClean(`text-left text-sm uppercase font-black tracking-[0.2em] transition-all duration-500
                 ${isMenuOpen ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"}
-                ${currentPage === item.id ? "text-brand-sky" : "text-stone-300"}`}
+                ${currentPage === item.id ? "text-brand-sky" : "text-stone-300"}`)}
             >
               {item.label}
             </button>

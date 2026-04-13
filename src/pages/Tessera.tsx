@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
+import { isIOS } from "../components/Section";
+
+
 
 const SESSION_KEY = "altour_session_v4";
 const PIN_LENGTH = 6;
@@ -102,12 +105,22 @@ interface UserTessera {
   dislivello_totali?: number;
 }
 
+export function iosClean(className: string): string {
+  if (!isIOS) return className;
+  return className
+    .split(" ")
+    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
+    .join(" ");
+}
+
 // --- Utilities ---
 const HEX_TO_FILOSOFIA: Record<string, string> = Object.fromEntries(
   Object.entries(FILOSOFIA_COLORS).map(([k, v]) => [v, k])
 );
 function getFilosofiaName(hex: string): string { return HEX_TO_FILOSOFIA[hex] ?? ""; }
 function getFilosofiaColor(name: string | null): string { return name ? (FILOSOFIA_COLORS[name] || "#5aaadd") : "#5aaadd"; }
+
+
 
 function parseJsonArray<T>(data: T[] | string | null | undefined): T[] {
   if (typeof data === 'string') {
@@ -147,6 +160,7 @@ const IconaScarponeCustom = ({ size = 24, color = "#d6d3d1", isActive = false }:
   return <img src="/scarpone.png" alt="scarpone" style={{ ...style, filter: "grayscale(100%) opacity(0.15)" }} />;
 };
 
+
 // --- BadgeChip (versione premium con effetti) ---
 const BadgeChip = ({ filo, isUnlocked, count, onClick }: { filo: string; isUnlocked: boolean; count: number; onClick?: () => void }) => {
   const color = FILOSOFIA_COLORS[filo] ?? "#44403c";
@@ -154,13 +168,14 @@ const BadgeChip = ({ filo, isUnlocked, count, onClick }: { filo: string; isUnloc
   const name  = BADGE_NAMES[filo] ?? filo;
   const pct   = Math.min((count / BADGE_THRESHOLD) * 100, 100);
 
+
+ 
   return (
     <motion.div
       onClick={onClick}
       whileHover={{ y: -4, scale: 1.04 }}
       whileTap={{ scale: 0.93 }}
       transition={{ type: "spring", stiffness: 380, damping: 18 }}
-      className="flex flex-col items-center gap-2 cursor-pointer"
     >
       <div className="relative">
         {isUnlocked && (

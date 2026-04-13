@@ -43,6 +43,14 @@ interface AttivitaPageProps {
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
 
+export function iosClean(className: string): string {
+  if (!isIOS) return className;
+  return className
+    .split(" ")
+    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
+    .join(" ");
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const IMG_FALLBACK = "/altour-logo.png";
 const ITEMS_PER_LOAD = typeof window !== "undefined" && window.innerWidth >= 1024 ? 6 : 4;

@@ -64,6 +64,14 @@ const SkeletonCard = () => (
 
 const IMG_FALLBACK = "/altour-logo.png";
 
+export function iosClean(className: string): string {
+  if (!isIOS) return className;
+  return className
+    .split(" ")
+    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
+    .join(" ");
+}
+
 function formatMarkdown(text: string | null): string {
   if (!text) return "";
   return text
@@ -336,13 +344,13 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
           >
             <button
               onClick={() => onNavigate("attivitapage")}
-              className="flex-1 flex items-center justify-center gap-2 bg-white/12 hover:bg-white/22 text-white font-black uppercase text-[10px] tracking-widest py-4 px-5 rounded-2xl border border-white/25 active:scale-95 transition-colors"
+              className={iosClean("flex-1 flex items-center justify-center gap-2 bg-white/12 hover:bg-white/22 text-white font-black uppercase text-[10px] tracking-widest py-4 px-5 rounded-2xl border border-white/25 active:scale-95 transition-colors")}
             >
               Esplora Attività <ArrowRight size={12} />
             </button>
             <button
               onClick={() => onNavigate("corsi")}
-              className="flex-1 flex items-center justify-center gap-2 bg-white/12 hover:bg-white/22 text-white font-black uppercase text-[10px] tracking-widest py-4 px-5 rounded-2xl border border-white/25 active:scale-95 transition-colors"
+              className={iosClean("flex-1 flex items-center justify-center gap-2 bg-white/12 hover:bg-white/22 text-white font-black uppercase text-[10px] tracking-widest py-4 px-5 rounded-2xl border border-white/25 active:scale-95 transition-colors")}
             >
               Vai all'Accademia <ArrowRight size={12} />
             </button>
