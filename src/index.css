@@ -11,9 +11,9 @@
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
     font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
-    /* Fix per l'altezza su mobile PWA */
+    /* Fix per l'altezza reale su mobile PWA */
     height: -webkit-fill-available;
-    /* Impedisce il rimbalzo gommoso che causa glitch grafici */
+    /* Impedisce il "rimbalzo" gommoso che causa glitch grafici su iOS */
     overscroll-behavior-y: none;
   }
 
@@ -29,17 +29,21 @@
 }
 
 @layer utilities {
-  /* Classe per forzare l'uso della GPU senza sfarfallio */
+  /* Classe universale per forzare l'uso della GPU senza sfarfallio */
   .force-gpu {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    
     perspective: 1000px;
     -webkit-perspective: 1000px;
-    transform: translate3d(0,0,0);
-    -webkit-transform: translate3d(0,0,0);
+    
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    
     will-change: transform, opacity;
   }
 
+  /* Utility per nascondere la scrollbar mantenendo lo scroll */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -53,51 +57,53 @@
 @supports (-webkit-touch-callout: none) {
   
   /* 1. DISATTIVAZIONE TOTALE BACKDROP-FILTER */
-  /* È la causa #1 di sfarfallio neri/bianchi su iPhone a DPR 3x */
+  /* Causa #1 di sfarfallio neri/bianchi su iPhone a DPR 3x */
   * {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
 
   /* 2. COMPENSAZIONE ESTETICA */
-  /* Poiché il blur è rimosso, rendiamo i componenti leggermente più opachi 
-     per mantenere la leggibilità del testo sopra le immagini */
+  /* Senza il blur, rendiamo i componenti leggermente più opachi per mantenere la leggibilità */
   .backdrop-blur-sm, 
   .backdrop-blur-md, 
   .backdrop-blur-lg,
   [class*="backdrop-blur"],
   nav, 
   .modal-card {
-    background-color: rgba(250, 250, 249, 0.98) !important; /* stone-50 solido */
+    background-color: rgba(250, 250, 249, 0.98) !important; /* stone-50 quasi solido */
     box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.15) !important;
   }
 
-  /* 3. STABILIZZAZIONE LAYER DINAMICI */
-  /* Forza Safari a non "dimenticarsi" di renderizzare elementi critici */
+  /* 3. STABILIZZAZIONE LAYER DINAMICI E MEDIA */
+  /* Forza Safari a non "dimenticarsi" di renderizzare elementi critici e immagini */
   .force-gpu,
   .hero-zoom,
   .modal-card,
   img,
   video {
-    -webkit-transform: translate3d(0,0,0);
-    transform: translate3d(0,0,0);
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }
 
   /* 4. FIX SCROLL & FIXED ELEMENTS */
-  /* Evita che la navbar o le modali spariscano durante lo scroll */
+  /* Evita che la navbar o le modali spariscano o tremino durante lo scroll */
   .fixed {
-    -webkit-transform: translate3d(0,0,0);
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
     isolation: isolate;
   }
 
-  .overflow-y-auto {
+  .overflow-y-auto,
+  .overflow-x-auto {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Fix specifico per input su iOS che a volte causano zoom indesiderato */
-  input, textarea {
+  /* 5. FIX ZOOM INPUT IOS */
+  /* Evita che Safari faccia lo zoom automatico e fastidioso quando clicchi su un campo di testo */
+  input, textarea, select {
     font-size: 16px !important;
   }
 }
