@@ -1,4 +1,4 @@
-import { Calendar, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -98,7 +98,7 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500 relative"
+      className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-shadow duration-500 relative"
     >
       {/* Image */}
       <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-200 relative overflow-hidden">
@@ -115,7 +115,7 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
         
         {/* Categoria Badge */}
         <div
-          className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-sm"
+          className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest"
           style={{
             backgroundColor: bg,
             color: "rgba(255,255,255,0.95)",
