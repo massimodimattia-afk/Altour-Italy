@@ -1,8 +1,8 @@
 // components/Section.tsx
 import React, { useRef, useEffect, useState, ElementType, useCallback } from "react";
-import { isIOS } from "../utils/motion"; // ← fonte unica, non ridichiarare
+import { isIOS } from "../utils/motion";
 
-export { isIOS }; // ri-esporta per chi importa da Section per retrocompatibilità
+export { isIOS };
 
 interface SectionProps {
   children: React.ReactNode;
@@ -13,8 +13,6 @@ interface SectionProps {
   as?: ElementType;
 }
 
-// Il `to` non include transform per evitare stacking context permanente.
-// Vedi commento esteso in versioni precedenti.
 const KEYFRAMES = `
   @keyframes sectionFadeUp {
     from {
@@ -44,19 +42,21 @@ export default function Section({
   fullHeight = false,
   as: Tag = "section",
 }: SectionProps) {
+  // 🔴 SU iOS DISABILITIAMO COMPLETAMENTE L'ANIMAZIONE
+  const shouldAnimate = animate && !isIOS;
+  
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(!animate);
-  const [animDone, setAnimDone] = useState(!animate);
+  const [visible, setVisible] = useState(!shouldAnimate);
+  const [animDone, setAnimDone] = useState(!shouldAnimate);
 
   useEffect(() => {
+    if (!shouldAnimate) return;
     injectKeyframes();
-    if (!animate) return;
-
+    
     const el = ref.current;
     if (!el) return;
 
     const margin = window.innerHeight < 700 ? "-40px 0px" : "-80px 0px";
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -66,18 +66,16 @@ export default function Section({
       },
       { rootMargin: margin }
     );
-
     observer.observe(el);
     return () => observer.disconnect();
-  }, [animate]);
+  }, [shouldAnimate]);
 
   const handleAnimationEnd = useCallback(() => {
     setAnimDone(true);
   }, []);
 
   const getAnimStyle = (): React.CSSProperties => {
-    if (!animate) return {};
-    if (!isIOS) return {};
+    if (!shouldAnimate) return {};
     if (animDone) return {};
     if (!visible) return { opacity: 0 };
     return {
@@ -94,7 +92,7 @@ export default function Section({
       ref={ref as React.Ref<HTMLDivElement>}
       className={`relative w-full ${className}`}
       style={{ ...getAnimStyle(), ...heightStyle }}
-      onAnimationEnd={isIOS && animate ? handleAnimationEnd : undefined}
+      onAnimationEnd={shouldAnimate ? handleAnimationEnd : undefined}
     >
       {children}
     </Tag>

@@ -1,8 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Montserrat:wght@400;700;900&display=swap');
-
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+
+/* Font esterni (opzionale, lo puoi tenere) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Montserrat:wght@400;700;900&display=swap');
 
 @layer base {
   html {
@@ -25,51 +26,79 @@
 }
 
 @layer utilities {
-  /* ❌ RIMOSSA .force-gpu — promuoveva ogni elemento a layer GPU permanente */
-  /* Il browser gestisce il compositing meglio di noi */
-
-  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 }
 
-/* ─── Fix iOS ──────────────────────────────────────────────────────────────── */
+/* ─── Fix specifici per iOS (senza rompere il compositing) ────────────────── */
 @supports (-webkit-touch-callout: none) {
 
-  /* 1. Rimuovi tutti i backdrop-filter — causa principale del flickering */
+  /* 1. Disabilita SOLO le trasformazioni al tocco (flickering) */
+  button:active,
+  .group:active,
+  [class*="active-scale"],
+  [class*="hover-scale"],
+  [class*="group-hover-scale"] {
+    transform: scale(1) !important;
+    transition: none !important;
+  }
+
+  /* 2. Accelera GPU per scroll e layout critici (solo dove serve) */
+  .overflow-y-auto,
+  .overflow-x-auto,
+  .min-h-screen,
+  .fixed,
+  [class*="sticky"] {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* 3. Le immagini NON devono essere promosse a layer singoli */
+  img {
+    transform: none !important;
+  }
+
+  /* 4. Riduce il paint per immagini dentro aspect-ratio */
+  .aspect-16\/9 img,
+  .aspect-3\/2 img,
+  .aspect-video img {
+    content-visibility: auto;
+    contain-intrinsic-size: 300px;
+  }
+
+  /* 5. Rimuovi tutti i backdrop-filter (causa flickering) */
   * {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
 
-  /* 2. Compensazione estetica per elementi che usavano backdrop-blur */
+  /* 6. Compensazione estetica per backdrop-blur rimossi */
   [class*="backdrop-blur"],
   nav {
     background-color: rgba(250, 250, 249, 0.98) !important;
-    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.15) !important;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.15) !important;
   }
 
-  /* 3. ❌ RIMOSSO il blocco img/video con transform
-     Mettere translate3d su ogni img crea un layer GPU per immagine
-     → il compositor crolla durante lo scroll con molte immagini */
-
-  /* 4. Solo gli elementi fixed hanno bisogno di isolation */
-  .fixed {
-    isolation: isolate;
-    /* ❌ RIMOSSO translate3d — non serve su fixed se non c'è transform animato */
-  }
-
-  /* 5. Fix zoom input */
-  input, textarea, select {
+  /* 7. Fix zoom input su iOS */
+  input,
+  textarea,
+  select {
     font-size: 16px !important;
   }
 
-  /* 6. Scroll inerziale — -webkit-overflow-scrolling è deprecato ma
-     non causa danni su iOS moderni, lascialo pure */
+  /* 8. Scroll inerziale (utile ma non causa problemi) */
   .overflow-y-auto,
   .overflow-x-auto {
     -webkit-overflow-scrolling: touch;
+  }
+
+  /* 9. Isolamento per elementi fixed (senza abusare) */
+  .fixed {
+    isolation: isolate;
   }
 }
