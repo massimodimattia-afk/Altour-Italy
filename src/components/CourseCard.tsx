@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Sparkles, BookOpen, Mountain, ArrowRight } from "lucide-react";
+import { isIOS } from "../utils/motion";
 
 // Interfaccia Corso allineata al database reale
 export interface Corso {
@@ -93,11 +94,17 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
 
   const formattedDate = formatDate(corso.data_inizio);
 
+  // Wrapper comune per iOS (statico) e non-iOS (animato)
+  const CardWrapper = isIOS ? "div" : motion.div;
+  const wrapperProps = isIOS ? {} : {
+    initial: { opacity: 0, y: 20 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true },
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+    <CardWrapper
+      {...wrapperProps}
       className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-shadow duration-500 relative"
     >
       {/* Image */}
@@ -247,6 +254,6 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
           </button>
         </div>
       </div>
-    </motion.div>
+    </CardWrapper>
   );
 }

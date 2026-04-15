@@ -1,18 +1,10 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { isIOS } from "../components/Section";
+import { iosClean } from "../utils/motion";
 
 interface HeaderProps {
   currentPage: string;
   onNavigate: (page: string) => void;
-}
-
-export function iosClean(className: string): string {
-  if (!isIOS) return className;
-  return className
-    .split(" ")
-    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
-    .join(" ");
 }
 
 export default function Header({ currentPage, onNavigate }: HeaderProps) {

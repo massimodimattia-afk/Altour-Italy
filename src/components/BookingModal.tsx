@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Send, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
-import { isIOS } from "../components/Section";
+import { isIOS, iosClean } from "../utils/motion";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -10,14 +10,6 @@ interface BookingModalProps {
   title: string;
   initialMessage?: string;
   mode?: "info" | "prenota";
-}
-
-export function iosClean(className: string): string {
-  if (!isIOS) return className;
-  return className
-    .split(" ")
-    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
-    .join(" ");
 }
 
 

@@ -4,6 +4,7 @@ import { ArrowRight, RotateCcw, Sparkles, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
 import ActivityDetailModal from "./ActivityDetailModal";
+import { iosClean } from "../utils/motion";
 
 
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
@@ -321,7 +322,7 @@ function ItemCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className={`fixed inset-0 z-[9998] ${isMobile ? "bg-stone-900/20 backdrop-blur-xl" : "bg-transparent"}`}
+              className={iosClean(`fixed inset-0 z-[9998] ${isMobile ? "bg-stone-900/20 backdrop-blur-xl" : "bg-transparent"}`)}
               onClick={() => setShowPopup(false)}
             />
 
