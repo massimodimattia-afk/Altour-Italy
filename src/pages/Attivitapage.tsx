@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import AttivitaQuiz from "../components/AttivitaQuiz";
-import { isIOS } from "../components/Section";
+import { isIOS, iosClean } from "../utils/motion";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
@@ -37,19 +37,6 @@ interface Campo {
 
 type Activity = Escursione | Campo;
 type FilterKey = "mezza_giornata" | "intera_giornata" | "tour" | "campi";
-
-interface AttivitaPageProps {
-  onNavigate: (page: string) => void;
-  onBookingClick: (title: string, mode?: "info" | "prenota") => void;
-}
-
-export function iosClean(className: string): string {
-  if (!isIOS) return className;
-  return className
-    .split(" ")
-    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
-    .join(" ");
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const IMG_FALLBACK = "/altour-logo.png";
@@ -104,6 +91,8 @@ function campoToDetail(campo: Campo) {
 }
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
+// Su iOS: div statico senza animazioni per evitare flickering durante lo scroll
+// Su altri dispositivi: motion.div con animazioni
 function ActivityCard({
   activity, idx, onDetails, onBook,
 }: {
@@ -112,24 +101,19 @@ function ActivityCard({
 }) {
   const isEsc = activity._tipo === "escursione";
   const esc   = isEsc ? activity as Escursione : null;
-  return (
-    <motion.div layout
-      initial={{ opacity: 0, y: isIOS ? 0 : 12 }} animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
-      className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform"
-      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
-    >
+  
+  const cardContent = (
+    <>
       <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
         <img src={activity.immagine_url || IMG_FALLBACK} alt={activity.titolo}
           className="absolute inset-0 w-full h-full object-cover"
           loading={idx < 4 ? "eager" : "lazy"} decoding="async" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-{isEsc
-  ? esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
-  : ((activity as Campo).filosofia || (activity as Campo).slug) && 
-    <FilosofiaBadge value={(activity as Campo).filosofia || (activity as Campo).slug} />
-}
+        {isEsc
+          ? esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
+          : ((activity as Campo).filosofia || (activity as Campo).slug) && 
+            <FilosofiaBadge value={(activity as Campo).filosofia || (activity as Campo).slug} />
+        }
       </div>
       <div className="p-4 md:p-5 flex flex-col flex-grow">
         <div className="flex items-center gap-2.5 mb-2 flex-wrap">
@@ -152,15 +136,41 @@ function ActivityCard({
           dangerouslySetInnerHTML={{ __html: formatMarkdown(activity.descrizione) }} />
         <div className="flex gap-2 pt-3 border-t border-stone-50">
           <button onClick={onDetails}
-            className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95">
+            className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors">
             Dettagli
           </button>
           <button onClick={() => onBook("info")}
-            className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors active:scale-95">
+            className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors">
             Richiedi Info
           </button>
         </div>
       </div>
+    </>
+  );
+
+  // iOS: div statico - nessuna animazione Framer Motion
+  if (isIOS) {
+    return (
+      <div
+        className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col"
+        style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
+  // Non-iOS: motion.div con animazioni
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
+      className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col"
+      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
+    >
+      {cardContent}
     </motion.div>
   );
 }
@@ -515,7 +525,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              className={iosClean("fixed inset-0 z-40 bg-black/40 backdrop-blur-sm")}
               onClick={closeDrawer}
             />
           )}

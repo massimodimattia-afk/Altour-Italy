@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../lib/supabase";
-import { isIOS } from "../components/Section";
+import { isIOS, iosClean } from "../utils/motion";
 
 
 
@@ -105,13 +105,7 @@ interface UserTessera {
   dislivello_totali?: number;
 }
 
-export function iosClean(className: string): string {
-  if (!isIOS) return className;
-  return className
-    .split(" ")
-    .filter(c => !c.includes("backdrop-blur") && !c.includes("backdrop-filter"))
-    .join(" ");
-}
+
 
 // --- Utilities ---
 const HEX_TO_FILOSOFIA: Record<string, string> = Object.fromEntries(

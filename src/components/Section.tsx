@@ -2,8 +2,6 @@
 import React, { useRef, useEffect, useState, ElementType, useCallback } from "react";
 import { isIOS } from "../utils/motion";
 
-export { isIOS };
-
 interface SectionProps {
   children: React.ReactNode;
   className?: string;
