@@ -301,52 +301,68 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
         {/* ── Banner quiz zaino ─────────────────────────────────────────── */}
-        <motion.div
-          initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="mb-6 rounded-[2rem] overflow-hidden"
-          style={{
+        {/* Su iOS: div statico - niente motion per evitare layer GPU */}
+        {(() => {
+          const bannerContent = (
+            <>
+              <div className="flex items-center gap-4 px-5 py-4 md:px-7 md:py-5">
+                <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl md:text-3xl"
+                  style={{ background: "rgba(129,204,176,0.15)" }}>
+                  🎒
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-0.5" style={{ color: "#81ccb0" }}>
+                    Non sai da dove iniziare?
+                  </p>
+                  <p className="text-sm md:text-base font-black text-[#44403c] uppercase tracking-tight leading-tight">
+                    Costruisci il tuo zaino ideale
+                  </p>
+                  <p className="text-[10px] text-stone-400 font-medium mt-0.5 hidden md:block">
+                    Scegli 3 oggetti e scopri l&apos;escursione perfetta per te
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (window.innerWidth < 768) {
+                      setDrawerOpen(true);
+                    } else {
+                      document.getElementById("zaino-quiz-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                  }}
+                  className="flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white"
+                  style={{
+                    background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
+                    boxShadow: "0 4px 14px rgba(90,170,221,0.25)",
+                  }}
+                >
+                  Inizia <ArrowRight size={12} />
+                </button>
+              </div>
+              <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #81ccb0, #5aaadd, #f4d98c)" }} />
+            </>
+          );
+          const bannerStyles = {
             background: "linear-gradient(135deg, #81ccb010 0%, #5aaadd12 50%, #f4d98c0e 100%)",
             border: "1.5px solid rgba(129,204,176,0.25)",
             boxShadow: "0 4px 24px rgba(129,204,176,0.10)",
-          }}
-        >
-          <div className="flex items-center gap-4 px-5 py-4 md:px-7 md:py-5">
-            <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl md:text-3xl"
-              style={{ background: "rgba(129,204,176,0.15)" }}>
-              🎒
+          };
+          
+          return isIOS ? (
+            <div className="mb-6 rounded-[2rem] overflow-hidden" style={bannerStyles}>
+              {bannerContent}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-0.5" style={{ color: "#81ccb0" }}>
-                Non sai da dove iniziare?
-              </p>
-              <p className="text-sm md:text-base font-black text-[#44403c] uppercase tracking-tight leading-tight">
-                Costruisci il tuo zaino ideale
-              </p>
-              <p className="text-[10px] text-stone-400 font-medium mt-0.5 hidden md:block">
-                Scegli 3 oggetti e scopri l'escursione perfetta per te
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                if (window.innerWidth < 768) {
-                  setDrawerOpen(true);
-                } else {
-                  document.getElementById("zaino-quiz-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
-              }}
-              className="flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white active:scale-95 transition-transform"
-              style={{
-                background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
-                boxShadow: "0 4px 14px rgba(90,170,221,0.25)",
-              }}
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="mb-6 rounded-[2rem] overflow-hidden"
+              style={bannerStyles}
             >
-              Inizia <ArrowRight size={12} />
-            </button>
-          </div>
-          <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #81ccb0, #5aaadd, #f4d98c)" }} />
-        </motion.div>
+              {bannerContent}
+            </motion.div>
+          );
+        })()}
 
         {/* ── Filtri card — mobile orizzontale, desktop pills ─────────────── */}
 {/* ── Filtri mobile "Segmented" Stylish ─────────────── */}
@@ -440,31 +456,56 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-20">
 
         {visible.length === 0 && !loading ? (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="py-20 text-center"
-          >
-            <p className="text-5xl mb-4">🏔️</p>
-            <p className="text-brand-stone font-black uppercase tracking-widest text-sm mb-2">Nessuna attività disponibile</p>
-            <p className="text-stone-400 text-xs font-medium mb-6">Non ci sono risultati per questo filtro al momento.</p>
-            <button
-              onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
-              className="px-6 py-3 bg-brand-sky text-white rounded-2xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
+          /* Empty state - statico su iOS */
+          isIOS ? (
+            <div className="py-20 text-center">
+              <p className="text-5xl mb-4">🏔️</p>
+              <p className="text-brand-stone font-black uppercase tracking-widest text-sm mb-2">Nessuna attività disponibile</p>
+              <p className="text-stone-400 text-xs font-medium mb-6">Non ci sono risultati per questo filtro al momento.</p>
+              <button
+                onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+                className="px-6 py-3 bg-brand-sky text-white rounded-2xl font-black uppercase text-[9px] tracking-widest"
+              >
+                Vedi tutte le attività
+              </button>
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              className="py-20 text-center"
             >
-              Vedi tutte le attività
-            </button>
-          </motion.div>
+              <p className="text-5xl mb-4">🏔️</p>
+              <p className="text-brand-stone font-black uppercase tracking-widest text-sm mb-2">Nessuna attività disponibile</p>
+              <p className="text-stone-400 text-xs font-medium mb-6">Non ci sono risultati per questo filtro al momento.</p>
+              <button
+                onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+                className="px-6 py-3 bg-brand-sky text-white rounded-2xl font-black uppercase text-[9px] tracking-widest"
+              >
+                Vedi tutte le attività
+              </button>
+            </motion.div>
+          )
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              <AnimatePresence mode="popLayout">
-                {visible.map((activity, idx) => (
+              {/* Su iOS: niente AnimatePresence per evitare flickering durante scroll */}
+              {isIOS ? (
+                visible.map((activity, idx) => (
                   <ActivityCard key={activity.id} activity={activity} idx={idx}
                     onDetails={() => openDetails(activity)}
                     onBook={(mode) => onBookingClick(activity.titolo, mode)}
                   />
-                ))}
-              </AnimatePresence>
+                ))
+              ) : (
+                <AnimatePresence mode="popLayout">
+                  {visible.map((activity, idx) => (
+                    <ActivityCard key={activity.id} activity={activity} idx={idx}
+                      onDetails={() => openDetails(activity)}
+                      onBook={(mode) => onBookingClick(activity.titolo, mode)}
+                    />
+                  ))}
+                </AnimatePresence>
+              )}
             </div>
 
             {visibleCount < filtered.length && (
@@ -506,66 +547,120 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
 
       {/* ── Mobile: pill sticky + bottom drawer ──────────────────────────── */}
       <div className="md:hidden">
-        <AnimatePresence>
-          {!drawerOpen && !drawerClosing && (
-            <motion.button
-              initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 340, damping: 28 }}
+        {/* FAB - Su iOS: statico, no AnimatePresence per evitare flickering */}
+        {isIOS ? (
+          !drawerOpen && (
+            <button
               onClick={() => setDrawerOpen(true)}
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-6 py-4 rounded-full text-white font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-transform"
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-6 py-4 rounded-full text-white font-black uppercase text-[10px] tracking-widest shadow-2xl"
               style={{ background: "linear-gradient(135deg, #81ccb0, #5aaadd)", boxShadow: "0 8px 32px rgba(90,170,221,0.35)" }}
             >
               <Sparkles size={14} /> Trova la tua escursione
-            </motion.button>
-          )}
-        </AnimatePresence>
+            </button>
+          )
+        ) : (
+          <AnimatePresence>
+            {!drawerOpen && !drawerClosing && (
+              <motion.button
+                initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 340, damping: 28 }}
+                onClick={() => setDrawerOpen(true)}
+                className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-6 py-4 rounded-full text-white font-black uppercase text-[10px] tracking-widest shadow-2xl"
+                style={{ background: "linear-gradient(135deg, #81ccb0, #5aaadd)", boxShadow: "0 8px 32px rgba(90,170,221,0.35)" }}
+              >
+                <Sparkles size={14} /> Trova la tua escursione
+              </motion.button>
+            )}
+          </AnimatePresence>
+        )}
 
-        <AnimatePresence>
-          {drawerOpen && (
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
-              className={iosClean("fixed inset-0 z-40 bg-black/40 backdrop-blur-sm")}
+        {/* Backdrop overlay - Su iOS: transizione CSS semplice */}
+        {isIOS ? (
+          drawerOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-200"
               onClick={closeDrawer}
             />
-          )}
-        </AnimatePresence>
+          )
+        ) : (
+          <AnimatePresence>
+            {drawerOpen && (
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.22 }}
+                className={iosClean("fixed inset-0 z-40 bg-black/40 backdrop-blur-sm")}
+                onClick={closeDrawer}
+              />
+            )}
+          </AnimatePresence>
+        )}
 
-        <AnimatePresence>
-          {drawerOpen && (
-            <motion.div
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 320, damping: 32 }}
-              drag="y"
-              dragConstraints={{ top: 0 }}
-              dragElastic={{ top: 0, bottom: 0.4 }}
-              onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 400) closeDrawer(); }}
-              className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] flex flex-col"
-              style={{ background: "#f5f2ed", maxHeight: "92dvh", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)", touchAction: "none" }}
-            >
-              <div className="flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
-                <div className="w-10 h-1 rounded-full bg-stone-300" />
+        {/* Drawer - Su iOS: transizione CSS invece di Framer Motion spring */}
+        {isIOS ? (
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] flex flex-col transition-transform duration-300 ease-out ${
+              drawerOpen ? "translate-y-0" : "translate-y-full"
+            }`}
+            style={{ background: "#f5f2ed", maxHeight: "92dvh", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)" }}
+          >
+            <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+              <div className="w-10 h-1 rounded-full bg-stone-300" />
+            </div>
+            <div className="flex items-center justify-between px-5 pb-3 flex-shrink-0">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-0.5">Trova la tua escursione</p>
+                <h3 className="text-lg font-black text-[#44403c] uppercase tracking-tight leading-tight">
+                  Cosa metti<br />
+                  <span className="font-light italic" style={{ color: "#9f8270" }}>nel tuo zaino?</span>
+                </h3>
               </div>
-              <div className="flex items-center justify-between px-5 pb-3 flex-shrink-0">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-0.5">Trova la tua escursione</p>
-                  <h3 className="text-lg font-black text-[#44403c] uppercase tracking-tight leading-tight">
-                    Cosa metti<br />
-                    <span className="font-light italic" style={{ color: "#9f8270" }}>nel tuo zaino?</span>
-                  </h3>
+              <button
+                onClick={closeDrawer}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-stone-400 flex-shrink-0"
+                style={{ background: "rgba(0,0,0,0.06)" }}
+              >✕</button>
+            </div>
+            <div className="overflow-y-auto px-4 pb-8 flex-1" style={{ WebkitOverflowScrolling: "touch" }}>
+              <AttivitaQuiz onBookingClick={(title, mode) => { closeDrawer(); onBookingClick(title, mode); }} />
+            </div>
+          </div>
+        ) : (
+          <AnimatePresence>
+            {drawerOpen && (
+              <motion.div
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                transition={{ type: "spring", stiffness: 320, damping: 32 }}
+                drag="y"
+                dragConstraints={{ top: 0 }}
+                dragElastic={{ top: 0, bottom: 0.4 }}
+                onDragEnd={(_, info) => { if (info.offset.y > 80 || info.velocity.y > 400) closeDrawer(); }}
+                className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[2rem] flex flex-col"
+                style={{ background: "#f5f2ed", maxHeight: "92dvh", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)", touchAction: "none" }}
+              >
+                <div className="flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing">
+                  <div className="w-10 h-1 rounded-full bg-stone-300" />
                 </div>
-                <button
-                  onClick={closeDrawer}
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-stone-400 active:scale-90 transition-transform flex-shrink-0"
-                  style={{ background: "rgba(0,0,0,0.06)" }}
-                >✕</button>
-              </div>
-              <div className="overflow-y-auto px-4 pb-8 flex-1" style={{ touchAction: "pan-y" }}>
-                <AttivitaQuiz onBookingClick={(title, mode) => { closeDrawer(); onBookingClick(title, mode); }} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <div className="flex items-center justify-between px-5 pb-3 flex-shrink-0">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-0.5">Trova la tua escursione</p>
+                    <h3 className="text-lg font-black text-[#44403c] uppercase tracking-tight leading-tight">
+                      Cosa metti<br />
+                      <span className="font-light italic" style={{ color: "#9f8270" }}>nel tuo zaino?</span>
+                    </h3>
+                  </div>
+                  <button
+                    onClick={closeDrawer}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-stone-400 flex-shrink-0"
+                    style={{ background: "rgba(0,0,0,0.06)" }}
+                  >✕</button>
+                </div>
+                <div className="overflow-y-auto px-4 pb-8 flex-1" style={{ touchAction: "pan-y" }}>
+                  <AttivitaQuiz onBookingClick={(title, mode) => { closeDrawer(); onBookingClick(title, mode); }} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
       </div>
 
       <ActivityDetailModal
