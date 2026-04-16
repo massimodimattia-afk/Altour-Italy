@@ -1,3 +1,8 @@
+/**
+ * ActivityDetailModal — ottimizzato per iOS/WebKit
+ * Versione autonoma (nessuna dipendenza da moduli esterni mancanti)
+ */
+
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -10,15 +15,50 @@ import {
   ExternalLink,
   Clock,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+} from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
+
+// ─── Scroll Lock Functions (inline, senza dipendenze esterne) ────────────────
+// Queste funzioni sostituiscono il modulo mancante '../lib/scrollLock'
+
+function lockScroll() {
+  const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+  document.body.style.overflow = "hidden";
+  document.body.style.paddingRight = `${scrollBarWidth}px`;
+  // iOS: evita il repositioning della viewport
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${window.scrollY}px`;
+  document.body.style.width = "100%";
+}
+
+function unlockScroll() {
+  const scrollY = document.body.style.top;
+  document.body.style.overflow = "";
+  document.body.style.paddingRight = "";
+  document.body.style.position = "";
+  document.body.style.top = "";
+  document.body.style.width = "";
+  if (scrollY) {
+    window.scrollTo(0, parseInt(scrollY || "0", 10) * -1);
+  }
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
 
 function normalizeMarkdown(text: string): string {
   return text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
 }
 
 const IMG_FALLBACK = "/altour-logo.png";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface Activity {
   id: string;
@@ -52,10 +92,36 @@ interface ActivityDetailModalProps {
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
 
-// ─── MiniMap ─────────────────────────────────────────────────────────────────
-function MiniMap({ lat, lng }: { lat: number; lng: number }) {
+// ─── Framer Motion variants (stable object references) ────────────────────────
+
+const overlayVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+} as const;
+
+const modalVariants = {
+  initial: { opacity: 0, y: 60 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: 60 },
+} as const;
+
+const modalTransition = {
+  duration: 0.22,
+  ease: "easeOut" as const,
+} as const;
+
+// ─── MiniMap ──────────────────────────────────────────────────────────────────
+
+interface MiniMapProps {
+  lat: number;
+  lng: number;
+}
+
+const MiniMap = memo(function MiniMap({ lat, lng }: MiniMapProps) {
   const nLat = Number(lat);
   const nLng = Number(lng);
+
   if (isNaN(nLat) || isNaN(nLng) || (nLat === 0 && nLng === 0)) return null;
 
   const delta = 0.005;
@@ -81,6 +147,7 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
           Apri App <ExternalLink size={10} />
         </a>
       </div>
+
       <div className="relative h-48 bg-stone-100 w-full">
         <iframe
           title="Mappa"
@@ -88,19 +155,25 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
           width="100%"
           height="100%"
           style={{ border: "none" }}
-          loading="lazy"
+          loading="eager"
+          sandbox="allow-scripts allow-same-origin"
         />
       </div>
     </div>
   );
-}
+});
 
-// ─── Formatta lista attrezzatura ──────────────────────────────────────────────
-function EquipmentList({ text }: { text: string }) {
-  const items = text
-    .split(/[,\n]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+// ─── EquipmentList ────────────────────────────────────────────────────────────
+
+const EquipmentList = memo(function EquipmentList({ text }: { text: string }) {
+  const items = useMemo(
+    () =>
+      text
+        .split(/[,\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+    [text]
+  );
 
   if (items.length > 1) {
     return (
@@ -111,28 +184,22 @@ function EquipmentList({ text }: { text: string }) {
       </ul>
     );
   }
+
   return <p>{text}</p>;
-}
+});
 
-// ─── Varianti Framer Motion ───────────────────────────────────────────────────
-const overlayVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit:    { opacity: 0 },
-};
+// ─── MemoizedMarkdown ─────────────────────────────────────────────────────────
 
-const modalVariants = {
-  initial: { opacity: 0, y: 60 },
-  animate: { opacity: 1, y: 0 },
-  exit:    { opacity: 0, y: 60 },
-};
+const MemoizedMarkdown = memo(function MemoizedMarkdown({
+  content,
+}: {
+  content: string;
+}) {
+  return <ReactMarkdown>{normalizeMarkdown(content)}</ReactMarkdown>;
+});
 
-const modalTransition = {
-  duration: 0.22,
-  ease: "easeOut" as const,
-};
+// ─── ActivityDetailModal ──────────────────────────────────────────────────────
 
-// ─── Componente principale ────────────────────────────────────────────────────
 export default function ActivityDetailModal({
   activity,
   isOpen,
@@ -140,36 +207,33 @@ export default function ActivityDetailModal({
   onBookingClick,
 }: ActivityDetailModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
-  const [showMap, setShowMap] = useState(false); // Stato per differire la mappa
+  
+  // Detect iOS per disabilitare trasformazioni problematiche
+  const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent), []);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // [OPT-1] Costruzione array immagini memoizzata
+  const images = useMemo(
+    () =>
+      [activity?.immagine_url, ...(activity?.gallery_urls ?? [])].filter(
+        Boolean
+      ) as string[],
+    [activity?.immagine_url, activity?.gallery_urls]
+  );
 
-  // Reset gallery e mappa al cambio attività
+  // Reset index al cambio attività
   useEffect(() => {
-    if (activity?.id) {
-      setCurrentImageIndex(0);
-      setShowMap(false);
-    }
+    setCurrentImageIndex(0);
   }, [activity?.id]);
 
-  // 🚀 Lock/unlock scroll body integrato (Sostituisce il file scrollLock)
+  // Lock scroll quando la modale è aperta
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
-      // Aspetta che l'animazione finisca prima di caricare l'iframe pesante
-      const timer = setTimeout(() => setShowMap(true), 350);
-      return () => clearTimeout(timer);
+      lockScroll();
     } else {
-      document.body.style.overflow = "";
-      setShowMap(false);
+      unlockScroll();
     }
-    
-    // Cleanup per sicurezza quando smonta
     return () => {
-      document.body.style.overflow = "";
+      unlockScroll();
     };
   }, [isOpen]);
 
@@ -183,19 +247,20 @@ export default function ActivityDetailModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
-  if (!isMounted || !activity) return null;
+  // Handler stabile per evitare ri-render
+  const handleBookingClick = useCallback(() => {
+    if (!activity) return;
+    onBookingClick(activity.titolo, "prenota");
+  }, [activity, onBookingClick]);
 
-  const images = [
-    activity.immagine_url,
-    ...(activity.gallery_urls ?? []),
-  ].filter(Boolean) as string[];
+  // Guard SSR
+  if (typeof document === "undefined" || !activity) return null;
 
-  const hasMap  = Boolean(activity.lat && activity.lng);
-  const isTour  = activity.categoria?.toLowerCase() === "tour";
+  const hasMap = Boolean(activity.lat && activity.lng);
+  const isTour = activity.categoria?.toLowerCase() === "tour";
   const isCorso = activity._tipo === "corso";
 
-  // ─── Modal content ──────────────────────────────────────────────────────────
-  const modalContent = (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div
@@ -205,7 +270,7 @@ export default function ActivityDetailModal({
           aria-modal="true"
           aria-label={activity.titolo}
         >
-          {/* Overlay scuro */}
+          {/* Overlay */}
           <motion.div
             variants={overlayVariants}
             initial="initial"
@@ -225,23 +290,28 @@ export default function ActivityDetailModal({
             transition={modalTransition}
             className="relative bg-white w-full max-w-5xl max-h-[93vh] md:max-h-[90vh] rounded-t-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row z-10"
           >
-            {/* ── Bottone chiudi ──────────────────────────────────────────── */}
+            {/* Bottone chiudi */}
             <button
               onClick={onClose}
               aria-label="Chiudi"
-              className="absolute top-4 right-4 z-30 p-2 bg-white/90 rounded-full shadow-lg active:scale-90 transition-transform"
+              className={`absolute top-4 right-4 z-30 p-2 bg-white/90 rounded-full shadow-lg transition-transform ${
+                isIOS ? "" : "active:scale-90"
+              }`}
             >
               <X size={20} />
             </button>
 
-            {/* ── Gallery ─────────────────────────────────────────────────── */}
+            {/* Gallery */}
             <div className="md:w-1/2 relative bg-stone-100 h-56 md:h-auto flex-shrink-0">
               <img
                 src={images[currentImageIndex] ?? IMG_FALLBACK}
                 className="absolute inset-0 w-full h-full object-cover"
                 alt={activity.titolo}
-                decoding="sync"
-                onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
+                decoding="async"
+                style={{ backgroundColor: "#e5e5e5" }}
+                onError={(e) => {
+                  e.currentTarget.src = IMG_FALLBACK;
+                }}
               />
 
               {/* Indicatori gallery */}
@@ -250,8 +320,8 @@ export default function ActivityDetailModal({
                   {images.map((_, i) => (
                     <button
                       key={i}
-                      onClick={() => setCurrentImageIndex(i)}
                       aria-label={`Immagine ${i + 1}`}
+                      onClick={() => setCurrentImageIndex(i)}
                       className={`h-1.5 rounded-full transition-all ${
                         i === currentImageIndex
                           ? "bg-white w-4"
@@ -263,7 +333,7 @@ export default function ActivityDetailModal({
               )}
             </div>
 
-            {/* ── Contenuto ───────────────────────────────────────────────── */}
+            {/* Contenuto */}
             <div className="md:w-1/2 flex flex-col overflow-hidden bg-white">
               {/* Header */}
               <div className="px-6 pt-6 pb-4 border-b border-stone-50">
@@ -300,17 +370,23 @@ export default function ActivityDetailModal({
 
               {/* Body scrollabile */}
               <div
-                className="flex-grow overflow-y-auto px-6 py-6 space-y-6 overscroll-contain"
-                style={{ WebkitOverflowScrolling: "touch" }}
+                className="flex-grow overflow-y-auto px-6 py-6 space-y-6"
+                style={{
+                  WebkitOverflowScrolling: "touch",
+                  overscrollBehavior: "contain",
+                  ...(isIOS ? {} : { transform: "translateZ(0)" }),
+                }}
               >
+                {/* Descrizione markdown */}
                 <div className="prose prose-sm max-w-none text-stone-600 font-medium">
-                  <ReactMarkdown>
-                    {normalizeMarkdown(
+                  <MemoizedMarkdown
+                    content={
                       activity.descrizione_estesa ?? activity.descrizione ?? ""
-                    )}
-                  </ReactMarkdown>
+                    }
+                  />
                 </div>
 
+                {/* Attrezzatura / Argomenti */}
                 {activity.attrezzatura && (
                   <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
@@ -323,21 +399,12 @@ export default function ActivityDetailModal({
                   </div>
                 )}
 
-                {/* 🚀 Mappa caricata in modo differito */}
-                {hasMap && showMap && (
-                  <MiniMap lat={activity.lat!} lng={activity.lng!} />
-                )}
-                
-                {/* Placeholder mentre la mappa carica */}
-                {hasMap && !showMap && (
-                  <div className="h-48 w-full bg-stone-50 animate-pulse rounded-2xl border border-stone-100 flex items-center justify-center mt-4">
-                    <span className="text-[10px] font-black uppercase text-stone-400">Caricamento mappa...</span>
-                  </div>
-                )}
+                {/* Mappa */}
+                {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} />}
               </div>
 
-              {/* Footer con prezzo e CTA */}
-              <div className="px-4 py-4 md:px-6 md:py-6 border-t border-stone-100 flex items-center gap-4 bg-white">
+              {/* Footer */}
+              <div className="px-4 py-4 md:px-6 md:py-6 border-t border-stone-100 flex items-center gap-4 bg-stone-50/50">
                 <div className="shrink-0">
                   <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-1">
                     Quota
@@ -347,19 +414,19 @@ export default function ActivityDetailModal({
                   </span>
                 </div>
                 <button
-                  onClick={() => onBookingClick(activity.titolo, "prenota")}
-                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-colors shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
+                  onClick={handleBookingClick}
+                  className={`flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-colors shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 ${
+                    isIOS ? "" : "active:scale-95"
+                  }`}
                 >
                   Prenota Ora <TrendingUp size={15} />
                 </button>
               </div>
-
             </div>
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
-
-  return createPortal(modalContent, document.body);
 }
