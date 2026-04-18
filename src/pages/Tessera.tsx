@@ -82,7 +82,28 @@ const BADGE_EMOJI: Record<string, string> = {
   "Cielo stellato":         "🌠",
 };
 
-const TESSERA_LEVELS = ["Esploratore", "Viaggiatore", "Camminatore", "Veterano", "Leggenda"];
+const TESSERA_LEVELS = [
+  "Amante di attività all'aperto",      // 0-7 escursioni
+  "Elfo dei prati",                     // 8-15 escursioni
+  "Collezionista di muschio",           // 16-23 escursioni
+  "Principe della mappa",               // 24-31 escursioni
+  "Guardiano delle nuvole",             // 32-39 escursioni
+  "Mago della bussola",                 // 40-47 escursioni
+  "Spirito dei boschi",                 // 48-55 escursioni
+  "Collezionista di scarponi",          // 56-63 escursioni
+  "Asceta dei monti",                   // 64-71 escursioni
+  "Re dell'altimetro",                  // 72-79 escursioni
+  "Saltatore di tronchi",               // 80-87 escursioni
+  "Amico delle querce",                 // 88-95 escursioni
+  "Menestrello dei bastoncini",         // 96-103 escursioni
+  "Duca degli scalatori",               // 104-111 escursioni
+  "Custode del verde",                  // 112-119 escursioni
+  "Specialista dei sentieri",           // 120-127 escursioni
+  "Gnomo delle pigne",                  // 128-135 escursioni
+  "Spiritello degli stagni",            // 136-143 escursioni
+  "Appassionato naturalista",           // 144-151 escursioni
+  "Leggenda vivente",                   // 152+ escursioni
+];
 
 type TabType = "TESSERA" | "BADGE" | "TRAGUARDI";
 type RedeemStep = "INPUT" | "SUCCESS";
@@ -395,18 +416,22 @@ export default function Tessera() {
   const escursioniCompletateParsed = useMemo(() => parseJsonArray<EscursioneCompletata>(userTessera?.escursioni_completate), [userTessera?.escursioni_completate]);
   const badgesFilosofiaParsed = useMemo(() => parseJsonArray<string>(userTessera?.badges_filosofia), [userTessera?.badges_filosofia]);
 
-  const stats = useMemo(() => {
-    if (!userTessera) return null;
-    const count = escursioniCompletateParsed.length || 0;
-    const levelIdx = Math.min(Math.floor(count / 8), TESSERA_LEVELS.length - 1);
-    return {
-      currentLevelLabel: TESSERA_LEVELS[levelIdx],
-      totalPages: Math.max(1, Math.ceil(count / SLOTS_PER_PAGE)),
-      vouchersCount: Math.floor(count / 8),
-      kmTotali: userTessera.km_totali || 0,
-      dislivelloTotali: userTessera.dislivello_totali || 0,
-    };
-  }, [userTessera, escursioniCompletateParsed]);
+const stats = useMemo(() => {
+  if (!userTessera) return null;
+  const count = escursioniCompletateParsed.length || 0;
+  
+  // Nuova logica: il livello cambia al primo scarpone di ogni nuova tessera
+  // Esempio: 1-8 → livello 0, 9-16 → livello 1, 17-24 → livello 2, ecc.
+  const levelIdx = Math.min(Math.floor((count - 1) / 8), TESSERA_LEVELS.length - 1);
+  
+  return {
+    currentLevelLabel: count > 0 ? TESSERA_LEVELS[levelIdx] : TESSERA_LEVELS[0],
+    totalPages: Math.max(1, Math.ceil(count / SLOTS_PER_PAGE)),
+    vouchersCount: Math.floor(count / 8),
+    kmTotali: userTessera.km_totali || 0,
+    dislivelloTotali: userTessera.dislivello_totali || 0,
+  };
+}, [userTessera, escursioniCompletateParsed]);
 
   const earnedBadges = useMemo(() => userTessera ? computeEarnedBadges(escursioniCompletateParsed) : [], [userTessera, escursioniCompletateParsed]);
   const badgeCounts = useMemo(() => {
