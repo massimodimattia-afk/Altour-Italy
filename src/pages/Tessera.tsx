@@ -528,7 +528,7 @@ const stats = useMemo(() => {
                 <ChevronLeft size={14} />
                 <span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span>
               </button>
-              <img src="/altour-logo.png" alt="Altour Italy" className="h-16 w-auto mx-auto mb-4 rounded-xl" onError={(e) => { e.currentTarget.src = "/altour-logo.png"; }} />
+              <img src="/Accesso_tessera.png" alt="Altour Italy" className="h-32 w-auto mx-auto mb-4 rounded-xl" onError={(e) => { e.currentTarget.src = "/Accesso_tessera.png"; }} />
               <h1 className="text-2xl font-black uppercase mb-6">TESSERA ALTOUR</h1>
               {loginStep === "code" ? (
                 <div className="space-y-4">
