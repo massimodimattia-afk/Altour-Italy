@@ -68,14 +68,26 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Tracce sulla neve": "#a8cce0", "Cielo stellato": "#1e2855",
 };
 
+function getFilosofiaOpacity(color: string): string {
+  const dark = ["#002f59", "#946a52", "#b8163c", "#358756", "#1e2855"];
+  return dark.includes(color) ? `${color}aa` : `${color}cc`;
+}
+
+
 function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   if (!value || !FILOSOFIA_COLORS[value]) return null;
   const color = FILOSOFIA_COLORS[value];
-  const dark = ["#002f59", "#946a52", "#b8163c", "#358756", "#1e2855"];
-  const bg = dark.includes(color) ? `${color}aa` : `${color}cc`;
+  const bg = getFilosofiaOpacity(color); // ✅ Ora questa funzione esiste!
   return (
-    <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-[#f5f2ed]/95 backdrop-blur-sm border-b-[1px] border-[#f5f2ed]/95"
-      style={{ backgroundColor: bg, color: "rgba(255,255,255,0.95)", textShadow: "0 1px 3px rgba(0,0,0,0.35)" }}>
+    <div
+      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest"
+      style={{
+        backgroundColor: bg,
+        color: "rgba(255,255,255,0.95)",
+        textShadow: "0 1px 3px rgba(0,0,0,0.35)",
+        boxShadow: `0 2px 12px ${color}55, inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px ${color}`,
+      }}
+    >
       {value}
     </div>
   );
