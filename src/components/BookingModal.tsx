@@ -27,6 +27,7 @@ export default function BookingModal({
     messaggio: "",
   });
 
+  // Reset form quando si apre
   useEffect(() => {
     if (isOpen) {
       setFormData((prev) => ({
@@ -36,6 +37,7 @@ export default function BookingModal({
     }
   }, [isOpen, initialMessage]);
 
+  // Reset stato quando si chiude
   useEffect(() => {
     if (isOpen) {
       setSent(false);
@@ -49,17 +51,35 @@ export default function BookingModal({
     }
   }, [isOpen]);
 
-  // FIX 1: "unset" → "" — valore corretto per inline style reset
-  // Evita conflitti con altri modali che usano ""
+  // Gestione scroll body - MIGLIORATA
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      // Salva lo scroll position corrente
+      const scrollY = window.scrollY;
+      
+      // Applica stili per prevenire scroll
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Ripristina
+        const scrollY = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        
+        // Ripristina scroll position
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
+        }
+      };
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [isOpen]);
 
+  // Gestione tasto ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isSubmitting) {
@@ -123,33 +143,43 @@ export default function BookingModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        // FIX 2: role="dialog" + aria-modal + aria-labelledby per accessibilità
+        // FIX PRINCIPALE: z-index molto alto e isolamento stacking context
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{
+            // Isola lo stacking context
+            isolation: 'isolate',
+            // Assicura che sia sopra tutto
+            pointerEvents: 'auto',
+          }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="booking-modal-title"
         >
+          {/* Backdrop - ora con z-index esplicito */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={!isSubmitting ? onClose : undefined}
-            className="absolute inset-0 bg-stone-200/60 backdrop-blur-md"
+            className="absolute inset-0 bg-stone-900/60 backdrop-blur-md"
+            style={{ zIndex: 1 }}
           />
 
+          {/* Contenuto modale - z-index superiore al backdrop */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 40 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-[0_40px_120px_rgba(28,25,23,0.15)] overflow-hidden border border-white"
+            className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-[0_40px_120px_rgba(28,25,23,0.25)] overflow-hidden border border-white/20"
+            style={{ zIndex: 2 }}
           >
             <div className="bg-[#f5f2ed] p-8 md:p-10 relative border-b border-stone-100">
               <button
                 onClick={onClose}
                 aria-label="Chiudi"
-                className="absolute top-6 right-6 p-2 text-stone-400 hover:text-brand-stone hover:bg-stone-200/50 rounded-full transition-all"
+                className="absolute top-6 right-6 p-2 text-stone-400 hover:text-brand-stone hover:bg-stone-200/50 rounded-full transition-all z-10"
                 disabled={isSubmitting}
               >
                 <X className="w-6 h-6" />
@@ -165,7 +195,6 @@ export default function BookingModal({
                     {mode === "prenota" ? "Prenotazione Attività" : "Richiesta Informazioni"}
                   </span>
                 </div>
-                {/* FIX 2: id per aria-labelledby */}
                 <h2
                   id="booking-modal-title"
                   className="text-2xl md:text-3xl font-black uppercase tracking-tighter leading-tight text-brand-stone"
@@ -186,7 +215,6 @@ export default function BookingModal({
                   >
                     <div className="space-y-4">
                       <div className="space-y-1.5">
-                        {/* FIX 2: htmlFor + id su tutti i campi */}
                         <label
                           htmlFor="booking-nome"
                           className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1"
@@ -264,7 +292,6 @@ export default function BookingModal({
                       className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-4 transition-all shadow-[0_15px_30px_rgba(14,165,233,0.25)] active:scale-95"
                     >
                       {isSubmitting ? (
-                        // FIX 3: testo + spinner durante invio
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
                           <span>Invio in corso...</span>
