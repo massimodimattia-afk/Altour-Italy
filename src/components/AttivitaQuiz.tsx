@@ -104,7 +104,7 @@ const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
   "Luoghi dello spirito":  { cerca: "Pace e serenità",   compagnia: "Solo" },
   "Novità":                { cerca: "Tempo di qualità",   compagnia: "Gruppo di amici", tempo: "Intera giornata" },
   "Speciali":              { cerca: "Tempo di qualità",   compagnia: "Gruppo di amici" },
-  "Tra mare e cielo":      { luogo: "Presenza di acqua",  cerca: "Conoscere la meta" },
+  "Acqua e cielo":      { luogo: "Presenza di acqua",  cerca: "Conoscere la meta" },
   "Trek urbano":           { tempo: "Mezza giornata",    sforzo: "Basso" },
   "Tracce sulla neve":     { luogo: "Panoramico",        sforzo: "Intenso",    tempo: "Intera giornata" },
   "Cielo stellato":        { cerca: "Pace e serenità",   tempo: "Una settimana", compagnia: "Solo" },

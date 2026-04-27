@@ -85,7 +85,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Luoghi dello spirito":  "#c8a3c9",
   "Novità":                "#75c43c",
   "Speciali":              "#b8163c",
-  "Tra mare e cielo":      "#7aaecd",
+  "Acqua e cielo":         "#7aaecd",
   "Trek urbano":           "#f39452",
   "Tracce sulla neve":     "#a8cce0",
   "Cielo stellato":        "#1e2855",

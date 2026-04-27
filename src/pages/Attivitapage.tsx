@@ -64,7 +64,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Avventura": "#e94544", "Benessere": "#a5d9c9", "Borghi più belli": "#946a52",
   "Cammini": "#e3c45d", "Educazione all'aperto": "#01aa9f", "Eventi": "#ffc0cb",
   "Formazione": "#002f59", "Immersi nel verde": "#358756", "Luoghi dello spirito": "#c8a3c9",
-  "Novità": "#75c43c", "Speciali": "#b8163c", "Tra mare e cielo": "#7aaecd", "Trek urbano": "#f39452",
+  "Novità": "#75c43c", "Speciali": "#b8163c", "Acqua e cielo": "#7aaecd", "Trek urbano": "#f39452",
   "Tracce sulla neve": "#a8cce0", "Cielo stellato": "#1e2855",
 };
 

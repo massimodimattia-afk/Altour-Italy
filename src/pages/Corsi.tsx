@@ -29,7 +29,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Luoghi dello spirito": "#c8a3c9",
   "Novità": "#75c43c",
   "Speciali": "#b8163c",
-  "Tra mare e cielo": "#7aaecd",
+  "Acqua e cielo": "#7aaecd",
   "Trek urbano": "#f39452",
   "Tracce sulla neve": "#a8cce0",
   "Cielo stellato": "#1e2855",
@@ -43,7 +43,7 @@ function getFilosofiaOpacity(color: string): string {
 const FILOSOFIA_ALIAS: Record<string, string> = {
   "Outdoor Education": "Educazione all'aperto",
   "Luoghi dello Spirito": "Luoghi dello spirito",
-  "Tra Mare e Cielo": "Tra mare e cielo",
+  "Acqua e Cielo": "Acqua e cielo",
   "Trek Urbano": "Trek urbano",
   "Giornata da Guida": "Novità",
 };
