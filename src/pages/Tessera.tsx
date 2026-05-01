@@ -165,11 +165,116 @@ function getSeason(date: Date): string {
 }
 
 const ACHIEVEMENT_BADGES = [
-  { id: "streak_tour", name: "Lupo dei Cammini", emoji: "🐺", description: "3 tour completati", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter((x) => x.categoria === "tour").length >= 3, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter((x) => x.categoria === "tour").length, 3), total: 3 }) },
-  { id: "assiduo", name: "Assiduo", emoji: "🎯", description: "8 giornate completate", color: "#01aa9f", check: (e: EscursioneCompletata[]) => e.filter((x) => x.categoria === "giornata").length >= 8, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter((x) => x.categoria === "giornata").length, 8), total: 8 }) },
-  { id: "collezionista", name: "Collezionista", emoji: "💎", description: "5 filosofie diverse", color: "#946a52", check: (e: EscursioneCompletata[]) => new Set(e.map((x) => getFilosofiaName(x.colore)).filter(Boolean)).size >= 5, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(new Set(e.map((x) => getFilosofiaName(x.colore)).filter(Boolean)).size, 5), total: 5 }) },
-  { id: "stagionale", name: "Anima delle Stagioni", emoji: "🍂", description: "Tutte e 4 le stagioni", color: "#75c43c", check: (e: EscursioneCompletata[]) => new Set(e.map((x) => getSeason(new Date(x.data)))).size >= 4, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(new Set(e.map((x) => getSeason(new Date(x.data)))).size, 4), total: 4 }) },
-  { id: "esploratore_verticale", name: "Esploratore Verticale", emoji: "⚡", description: "Facile → Media → Impegnativa", color: "#002f59", check: (e: EscursioneCompletata[]) => { const d = e.map((x) => x.difficolta || ""); return d.some((x) => x === "Facile") && d.some((x) => x.includes("Media")) && d.some((x) => x.includes("Impegnativa")); }, progress: (e: EscursioneCompletata[]) => { const d = e.map((x) => x.difficolta || ""); let n = 0; if (d.some((x) => x === "Facile")) n++; if (d.some((x) => x.includes("Media"))) n++; if (d.some((x) => x.includes("Impegnativa"))) n++; return { current: n, total: 3 }; } },
+  { id: "streak_tour", name: "Lupo dei Cammini", emoji: "🐺", description: "16 tour completati", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter((x) => x.categoria === "tour").length >= 16, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter((x) => x.categoria === "tour").length, 16), total: 16 }) },
+  {
+    id: "assiduo",
+    name: "Assiduo",
+    emoji: "🎯",
+    description: "20 attività nello stesso anno",
+    color: "#01aa9f",
+    check: (e: EscursioneCompletata[]) => {
+      // Raggruppa per anno
+      const perAnno: Record<number, number> = {};
+      e.forEach(attivita => {
+        const anno = new Date(attivita.data).getFullYear();
+        perAnno[anno] = (perAnno[anno] || 0) + 1;
+      });
+      // Almeno un anno con 20+ attività
+      return Object.values(perAnno).some(count => count >= 20);
+    },
+    progress: (e: EscursioneCompletata[]) => {
+      const perAnno: Record<number, number> = {};
+      e.forEach(attivita => {
+        const anno = new Date(attivita.data).getFullYear();
+        perAnno[anno] = (perAnno[anno] || 0) + 1;
+      });
+      const maxInYear = Math.max(...Object.values(perAnno), 0);
+      return { current: Math.min(maxInYear, 20), total: 20 };
+    },
+  },
+  {
+    id: "collezionista",
+    name: "Collezionista",
+    emoji: "💎",
+    description: "Tutte le 15 filosofie",
+    color: "#946a52",
+    check: (e: EscursioneCompletata[]) => {
+      const filosofieTrovate = new Set(e.map(x => getFilosofiaName(x.colore)).filter(Boolean));
+      return filosofieTrovate.size >= 15;
+    },
+    progress: (e: EscursioneCompletata[]) => ({ 
+      current: Math.min(new Set(e.map(x => getFilosofiaName(x.colore)).filter(Boolean)).size, 15), 
+      total: 15 
+    }),
+  },
+
+  // 4. Anima delle Stagioni: 6 attività in ogni stagione (totale 24)
+  {
+    id: "stagionale",
+    name: "Anima delle Stagioni",
+    emoji: "🍂",
+    description: "6 attività in ogni stagione",
+    color: "#75c43c",
+    check: (e: EscursioneCompletata[]) => {
+      const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
+      e.forEach(attivita => {
+        const stagione = getSeason(new Date(attivita.data));
+        perStagione[stagione] = (perStagione[stagione] || 0) + 1;
+      });
+      return Object.values(perStagione).every(count => count >= 6);
+    },
+    progress: (e: EscursioneCompletata[]) => {
+      const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
+      e.forEach(attivita => {
+        const stagione = getSeason(new Date(attivita.data));
+        perStagione[stagione] = (perStagione[stagione] || 0) + 1;
+      });
+      const minSeason = Math.min(...Object.values(perStagione));
+      return { current: Math.min(minSeason, 6), total: 6 };
+    },
+  },
+
+  // 5. Esploratore Verticale: 5 attività per ogni difficoltà (totale 25)
+  {
+    id: "esploratore_verticale",
+    name: "Esploratore Verticale",
+    emoji: "⚡",
+    description: "5 attività per ogni difficoltà",
+    color: "#002f59",
+    check: (e: EscursioneCompletata[]) => {
+      const perDifficolta: Record<string, number> = { 
+        facile: 0, 
+        media: 0, 
+        impegnativa: 0 
+      };
+      
+      e.forEach(attivita => {
+        const diff = attivita.difficolta || "";
+        if (diff === "Facile" || diff === "Facile-Media") {
+          perDifficolta.facile++;
+        }
+        if (diff === "Media" || diff === "Facile-Media" || diff === "Media-Impegnativa") {
+          perDifficolta.media++;
+        }
+        if (diff === "Impegnativa" || diff === "Media-Impegnativa") {
+          perDifficolta.impegnativa++;
+        }
+      });
+      
+      return perDifficolta.facile >= 5 && perDifficolta.media >= 5 && perDifficolta.impegnativa >= 5;
+    },
+    progress: (e: EscursioneCompletata[]) => {
+      let facile = 0, media = 0, impegnativa = 0;
+      e.forEach(attivita => {
+        const diff = attivita.difficolta || "";
+        if (diff === "Facile" || diff === "Facile-Media") facile++;
+        if (diff === "Media" || diff === "Facile-Media" || diff === "Media-Impegnativa") media++;
+        if (diff === "Impegnativa" || diff === "Media-Impegnativa") impegnativa++;
+      });
+      const minimo = Math.min(facile, media, impegnativa);
+      return { current: Math.min(minimo, 5), total: 5 };
+    },
+  },
 ];
 
 const IconaScarponeCustom = ({ size = 24, color = "#d6d3d1", isActive = false }: { size?: number; color?: string; isActive?: boolean }) => {
