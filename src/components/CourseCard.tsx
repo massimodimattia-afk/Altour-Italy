@@ -154,16 +154,6 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
           </ReactMarkdown>
         </div>
 
-        {/* Durata (opzionale) */}
-        {corso.durata && (
-          <div className="flex items-center gap-1.5 mb-4">
-            <Clock size={12} className="text-stone-400" />
-            <span className="text-[9px] font-bold uppercase tracking-wide text-stone-400">
-              {corso.durata}
-            </span>
-          </div>
-        )}
-
         {/* Pricing */}
         <div className="mt-auto pt-5 border-t border-stone-100">
           {hasModular ? (
