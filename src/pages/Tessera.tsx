@@ -165,7 +165,7 @@ function getSeason(date: Date): string {
 }
 
 const ACHIEVEMENT_BADGES = [
-  { id: "streak_tour", name: "Lupo dei Cammini", emoji: "🐺", description: "16 tour completati", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter((x) => x.categoria === "tour").length >= 16, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter((x) => x.categoria === "tour").length, 16), total: 16 }) },
+  { id: "streak_tour", name: "Cuore verde", emoji: "🌿", description: "60 attività tour o campi", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter(x => x.categoria === "tour" || x.categoria === "campo").length >= 60, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter(x => x.categoria === "tour" || x.categoria === "campo").length, 60), total: 60 }) },
   {
     id: "assiduo",
     name: "Assiduo",
@@ -235,46 +235,42 @@ const ACHIEVEMENT_BADGES = [
   },
 
   // 5. Esploratore Verticale: 5 attività per ogni difficoltà (totale 25)
-  {
-    id: "esploratore_verticale",
-    name: "Esploratore Verticale",
-    emoji: "⚡",
-    description: "5 attività per ogni difficoltà",
-    color: "#002f59",
-    check: (e: EscursioneCompletata[]) => {
-      const perDifficolta: Record<string, number> = { 
-        facile: 0, 
-        media: 0, 
-        impegnativa: 0 
-      };
-      
-      e.forEach(attivita => {
-        const diff = attivita.difficolta || "";
-        if (diff === "Facile" || diff === "Facile-Media") {
-          perDifficolta.facile++;
-        }
-        if (diff === "Media" || diff === "Facile-Media" || diff === "Media-Impegnativa") {
-          perDifficolta.media++;
-        }
-        if (diff === "Impegnativa" || diff === "Media-Impegnativa") {
-          perDifficolta.impegnativa++;
-        }
-      });
-      
-      return perDifficolta.facile >= 5 && perDifficolta.media >= 5 && perDifficolta.impegnativa >= 5;
-    },
-    progress: (e: EscursioneCompletata[]) => {
-      let facile = 0, media = 0, impegnativa = 0;
-      e.forEach(attivita => {
-        const diff = attivita.difficolta || "";
-        if (diff === "Facile" || diff === "Facile-Media") facile++;
-        if (diff === "Media" || diff === "Facile-Media" || diff === "Media-Impegnativa") media++;
-        if (diff === "Impegnativa" || diff === "Media-Impegnativa") impegnativa++;
-      });
-      const minimo = Math.min(facile, media, impegnativa);
-      return { current: Math.min(minimo, 5), total: 5 };
-    },
+{
+  id: "esploratore_verticale",
+  name: "Esploratore Verticale",
+  emoji: "⚡",
+  description: "5 attività per ogni livello di difficoltà",
+  color: "#002f59",
+  check: (e: EscursioneCompletata[]) => {
+    let facile = 0, facile_media = 0, media = 0, media_impegnativa = 0, impegnativa = 0;
+    
+    e.forEach(attivita => {
+      const diff = attivita.difficolta || "";
+      if (diff === "Facile" && facile < 5) facile++;
+      if (diff === "Facile-Media" && facile_media < 5) facile_media++;
+      if (diff === "Media" && media < 5) media++;
+      if (diff === "Media-Impegnativa" && media_impegnativa < 5) media_impegnativa++;
+      if (diff === "Impegnativa" && impegnativa < 5) impegnativa++;
+    });
+    
+    return facile >= 5 && facile_media >= 5 && media >= 5 && media_impegnativa >= 5 && impegnativa >= 5;
   },
+  progress: (e: EscursioneCompletata[]) => {
+    let facile = 0, facile_media = 0, media = 0, media_impegnativa = 0, impegnativa = 0;
+    
+    e.forEach(attivita => {
+      const diff = attivita.difficolta || "";
+      if (diff === "Facile" && facile < 5) facile++;
+      if (diff === "Facile-Media" && facile_media < 5) facile_media++;
+      if (diff === "Media" && media < 5) media++;
+      if (diff === "Media-Impegnativa" && media_impegnativa < 5) media_impegnativa++;
+      if (diff === "Impegnativa" && impegnativa < 5) impegnativa++;
+    });
+    
+    const totale = facile + facile_media + media + media_impegnativa + impegnativa;
+    return { current: Math.min(totale, 25), total: 25 };
+  },
+}
 ];
 
 const IconaScarponeCustom = ({ size = 24, color = "#d6d3d1", isActive = false }: { size?: number; color?: string; isActive?: boolean }) => {
@@ -845,6 +841,15 @@ export default function Tessera() {
                       );
                     })}
                   </div>
+                  {/* ─── INSERISCI L'AFORISMA QUI, DOPO LA CHIUSURA DI space-y-5 ─── */}
+    <div className="mt-8 pt-6 border-t border-stone-100 text-center">
+      <p className="text-[12px] italic text-stone-500 leading-relaxed max-w-[90%] mx-auto">
+        “Solo coloro che tentano l'assurdo raggiungeranno l'impossibile”
+      </p>
+      <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mt-2">
+        — M.C. Escher
+      </p>
+    </div>
                 </motion.div>
               )}
             </AnimatePresence>
