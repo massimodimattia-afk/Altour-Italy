@@ -108,7 +108,7 @@ function PricingBlock({
           Dettagli
         </button>
         <button
-          onClick={() => onBook(corso.titolo, "prenota")}
+          onClick={() => onBook(corso.titolo, "info")}
           className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white"
         >
           Richiedi Info
@@ -170,7 +170,7 @@ function PricingBlock({
 
       {/* CTA unico */}
       <button
-        onClick={() => onBook(bookLabel, "prenota")}
+        onClick={() => onBook(bookLabel, "info")}
         className="w-full min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all"
         style={{
           background: selected === "bundle"

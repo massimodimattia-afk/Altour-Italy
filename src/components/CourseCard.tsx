@@ -1,4 +1,3 @@
-import { Calendar, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -19,6 +18,7 @@ export interface Corso {
   prezzo?: string | number | null;
   is_active?: boolean;
   posizione?: number;
+  _tipo?: 'corso';
 }
 
 interface CourseCardProps {
@@ -195,7 +195,7 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
 
               {/* CTA Richiedi Info */}
               <button
-                onClick={() => onBookingClick(bookLabel, "prenota")}
+                onClick={() => onBookingClick(bookLabel, "info")}
                 className="w-full min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all"
                 style={{
                   background: selected === "bundle"
@@ -220,7 +220,7 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
                 Dettagli
               </button>
               <button
-                onClick={() => onBookingClick(corso.titolo, "prenota")}
+                onClick={() => onBookingClick(corso.titolo, "info")}
                 className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white"
               >
                 Richiedi Info
@@ -230,7 +230,7 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
 
           {/* Bottone Vedi programma completo */}
           <button
-            onClick={() => openDetails(corso)}
+            onClick={() => openDetails({ ...corso, _tipo: 'corso' })}
             className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
           >
             Vedi programma completo

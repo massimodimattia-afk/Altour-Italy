@@ -714,81 +714,169 @@ export default function Tessera() {
           {/* MAIN CONTENT */}
           <div className="max-w-xl mx-auto px-4 relative z-30 -mt-10">
             <AnimatePresence mode="wait">
-              {activeTab === "TESSERA" && (
-                <motion.div key="tessera" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }}>
-                  <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
-                    <div className="flex items-center gap-5 mb-8">
-                      <div className="relative flex-shrink-0">
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-20 h-20 rounded-[2rem] bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center shadow-inner cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                          {userTessera.avatar_url ? <img src={userTessera.avatar_url} className="w-full h-full object-cover" alt="avatar" /> : <User size={32} className="text-stone-300" />}
-                          {avatarUploading && <div className="absolute inset-0 bg-black/30 rounded-[2rem] flex items-center justify-center"><Loader2 className="w-6 h-6 text-white animate-spin" /></div>}
-                        </motion.div>
-                        <button onClick={() => fileInputRef.current?.click()} disabled={avatarUploading} className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center hover:bg-stone-50 active:scale-90 transition-all disabled:opacity-50"><Camera size={13} className="text-stone-600" /></button>
-                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5 text-sky-500 mb-1"><ShieldCheck size={14} /><span className="text-[10px] font-black uppercase tracking-wider">Escursionista Verificato</span></div>
-                        <h2 className="text-2xl font-black uppercase leading-tight">{userTessera.nome_escursionista} {userTessera.cognome_escursionista}</h2>
-                        <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest mt-0.5">{userTessera.livello || stats?.currentLevelLabel} · {escursioniCompletateParsed.length || 0} Scarponi</p>
-                      </div>
-                    </div>
+             {activeTab === "TESSERA" && (
+  <motion.div
+    key="tessera"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+  >
+    <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
+      {/* Intestazione con avatar e nome (invariata) */}
+      <div className="flex items-center gap-5 mb-8">
+        <div className="relative flex-shrink-0">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-20 h-20 rounded-[2rem] bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center shadow-inner cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {userTessera.avatar_url ? (
+              <img src={userTessera.avatar_url} className="w-full h-full object-cover object-center" alt="avatar" />
+            ) : (
+              <User size={32} className="text-stone-300" />
+            )}
+            {avatarUploading && (
+              <div className="absolute inset-0 bg-black/30 rounded-[2rem] flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-white animate-spin" />
+              </div>
+            )}
+          </motion.div>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={avatarUploading}
+            className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center hover:bg-stone-50 active:scale-90 transition-all disabled:opacity-50"
+          >
+            <Camera size={13} className="text-stone-600" />
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
+        </div>
+        <div>
+          <div className="flex items-center gap-1.5 text-sky-500 mb-1">
+            <ShieldCheck size={14} />
+            <span className="text-[10px] font-black uppercase tracking-wider">Escursionista Verificato</span>
+          </div>
+          <h2 className="text-2xl font-black uppercase leading-tight">
+            {userTessera.nome_escursionista} {userTessera.cognome_escursionista}
+          </h2>
+          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest mt-0.5">
+            {userTessera.livello || stats?.currentLevelLabel} · {escursioniCompletateParsed.length || 0} Scarponi
+          </p>
+        </div>
+      </div>
 
-                    {/* 3 Stat Box: Distanza Percorsa, Dislivello Superato, Quota Raggiunta */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                      <div className="p-4 rounded-[2rem] bg-gradient-to-br from-sky-50 to-sky-100/70 border border-sky-100 shadow-sm flex flex-col items-center justify-center text-center">
-                        <Footprints size={28} className="text-sky-600 mb-2" />
-                        <p className="text-[9px] font-black uppercase text-sky-500 tracking-widest">Distanza Percorsa</p>
-                        <h4 className="text-xl font-black text-sky-950">{stats?.kmTotali} km</h4>
-                      </div>
-                      <div className="p-4 rounded-[2rem] bg-gradient-to-br from-emerald-50 to-emerald-100/70 border border-emerald-100 shadow-sm flex flex-col items-center justify-center text-center">
-                        <Mountain size={28} className="text-emerald-600 mb-2" />
-                        <p className="text-[9px] font-black uppercase text-emerald-500 tracking-widest">Dislivello Superato</p>
-                        <h4 className="text-xl font-black text-emerald-950">{stats?.dislivelloTotali} m</h4>
-                      </div>
-                      <div className="p-4 rounded-[2rem] bg-gradient-to-br from-amber-50 to-amber-100/70 border border-amber-100 shadow-sm flex flex-col items-center justify-center text-center">
-                        <span className="text-2xl mb-2">⛰️</span>
-                        <p className="text-[9px] font-black uppercase text-amber-600 tracking-widest">Quota Raggiunta</p>
-                        <h4 className="text-xl font-black text-amber-950">{stats?.quotaRaggiunta} m</h4>
-                      </div>
-                    </div>
+      {/* ── 3 BOX STATISTICI OTTIMIZZATI (NESSUNO SCROLL ORIZZONTALE) ── */}
+      <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8">
+        {/* Distanza Percorsa */}
+        <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-sky-50 to-sky-100/70 border border-sky-100 shadow-sm flex flex-col items-center justify-center text-center transition-all active:scale-[0.98]">
+          <Footprints className="w-5 h-5 md:w-7 md:h-7 text-sky-600 mb-2" />
+          <p className="text-[8px] md:text-[9px] font-black uppercase text-sky-500 tracking-wider">Distanza</p>
+          <p className="text-base md:text-xl font-black text-sky-950 leading-tight">
+            {stats?.kmTotali} <span className="text-[9px] md:text-sm font-bold text-sky-400">km</span>
+          </p>
+        </div>
 
-                    <div className="grid grid-cols-4 gap-4 md:gap-6 mb-8">
-                      {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
-                        const esc = escursioniCompletateParsed?.[currentPage * SLOTS_PER_PAGE + i];
-                        return (
-                          <motion.div key={i} whileHover={esc ? { scale: 1.05, y: -5 } : {}} whileTap={esc ? { scale: 0.95 } : {}} onClick={() => esc && setSelectedBoot(esc)}
-                            className={`aspect-square rounded-[1.5rem] md:rounded-[2rem] bg-stone-50 border-2 border-dashed border-stone-100 flex items-center justify-center transition-all duration-300 ${esc ? "cursor-pointer bg-white shadow-md border-solid border-stone-50" : "opacity-40"}`}>
-                            <IconaScarponeCustom size={window.innerWidth < 768 ? 48 : 64} color={esc?.colore} isActive={!!esc} />
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                    <div className="flex justify-between items-center pt-6 border-t border-stone-50">
-                      <button disabled={currentPage === 0} onClick={() => setCurrentPage(p => p - 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all"><ChevronLeft size={20} /></button>
-                      <span className="text-[11px] font-black uppercase text-stone-300 tracking-[0.2em]">Pagina {currentPage + 1} di {stats?.totalPages}</span>
-                      <button disabled={currentPage >= (stats?.totalPages || 1) - 1} onClick={() => setCurrentPage(p => p + 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all"><ChevronRight size={20} /></button>
-                    </div>
-                  </div>
+        {/* Dislivello Superato */}
+        <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/70 border border-emerald-100 shadow-sm flex flex-col items-center justify-center text-center transition-all active:scale-[0.98]">
+          <Mountain className="w-5 h-5 md:w-7 md:h-7 text-emerald-600 mb-2" />
+          <p className="text-[8px] md:text-[9px] font-black uppercase text-emerald-500 tracking-wider">Dislivello</p>
+          <p className="text-base md:text-xl font-black text-emerald-950 leading-tight">
+            {stats?.dislivelloTotali} <span className="text-[9px] md:text-sm font-bold text-emerald-400">m</span>
+          </p>
+        </div>
 
-                  <motion.button onClick={() => setShowRedeem(true)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
-                    <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
-                  </motion.button>
+        {/* Quota Raggiunta */}
+        <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/70 border border-amber-100 shadow-sm flex flex-col items-center justify-center text-center transition-all active:scale-[0.98]">
+          <span className="text-xl md:text-2xl mb-2">⛰️</span>
+          <p className="text-[8px] md:text-[9px] font-black uppercase text-amber-600 tracking-wider">Quota</p>
+          <p className="text-base md:text-xl font-black text-amber-950 leading-tight">
+            {stats?.quotaRaggiunta} <span className="text-[9px] md:text-sm font-bold text-amber-500">m</span>
+          </p>
+        </div>
+      </div>
 
-                  {stats && stats.vouchersCount > 0 && (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mt-6 rounded-[2.5rem] p-6 flex items-center justify-between bg-gradient-to-br from-amber-100 via-amber-200 to-amber-400 shadow-xl shadow-amber-100 border border-white/40">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3.5 bg-white/70 backdrop-blur-md rounded-2xl shadow-sm"><Gift size={26} className="text-amber-600" /></div>
-                        <div>
-                          <p className="text-[11px] font-black uppercase text-amber-800 tracking-widest leading-none mb-1.5">VOUCHER SBLOCCATI 🎉</p>
-                          <h4 className="text-base md:text-lg font-black uppercase text-amber-950 leading-tight">{stats.vouchersCount} Voucher da 10 € maturati</h4>
-                        </div>
-                      </div>
-                      <div className="text-4xl font-black text-amber-900/20 select-none">✦</div>
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
+      {/* Griglia degli scarponi (con dimensione icona ridotta su mobile) */}
+      <div className="grid grid-cols-4 gap-2 md:gap-4 mb-8">
+        {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
+          const esc = escursioniCompletateParsed?.[currentPage * SLOTS_PER_PAGE + i];
+          return (
+            <motion.div
+              key={i}
+              whileTap={esc ? { scale: 0.95 } : {}}
+              onClick={() => esc && setSelectedBoot(esc)}
+              className={`aspect-square rounded-xl md:rounded-2xl bg-stone-50 border-2 border-dashed border-stone-100 flex items-center justify-center transition-all duration-200 ${
+                esc ? "cursor-pointer bg-white shadow-sm border-solid border-stone-50" : "opacity-40"
+              }`}
+            >
+              <IconaScarponeCustom
+                size={window.innerWidth < 768 ? 44 : 64}
+                color={esc?.colore}
+                isActive={!!esc}
+              />
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Paginazione */}
+      <div className="flex justify-between items-center pt-6 border-t border-stone-50">
+        <button
+          disabled={currentPage === 0}
+          onClick={() => setCurrentPage((p) => p - 1)}
+          className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90"
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <span className="text-[11px] font-black uppercase text-stone-300 tracking-[0.2em]">
+          Pagina {currentPage + 1} di {stats?.totalPages}
+        </span>
+        <button
+          disabled={currentPage >= (stats?.totalPages || 1) - 1}
+          onClick={() => setCurrentPage((p) => p + 1)}
+          className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+
+    {/* Pulsante Riscatta (invariato) */}
+    <motion.button
+      onClick={() => setShowRedeem(true)}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all"
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
+      <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
+    </motion.button>
+
+    {/* Voucher (invariato) */}
+    {stats && stats.vouchersCount > 0 && (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="mt-6 rounded-[2.5rem] p-6 flex items-center justify-between bg-gradient-to-br from-amber-100 via-amber-200 to-amber-400 shadow-xl shadow-amber-100 border border-white/40"
+      >
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 bg-white/70 backdrop-blur-md rounded-2xl shadow-sm">
+            <Gift size={26} className="text-amber-600" />
+          </div>
+          <div>
+            <p className="text-[11px] font-black uppercase text-amber-800 tracking-widest leading-none mb-1.5">
+              VOUCHER SBLOCCATI 🎉
+            </p>
+            <h4 className="text-base md:text-lg font-black uppercase text-amber-950 leading-tight">
+              {stats.vouchersCount} Voucher da 10 € maturati
+            </h4>
+          </div>
+        </div>
+        <div className="text-4xl font-black text-amber-900/20 select-none">✦</div>
+      </motion.div>
+    )}
+  </motion.div>
+)}
 
               {activeTab === "BADGE" && (
                 <motion.div key="badge" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">

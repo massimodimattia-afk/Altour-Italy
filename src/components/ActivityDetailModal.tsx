@@ -160,7 +160,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
                       <Backpack size={14} className="text-brand-sky" />
-                      {activity._tipo === 'corso' ? "Argomenti" : "Equipaggiamento"}
+                      {activity._tipo === 'corso' ? "Argomenti trattati" : "Equipaggiamento consigliato"}
                     </h4>
                     <div className="text-xs text-stone-600 leading-relaxed">{formatEquipmentList(activity.attrezzatura)}</div>
                   </div>
