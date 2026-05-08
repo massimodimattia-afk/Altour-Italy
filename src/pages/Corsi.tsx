@@ -3,11 +3,10 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import ReactMarkdown from "react-markdown";
-import { ArrowRight, Sparkles, BookOpen, Mountain } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen } from "lucide-react";
 
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   prezzo_teorico?: number | null;
-  prezzo_pratico?: number | null;
   prezzo_bundle?: number | null;
   posizione?: number | null;
 };
@@ -77,62 +76,87 @@ function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
-// ── Pricing block — toggle tre opzioni ────────────────────────────────────────
-type PricingOption = "bundle" | "teorico" | "pratico";
+// ── Pricing block — toggle due opzioni (Tutto / Teoria) ──────────────────────
+type PricingOption = "bundle" | "teorico";
 
 function PricingBlock({
   corso,
   onBook,
+  onOpenDetails,
 }: {
   corso: Corso;
   onBook: (title: string, mode?: "info" | "prenota") => void;
+  onOpenDetails: (corso: Corso) => void;
 }) {
-  const hasModular =
-    corso.prezzo_teorico != null || corso.prezzo_pratico != null;
+  const hasModular = corso.prezzo_teorico != null;
 
-  const sumParts = (corso.prezzo_teorico ?? 0) + (corso.prezzo_pratico ?? 0);
+  const sumParts = Number(corso.prezzo_teorico);
   const saveAmount =
     corso.prezzo_bundle != null && sumParts > 0
-      ? sumParts - corso.prezzo_bundle
+      ? sumParts - Number(corso.prezzo_bundle)
       : 0;
 
   const [selected, setSelected] = useState<PricingOption>("bundle");
 
+  // Determina il prezzo corrente in base alla selezione
+  const getCurrentPrice = () => {
+    if (selected === "bundle" && corso.prezzo_bundle != null) {
+      return Number(corso.prezzo_bundle);
+    }
+    if (selected === "teorico" && corso.prezzo_teorico != null) {
+      return Number(corso.prezzo_teorico);
+    }
+    return Number(corso.prezzo) || 0;
+  };
+
+  const currentPrice = getCurrentPrice();
+
   if (!hasModular) {
     return (
-      <div className="flex gap-3">
+      <>
+        <div className="flex gap-3">
+          <button
+            onClick={() => onBook(corso.titolo, "info")}
+            className="flex-1 min-h-[48px] bg-white border-2 border-stone-900 text-stone-900 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+          >
+            Dettagli
+          </button>
+          <button
+            onClick={() => onBook(corso.titolo, "info")}
+            className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white"
+          >
+            Richiedi Info
+          </button>
+        </div>
+        {/* Bottone Vedi programma completo */}
         <button
-          onClick={() => onBook(corso.titolo, "info")}
-          className="flex-1 min-h-[48px] bg-white border-2 border-stone-900 text-stone-900 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+          onClick={() => onOpenDetails(corso)}
+          className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
         >
-          Dettagli
+          Vedi programma completo
         </button>
-        <button
-          onClick={() => onBook(corso.titolo, "info")}
-          className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white"
-        >
-          Richiedi Info
-        </button>
-      </div>
+      </>
     );
   }
 
-  // Opzioni disponibili
+  // Opzioni disponibili per il toggle (solo bundle e teoria)
   const opts: { key: PricingOption; label: string; price: number | null | undefined; icon: React.ReactNode }[] = [
-    ...(corso.prezzo_bundle != null ? [{ key: "bundle" as PricingOption, label: "Tutto", price: corso.prezzo_bundle, icon: <Sparkles size={10} /> }] : []),
-    ...(corso.prezzo_teorico != null ? [{ key: "teorico" as PricingOption, label: "Teoria", price: corso.prezzo_teorico, icon: <BookOpen size={10} /> }] : []),
-    ...(corso.prezzo_pratico != null ? [{ key: "pratico" as PricingOption, label: "Pratica", price: corso.prezzo_pratico, icon: <Mountain size={10} /> }] : []),
+    ...(corso.prezzo_bundle != null
+      ? [{ key: "bundle" as PricingOption, label: "Tutto", price: Number(corso.prezzo_bundle), icon: <Sparkles size={10} /> }]
+      : []),
+    ...(corso.prezzo_teorico != null
+      ? [{ key: "teorico" as PricingOption, label: "Teoria", price: Number(corso.prezzo_teorico), icon: <BookOpen size={10} /> }]
+      : []),
   ];
 
-  const currentOpt = opts.find(o => o.key === selected) ?? opts[0];
   const bookLabel =
-    selected === "bundle" ? `${corso.titolo} — Pacchetto Completo`
-    : selected === "teorico" ? `${corso.titolo} — Modulo Teorico`
-    : `${corso.titolo} — Uscita Didattica`;
+    selected === "bundle"
+      ? `${corso.titolo} — Pacchetto Completo`
+      : `${corso.titolo} — Modulo Teorico`;
 
   return (
     <div className="space-y-3">
-      {/* Toggle */}
+      {/* Toggle prezzi */}
       <div className="flex rounded-2xl p-1 gap-1" style={{ background: "rgba(0,0,0,0.04)" }}>
         {opts.map(opt => {
           const isActive = selected === opt.key;
@@ -147,7 +171,6 @@ function PricingBlock({
                 boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.10)" : "none",
               }}
             >
-              {/* Badge risparmio solo sul bundle */}
               {isBundle && saveAmount > 0 && (
                 <span
                   className="absolute -top-2 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full text-white whitespace-nowrap"
@@ -168,22 +191,28 @@ function PricingBlock({
         })}
       </div>
 
-      {/* CTA unico */}
+      {/* CTA Richiedi Info (senza prezzo) */}
       <button
         onClick={() => onBook(bookLabel, "info")}
-        className="w-full min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all"
-        style={{
-          background: selected === "bundle"
-            ? "linear-gradient(135deg, #5aaadd, #3d8fb8)"
-            : "linear-gradient(135deg, #9f8270, #7a6050)",
-          boxShadow: selected === "bundle"
-            ? "0 4px 14px rgba(90,170,221,0.3)"
-            : "0 4px 14px rgba(159,130,112,0.25)",
-        }}
+        className="w-full bg-brand-sky hover:bg-brand-stone text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
       >
-        {selected === "bundle" ? <Sparkles size={11} /> : selected === "teorico" ? <BookOpen size={11} /> : <Mountain size={11} />}
-        Richiedi Info — €{currentOpt.price}
+        Richiedi Info
         <ArrowRight size={11} />
+      </button>
+
+      {/* Bottone Vedi programma completo */}
+      <button
+        onClick={() =>
+          onOpenDetails({
+            ...corso,
+            _tipo: "corso",
+            selectedPrice: currentPrice,
+            selectedOption: selected,
+          } as any)
+        }
+        className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
+      >
+        Vedi programma completo
       </button>
     </div>
   );
@@ -242,7 +271,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
   }, []);
 
   const openDetails = (corso: Corso) => {
-    setSelectedActivity({ ...corso, _tipo: "corso" });
+    setSelectedActivity({ ...corso });
     setIsDetailOpen(true);
   };
 
@@ -326,18 +355,13 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
                   </ReactMarkdown>
                 </div>
 
-
                 {/* Pricing */}
                 <div className="mt-auto pt-5 border-t border-stone-100">
-                  <PricingBlock corso={corso} onBook={onBookingClick} />
-
-                  {/* Bottone dettagli sempre visibile sotto */}
-                  <button
-                    onClick={() => openDetails(corso)}
-                    className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
-                  >
-                    Vedi programma completo
-                  </button>
+                  <PricingBlock
+                    corso={corso}
+                    onBook={onBookingClick}
+                    onOpenDetails={openDetails}
+                  />
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  X, TrendingUp, 
+import {
+  X, TrendingUp,
   Briefcase as Backpack, Ruler, Mountain, MapPin, ArrowUp, ExternalLink, Clock
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -35,6 +35,9 @@ export interface Activity {
   lng?: number | null;
   slug?: string | null;
   min_partecipanti?: number | null;
+  // Nuovi campi per la selezione del prezzo (corsi modulari)
+  selectedPrice?: number;
+  selectedOption?: "bundle" | "teorico";
 }
 
 interface ActivityDetailModalProps {
@@ -93,6 +96,14 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
   const hasMap = Boolean(activity.lat && activity.lng);
   const isTour = activity.categoria?.toLowerCase() === "tour";
 
+  // Prezzo da mostrare
+  const displayPrice = activity.selectedPrice ?? activity.prezzo;
+
+  // Titolo per la prenotazione
+  const bookingTitle = activity.selectedOption
+    ? `${activity.titolo} — ${activity.selectedOption === "bundle" ? "Pacchetto Completo" : "Modulo Teorico"}`
+    : activity.titolo;
+
   const formatEquipmentList = (equipment: string) => {
     const items = equipment.split(/[,\n]+/).map(s => s.trim()).filter(s => s);
     if (items.length > 1) {
@@ -105,7 +116,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center p-0 md:p-8" style={{ isolation: 'isolate' }}>
-          {/* Overlay scuro (senza backdrop-blur per evitare bug iOS) */}
+          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -119,10 +130,10 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
-            transition={{ duration: 0.2, ease: "easeOut" }} // animazione lineare, no spring
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="relative bg-white w-full max-w-5xl max-h-[93vh] md:max-h-[90vh] rounded-t-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row z-[10001]"
           >
-            {/* Bottone Chiudi */}
+            {/* Chiudi */}
             <button onClick={onClose} className="absolute top-4 right-4 z-30 p-2 bg-white/90 rounded-full shadow-lg active:scale-90 transition-transform">
               <X size={20} />
             </button>
@@ -133,8 +144,11 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               {images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                   {images.map((_, i) => (
-                    <button key={i} onClick={() => setCurrentImageIndex(i)}
-                      className={`h-1.5 rounded-full transition-all ${i === currentImageIndex ? "bg-white w-4" : "bg-white/50 w-1.5"}`} />
+                    <button
+                      key={i}
+                      onClick={() => setCurrentImageIndex(i)}
+                      className={`h-1.5 rounded-full transition-all ${i === currentImageIndex ? "bg-white w-4" : "bg-white/50 w-1.5"}`}
+                    />
                   ))}
                 </div>
               )}
@@ -171,10 +185,12 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               <div className="px-4 py-4 md:px-6 md:py-6 border-t border-stone-100 flex items-center gap-4 bg-stone-50/50">
                 <div className="shrink-0">
                   <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-1">Quota</span>
-                  <span className="text-2xl font-black text-brand-stone leading-none">€{activity.prezzo || "—"}</span>
+                  <span className="text-2xl font-black text-brand-stone leading-none">€{displayPrice || "—"}</span>
                 </div>
-                <button onClick={() => onBookingClick(activity.titolo, 'prenota')}
-                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95">
+                <button
+                  onClick={() => onBookingClick(bookingTitle, 'prenota')}
+                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
+                >
                   Prenota Ora <TrendingUp size={15} />
                 </button>
               </div>

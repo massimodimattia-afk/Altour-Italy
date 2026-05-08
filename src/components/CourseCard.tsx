@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, BookOpen, Mountain, ArrowRight } from "lucide-react";
+import { Sparkles, BookOpen, ArrowRight } from "lucide-react";
 
 // Interfaccia Corso allineata al database reale
 export interface Corso {
@@ -14,7 +14,6 @@ export interface Corso {
   durata?: string | null;
   prezzo_bundle?: string | number | null;
   prezzo_teorico?: string | number | null;
-  prezzo_pratico?: string | number | null;
   prezzo?: string | number | null;
   is_active?: boolean;
   posizione?: number;
@@ -57,36 +56,55 @@ function normalizeMarkdown(text: string): string {
   return text.replace(/\*\s+/g, "*").replace(/\s+\*/g, "*");
 }
 
-type PricingOption = "bundle" | "teorico" | "pratico";
+type PricingOption = "bundle" | "teorico";
 
 export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardProps) {
   const [selected, setSelected] = useState<PricingOption>("bundle");
-  
-  const hasModular = corso.prezzo_teorico != null || corso.prezzo_pratico != null;
-  const sumParts = (Number(corso.prezzo_teorico) || 0) + (Number(corso.prezzo_pratico) || 0);
-  const saveAmount = corso.prezzo_bundle != null && sumParts > 0 ? sumParts - Number(corso.prezzo_bundle) : 0;
 
-  const color = CATEGORIA_COLORS[corso.categoria || "Formazione"] || "#002f59";
-  const bg = getCategoriaOpacity(color);
+  const hasModular = corso.prezzo_teorico != null;
+  const sumParts = Number(corso.prezzo_teorico);
+  const saveAmount = corso.prezzo_bundle != null && sumParts > 0
+    ? sumParts - Number(corso.prezzo_bundle)
+    : 0;
+
+  // Prezzo corrente in base alla selezione
+  const getCurrentPrice = () => {
+    if (selected === "bundle" && corso.prezzo_bundle != null) {
+      return Number(corso.prezzo_bundle);
+    }
+    if (selected === "teorico" && corso.prezzo_teorico != null) {
+      return Number(corso.prezzo_teorico);
+    }
+    return Number(corso.prezzo) || 0;
+  };
+
+  const currentPrice = getCurrentPrice();
 
   // Opzioni disponibili per il toggle
   const opts: { key: PricingOption; label: string; price: number | null | undefined; icon: React.ReactNode }[] = [
-    ...(corso.prezzo_bundle != null ? [{ key: "bundle" as PricingOption, label: "Tutto", price: Number(corso.prezzo_bundle), icon: <Sparkles size={10} /> }] : []),
-    ...(corso.prezzo_teorico != null ? [{ key: "teorico" as PricingOption, label: "Teoria", price: Number(corso.prezzo_teorico), icon: <BookOpen size={10} /> }] : []),
-    ...(corso.prezzo_pratico != null ? [{ key: "pratico" as PricingOption, label: "Pratica", price: Number(corso.prezzo_pratico), icon: <Mountain size={10} /> }] : []),
+    ...(corso.prezzo_bundle != null
+      ? [{ key: "bundle" as PricingOption, label: "Tutto", price: Number(corso.prezzo_bundle), icon: <Sparkles size={10} /> }]
+      : []),
+    ...(corso.prezzo_teorico != null
+      ? [{ key: "teorico" as PricingOption, label: "Teoria", price: Number(corso.prezzo_teorico), icon: <BookOpen size={10} /> }]
+      : []),
   ];
 
-  const currentOpt = opts.find(o => o.key === selected) ?? opts[0];
-  const bookLabel = selected === "bundle" ? `${corso.titolo} — Pacchetto Completo`
-    : selected === "teorico" ? `${corso.titolo} — Modulo Teorico`
-    : `${corso.titolo} — Uscita Didattica`;
+  const bookLabel =
+    selected === "bundle"
+      ? `${corso.titolo} — Pacchetto Completo`
+      : `${corso.titolo} — Modulo Teorico`;
+
+  // Colori categoria
+  const color = CATEGORIA_COLORS[corso.categoria || "Formazione"] || "#002f59";
+  const bg = getCategoriaOpacity(color);
 
   // Safe date formatting
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return null;
     try {
       return new Date(dateStr).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-    } catch (e) {
+    } catch {
       return null;
     }
   };
@@ -112,7 +130,7 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-        
+
         {/* Categoria Badge */}
         <div
           className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-sm"
@@ -129,7 +147,7 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
 
       {/* Body */}
       <div className="p-5 md:p-7 flex flex-col flex-grow">
-        {/* Iscrizioni aperte - badge */}
+        {/* Iscrizioni aperte */}
         <div className="flex items-center gap-2.5 mb-2">
           <span className="text-[9px] font-bold uppercase tracking-wide text-brand-sky">
             Iscrizioni aperte
@@ -143,11 +161,12 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
             </>
           )}
         </div>
-        
+
         <h2 className="text-lg md:text-xl font-black mb-3 text-brand-stone uppercase line-clamp-2">
           {corso.titolo}
         </h2>
 
+        {/* Descrizione */}
         <div className="text-stone-500 text-xs md:text-sm mb-5 line-clamp-3 font-medium flex-grow [&_em]:italic [&_em]:font-serif [&_strong]:font-black [&_strong]:text-[#44403c]">
           <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
             {normalizeMarkdown(corso.descrizione ?? "")}
@@ -194,22 +213,13 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
               </div>
 
               {/* CTA Richiedi Info */}
-              <button
-                onClick={() => onBookingClick(bookLabel, "info")}
-                className="w-full min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all"
-                style={{
-                  background: selected === "bundle"
-                    ? "linear-gradient(135deg, #5aaadd, #3d8fb8)"
-                    : "linear-gradient(135deg, #9f8270, #7a6050)",
-                  boxShadow: selected === "bundle"
-                    ? "0 4px 14px rgba(90,170,221,0.3)"
-                    : "0 4px 14px rgba(159,130,112,0.25)",
-                }}
-              >
-                {selected === "bundle" ? <Sparkles size={11} /> : selected === "teorico" ? <BookOpen size={11} /> : <Mountain size={11} />}
-                Richiedi Info — €{currentOpt?.price || 0}
-                <ArrowRight size={11} />
-              </button>
+<button
+  onClick={() => onBookingClick(bookLabel, "info")}
+  className="w-full bg-brand-sky hover:bg-brand-stone text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
+>
+  Richiedi Info
+  <ArrowRight size={11} />
+</button>
             </div>
           ) : (
             <div className="flex gap-3">
@@ -230,7 +240,14 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
 
           {/* Bottone Vedi programma completo */}
           <button
-            onClick={() => openDetails({ ...corso, _tipo: 'corso' })}
+            onClick={() =>
+              openDetails({
+                ...corso,
+                _tipo: "corso",
+                selectedPrice: currentPrice,
+                selectedOption: selected,
+              })
+            }
             className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
           >
             Vedi programma completo
