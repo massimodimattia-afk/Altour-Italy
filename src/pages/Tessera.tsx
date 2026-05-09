@@ -42,7 +42,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Luoghi dello spirito":   "#c8a3c9",
   "Novità":                 "#75c43c",
   "Speciali":               "#b8163c",
-  "Acqua e cielo":       "#7aaecd",
+  "Acqua e cielo":          "#7aaecd",
   "Trek urbano":            "#f39452",
   "Tracce sulla neve":      "#a8cce0",
   "Cielo stellato":         "#1e2855",
@@ -173,13 +173,11 @@ const ACHIEVEMENT_BADGES = [
     description: "20 attività nello stesso anno",
     color: "#01aa9f",
     check: (e: EscursioneCompletata[]) => {
-      // Raggruppa per anno
       const perAnno: Record<number, number> = {};
       e.forEach(attivita => {
         const anno = new Date(attivita.data).getFullYear();
         perAnno[anno] = (perAnno[anno] || 0) + 1;
       });
-      // Almeno un anno con 20+ attività
       return Object.values(perAnno).some(count => count >= 20);
     },
     progress: (e: EscursioneCompletata[]) => {
@@ -207,8 +205,6 @@ const ACHIEVEMENT_BADGES = [
       total: 15 
     }),
   },
-
-  // 4. Anima delle Stagioni: 6 attività in ogni stagione (totale 24)
   {
     id: "stagionale",
     name: "Anima delle Stagioni",
@@ -233,8 +229,6 @@ const ACHIEVEMENT_BADGES = [
       return { current: Math.min(minSeason, 6), total: 6 };
     },
   },
-
-  // 5. Esploratore Verticale: 5 attività per ogni difficoltà (totale 25)
 {
   id: "esploratore_verticale",
   name: "Esploratore Verticale",
@@ -534,7 +528,6 @@ export default function Tessera() {
     };
   }, [userTessera, escursioniCompletateParsed]);
 
-  //const earnedBadges = useMemo(() => computeEarnedBadges(escursioniCompletateParsed), [escursioniCompletateParsed]);
   const badgeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     escursioniCompletateParsed.forEach(e => { const f = getFilosofiaName(e.colore); if (f) counts[f] = (counts[f] || 0) + 1; });
@@ -616,30 +609,71 @@ export default function Tessera() {
     setRedeemStep("SUCCESS"); setIsVerifying(false);
   };
 
+  // --- AUTO-CROP INTOLLIGENTE ---
   const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userTessera) return;
+    
     setAvatarUploading(true);
+
     try {
-      const bitmap = await createImageBitmap(file);
-      const size = Math.min(bitmap.width, bitmap.height, 400);
+      const url = URL.createObjectURL(file);
+      const image = new Image();
+      image.src = url;
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = reject;
+      });
+
       const canvas = document.createElement("canvas");
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext("2d")!;
-      const sx = (bitmap.width - size) / 2;
-      const sy = (bitmap.height - size) / 2;
-      ctx.drawImage(bitmap, sx, sy, size, size, 0, 0, size, size);
-      const blob = await new Promise<Blob>((res) => canvas.toBlob(b => res(b!), "image/jpeg", 0.82));
+      canvas.width = 400;
+      canvas.height = 400;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas non supportato");
+
+      const size = Math.min(image.width, image.height); 
+      const sx = (image.width - size) / 2; 
+      
+// DOPO (fixed)
+let sy: number;
+if (image.height > image.width) {
+  // Portrait: offset a 1/3 dall'alto invece di 20%
+  // È più conservativo e cattura meglio viso + spalle
+  const centerY = (image.height - size) / 2;
+  const topBiasY = (image.height - size) * 0.30;
+  sy = (centerY + topBiasY) / 2; // media tra centro e bias → ~33% dall'alto
+} else {
+  // Landscape o quadrata: centro perfetto
+  sy = (image.height - size) / 2;
+}
+
+      ctx.drawImage(image, sx, sy, size, size, 0, 0, 400, 400);
+
+      const blob = await new Promise<Blob>((res, rej) => {
+        canvas.toBlob((b) => b ? res(b) : rej(new Error("Errore Canvas")), "image/jpeg", 0.85);
+      });
+
       const path = `avatars/${userTessera.id}.jpg`;
       const { error: upErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
       if (upErr) throw upErr;
+      
       const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
       const freshUrl = `${pub.publicUrl}?t=${Date.now()}`;
+      
       const { error: dbErr } = await supabase.from("tessere").update({ avatar_url: freshUrl }).eq("id", userTessera.id);
       if (dbErr) throw dbErr;
+      
       setUserTessera((prev) => prev ? { ...prev, avatar_url: freshUrl } : prev);
-    } catch (err) { console.error(err); }
-    finally { setAvatarUploading(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+      
+      URL.revokeObjectURL(url);
+
+    } catch (err) {
+      console.error(err);
+      alert("Errore durante il caricamento dell'immagine.");
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed]"><Loader2 className="animate-spin text-sky-500" /></div>;
@@ -723,7 +757,6 @@ export default function Tessera() {
     transition={{ type: "spring", damping: 25, stiffness: 200 }}
   >
     <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
-      {/* Intestazione con avatar e nome (invariata) */}
       <div className="flex items-center gap-5 mb-8">
         <div className="relative flex-shrink-0">
           <motion.div
@@ -766,9 +799,7 @@ export default function Tessera() {
         </div>
       </div>
 
-      {/* ── 3 BOX STATISTICI OTTIMIZZATI (NESSUNO SCROLL ORIZZONTALE) ── */}
       <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8">
-        {/* Distanza Percorsa */}
         <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-sky-50 to-sky-100/70 border border-sky-100 shadow-sm flex flex-col items-center justify-center text-center transition-all active:scale-[0.98]">
           <Footprints className="w-5 h-5 md:w-7 md:h-7 text-sky-600 mb-2" />
           <p className="text-[8px] md:text-[9px] font-black uppercase text-sky-500 tracking-wider">Distanza</p>
@@ -777,7 +808,6 @@ export default function Tessera() {
           </p>
         </div>
 
-        {/* Dislivello Superato */}
         <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/70 border border-emerald-100 shadow-sm flex flex-col items-center justify-center text-center transition-all active:scale-[0.98]">
           <Mountain className="w-5 h-5 md:w-7 md:h-7 text-emerald-600 mb-2" />
           <p className="text-[8px] md:text-[9px] font-black uppercase text-emerald-500 tracking-wider">Dislivello</p>
@@ -786,7 +816,6 @@ export default function Tessera() {
           </p>
         </div>
 
-        {/* Quota Raggiunta */}
         <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/70 border border-amber-100 shadow-sm flex flex-col items-center justify-center text-center transition-all active:scale-[0.98]">
           <span className="text-xl md:text-2xl mb-2">⛰️</span>
           <p className="text-[8px] md:text-[9px] font-black uppercase text-amber-600 tracking-wider">Quota</p>
@@ -796,7 +825,6 @@ export default function Tessera() {
         </div>
       </div>
 
-      {/* Griglia degli scarponi (con dimensione icona ridotta su mobile) */}
       <div className="grid grid-cols-4 gap-2 md:gap-4 mb-8">
         {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
           const esc = escursioniCompletateParsed?.[currentPage * SLOTS_PER_PAGE + i];
@@ -819,7 +847,6 @@ export default function Tessera() {
         })}
       </div>
 
-      {/* Paginazione */}
       <div className="flex justify-between items-center pt-6 border-t border-stone-50">
         <button
           disabled={currentPage === 0}
@@ -841,7 +868,6 @@ export default function Tessera() {
       </div>
     </div>
 
-    {/* Pulsante Riscatta (invariato) */}
     <motion.button
       onClick={() => setShowRedeem(true)}
       whileHover={{ scale: 1.02 }}
@@ -852,7 +878,6 @@ export default function Tessera() {
       <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
     </motion.button>
 
-    {/* Voucher (invariato) */}
     {stats && stats.vouchersCount > 0 && (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -929,21 +954,20 @@ export default function Tessera() {
                       );
                     })}
                   </div>
-                  {/* ─── INSERISCI L'AFORISMA QUI, DOPO LA CHIUSURA DI space-y-5 ─── */}
-    <div className="mt-8 pt-6 border-t border-stone-100 text-center">
-      <p className="text-[12px] italic text-stone-500 leading-relaxed max-w-[90%] mx-auto">
-        “Solo coloro che tentano l'assurdo raggiungeranno l'impossibile”
-      </p>
-      <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mt-2">
-        — M.C. Escher
-      </p>
-    </div>
+                  <div className="mt-8 pt-6 border-t border-stone-100 text-center">
+                    <p className="text-[12px] italic text-stone-500 leading-relaxed max-w-[90%] mx-auto">
+                      “Solo coloro che tentano l'assurdo raggiungeranno l'impossibile”
+                    </p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mt-2">
+                      — M.C. Escher
+                    </p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* MODALS (Redeem, Boot, Badge, Achievement) ... invariati, solo aggiornato il popup badge */}
+          {/* MODALS */}
           <AnimatePresence>
             {showRedeem && (
               <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
