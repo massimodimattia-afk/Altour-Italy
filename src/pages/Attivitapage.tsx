@@ -23,7 +23,7 @@ interface Campo {
   descrizione: string | null;
   descrizione_estesa?: string | null;
   immagine_url: string | null;
-  servizi: string[] | null;
+  servizi: string | null;
   slug: string;
   prezzo?: number | null;
   durata?: string | null;
@@ -55,11 +55,6 @@ function formatMarkdown(text: string | null): string {
     .replace(/__(.*?)__/g, "<strong>$1</strong>")
     .replace(/_(.*?)_/g, "<em>$1</em>");
 }
-
-function safeParseArray(v: string): string[] | null {
-  try { const p = JSON.parse(v); return Array.isArray(p) ? p : null; } catch { return null; }
-}
-
 const FILOSOFIA_COLORS: Record<string, string> = {
   "Avventura": "#e94544", "Benessere": "#a5d9c9", "Borghi più belli": "#946a52",
   "Cammini": "#e3c45d", "Educazione all'aperto": "#01aa9f", "Eventi": "#ffc0cb",
@@ -101,7 +96,8 @@ function campoToDetail(campo: Campo) {
     immagine_url: campo.immagine_url, gallery_urls: null,
     difficolta: campo.difficolta ?? null, durata: campo.durata ?? null,
     lunghezza: campo.lunghezza ?? null, attrezzatura_consigliata: null,
-    attrezzatura: campo.servizi?.join(", ") ?? null,
+    attrezzatura: null,
+    servizi: campo.servizi ?? null,
     filosofia: campo.filosofia ?? null,
     _tipo: "campo" as const,
   };
@@ -213,7 +209,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         id: row.id, created_at: row.created_at, titolo: row.titolo,
         descrizione: row.descrizione ?? null, descrizione_estesa: row.descrizione_estesa ?? null,
         immagine_url: row.immagine_url ?? null,
-        servizi: typeof row.servizi === "string" ? safeParseArray(row.servizi) : row.servizi,
+        servizi: row.servizi ?? null,
         slug: row.slug, prezzo: row.prezzo ?? null, durata: row.durata ?? null,
         difficolta: row.difficolta ?? null, lunghezza: row.lunghezza ?? null,
         filosofia: row.filosofia ?? null, lat: row.lat ?? null, lng: row.lng ?? null,

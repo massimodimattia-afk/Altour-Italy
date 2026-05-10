@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, TrendingUp,
-  Briefcase as Backpack, Ruler, Mountain, MapPin, ArrowUp, ExternalLink, Clock
+  Briefcase as Backpack, Ruler, Mountain, MapPin, ArrowUp, ExternalLink, Users
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
@@ -29,6 +29,7 @@ export interface Activity {
   filosofia?: string | null;
   attrezzatura_consigliata?: string | null;
   attrezzatura?: string | null;
+  servizi?: string | null;
   data?: string | null;
   _tipo?: 'escursione' | 'campo' | 'corso' | null;
   lat?: number | null;
@@ -95,6 +96,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
   const images = [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[];
   const hasMap = Boolean(activity.lat && activity.lng);
   const isTour = activity.categoria?.toLowerCase() === "tour";
+  const isCampo = activity._tipo === "campo";
 
   // Prezzo da mostrare
   const displayPrice = activity.selectedPrice ?? activity.prezzo;
@@ -160,9 +162,15 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 <h2 className="text-xl md:text-2xl font-black text-brand-stone uppercase leading-tight mb-2">{activity.titolo}</h2>
                 <div className="flex flex-wrap gap-3 text-[10px] font-black uppercase text-stone-400">
                   {activity.difficolta && <span className="flex items-center gap-1"><Mountain size={12} className="text-brand-sky" /> {activity.difficolta}</span>}
-                  {activity.durata && <span className="flex items-center gap-1"><Clock size={12} className="text-brand-sky" /> {activity.durata}</span>}
+                
                   {!isTour && activity.lunghezza != null && <span className="flex items-center gap-1"><Ruler size={12} className="text-brand-sky" /> {activity.lunghezza} km</span>}
                   {!isTour && activity.dislivello != null && <span className="flex items-center gap-1"><ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m</span>}
+                  {isTour && activity.lunghezza_tour && (<span className="flex items-center gap-1"><MapPin size={12} className="text-brand-sky" /> {activity.lunghezza_tour}</span>)}
+                  {activity.min_partecipanti != null && (
+  <span className="flex items-center gap-1">
+    <Users size={12} className="text-brand-sky" /> Min. {activity.min_partecipanti} partecipanti
+  </span>
+)}
                 </div>
               </div>
 
@@ -179,6 +187,18 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     <div className="text-xs text-stone-600 leading-relaxed">{formatEquipmentList(activity.attrezzatura)}</div>
                   </div>
                 )}
+                {/* Servizi — solo per i campi */}
+{isCampo && activity.servizi && (
+  <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
+    <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
+      <Backpack size={14} className="text-brand-sky" />
+      Obiettivi
+    </h4>
+    <div className="text-xs text-stone-600 leading-relaxed">
+      {formatEquipmentList(activity.servizi)}
+    </div>
+  </div>
+)}
                 {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} />}
               </div>
 

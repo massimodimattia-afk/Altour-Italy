@@ -221,7 +221,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               .order("data", { ascending: true }),
             supabase
               .from("campi")
-              .select("id, titolo, descrizione, immagine_url, prezzo, durata, slug"),
+              .select("id, titolo, descrizione, immagine_url, prezzo, durata, slug, servizi, descrizione_estesa, difficolta, lunghezza"),
             supabase
               .from("corsi")
               .select("*")
