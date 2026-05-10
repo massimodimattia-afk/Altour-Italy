@@ -206,29 +206,30 @@ const ACHIEVEMENT_BADGES = [
     }),
   },
   {
-    id: "stagionale",
-    name: "Anima delle Stagioni",
-    emoji: "🍂",
-    description: "6 attività in ogni stagione",
-    color: "#75c43c",
-    check: (e: EscursioneCompletata[]) => {
-      const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
-      e.forEach(attivita => {
-        const stagione = getSeason(new Date(attivita.data));
-        perStagione[stagione] = (perStagione[stagione] || 0) + 1;
-      });
-      return Object.values(perStagione).every(count => count >= 6);
-    },
-    progress: (e: EscursioneCompletata[]) => {
-      const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
-      e.forEach(attivita => {
-        const stagione = getSeason(new Date(attivita.data));
-        perStagione[stagione] = (perStagione[stagione] || 0) + 1;
-      });
-      const minSeason = Math.min(...Object.values(perStagione));
-      return { current: Math.min(minSeason, 6), total: 6 };
-    },
+  id: "stagionale",
+  name: "Anima delle Stagioni",
+  emoji: "🍂",
+  description: "16 attività in ogni stagione",
+  color: "#75c43c",
+  check: (e: EscursioneCompletata[]) => {
+    const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
+    e.forEach(attivita => {
+      const stagione = getSeason(new Date(attivita.data));
+      perStagione[stagione] = (perStagione[stagione] || 0) + 1;
+    });
+    return Object.values(perStagione).every(count => count >= 16);
   },
+  progress: (e: EscursioneCompletata[]) => {
+    const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
+    e.forEach(attivita => {
+      const stagione = getSeason(new Date(attivita.data));
+      perStagione[stagione] = (perStagione[stagione] || 0) + 1;
+    });
+    // Per la progress bar: considera la stagione con meno attività
+    const minSeason = Math.min(...Object.values(perStagione));
+    return { current: Math.min(minSeason, 16), total: 16 };
+  },
+},
 {
   id: "esploratore_verticale",
   name: "Esploratore Verticale",
@@ -610,71 +611,87 @@ export default function Tessera() {
   };
 
   // --- AUTO-CROP INTOLLIGENTE ---
-  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userTessera) return;
-    
-    setAvatarUploading(true);
+ const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file || !userTessera) return;
 
-    try {
-      const url = URL.createObjectURL(file);
-      const image = new Image();
-      image.src = url;
-      await new Promise((resolve, reject) => {
-        image.onload = resolve;
-        image.onerror = reject;
-      });
+  if (file.size > 20 * 1024 * 1024) {
+    alert("Foto troppo grande (max 20MB).");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    return;
+  }
 
-      const canvas = document.createElement("canvas");
-      canvas.width = 400;
-      canvas.height = 400;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas non supportato");
+  setAvatarUploading(true);
 
-      const size = Math.min(image.width, image.height); 
-      const sx = (image.width - size) / 2; 
-      
-// DOPO (fixed)
-let sy: number;
-if (image.height > image.width) {
-  // Portrait: offset a 1/3 dall'alto invece di 20%
-  // È più conservativo e cattura meglio viso + spalle
-  const centerY = (image.height - size) / 2;
-  const topBiasY = (image.height - size) * 0.30;
-  sy = (centerY + topBiasY) / 2; // media tra centro e bias → ~33% dall'alto
-} else {
-  // Landscape o quadrata: centro perfetto
-  sy = (image.height - size) / 2;
-}
+  try {
+    // FileReader → dataURL: più affidabile di createObjectURL in tutti i contesti
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Impossibile leggere il file."));
+      reader.readAsDataURL(file);
+    });
 
-      ctx.drawImage(image, sx, sy, size, size, 0, 0, 400, 400);
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Impossibile decodificare l'immagine."));
+      img.src = dataUrl;
+    });
 
-      const blob = await new Promise<Blob>((res, rej) => {
-        canvas.toBlob((b) => b ? res(b) : rej(new Error("Errore Canvas")), "image/jpeg", 0.85);
-      });
+    const OUTPUT = 400;
+    const canvas = document.createElement("canvas");
+    canvas.width = OUTPUT;
+    canvas.height = OUTPUT;
+    const ctx = canvas.getContext("2d")!;
 
-      const path = `avatars/${userTessera.id}.jpg`;
-      const { error: upErr } = await supabase.storage.from("avatars").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
-      if (upErr) throw upErr;
-      
-      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-      const freshUrl = `${pub.publicUrl}?t=${Date.now()}`;
-      
-      const { error: dbErr } = await supabase.from("tessere").update({ avatar_url: freshUrl }).eq("id", userTessera.id);
-      if (dbErr) throw dbErr;
-      
-      setUserTessera((prev) => prev ? { ...prev, avatar_url: freshUrl } : prev);
-      
-      URL.revokeObjectURL(url);
+    const w = image.naturalWidth;
+    const h = image.naturalHeight;
+    const shortSide = Math.min(w, h);
+    const cropSize = Math.round(shortSide * 0.75);
+    const cropX = Math.round((w - cropSize) / 2);
 
-    } catch (err) {
-      console.error(err);
-      alert("Errore durante il caricamento dell'immagine.");
-    } finally {
-      setAvatarUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+    let cropY: number;
+    if (h > w) {
+      // Portrait: focus al 20% dall'alto → cattura testa e spalle
+      const targetCenter = Math.round(h * 0.25);
+      cropY = Math.max(0, Math.min(targetCenter - Math.round(cropSize / 2), h - cropSize));
+    } else {
+      cropY = Math.round((h - cropSize) / 2);
     }
-  };
+
+    ctx.drawImage(image, cropX, cropY, cropSize, cropSize, 0, 0, OUTPUT, OUTPUT);
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("Errore generazione immagine."))),
+        "image/jpeg", 0.88
+      );
+    });
+
+    const storagePath = `avatars/${userTessera.id}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(storagePath, blob, { upsert: true, contentType: "image/jpeg" });
+    if (uploadError) throw new Error(`Upload fallito: ${uploadError.message}`);
+
+    const { data: pubData } = supabase.storage.from("avatars").getPublicUrl(storagePath);
+    const freshUrl = `${pubData.publicUrl}?t=${Date.now()}`;
+
+    const { error: dbError } = await supabase
+      .from("tessere").update({ avatar_url: freshUrl }).eq("id", userTessera.id);
+    if (dbError) throw new Error(`Salvataggio fallito: ${dbError.message}`);
+
+    setUserTessera((prev) => (prev ? { ...prev, avatar_url: freshUrl } : prev));
+
+  } catch (err) {
+    console.error("[Avatar upload]", err);
+    alert(err instanceof Error ? err.message : "Errore sconosciuto.");
+  } finally {
+    setAvatarUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+};
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed]"><Loader2 className="animate-spin text-sky-500" /></div>;
 

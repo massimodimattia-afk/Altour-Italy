@@ -553,45 +553,37 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                     <FilosofiaBadge value={(activity as Campo).slug} />
                   )}
                 </div>
-                <div className="p-5 md:p-7 flex flex-col flex-grow">
-                  <div className="flex items-center gap-3 mb-3">
-                    {isEscursione ? (
-                      <>
-                        <div className="w-1 h-1 rounded-full bg-stone-200" />
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-brand-sky uppercase tracking-wider">
-                          <Clock size={12} className="text-brand-sky" />
-                          {activity.durata || "Giornata intera"}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-brand-sky uppercase tracking-wider">
-                        <Clock size={12} />
-                        {activity.durata || "Campo"}
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-lg md:text-xl font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-3">
-                    {activity.titolo}
-                  </h3>
-                  <p
-                    className="text-stone-500 text-xs md:text-sm line-clamp-3 leading-relaxed mb-6 flex-grow font-medium"
-                    dangerouslySetInnerHTML={{ __html: formatMarkdown(activity.descrizione) }}
-                  />
-                  <div className="flex gap-3 pt-5 border-t border-stone-100">
-                    <button
-                      onClick={() => openDetails(activity)}
-                      className="flex-1 py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95"
-                    >
-                      Dettagli
-                    </button>
-                    <button
-                      onClick={() => onBookingClick(activity.titolo, "info")}
-                      className="flex-[1.5] py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-lg hover:bg-[#0284c7] transition-colors active:scale-95"
-                    >
-                      Richiedi Info
-                    </button>
-                  </div>
-                </div>
+               <div className="p-4 md:p-5 flex flex-col flex-grow">
+  <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+    {activity.durata && (
+      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+        <Clock size={9} />
+        {activity.durata}
+      </span>
+    )}
+  </div>
+  <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
+    {activity.titolo}
+  </h3>
+  <p
+    className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium"
+    dangerouslySetInnerHTML={{ __html: formatMarkdown(activity.descrizione) }}
+  />
+  <div className="flex gap-2 pt-3 border-t border-stone-50">
+    <button
+      onClick={() => openDetails(activity)}
+      className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95"
+    >
+      Dettagli
+    </button>
+    <button
+      onClick={() => onBookingClick(activity.titolo, "info")}
+      className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors active:scale-95"
+    >
+      Richiedi Info
+    </button>
+  </div>
+</div>
               </div>
             );
           })}
