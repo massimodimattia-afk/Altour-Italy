@@ -161,10 +161,10 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               <div className="px-6 pt-6 pb-4 border-b border-stone-50">
                 <h2 className="text-xl md:text-2xl font-black text-brand-stone uppercase leading-tight mb-2">{activity.titolo}</h2>
                 <div className="flex flex-wrap gap-3 text-[10px] font-black uppercase text-stone-400">
-                  {activity.durata && <span className="flex items-center gap-1"><Clock size={12} className="text-brand-sky" /> {activity.durata}</span>}
+                  
                   {activity.difficolta && <span className="flex items-center gap-1"><Mountain size={12} className="text-brand-sky" /> {activity.difficolta}</span>}
                 
-                  {!isTour && activity.lunghezza != null && <span className="flex items-center gap-1"><MapPin size={12} className="text-brand-sky" /> {activity.lunghezza} km</span>}
+                  {!isTour && activity.lunghezza != null && <span className="flex items-center gap-1"><MapPin size={12} className="text-brand-sky" /> {activity.lunghezza}{!isCampo && " km"}</span>}
                   {!isTour && activity.dislivello != null && <span className="flex items-center gap-1"><ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m</span>}
                   {isTour && activity.lunghezza_tour && (<span className="flex items-center gap-1"><MapPin size={12} className="text-brand-sky" /> {activity.lunghezza_tour}</span>)}
                   {activity.min_partecipanti != null && (

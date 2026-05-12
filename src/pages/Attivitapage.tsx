@@ -32,6 +32,7 @@ interface Campo {
   filosofia?: string | null;
   lat?: number | null;
   lng?: number | null;
+  min_partecipanti?: number | null;
   _tipo: "campo";
 }
 
@@ -99,6 +100,7 @@ function campoToDetail(campo: Campo) {
     attrezzatura: null,
     servizi: campo.servizi ?? null,
     filosofia: campo.filosofia ?? null,
+    min_partecipanti: campo.min_partecipanti ?? null,
     _tipo: "campo" as const,
   };
 }
@@ -213,6 +215,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         slug: row.slug, prezzo: row.prezzo ?? null, durata: row.durata ?? null,
         difficolta: row.difficolta ?? null, lunghezza: row.lunghezza ?? null,
         filosofia: row.filosofia ?? null, lat: row.lat ?? null, lng: row.lng ?? null,
+        min_partecipanti: row.min_partecipanti ?? null,
         _tipo: "campo" as const,
       })));
       setLoading(false);
