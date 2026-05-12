@@ -46,6 +46,7 @@ const FILOSOFIA_COLORS: Record<string, string> = {
   "Trek urbano":            "#f39452",
   "Tracce sulla neve":      "#a8cce0",
   "Cielo stellato":         "#1e2855",
+  "Master":                 "#fbbf24",
 };
 
 const BADGE_NAMES: Record<string, string> = {
@@ -64,6 +65,7 @@ const BADGE_NAMES: Record<string, string> = {
   "Trek urbano":            "Flaneur",
   "Tracce sulla neve":      "Segugio della Neve",
   "Cielo stellato":         "Astronomo",
+  "Master":                 "Master",
 };
 
 const BADGE_EMOJI: Record<string, string> = {
@@ -82,6 +84,7 @@ const BADGE_EMOJI: Record<string, string> = {
   "Trek urbano":            "🏙",
   "Tracce sulla neve":      "❄️",
   "Cielo stellato":         "🌠",
+  "Master":                 "👑",
 };
 
 const TESSERA_LEVELS = [
@@ -153,7 +156,21 @@ function computeEarnedBadges(escursioni: EscursioneCompletata[]): string[] {
     const filo = getFilosofiaName(e.colore);
     if (filo) counts[filo] = (counts[filo] || 0) + 1;
   }
-  return Object.entries(counts).filter(([, n]) => n >= BADGE_UNLOCK).map(([f]) => f);
+  
+  // Badge normali (i 15 originali)
+  const earnedBadges = Object.entries(counts)
+    .filter(([, n]) => n >= BADGE_UNLOCK)
+    .map(([f]) => f);
+  
+  // 16° badge: si sblocca solo se TUTTI i 15 sono stati sbloccati
+  const allFilosofie = Object.keys(BADGE_NAMES).filter(f => f !== "Master");
+  const allUnlocked = allFilosofie.every(f => earnedBadges.includes(f));
+  
+  if (allUnlocked) {
+    earnedBadges.push("Master");
+  }
+  
+  return earnedBadges;
 }
 
 function getSeason(date: Date): string {
@@ -165,12 +182,12 @@ function getSeason(date: Date): string {
 }
 
 const ACHIEVEMENT_BADGES = [
-  { id: "streak_tour", name: "Cuore verde", emoji: "🌿", description: "60 attività tour o campi", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter(x => x.categoria === "tour" || x.categoria === "campo").length >= 60, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter(x => x.categoria === "tour" || x.categoria === "campo").length, 60), total: 60 }) },
+  { id: "streak_tour", name: "Cuore verde", emoji: "🌿", description: "64 attività tour o campi", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter(x => x.categoria === "tour" || x.categoria === "campo").length >= 64, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter(x => x.categoria === "tour" || x.categoria === "campo").length, 64), total: 64 }) },
   {
     id: "assiduo",
     name: "Assiduo",
     emoji: "🎯",
-    description: "20 attività nello stesso anno",
+    description: "24 attività nello stesso anno",
     color: "#01aa9f",
     check: (e: EscursioneCompletata[]) => {
       const perAnno: Record<number, number> = {};
@@ -178,7 +195,7 @@ const ACHIEVEMENT_BADGES = [
         const anno = new Date(attivita.data).getFullYear();
         perAnno[anno] = (perAnno[anno] || 0) + 1;
       });
-      return Object.values(perAnno).some(count => count >= 20);
+      return Object.values(perAnno).some(count => count >= 24);
     },
     progress: (e: EscursioneCompletata[]) => {
       const perAnno: Record<number, number> = {};
@@ -187,7 +204,7 @@ const ACHIEVEMENT_BADGES = [
         perAnno[anno] = (perAnno[anno] || 0) + 1;
       });
       const maxInYear = Math.max(...Object.values(perAnno), 0);
-      return { current: Math.min(maxInYear, 20), total: 20 };
+      return { current: Math.min(maxInYear, 24), total: 24 };
     },
   },
   {
@@ -234,38 +251,50 @@ const ACHIEVEMENT_BADGES = [
   id: "esploratore_verticale",
   name: "Esploratore Verticale",
   emoji: "⚡",
-  description: "5 attività per ogni livello di difficoltà",
+  description: "Completa tutti i livelli di difficoltà",
   color: "#002f59",
   check: (e: EscursioneCompletata[]) => {
     let facile = 0, facile_media = 0, media = 0, media_impegnativa = 0, impegnativa = 0;
     
     e.forEach(attivita => {
       const diff = attivita.difficolta || "";
-      if (diff === "Facile" && facile < 5) facile++;
-      if (diff === "Facile-Media" && facile_media < 5) facile_media++;
-      if (diff === "Media" && media < 5) media++;
-      if (diff === "Media-Impegnativa" && media_impegnativa < 5) media_impegnativa++;
-      if (diff === "Impegnativa" && impegnativa < 5) impegnativa++;
+      if (diff === "Facile") facile++;
+      if (diff === "Facile-Media") facile_media++;
+      if (diff === "Media") media++;
+      if (diff === "Media-Impegnativa") media_impegnativa++;
+      if (diff === "Impegnativa") impegnativa++;
     });
     
-    return facile >= 5 && facile_media >= 5 && media >= 5 && media_impegnativa >= 5 && impegnativa >= 5;
+    return facile >= 16 && facile_media >= 24 && media >= 16 && media_impegnativa >= 10 && impegnativa >= 6;
   },
   progress: (e: EscursioneCompletata[]) => {
     let facile = 0, facile_media = 0, media = 0, media_impegnativa = 0, impegnativa = 0;
     
     e.forEach(attivita => {
       const diff = attivita.difficolta || "";
-      if (diff === "Facile" && facile < 5) facile++;
-      if (diff === "Facile-Media" && facile_media < 5) facile_media++;
-      if (diff === "Media" && media < 5) media++;
-      if (diff === "Media-Impegnativa" && media_impegnativa < 5) media_impegnativa++;
-      if (diff === "Impegnativa" && impegnativa < 5) impegnativa++;
+      if (diff === "Facile") facile++;
+      if (diff === "Facile-Media") facile_media++;
+      if (diff === "Media") media++;
+      if (diff === "Media-Impegnativa") media_impegnativa++;
+      if (diff === "Impegnativa") impegnativa++;
     });
     
-    const totale = facile + facile_media + media + media_impegnativa + impegnativa;
-    return { current: Math.min(totale, 25), total: 25 };
+    const targets = [
+      { current: facile, total: 16 },
+      { current: facile_media, total: 24 },
+      { current: media, total: 16 },
+      { current: media_impegnativa, total: 10 },
+      { current: impegnativa, total: 6 },
+    ];
+    
+    // Trova la categoria con la percentuale più bassa (collo di bottiglia)
+    const worst = targets.reduce((a, b) => 
+      (a.current / a.total) < (b.current / b.total) ? a : b
+    );
+    
+    return { current: Math.min(worst.current, worst.total), total: worst.total };
   },
-}
+},
 ];
 
 const IconaScarponeCustom = ({ size = 24, color = "#d6d3d1", isActive = false }: { size?: number; color?: string; isActive?: boolean }) => {
@@ -279,13 +308,21 @@ const BadgeChip = ({ filo, count, onClick }: { filo: string; count: number; onCl
   const color = FILOSOFIA_COLORS[filo] ?? "#44403c";
   const emoji = BADGE_EMOJI[filo] ?? "★";
   const shortName = BADGE_NAMES[filo]?.split(" ")[0] ?? filo.split(" ")[0];
-  const levelInfo = getBadgeLevel(count);
+
+  // ✅ Master: unlocked solo se count === BADGE_COMPLETO (16)
+  //    Altrimenti getBadgeLevel(7) darebbe isUnlocked:true per errore
+  const levelInfo = filo === "Master"
+    ? (count === BADGE_COMPLETO
+        ? { level: 3, dots: 3, isUnlocked: true }
+        : { level: 0, dots: 0, isUnlocked: false })
+    : getBadgeLevel(count);
+
   const isUnlocked = levelInfo.isUnlocked;
 
-  // Progresso verso il prossimo livello (usato solo per il contatore bloccato)
+  // ✅ Master locked mostra "X/15" invece di "X/4"
   let progressText = "";
   if (!isUnlocked) {
-    progressText = `${count}/${BADGE_UNLOCK}`;
+    progressText = filo === "Master" ? `${count}/15` : `${count}/${BADGE_UNLOCK}`;
   }
 
   return (
@@ -356,6 +393,41 @@ const BadgeChip = ({ filo, count, onClick }: { filo: string; count: number; onCl
 
 // --- BadgeDetailPopup (aggiornato con livelli) ---
 const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: number; onClose: () => void }) => {
+   if (filo === "Master") {
+    const isMasterUnlocked = count === BADGE_COMPLETO;
+    return (
+      <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center p-4 bg-black/50"
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+        <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+          className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-2xl border border-stone-100 relative">
+          <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 rounded-full text-stone-400"><X size={16} /></button>
+          <div className="relative h-36 flex items-center justify-center"
+            style={{ background: isMasterUnlocked
+              ? "linear-gradient(145deg, #fbbf24cc, #f59e0b, #d97706aa)"
+              : "linear-gradient(145deg, #f0eeec, #e8e5e2)" }}>
+            <span style={{ fontSize: 56, filter: isMasterUnlocked ? "drop-shadow(0 4px 12px rgba(0,0,0,0.22))" : "grayscale(1) opacity(0.3)" }}>
+              👑
+            </span>
+          </div>
+          <div className="px-8 py-6 text-center">
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1"
+              style={{ color: isMasterUnlocked ? "#f59e0b" : "#c4c2c0" }}>
+              {isMasterUnlocked ? "Badge Leggendario" : "Badge Segreto"}
+            </p>
+            <h3 className="text-xl font-black uppercase text-stone-800 mb-1">
+              {isMasterUnlocked ? "Master Altour" : "???"}
+            </h3>
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">
+              {isMasterUnlocked
+                ? "Hai percorso ogni filosofia. Sei una leggenda."
+                : "Sblocca tutti i 15 badge per rivelare"}
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+   
   const color = FILOSOFIA_COLORS[filo] ?? "#44403c";
   const emoji = BADGE_EMOJI[filo] ?? "★";
   const name = BADGE_NAMES[filo] ?? filo;
@@ -369,6 +441,8 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
   else if (count < BADGE_INTERMEDIO) statusText = `${remaining} per livello 2`;
   else if (count < BADGE_COMPLETO) statusText = `${remaining} per completare`;
   else statusText = "Completato! 🎉";
+
+  
 
   return (
     <div className="fixed inset-0 z-[110] flex items-end md:items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
@@ -529,11 +603,23 @@ export default function Tessera() {
     };
   }, [userTessera, escursioniCompletateParsed]);
 
-  const badgeCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    escursioniCompletateParsed.forEach(e => { const f = getFilosofiaName(e.colore); if (f) counts[f] = (counts[f] || 0) + 1; });
-    return counts;
-  }, [escursioniCompletateParsed]);
+ const badgeCounts = useMemo(() => {
+  const counts: Record<string, number> = {};
+  escursioniCompletateParsed.forEach(e => {
+    const f = getFilosofiaName(e.colore);
+    if (f) counts[f] = (counts[f] || 0) + 1;
+  });
+
+  const allFilosofie = Object.keys(BADGE_NAMES).filter(f => f !== "Master");
+  const allUnlocked = allFilosofie.every(f => (counts[f] || 0) >= BADGE_UNLOCK);
+
+  // ✅ Quando bloccato: quante filosofie su 15 sono sbloccate (per mostrare X/15)
+  // Quando sbloccato: BADGE_COMPLETO (16) per triggerare getBadgeLevel correttamente
+  const unlockedFilosofieCount = allFilosofie.filter(f => (counts[f] || 0) >= BADGE_UNLOCK).length;
+  counts["Master"] = allUnlocked ? BADGE_COMPLETO : unlockedFilosofieCount;
+
+  return counts;
+}, [escursioniCompletateParsed]);
 
   useEffect(() => {
     const saved = localStorage.getItem(SESSION_KEY);
@@ -730,7 +816,7 @@ export default function Tessera() {
         <>
           {/* HERO */}
           <div className="relative h-[45vh] md:h-[55vh] w-full flex items-center justify-center text-center overflow-hidden">
-            <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Trentino_neve.webp" className="absolute inset-0 w-full h-full object-cover object-[center_60%]" alt="header bg" />
+            <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Hero_tessera.webp" className="absolute inset-0 w-full h-full object-cover object-[center_60%]" alt="header bg" />
             <div className="absolute inset-0 bg-black/25" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[50%] to-black/40" />
             <button onClick={handleLogout} className="absolute top-4 right-4 p-3 bg-black/20 backdrop-blur-md rounded-full text-white border border-white/10 z-50 hover:bg-black/40 transition-all"><LogOut size={18} /></button>
