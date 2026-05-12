@@ -9,6 +9,7 @@ type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   prezzo_teorico?: number | null;
   prezzo_bundle?: number | null;
   posizione?: number | null;
+  difficolta?: string | null;
 };
 
 interface CorsiPageProps {

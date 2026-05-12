@@ -12,6 +12,7 @@ export interface Corso {
   categoria?: string | null;
   data_inizio?: string | null;
   durata?: string | null;
+  difficolta?: string | null;
   prezzo_bundle?: string | number | null;
   prezzo_teorico?: string | number | null;
   prezzo?: string | number | null;
@@ -145,27 +146,28 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
         </div>
       </div>
 
-      {/* Body */}
-      <div className="p-5 md:p-7 flex flex-col flex-grow">
-        {/* Iscrizioni aperte */}
-        <div className="flex items-center gap-2.5 mb-2">
-          <span className="text-[9px] font-bold uppercase tracking-wide text-brand-sky">
-            Iscrizioni aperte
-          </span>
-          {formattedDate && (
-            <>
-              <span className="w-1 h-1 rounded-full bg-stone-300" />
-              <span className="text-[9px] font-bold uppercase tracking-wide text-stone-400">
-                {formattedDate}
-              </span>
-            </>
-          )}
-        </div>
+    {/* Body */}
+<div className="p-5 md:p-7 flex flex-col flex-grow">
+  {/* Iscrizioni aperte + Data */}
+  <div className="flex items-center gap-2.5 mb-2">
+    <span className="text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+      Iscrizioni aperte
+    </span>
 
-        <h2 className="text-lg md:text-xl font-black mb-3 text-brand-stone uppercase line-clamp-2">
-          {corso.titolo}
-        </h2>
+    {formattedDate && (
+      <>
+        <span className="w-1 h-1 rounded-full bg-stone-300" />
+        <span className="text-[9px] font-bold uppercase tracking-wide text-stone-400">
+          {formattedDate}
+        </span>
+      </>
+    )}
+  </div>
 
+  <h2 className="text-lg md:text-xl font-black mb-3 text-brand-stone uppercase line-clamp-2">
+    {corso.titolo}
+  </h2>
+  
         {/* Descrizione */}
         <div className="text-stone-500 text-xs md:text-sm mb-5 line-clamp-3 font-medium flex-grow [&_em]:italic [&_em]:font-serif [&_strong]:font-black [&_strong]:text-[#44403c]">
           <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
@@ -213,13 +215,13 @@ export function CourseCard({ corso, onBookingClick, openDetails }: CourseCardPro
               </div>
 
               {/* CTA Richiedi Info */}
-<button
-  onClick={() => onBookingClick(bookLabel, "info")}
-  className="w-full bg-brand-sky hover:bg-brand-stone text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
->
-  Richiedi Info
-  <ArrowRight size={11} />
-</button>
+              <button
+                onClick={() => onBookingClick(bookLabel, "info")}
+                className="w-full bg-brand-sky hover:bg-brand-stone text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
+              >
+                Richiedi Info
+                <ArrowRight size={11} />
+              </button>
             </div>
           ) : (
             <div className="flex gap-3">
