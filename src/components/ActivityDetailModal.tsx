@@ -35,7 +35,7 @@ export interface Activity {
   lat?: number | null;
   lng?: number | null;
   slug?: string | null;
-  min_partecipanti?: number | null;
+  min_partecipanti?: string | null;
   // Nuovi campi per la selezione del prezzo (corsi modulari)
   selectedPrice?: number;
   selectedOption?: "bundle" | "teorico";
@@ -170,7 +170,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   {isTour && activity.lunghezza_tour && (<span className="flex items-center gap-1"><MapPin size={12} className="text-brand-sky" /> {activity.lunghezza_tour}</span>)}
                   {activity.min_partecipanti != null && (
   <span className="flex items-center gap-1">
-    <Users size={12} className="text-brand-sky" /> Min. {activity.min_partecipanti} partecipanti
+    <Users size={12} className="text-brand-sky" />partecipanti: {activity.min_partecipanti}
   </span>
 )}
                 </div>

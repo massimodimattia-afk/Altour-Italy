@@ -31,7 +31,7 @@ interface Campo {
   prezzo?: number | null;
   durata?: string | null;
   slug?: string | null;
-  min_partecipanti?: number | null;
+  min_partecipanti?: string | null;
   _tipo: "campo";
 }
 type FeaturedActivity = Escursione | Campo;
@@ -222,7 +222,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               .order("data", { ascending: true }),
             supabase
               .from("campi")
-              .select("id, titolo, descrizione, immagine_url, prezzo, durata, slug, servizi, descrizione_estesa, difficolta, lunghezza, min_partecipanti"),
+              .select("id, titolo, descrizione, immagine_url, prezzo, durata, slug, servizi, descrizione_estesa, difficolta, lunghezza, min_partecipanti, lat, lng"),
             supabase
               .from("corsi")
               .select("*")

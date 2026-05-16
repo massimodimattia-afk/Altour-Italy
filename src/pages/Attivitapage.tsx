@@ -32,7 +32,7 @@ interface Campo {
   filosofia?: string | null;
   lat?: number | null;
   lng?: number | null;
-  min_partecipanti?: number | null;
+  min_partecipanti?: string | null;
   _tipo: "campo";
 }
 
@@ -101,6 +101,7 @@ function campoToDetail(campo: Campo) {
     servizi: campo.servizi ?? null,
     filosofia: campo.filosofia ?? null,
     min_partecipanti: campo.min_partecipanti ?? null,
+    lat: campo.lat ?? null, lng: campo.lng ?? null,
     _tipo: "campo" as const,
   };
 }
