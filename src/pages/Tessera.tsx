@@ -174,15 +174,30 @@ function computeEarnedBadges(escursioni: EscursioneCompletata[]): string[] {
 }
 
 function getSeason(date: Date): string {
-  const m = date.getMonth();
-  if (m >= 2 && m <= 4) return "spring";
-  if (m >= 5 && m <= 7) return "summer";
-  if (m >= 8 && m <= 10) return "autumn";
+  const m = date.getMonth();        // 0 = gennaio, 11 = dicembre
+  const d = date.getDate();         // giorno del mese
+
+  // Primavera: 21 marzo (m=2, d>=21) → 20 giugno (m=5, d<=20)
+  if ((m === 2 && d >= 21) || m === 3 || m === 4 || (m === 5 && d <= 20)) {
+    return "spring";
+  }
+  
+  // Estate: 21 giugno (m=5, d>=21) → 22 settembre (m=8, d<=22)
+  if ((m === 5 && d >= 21) || m === 6 || m === 7 || (m === 8 && d <= 22)) {
+    return "summer";
+  }
+  
+  // Autunno: 23 settembre (m=8, d>=23) → 20 dicembre (m=11, d<=20)
+  if ((m === 8 && d >= 23) || m === 9 || m === 10 || (m === 11 && d <= 20)) {
+    return "autumn";
+  }
+  
+  // Inverno: 21 dicembre (m=11, d>=21) → 20 marzo (m=2, d<=20)
   return "winter";
 }
 
 const ACHIEVEMENT_BADGES = [
-  { id: "streak_tour", name: "Cuore verde", emoji: "🌿", description: "64 attività tour o campi", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter(x => x.categoria === "tour" || x.categoria === "campo").length >= 64, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter(x => x.categoria === "tour" || x.categoria === "campo").length, 64), total: 64 }) },
+  { id: "streak_tour", name: "Cuore verde", emoji: "🌿", description: "80 attività tra tour, campi e corsi", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter(x => x.categoria === "tour" || x.categoria === "campo"|| x.categoria === "corso").length >= 80, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter(x => x.categoria === "tour" || x.categoria === "campo"|| x.categoria === "corso").length, 80), total: 80 }) },
   {
     id: "assiduo",
     name: "Assiduo",
@@ -1012,7 +1027,7 @@ export default function Tessera() {
                     <div className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center shadow-lg"><Award size={24} className="text-white" /></div>
                     <div>
                       <h3 className="text-xl font-black uppercase leading-none">Collezione Filosofie</h3>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">4 per sbloccare · 16 per completare</p>
+                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">4 per sbloccare · 8 per dimezzare · 16 per completare</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-4 gap-x-4 gap-y-8">

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowRight, RotateCcw, Sparkles, X, Check } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import type { Database } from "../types/supabase";
 import ActivityDetailModal from "./ActivityDetailModal";
 
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
@@ -14,100 +14,88 @@ type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   _tipo?: "escursione";
 };
 
-// ─── Oggetti zaino ─────────────────────────────────────────────────────────────
 interface Item {
   id: string;
   emoji: string;
   label: string;
   zone: "left" | "bottom" | "right";
   zoneRow?: number;
-  hint: string;       // spiegazione mostrata nel tooltip
-  hintTag: string;    // pill sintetica
+  hint: string;
+  hintTag: string;
 }
 
+type ItemThemeMapping = {
+  categorie: string[];
+  filosofie: string[];
+  fallback: string[];
+};
+
+// ─── Configurazione Oggetti & Mapping ──────────────────────────────────────────
 const ITEMS: Item[] = [
-  {
-    id: "map", emoji: "🗺️", label: "Cartina", zone: "left", zoneRow: 1,
-    hint: "Ami conoscere la meta prima di partire. Cerchi percorsi culturali o naturalistici con un obiettivo preciso.",
-    hintTag: "Scoperta del territorio",
-  },
-  {
-    id: "boots", emoji: "🥾", label: "Scarponi", zone: "left", zoneRow: 2,
-    hint: "Esci regolarmente e cerchi esperienze di qualità. Il giusto equilibrio tra impegno e soddisfazione.",
-    hintTag: "Escursionismo regolare",
-  },
-  {
-    id: "poles", emoji: "🥢", label: "Bastoncini", zone: "left", zoneRow: 3,
-    hint: "Preferisci percorsi impegnativi con dislivelli importanti. Esci spesso e ami le sfide fisiche.",
-    hintTag: "Alta difficoltà",
-  },
-  {
-    id: "compass", emoji: "🧭", label: "Bussola", zone: "bottom",
-    hint: "Ti piace esplorare da solo in luoghi poco battuti. Cerchi pace e orientamento autonomo.",
-    hintTag: "Luoghi remoti",
-  },
-  {
-    id: "water", emoji: "🧴", label: "Borraccia", zone: "bottom",
-    hint: "Preferisci uscite brevi e accessibili a tutti. Ideale per escursioni in famiglia o senza troppe pretese fisiche.",
-    hintTag: "Mezza giornata",
-  },
-  {
-    id: "medkit", emoji: "🩹", label: "Kit soccorso", zone: "bottom",
-    hint: "Sei prudente e previdente. Ti avvicini alla montagna con calma, magari per la prima volta o in coppia.",
-    hintTag: "Approccio cauto",
-  },
-  {
-    id: "jacket", emoji: "🧥", label: "Giacca", zone: "right", zoneRow: 1,
-    hint: "Punti in alto — vette, creste, paesaggi panoramici. Non ti spaventa la fatica né il freddo.",
-    hintTag: "Alta quota",
-  },
-  {
-    id: "torch", emoji: "🔦", label: "Frontale", zone: "right", zoneRow: 2,
-    hint: "Cerchi avventure lunghe, magari multi-giorno. Ti piace l'isolamento e la tranquillità della notte.",
-    hintTag: "Avventura prolungata",
-  },
-  {
-    id: "gps", emoji: "📡", label: "GPS", zone: "right", zoneRow: 3,
-    hint: "Esplori zone selvagge con il gruppo o in autonomia. La tecnologia è la tua sicurezza fuori rotta.",
-    hintTag: "Fuori dai sentieri",
-  },
+  { id: "map", emoji: "🗺️", label: "Cartina", zone: "left", zoneRow: 1, hint: "Ami conoscere la meta prima di partire. Cerchi percorsi culturali o naturalistici.", hintTag: "Scoperta" },
+  { id: "boots", emoji: "🥾", label: "Scarponi", zone: "left", zoneRow: 2, hint: "Esci regolarmente e cerchi esperienze di qualità. Il giusto equilibrio tra impegno e relax.", hintTag: "Regolarità" },
+  { id: "poles", emoji: "🥢", label: "Bastoncini", zone: "left", zoneRow: 3, hint: "Preferisci percorsi impegnativi con dislivelli importanti e sfide fisiche.", hintTag: "Performance" },
+  { id: "compass", emoji: "🧭", label: "Bussola", zone: "bottom", hint: "Ti piace esplorare in solitaria in luoghi poco battuti. Cerchi pace e autonomia.", hintTag: "Esplorazione" },
+  { id: "water", emoji: "🧴", label: "Borraccia", zone: "bottom", hint: "Preferisci uscite brevi e accessibili, ideali per famiglie o camminate rigeneranti.", hintTag: "Easy" },
+  { id: "medkit", emoji: "🩹", label: "Kit soccorso", zone: "bottom", hint: "Sei prudente e previdente. Ti avvicini alla montagna con calma e sicurezza.", hintTag: "Prudenza" },
+  { id: "jacket", emoji: "🧥", label: "Giacca", zone: "right", zoneRow: 1, hint: "Punti in alto: vette, creste e panorami. Non ti spaventa la fatica né il freddo.", hintTag: "Alta Quota" },
+  { id: "torch", emoji: "🔦", label: "Frontale", zone: "right", zoneRow: 2, hint: "Cerchi avventure lunghe o notturne. Ti piace l'isolamento e il silenzio.", hintTag: "Avventura" },
+  { id: "gps", emoji: "📡", label: "GPS", zone: "right", zoneRow: 3, hint: "Esplori zone selvagge. La tecnologia è la tua sicurezza fuori dai sentieri battuti.", hintTag: "Wild" },
 ];
 
-// ─── Segnali semantici ─────────────────────────────────────────────────────────
-const ITEM_SIGNALS: Record<string, Record<string, string>> = {
-  map:     { cerca: "Conoscere la meta",    luogo: "Bosco",              tempo: "Intera giornata" },
-  boots:   { sforzo: "Medio",               frequenza: "Ogni mese",      cerca: "Tempo di qualità" },
-  poles:   { sforzo: "Intenso",             frequenza: "Ogni settimana", luogo: "Panoramico" },
-  compass: { compagnia: "Solo",             cerca: "Pace e serenità",    luogo: "Poco frequentato" },
-  water:   { tempo: "Mezza giornata",       sforzo: "Basso",             compagnia: "Famiglia" },
-  medkit:  { frequenza: "1/3 volte l'anno", sforzo: "Basso",             compagnia: "Coppia" },
-  jacket:  { luogo: "Panoramico",           sforzo: "Intenso",           cerca: "Tempo di qualità" },
-  torch:   { tempo: "Una settimana",        luogo: "Poco frequentato",   cerca: "Pace e serenità" },
-  gps:     { luogo: "Poco frequentato",     sforzo: "Intenso",           compagnia: "Gruppo di amici" },
+// Nuovo Mapping Alleggerito (Solo Atmosfera, zero difficoltà)
+const ITEM_THEME_MAPPING: Record<string, ItemThemeMapping> = {
+  map: { 
+    categorie: ["tour", "intera giornata", "giornata"], 
+    filosofie: ["Borghi più belli", "Formazione", "Trek urbano", "Eventi", "Acqua e cielo"],
+    fallback: ["Cammini"]
+  },
+  boots: { 
+    categorie: ["tour", "mezza giornata"], 
+    filosofie: ["Avventura", "Cammini", "Immersi nel verde"],
+    fallback: ["Formazione"]
+  },
+  poles: { 
+    categorie: ["intera giornata", "giornata", "tour"], 
+    filosofie: ["Avventura", "Tracce sulla neve"],
+    fallback: ["Immersi nel verde"]
+  },
+  compass: { 
+    categorie: ["intera giornata", "giornata"], 
+    filosofie: ["Luoghi dello spirito", "Novità", "Immersi nel verde"],
+    fallback: ["Avventura"]
+  },
+  water: { 
+    categorie: ["mezza giornata"], 
+    filosofie: ["Benessere", "Trek urbano", "Acqua e cielo", "Educazione all'aperto"],
+    fallback: ["Immersi nel verde"]
+  },
+  medkit: { 
+    categorie: ["mezza giornata"], 
+    filosofie: ["Educazione all'aperto", "Benessere"],
+    fallback: ["Formazione"]
+  },
+  jacket: { 
+    categorie: ["intera giornata", "giornata", "tour"], 
+    filosofie: ["Tracce sulla neve", "Speciali"],
+    fallback: ["Avventura"]
+  },
+  torch: { 
+    categorie: ["tour"], 
+    filosofie: ["Cielo stellato", "Cammini", "Avventura"],
+    fallback: ["Immersi nel verde", "Speciali"]
+  },
+  gps: { 
+    categorie: ["intera giornata", "giornata", "tour"], 
+    filosofie: ["Avventura", "Novità"],
+    fallback: ["Tracce sulla neve", "Speciali"]
+  },
 };
 
 const ITEM_WEIGHT: Record<string, number> = {
   poles: 2, jacket: 2, gps: 2, torch: 2,
   boots: 1, compass: 1,
   map: 0, water: 0, medkit: 0,
-};
-
-const FILOSOFIA_QUIZ_MAP: Record<string, Record<string, string>> = {
-  "Avventura":             { cerca: "Tempo di qualità",   sforzo: "Intenso",    frequenza: "Ogni settimana" },
-  "Benessere":             { cerca: "Pace e serenità",    sforzo: "Basso",      compagnia: "Coppia" },
-  "Borghi più belli":      { luogo: "Bosco",              tempo: "Intera giornata", cerca: "Conoscere la meta" },
-  "Cammini":               { luogo: "Bosco",              tempo: "Più giorni",  cerca: "Pace e serenità" },
-  "Educazione all'aperto": { frequenza: "Mai",            compagnia: "Famiglia" },
-  "Eventi":                { compagnia: "Gruppo di amici", tempo: "Intera giornata" },
-  "Formazione":            { frequenza: "Mai",            tempo: "Più giorni",  cerca: "Conoscere la meta" },
-  "Immersi nel verde":     { luogo: "Bosco",              cerca: "Pace e serenità" },
-  "Luoghi dello spirito":  { cerca: "Pace e serenità",   compagnia: "Solo" },
-  "Novità":                { cerca: "Tempo di qualità",   compagnia: "Gruppo di amici", tempo: "Intera giornata" },
-  "Speciali":              { cerca: "Tempo di qualità",   compagnia: "Gruppo di amici" },
-  "Acqua e cielo":      { luogo: "Presenza di acqua",  cerca: "Conoscere la meta" },
-  "Trek urbano":           { tempo: "Mezza giornata",    sforzo: "Basso" },
-  "Tracce sulla neve":     { luogo: "Panoramico",        sforzo: "Intenso",    tempo: "Intera giornata" },
-  "Cielo stellato":        { cerca: "Pace e serenità",   tempo: "Una settimana", compagnia: "Solo" },
 };
 
 const PROFILI = {
@@ -128,45 +116,38 @@ const PROFILI = {
   },
 } as const;
 
-// ─── Scoring ───────────────────────────────────────────────────────────────────
+// ─── GATEKEEPER DI SICUREZZA ──────────────────────────────────────────────────
+const PROFILE_DIFFICULTY_MAP: Record<keyof typeof PROFILI, string[]> = {
+  base: ["Facile", "Facile-Media", "Media"],
+  intermedio: ["Facile-Media", "Media", "Media-Impegnativa"],
+  avanzato: ["Media", "Media-Impegnativa", "Impegnativa", "Molto Impegnativa"]
+};
+
+// ─── Logica di Scoring & Profilazione ──────────────────────────────────────────
 function scoreEscursione(esc: Escursione, selectedItems: string[]): number {
   let score = 0;
-  const t = esc.titolo?.toLowerCase() || "";
-  const d = esc.descrizione?.toLowerCase() || "";
-  const diffDB = esc.difficolta ?? "";
-  const cat = esc.categoria?.toLowerCase() || "";
-  const fs = FILOSOFIA_QUIZ_MAP[esc.filosofia ?? ""] ?? {};
+  const catDB = esc.categoria?.toLowerCase() || "";
+  const filoDB = esc.filosofia || "";
+
+  // 1. SCORING TEMATICO
   selectedItems.forEach(itemId => {
-    const signals = ITEM_SIGNALS[itemId];
-    Object.entries(signals).forEach(([dim, val]) => { if (fs[dim] === val) score += 8; });
-    const sforzo = signals.sforzo;
-    if (sforzo && diffDB) {
-      if (sforzo === "Basso"    && (diffDB === "Facile" || diffDB === "Facile-Media"))          score += 4;
-      if (sforzo === "Moderato" && (diffDB === "Facile-Media" || diffDB === "Media"))           score += 4;
-      if (sforzo === "Medio"    && diffDB === "Media")                                          score += 4;
-      if (sforzo === "Intenso"  && (diffDB === "Media-Impegnativa" || diffDB === "Impegnativa")) score += 4;
-    }
-    const tempo = signals.tempo;
-    if (tempo) {
-      if (tempo === "Mezza giornata"  && cat.includes("mezza"))                             score += 8;
-      if (tempo === "Intera giornata" && (cat === "giornata" || cat.includes("intera")))    score += 8;
-      if (tempo === "Una settimana"   && cat === "tour")                                    score += 8;
-      if (tempo === "Più giorni"      && (cat === "giornata" || cat === "tour"))            score += 4;
-    }
-    const luogo = signals.luogo;
-    if (luogo) {
-      if (luogo === "Panoramico"        && (t.includes("cima") || t.includes("vetta") || d.includes("panoram"))) score += 4;
-      if (luogo === "Bosco"             && (d.includes("bosco") || d.includes("foresta"))) score += 4;
-      if (luogo === "Poco frequentato"  && (d.includes("nascost") || d.includes("solitari") || d.includes("selvag"))) score += 4;
-      if (luogo === "Presenza di acqua" && (t.includes("lago") || t.includes("mare") || d.includes("acqua"))) score += 4;
-    }
-    const cerca = signals.cerca;
-    if (cerca) {
-      if (cerca === "Pace e serenità"   && d.includes("pace"))                                                score += 3;
-      if (cerca === "Conoscere la meta" && (d.includes("storia") || d.includes("cultura") || d.includes("scopri"))) score += 3;
-      if (cerca === "Tempo di qualità"  && (d.includes("esperienz") || d.includes("emozione")))              score += 3;
-    }
+    const mapping = ITEM_THEME_MAPPING[itemId];
+    if (!mapping) return;
+
+    if (mapping.filosofie.includes(filoDB)) score += 15;
+    else if (mapping.fallback.includes(filoDB)) score += 8;
+
+    if (mapping.categorie.some(c => catDB.includes(c))) score += 10;
   });
+
+  // 2. MAGIC COMBOS (Sinergie che premiano scenari molto precisi)
+  const has = (id: string) => selectedItems.includes(id);
+
+  if (has("map") && has("gps") && (filoDB === "Avventura" || filoDB === "Novità")) score += 25;
+  if (has("compass") && has("torch") && (filoDB === "Luoghi dello spirito" || filoDB === "Cammini")) score += 25;
+  if (has("water") && has("medkit") && (filoDB === "Benessere" || filoDB === "Educazione all'aperto")) score += 25;
+  if (has("poles") && has("jacket") && (filoDB === "Tracce sulla neve" || filoDB === "Avventura")) score += 25;
+
   return score;
 }
 
@@ -177,138 +158,80 @@ function computeProfile(selectedItems: string[]): keyof typeof PROFILI {
   return "base";
 }
 
-// ─── BackpackSVG (da CorsiquizNuovo) ──────────────────────────────────────────
+// ─── Sub-Component: BackpackSVG ────────────────────────────────────────────────
 function BackpackSVG({ glowing, itemCount }: { glowing: boolean; itemCount: number }) {
   return (
-    <motion.div style={{ transformOrigin: "50% 10%", position: "relative" }}>
+    <div className="relative w-full max-w-[280px] mx-auto py-4">
       <motion.div
-        key={itemCount}
-        initial={false}
-        animate={itemCount > 0
-          ? { y: [0, 7, -2, 1, 0], scaleY: [1, 1.04, 0.97, 1.01, 1], scaleX: [1, 0.98, 1.02, 1, 1] }
-          : {}}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        style={{ transformOrigin: "50% 100%", position: "relative" }}
+        animate={glowing ? { scale: [1, 1.05, 1], rotate: [0, -1, 1, 0] } : { scale: 1 }}
+        transition={{ duration: 0.6, repeat: glowing ? Infinity : 0 }}
+        className="relative z-10"
       >
-        <motion.div
-          animate={glowing ? { scale: [1, 1.03, 1.02, 1.04, 1], rotate: [0, -1, 1, -0.6, 0] } : { scale: 1 }}
-          transition={glowing ? { duration: 0.65 } : {}}
-          style={{ position: "relative" }}
-        >
-          <AnimatePresence>
-            {glowing && (
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: [0.3, 0.65, 0.3] }} exit={{ opacity: 0 }}
-                transition={{ duration: 1.8, repeat: Infinity }}
-                style={{
-                  position: "absolute", inset: "-20%", borderRadius: "50%", zIndex: 0,
-                  background: "radial-gradient(ellipse at 50% 55%, rgba(129,204,176,0.6) 0%, rgba(129,204,176,0.2) 45%, transparent 70%)",
-                  filter: "blur(16px)", pointerEvents: "none",
-                }}
-              />
-            )}
-          </AnimatePresence>
-          <motion.div
-            animate={{ scaleX: glowing ? 1.2 : itemCount > 0 ? 1.05 : 0.85, opacity: glowing ? 0.45 : 0.22 }}
-            transition={{ duration: 0.4 }}
-            style={{
-              position: "absolute", bottom: "-4%", left: "15%", right: "15%", height: "12px",
-              borderRadius: "50%", background: "radial-gradient(ellipse, rgba(60,100,60,0.4) 0%, transparent 70%)",
-              filter: "blur(4px)", zIndex: 0, pointerEvents: "none",
-            }}
-          />
-          <img
-            src="/zaino.png" alt="Zaino da trekking" draggable={false}
-            style={{
-              width: "100%", height: "auto", display: "block", position: "relative", zIndex: 1,
-              filter: glowing
-                ? "drop-shadow(0 0 14px rgba(129,204,176,0.8)) brightness(1.05)"
-                : `drop-shadow(0 ${4 + itemCount * 2}px ${8 + itemCount * 3}px rgba(60,100,60,0.22))`,
-              transition: "filter 0.4s ease",
-            }}
-          />
-        </motion.div>
+        <AnimatePresence>
+          {glowing && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: [0.2, 0.5, 0.2] }} exit={{ opacity: 0 }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-[-20%] rounded-full z-0 blur-2xl"
+              style={{ background: "radial-gradient(circle, rgba(129,204,176,0.4) 0%, transparent 70%)" }}
+            />
+          )}
+        </AnimatePresence>
+        <img
+          src="/zaino.png" alt="Zaino da trekking" draggable={false}
+          className="w-full h-auto drop-shadow-2xl relative z-10 select-none"
+          style={{
+            filter: glowing
+              ? "drop-shadow(0 0 14px rgba(129,204,176,0.8)) brightness(1.05)"
+              : `drop-shadow(0 ${4 + itemCount * 2}px ${8 + itemCount * 3}px rgba(60,100,60,0.22))`,
+            transition: "filter 0.4s ease",
+          }}
+        />
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
 
-// ─── Componente ItemCard Aggiornato con Safe Responsive Modal/Tooltip ────────────────
-// Sostituisci l'intero componente ItemCard nel tuo file AttivitaQuiz.tsx
-// (dovrebbe trovarsi intorno alla riga 210-360 del file originale)
-
-function ItemCard({
-  item,
-  isIn,
-  isDisabled,
-  onAdd,
-  onRemove,
-}: {
-  item: any; // Usa il tuo tipo Item se definito
-  isIn: boolean;
-  isDisabled: boolean;
-  onAdd: () => void;
-  onRemove: () => void;
-}) {
+// ─── Sub-Component: ItemCard ───────────────────────────────────────────────────
+function ItemCard({ item, isIn, isDisabled, onAdd, onRemove }: any) {
   const [showPopup, setShowPopup] = useState(false);
-  const itemCardRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    const checkSize = () => setIsMobile(window.innerWidth < 640);
+    checkSize();
+    window.addEventListener("resize", checkSize);
+    return () => window.removeEventListener("resize", checkSize);
   }, []);
 
   useEffect(() => {
-    if (showPopup && isMobile) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => { document.body.style.overflow = "unset"; };
+    if (showPopup && isMobile) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "unset";
   }, [showPopup, isMobile]);
 
-  const getDesktopTooltipPositionClasses = () => {
+  const getTooltipPosition = () => {
     if (item.zone === "bottom") return "bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 origin-bottom";
     if (item.zone === "left") return "top-1/2 -translate-y-1/2 left-[calc(100%+12px)] origin-left";
     return "top-1/2 -translate-y-1/2 right-[calc(100%+12px)] origin-right";
   };
 
-  const getDesktopArrowClasses = () => {
-    if (item.zone === "bottom") return "bottom-[-4px] left-1/2 -translate-x-1/2 rotate-45";
-    if (item.zone === "left") return "top-1/2 -translate-y-1/2 left-[-4px] rotate-45";
-    return "top-1/2 -translate-y-1/2 right-[-4px] rotate-45";
-  };
-
   return (
-    <div className="relative" ref={itemCardRef}>
+    <div className="relative">
       <motion.button
-        whileHover={!isDisabled ? { scale: 1.05, y: -2 } : {}}
-        whileTap={!isDisabled ? { scale: 0.95 } : {}}
+        whileHover={!isDisabled ? { scale: 1.08 } : {}}
+        whileTap={{ scale: 0.92 }}
         onClick={() => {
           if (isDisabled) return;
-          if (isIn) onRemove();
-          else setShowPopup(true);
+          isIn ? onRemove() : setShowPopup(true);
         }}
-        className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl transition-all duration-300 ${
-          isIn
-            ? "bg-white shadow-[0_4px_12px_rgba(129,204,176,0.4),0_0_0_2px_#81ccb0] z-10"
-            : isDisabled
-            ? "bg-stone-100 opacity-40 cursor-not-allowed grayscale"
-            : "bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_16px_rgba(159,130,112,0.15),0_0_0_1px_rgba(159,130,112,0.1)]"
+        className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-sm border ${
+          isIn ? "bg-white border-[#81ccb0] shadow-lg z-10" : isDisabled ? "bg-stone-100 opacity-30 grayscale" : "bg-white border-transparent"
         }`}
       >
         <span className={isIn ? "opacity-100" : "opacity-80"}>{item.emoji}</span>
         {isIn && (
-          <motion.div
-            initial={{ scale: 0 }} animate={{ scale: 1 }}
-            className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#81ccb0] rounded-full flex items-center justify-center text-white shadow-sm"
-          >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#81ccb0] rounded-full flex items-center justify-center text-white">
+            <Check size={12} strokeWidth={4} />
           </motion.div>
         )}
       </motion.button>
@@ -316,75 +239,31 @@ function ItemCard({
       <AnimatePresence>
         {showPopup && (
           <>
-            {/* BACKDROP GLASSMORPHISM */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className={`fixed inset-0 z-[9998] ${isMobile ? "bg-stone-900/20 backdrop-blur-xl" : "bg-transparent"}`}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className={`fixed inset-0 z-[100] ${isMobile ? "bg-black/40 backdrop-blur-md" : "bg-transparent"}`}
               onClick={() => setShowPopup(false)}
             />
-
-            {/* MODAL / TOOLTIP */}
             <motion.div
-              initial={{ opacity: 0, scale: isMobile ? 0.9 : 0.88, y: isMobile ? 40 : 0 }}
+              initial={{ opacity: 0, scale: 0.9, y: isMobile ? 20 : 0 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: isMobile ? 0.9 : 0.88, y: isMobile ? 40 : 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className={`z-[9999] ${isMobile ? "fixed inset-0 flex items-center justify-center p-6" : `absolute w-56 ${getDesktopTooltipPositionClasses()}`}`}
-              onClick={(e) => isMobile && e.target === e.currentTarget && setShowPopup(false)}
+              exit={{ opacity: 0, scale: 0.9, y: isMobile ? 20 : 0 }}
+              className={`z-[101] ${isMobile ? "fixed inset-0 flex items-center justify-center p-6" : `absolute w-64 ${getTooltipPosition()}`}`}
             >
-              <div 
-                className={`bg-white rounded-[2rem] p-5 sm:p-6 relative ${isMobile ? "w-full max-w-[320px]" : "w-full"}`}
-                style={{
-                  boxShadow: isMobile 
-                    ? "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(159,130,112,0.08)" 
-                    : "0 12px 40px rgba(159,130,112,0.25), 0 0 0 1.5px rgba(159,130,112,0.15)",
-                }}
-              >
-                {!isMobile && (
-                  <div
-                    className={`absolute w-3 h-3 bg-white ${getDesktopArrowClasses()}`}
-                    style={{
-                      boxShadow: item.zone === "bottom" ? "2px 2px 2px rgba(159,130,112,0.05)" : "-1px -1px 2px rgba(159,130,112,0.12)",
-                      zIndex: -1,
-                    }}
-                  />
-                )}
-
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl leading-none">{item.emoji}</span>
-                    <span
-                      className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full leading-none"
-                      style={{ background: "rgba(129,204,176,0.12)", color: "#81ccb0", border: "1px solid rgba(129,204,176,0.2)" }}
-                    >
+              <div className="bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 w-full max-w-[320px]">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{item.emoji}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#81ccb0] bg-[#81ccb0]/10 px-2 py-1 rounded-full">
                       {item.hintTag}
                     </span>
                   </div>
-                  <button onClick={() => setShowPopup(false)} className="text-stone-300 hover:text-stone-500 transition-colors p-1">
-                    <X size={18} />
-                  </button>
+                  <button onClick={() => setShowPopup(false)} className="text-stone-300 hover:text-stone-500"><X size={18}/></button>
                 </div>
-
-                <p className="text-xs sm:text-sm text-stone-500 leading-relaxed font-medium mb-5">
-                  {item.hint}
-                </p>
-
-                <div className="flex gap-2.5">
-                  <button
-                    onClick={() => setShowPopup(false)}
-                    className="flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-stone-400 border border-stone-100 hover:bg-stone-50 transition-all"
-                  >
-                    Chiudi
-                  </button>
-                  <button
-                    onClick={() => { setShowPopup(false); onAdd(); }}
-                    className="flex-[1.8] py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-lg active:scale-95 transition-all"
-                    style={{ background: "linear-gradient(135deg, #81ccb0, #5aa89a)", boxShadow: "0 8px 20px rgba(129,204,176,0.3)" }}
-                  >
-                    Aggiungi ✓
-                  </button>
+                <p className="text-sm text-stone-500 leading-relaxed mb-6 font-medium">{item.hint}</p>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowPopup(false)} className="flex-1 py-3 text-[10px] font-black uppercase text-stone-400 border border-stone-100 rounded-2xl">Chiudi</button>
+                  <button onClick={() => { setShowPopup(false); onAdd(); }} className="flex-[2] py-3 text-[10px] font-black uppercase text-white bg-[#81ccb0] rounded-2xl shadow-lg shadow-[#81ccb0]/30">Aggiungi ✓</button>
                 </div>
               </div>
             </motion.div>
@@ -395,7 +274,7 @@ function ItemCard({
   );
 }
 
-// ─── Componente principale ──────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 interface AttivitaQuizProps {
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
@@ -419,33 +298,56 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
   }, []);
 
   const isFull = selectedItems.length === 3;
-  const addItem    = (id: string) => { if (!isFull) setSelectedItems(p => [...p, id]); };
+  const addItem = (id: string) => !isFull && setSelectedItems(p => [...p, id]);
   const removeItem = (id: string) => setSelectedItems(p => p.filter(i => i !== id));
 
-  const compute = () => {
+  const runAnalysis = () => {
     if (!isFull || escursioniPool.length === 0) return;
     setIsComputing(true);
+
     setTimeout(() => {
-      let bestMatch = escursioniPool[0];
-      let maxScore = -Infinity;
-      escursioniPool.forEach(esc => {
-        let s = scoreEscursione(esc, selectedItems);
-        if (shownIds.includes(esc.id)) s -= 14;
-        s += Math.random() * 2;
-        if (s > maxScore) { maxScore = s; bestMatch = esc; }
+      // 1. Calcoliamo il profilo utente per il Gatekeeper
+      const currentProfileKey = computeProfile(selectedItems);
+      setProfile(currentProfileKey);
+      
+      const allowedDifficulties = PROFILE_DIFFICULTY_MAP[currentProfileKey];
+
+      // 2. Filtro di sicurezza (Hard Constraint)
+      let poolSicuro = escursioniPool.filter(esc => {
+        const diff = esc.difficolta || "Media"; 
+        return allowedDifficulties.includes(diff);
       });
+
+      // Fallback: se il DB non ha escursioni che fittano perfettamente, usiamo il pool totale
+      if (poolSicuro.length === 0) poolSicuro = escursioniPool;
+
+      // 3. Analisi Tematica & Combo
+      let bestMatch = poolSicuro[0];
+      let maxScore = -Infinity;
+
+      poolSicuro.forEach(esc => {
+        let currentScore = scoreEscursione(esc, selectedItems);
+        
+        if (shownIds.includes(esc.id)) currentScore -= 30; // Penalizza ripetizioni
+        currentScore += Math.random() * 2; // Tie-breaker
+
+        if (currentScore > maxScore) {
+          maxScore = currentScore;
+          bestMatch = esc;
+        }
+      });
+
       setRecommended(bestMatch);
       setShownIds(prev => [...prev, bestMatch.id]);
-      setProfile(computeProfile(selectedItems));
       setIsComputing(false);
       setStep("result");
-    }, 600);
+    }, 1200);
   };
 
   const reset = () => { setStep("items"); setSelectedItems([]); setRecommended(null); };
 
-  const leftItems   = ITEMS.filter(i => i.zone === "left").sort((a, b) => (a.zoneRow||0) - (b.zoneRow||0));
-  const rightItems  = ITEMS.filter(i => i.zone === "right").sort((a, b) => (a.zoneRow||0) - (b.zoneRow||0));
+  const leftItems = ITEMS.filter(i => i.zone === "left").sort((a, b) => (a.zoneRow || 0) - (b.zoneRow || 0));
+  const rightItems = ITEMS.filter(i => i.zone === "right").sort((a, b) => (a.zoneRow || 0) - (b.zoneRow || 0));
   const bottomItems = ITEMS.filter(i => i.zone === "bottom");
   const currentProfile = PROFILI[profile];
 
@@ -460,17 +362,10 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
       <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #81ccb0, #5aaadd, #f4d98c)" }} />
 
       <AnimatePresence mode="wait">
-
-        {/* ── STEP items ────────────────────────────────────────────────── */}
         {step === "items" && (
-          <motion.div key="items" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.3 }}
-            className="p-5 sm:p-7 md:p-8"
-          >
+          <motion.div key="items" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.3 }} className="p-5 sm:p-7 md:p-8">
             <div className="mb-5">
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1" style={{ color: "#81ccb0" }}>
-                Trova la tua escursione
-              </p>
+              <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1" style={{ color: "#81ccb0" }}>Trova la tua escursione</p>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#44403c] uppercase tracking-tighter leading-[0.9] mb-1">
                 Cosa metti<br />
                 <span className="font-light italic" style={{ color: "#9f8270" }}>nel tuo zaino?</span>
@@ -482,97 +377,57 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
             </div>
 
             <div className="flex gap-2 sm:gap-4 items-center mb-3">
-              {/* Colonna sinistra */}
               <div className="flex flex-col gap-3 sm:gap-4 items-center w-14 sm:w-16 shrink-0">
                 {leftItems.map(item => (
-                  <ItemCard key={item.id} item={item}
-                    isIn={selectedItems.includes(item.id)}
-                    isDisabled={!selectedItems.includes(item.id) && isFull}
-                    onAdd={() => addItem(item.id)} onRemove={() => removeItem(item.id)}
-                  />
+                  <ItemCard key={item.id} item={item} isIn={selectedItems.includes(item.id)} isDisabled={!selectedItems.includes(item.id) && isFull} onAdd={() => addItem(item.id)} onRemove={() => removeItem(item.id)} />
                 ))}
               </div>
 
-              {/* Centro zaino */}
               <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="relative w-full mx-auto" style={{ maxWidth: "520px" }}>
-                  <BackpackSVG glowing={isFull} itemCount={selectedItems.length} />
-                </div>
+                <BackpackSVG glowing={isFull} itemCount={selectedItems.length} />
                 <div className="flex gap-2 mt-3 min-h-[44px] items-center justify-center">
                   <AnimatePresence>
                     {selectedItems.map(id => {
                       const it = ITEMS.find(i => i.id === id);
                       return (
-                        <motion.button key={id}
-                          initial={{ opacity: 0, scale: 0.5, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.5, y: 8 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 24 }}
-                          onClick={() => removeItem(id)}
-                          className="relative w-11 h-11 rounded-2xl flex items-center justify-center text-2xl focus:outline-none active:scale-90"
-                          style={{ background: "white", boxShadow: "0 2px 8px rgba(129,204,176,0.3), 0 0 0 2px #81ccb0" }}
-                          title={`Rimuovi ${it?.label}`}
-                        >
+                        <motion.button key={id} initial={{ opacity: 0, scale: 0.5, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.5, y: 8 }} onClick={() => removeItem(id)} className="relative w-11 h-11 rounded-2xl flex items-center justify-center text-2xl focus:outline-none active:scale-90" style={{ background: "white", boxShadow: "0 2px 8px rgba(129,204,176,0.3), 0 0 0 2px #81ccb0" }}>
                           {it?.emoji}
                           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-stone-400 text-white flex items-center justify-center text-[9px] font-black leading-none">✕</span>
                         </motion.button>
                       );
                     })}
-                    {selectedItems.length === 0 && (
-                      <p className="text-[9px] font-medium text-stone-300 tracking-wide">Nessun oggetto selezionato</p>
-                    )}
+                    {selectedItems.length === 0 && <p className="text-[9px] font-medium text-stone-300 tracking-wide">Nessun oggetto selezionato</p>}
                   </AnimatePresence>
                 </div>
                 <div className="flex gap-2 mt-2">
                   {[0, 1, 2].map(i => (
-                    <motion.div key={i}
-                      animate={{ backgroundColor: i < selectedItems.length ? "#81ccb0" : "#d6d3d1", scale: i < selectedItems.length ? 1.3 : 1 }}
-                      transition={{ duration: 0.22 }}
-                      className="w-2 h-2 rounded-full"
-                    />
+                    <motion.div key={i} animate={{ backgroundColor: i < selectedItems.length ? "#81ccb0" : "#d6d3d1", scale: i < selectedItems.length ? 1.3 : 1 }} className="w-2 h-2 rounded-full" />
                   ))}
                 </div>
                 <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mt-1">{selectedItems.length}/3</p>
               </div>
 
-              {/* Colonna destra */}
               <div className="flex flex-col gap-3 sm:gap-4 items-center w-14 sm:w-16 shrink-0">
                 {rightItems.map(item => (
-                  <ItemCard key={item.id} item={item}
-                    isIn={selectedItems.includes(item.id)}
-                    isDisabled={!selectedItems.includes(item.id) && isFull}
-                    onAdd={() => addItem(item.id)} onRemove={() => removeItem(item.id)}
-                  />
+                  <ItemCard key={item.id} item={item} isIn={selectedItems.includes(item.id)} isDisabled={!selectedItems.includes(item.id) && isFull} onAdd={() => addItem(item.id)} onRemove={() => removeItem(item.id)} />
                 ))}
               </div>
             </div>
 
-            {/* Riga in basso */}
-            <div className="flex justify-center gap-3 sm:gap-6 py-3 px-2 rounded-2xl mb-4"
-              style={{ background: "rgba(90,170,221,0.06)", border: "1px dashed rgba(90,170,221,0.2)" }}
-            >
+            <div className="flex justify-center gap-3 sm:gap-6 py-3 px-2 rounded-2xl mb-4" style={{ background: "rgba(90,170,221,0.06)", border: "1px dashed rgba(90,170,221,0.2)" }}>
               {bottomItems.map(item => (
-                <ItemCard key={item.id} item={item}
-                  isIn={selectedItems.includes(item.id)}
-                  isDisabled={!selectedItems.includes(item.id) && isFull}
-                  onAdd={() => addItem(item.id)} onRemove={() => removeItem(item.id)}
-                />
+                <ItemCard key={item.id} item={item} isIn={selectedItems.includes(item.id)} isDisabled={!selectedItems.includes(item.id) && isFull} onAdd={() => addItem(item.id)} onRemove={() => removeItem(item.id)} />
               ))}
             </div>
 
             <AnimatePresence>
               {isFull && (
                 <motion.button
-                  initial={{ opacity: 0, y: 12, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ type: "spring", stiffness: 280, damping: 22 }}
-                  onClick={compute} disabled={isComputing}
+                  initial={{ opacity: 0, y: 12, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8 }} transition={{ type: "spring", stiffness: 280, damping: 22 }} onClick={runAnalysis} disabled={isComputing}
                   className="w-full min-h-[52px] py-4 rounded-2xl font-black uppercase text-xs tracking-widest text-white flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60"
                   style={{ background: "linear-gradient(135deg, #81ccb0 0%, #5aa89a 100%)", boxShadow: "0 8px 28px rgba(129,204,176,0.35)" }}
                 >
-                  {isComputing
-                    ? <><span className="animate-spin text-base">🧭</span> Analisi in corso…</>
-                    : <><Sparkles size={14} /> Scopri l'escursione perfetta <ArrowRight size={14} /></>
-                  }
+                  {isComputing ? <><RotateCcw className="animate-spin" size={16} /> Analisi in corso…</> : <><Sparkles size={16} /> Scopri l'escursione perfetta <ArrowRight size={14} /></>}
                 </motion.button>
               )}
             </AnimatePresence>
@@ -585,86 +440,48 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
           </motion.div>
         )}
 
-        {/* ── STEP result ───────────────────────────────────────────────── */}
         {step === "result" && recommended && (
-          <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: "easeOut" }}
-            className="p-5 sm:p-7 md:p-10"
-          >
+          <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: "easeOut" }} className="p-5 sm:p-7 md:p-10 text-center">
             <div className="flex justify-center gap-3 mb-5">
               {selectedItems.map((id, idx) => {
                 const it = ITEMS.find(i => i.id === id);
                 return (
-                  <motion.div key={id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.06 + idx * 0.07 }}
-                    className="flex flex-col items-center gap-1"
-                  >
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl"
-                      style={{ background: "white", boxShadow: "0 2px 10px rgba(159,130,112,0.12), 0 0 0 2px rgba(129,204,176,0.4)" }}>
+                  <motion.div key={id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 + idx * 0.07 }} className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl" style={{ background: "white", boxShadow: "0 2px 10px rgba(159,130,112,0.12), 0 0 0 2px rgba(129,204,176,0.4)" }}>
                       {it?.emoji}
                     </div>
-                    <span className="text-[8px] font-black uppercase tracking-wider text-stone-400 text-center leading-tight max-w-[52px]">
-                      {it?.label}
-                    </span>
+                    <span className="text-[8px] font-black uppercase tracking-wider text-stone-400 text-center leading-tight max-w-[52px]">{it?.label}</span>
                   </motion.div>
                 );
               })}
             </div>
 
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-              className="rounded-2xl p-4 mb-4 text-center"
-              style={{ background: currentProfile.bg, border: `1.5px solid ${currentProfile.border}` }}
-            >
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 16 }}
-                className="text-4xl mb-2"
-              >
-                {currentProfile.icona}
-              </motion.div>
-              <h3 className="text-xl font-black uppercase tracking-tighter mb-0.5" style={{ color: currentProfile.colore }}>
-                {currentProfile.titolo}
-              </h3>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-2xl p-4 mb-4 text-center" style={{ background: currentProfile.bg, border: `1.5px solid ${currentProfile.border}` }}>
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 16 }} className="text-4xl mb-2">{currentProfile.icona}</motion.div>
+              <h3 className="text-xl font-black uppercase tracking-tighter mb-0.5" style={{ color: currentProfile.colore }}>{currentProfile.titolo}</h3>
               <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-2">{currentProfile.sottotitolo}</p>
               <p className="text-xs text-stone-500 font-medium leading-relaxed">{currentProfile.descrizione}</p>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
-              className="rounded-2xl overflow-hidden mb-4"
-              style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}
-            >
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="rounded-2xl overflow-hidden mb-4" style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}>
               <div className="relative h-44">
                 <img src={recommended.immagine_url || "/altour-logo.png"} className="w-full h-full object-cover" alt={recommended.titolo} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-white/70 mb-0.5">
-                    {recommended.filosofia || recommended.difficolta || "Escursione"}
-                  </p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-white/70 mb-0.5">{recommended.filosofia || recommended.difficolta || "Escursione"}</p>
                   <h4 className="text-base font-black uppercase text-white leading-tight line-clamp-2">{recommended.titolo}</h4>
                 </div>
-                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white"
-                  style={{ background: currentProfile.colore }}>
-                  ✦ Per te
-                </div>
+                <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white" style={{ background: currentProfile.colore }}>✦ Per te</div>
               </div>
               <div className="p-4">
                 <p className="text-xs text-stone-500 leading-relaxed line-clamp-2 mb-3 font-medium">{recommended.descrizione}</p>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-2xl font-black" style={{ color: "#44403c" }}>
-                    {recommended.prezzo ? `€${recommended.prezzo}` : "—"}
-                  </span>
+                  <span className="text-2xl font-black" style={{ color: "#44403c" }}>{recommended.prezzo ? `€${recommended.prezzo}` : "—"}</span>
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => { setSelectedActivity(recommended); setIsDetailOpen(true); }}
-                      className="py-2.5 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all active:scale-95"
-                      style={{ background: "white", boxShadow: "0 2px 8px rgba(159,130,112,0.1), 0 0 0 1.5px rgba(159,130,112,0.2)", color: "#44403c" }}
-                    >
+                    <button onClick={() => { setSelectedActivity(recommended); setIsDetailOpen(true); }} className="py-2.5 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all active:scale-95" style={{ background: "white", boxShadow: "0 2px 8px rgba(159,130,112,0.1), 0 0 0 1.5px rgba(159,130,112,0.2)", color: "#44403c" }}>
                       Dettagli
                     </button>
-                    <button
-                      onClick={() => onBookingClick(recommended.titolo, "info")}
-                      className="py-2.5 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-white active:scale-95 transition-all"
-                      style={{ background: `linear-gradient(135deg, ${currentProfile.colore}, ${currentProfile.colore}cc)`, boxShadow: `0 4px 16px ${currentProfile.colore}40` }}
-                    >
+                    <button onClick={() => onBookingClick(recommended.titolo, "info")} className="py-2.5 px-4 rounded-xl font-black uppercase text-[9px] tracking-widest text-white active:scale-95 transition-all" style={{ background: `linear-gradient(135deg, ${currentProfile.colore}, ${currentProfile.colore}cc)`, boxShadow: `0 4px 16px ${currentProfile.colore}40` }}>
                       Richiedi Info
                     </button>
                   </div>
@@ -673,30 +490,10 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
             </motion.div>
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.44 }} className="flex gap-2">
-              <button
-                onClick={() => {
-                  setIsComputing(true);
-                  setTimeout(() => {
-                    let bestMatch = escursioniPool[0]; let maxScore = -Infinity;
-                    escursioniPool.forEach(esc => {
-                      let s = scoreEscursione(esc, selectedItems);
-                      if (shownIds.includes(esc.id)) s -= 14;
-                      s += Math.random() * 2;
-                      if (s > maxScore) { maxScore = s; bestMatch = esc; }
-                    });
-                    setRecommended(bestMatch); setShownIds(prev => [...prev, bestMatch.id]); setIsComputing(false);
-                  }, 400);
-                }}
-                className="flex-1 min-h-[48px] py-3.5 rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 active:scale-95 hover:bg-stone-100 transition-all"
-                style={{ background: "white", boxShadow: "0 2px 8px rgba(159,130,112,0.1), 0 0 0 1.5px rgba(159,130,112,0.15)", color: "#44403c" }}
-              >
+              <button onClick={runAnalysis} className="flex-1 min-h-[48px] py-3.5 rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 active:scale-95 hover:bg-stone-100 transition-all" style={{ background: "white", boxShadow: "0 2px 8px rgba(159,130,112,0.1), 0 0 0 1.5px rgba(159,130,112,0.15)", color: "#44403c" }}>
                 <RotateCcw size={11} /> Altra proposta
               </button>
-              <button
-                onClick={reset}
-                className="flex-1 min-h-[48px] py-3.5 rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 active:scale-95 hover:bg-stone-100 transition-all"
-                style={{ background: "white", boxShadow: "0 2px 8px rgba(159,130,112,0.1), 0 0 0 1.5px rgba(159,130,112,0.15)", color: "#44403c" }}
-              >
+              <button onClick={reset} className="flex-1 min-h-[48px] py-3.5 rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 active:scale-95 hover:bg-stone-100 transition-all" style={{ background: "white", boxShadow: "0 2px 8px rgba(159,130,112,0.1), 0 0 0 1.5px rgba(159,130,112,0.15)", color: "#44403c" }}>
                 <Sparkles size={11} /> Cambia zaino
               </button>
             </motion.div>
