@@ -247,7 +247,7 @@ const ACHIEVEMENT_BADGES = [
     const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
     e.forEach(attivita => {
       const stagione = getSeason(new Date(attivita.data));
-      perStagione[stagione] = (perStagione[stagione] || 0) + 1;
+      perStagione[stagione] = Math.min((perStagione[stagione] || 0) + 1, 16);
     });
     return Object.values(perStagione).every(count => count >= 16);
   },
@@ -255,29 +255,29 @@ const ACHIEVEMENT_BADGES = [
     const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
     e.forEach(attivita => {
       const stagione = getSeason(new Date(attivita.data));
-      perStagione[stagione] = (perStagione[stagione] || 0) + 1;
+      perStagione[stagione] = Math.min((perStagione[stagione] || 0) + 1, 16);
     });
-    // Per la progress bar: considera la stagione con meno attività
-    const minSeason = Math.min(...Object.values(perStagione));
-    return { current: Math.min(minSeason, 16), total: 16 };
+    
+    const currentSum = Object.values(perStagione).reduce((sum, count) => sum + count, 0);
+    return { current: currentSum, total: 64 };
   },
 },
 {
   id: "esploratore_verticale",
   name: "Esploratore Verticale",
   emoji: "⚡",
-  description: "Completa tutti i livelli di difficoltà",
+  description: "🟢16 · 🟡24 · 🟠16 · 🔴10 · ⚫6",
   color: "#002f59",
   check: (e: EscursioneCompletata[]) => {
     let facile = 0, facile_media = 0, media = 0, media_impegnativa = 0, impegnativa = 0;
     
     e.forEach(attivita => {
       const diff = attivita.difficolta || "";
-      if (diff === "Facile") facile++;
-      if (diff === "Facile-Media") facile_media++;
-      if (diff === "Media") media++;
-      if (diff === "Media-Impegnativa") media_impegnativa++;
-      if (diff === "Impegnativa") impegnativa++;
+      if (diff === "Facile") facile = Math.min(facile + 1, 16);
+      if (diff === "Facile-Media") facile_media = Math.min(facile_media + 1, 24);
+      if (diff === "Media") media = Math.min(media + 1, 16);
+      if (diff === "Media-Impegnativa") media_impegnativa = Math.min(media_impegnativa + 1, 10);
+      if (diff === "Impegnativa") impegnativa = Math.min(impegnativa + 1, 6);
     });
     
     return facile >= 16 && facile_media >= 24 && media >= 16 && media_impegnativa >= 10 && impegnativa >= 6;
@@ -287,27 +287,15 @@ const ACHIEVEMENT_BADGES = [
     
     e.forEach(attivita => {
       const diff = attivita.difficolta || "";
-      if (diff === "Facile") facile++;
-      if (diff === "Facile-Media") facile_media++;
-      if (diff === "Media") media++;
-      if (diff === "Media-Impegnativa") media_impegnativa++;
-      if (diff === "Impegnativa") impegnativa++;
+      if (diff === "Facile") facile = Math.min(facile + 1, 16);
+      if (diff === "Facile-Media") facile_media = Math.min(facile_media + 1, 24);
+      if (diff === "Media") media = Math.min(media + 1, 16);
+      if (diff === "Media-Impegnativa") media_impegnativa = Math.min(media_impegnativa + 1, 10);
+      if (diff === "Impegnativa") impegnativa = Math.min(impegnativa + 1, 6);
     });
     
-    const targets = [
-      { current: facile, total: 16 },
-      { current: facile_media, total: 24 },
-      { current: media, total: 16 },
-      { current: media_impegnativa, total: 10 },
-      { current: impegnativa, total: 6 },
-    ];
-    
-    // Trova la categoria con la percentuale più bassa (collo di bottiglia)
-    const worst = targets.reduce((a, b) => 
-      (a.current / a.total) < (b.current / b.total) ? a : b
-    );
-    
-    return { current: Math.min(worst.current, worst.total), total: worst.total };
+    const currentSum = facile + facile_media + media + media_impegnativa + impegnativa;
+    return { current: currentSum, total: 72 };
   },
 },
 ];
