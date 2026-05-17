@@ -174,25 +174,15 @@ function computeEarnedBadges(escursioni: EscursioneCompletata[]): string[] {
 }
 
 function getSeason(date: Date): string {
-  const m = date.getMonth();        // 0 = gennaio, 11 = dicembre
-  const d = date.getDate();         // giorno del mese
+  const m = date.getUTCMonth(); // ← UTC, non locale
+  const d = date.getUTCDate();  // ← UTC, non locale
 
-  // Primavera: 21 marzo (m=2, d>=21) → 20 giugno (m=5, d<=20)
-  if ((m === 2 && d >= 21) || m === 3 || m === 4 || (m === 5 && d <= 20)) {
+  if ((m === 2 && d >= 21) || m === 3 || m === 4 || (m === 5 && d <= 20))
     return "spring";
-  }
-  
-  // Estate: 21 giugno (m=5, d>=21) → 22 settembre (m=8, d<=22)
-  if ((m === 5 && d >= 21) || m === 6 || m === 7 || (m === 8 && d <= 22)) {
+  if ((m === 5 && d >= 21) || m === 6 || m === 7 || (m === 8 && d <= 22))
     return "summer";
-  }
-  
-  // Autunno: 23 settembre (m=8, d>=23) → 20 dicembre (m=11, d<=20)
-  if ((m === 8 && d >= 23) || m === 9 || m === 10 || (m === 11 && d <= 20)) {
+  if ((m === 8 && d >= 23) || m === 9 || m === 10 || (m === 11 && d <= 20))
     return "autumn";
-  }
-  
-  // Inverno: 21 dicembre (m=11, d>=21) → 20 marzo (m=2, d<=20)
   return "winter";
 }
 
@@ -207,7 +197,7 @@ const ACHIEVEMENT_BADGES = [
     check: (e: EscursioneCompletata[]) => {
       const perAnno: Record<number, number> = {};
       e.forEach(attivita => {
-        const anno = new Date(attivita.data).getFullYear();
+        const anno = new Date(attivita.data).getUTCFullYear();
         perAnno[anno] = (perAnno[anno] || 0) + 1;
       });
       return Object.values(perAnno).some(count => count >= 24);
