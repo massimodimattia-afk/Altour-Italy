@@ -202,31 +202,47 @@ const ACHIEVEMENT_BADGES = [
       });
       return Object.values(perAnno).some(count => count >= 24);
     },
-    progress: (e: EscursioneCompletata[]) => {
-      const perAnno: Record<number, number> = {};
-      e.forEach(attivita => {
-        const anno = new Date(attivita.data).getFullYear();
-        perAnno[anno] = (perAnno[anno] || 0) + 1;
-      });
-      const maxInYear = Math.max(...Object.values(perAnno), 0);
-      return { current: Math.min(maxInYear, 24), total: 24 };
-    },
+progress: (e: EscursioneCompletata[]) => {
+  const perAnno: Record<number, number> = {};
+  e.forEach(attivita => {
+    const anno = new Date(attivita.data).getUTCFullYear(); // ✅ come check
+    perAnno[anno] = (perAnno[anno] || 0) + 1;
+  });
+  const maxInYear = Math.max(...Object.values(perAnno), 0);
+  return { current: Math.min(maxInYear, 24), total: 24 };
+},
   },
   {
-    id: "collezionista",
-    name: "Collezionista",
-    emoji: "💎",
-    description: "Tutte le 15 filosofie",
-    color: "#946a52",
-    check: (e: EscursioneCompletata[]) => {
-      const filosofieTrovate = new Set(e.map(x => getFilosofiaName(x.colore)).filter(Boolean));
-      return filosofieTrovate.size >= 15;
-    },
-    progress: (e: EscursioneCompletata[]) => ({ 
-      current: Math.min(new Set(e.map(x => getFilosofiaName(x.colore)).filter(Boolean)).size, 15), 
-      total: 15 
-    }),
+  id: "collezionista",
+  name: "Collezionista",
+  emoji: "💎",
+  description: "Completa 8 filosofie",
+  color: "#946a52",
+  check: (e: EscursioneCompletata[]) => {
+    const counts: Record<string, number> = {};
+    for (const attivita of e) {
+      const filo = getFilosofiaName(attivita.colore);
+      if (filo) {
+        counts[filo] = Math.min((counts[filo] || 0) + 1, 16);
+      }
+    }
+    // Conta quante filosofie hanno raggiunto almeno 16 attività
+    const filosofieComplete = Object.values(counts).filter(count => count >= 16).length;
+    return filosofieComplete >= 8;
   },
+  progress: (e: EscursioneCompletata[]) => {
+    const counts: Record<string, number> = {};
+    for (const attivita of e) {
+      const filo = getFilosofiaName(attivita.colore);
+      if (filo) {
+        counts[filo] = Math.min((counts[filo] || 0) + 1, 16);
+      }
+    }
+    // Conta quante filosofie hanno raggiunto almeno 16
+    const filosofieComplete = Object.values(counts).filter(count => count >= 16).length;
+    return { current: Math.min(filosofieComplete, 8), total: 8 };
+  },
+},
   {
   id: "stagionale",
   name: "Anima delle Stagioni",
