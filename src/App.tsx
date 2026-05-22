@@ -7,8 +7,10 @@ import Attivitapage from './pages/Attivitapage';
 import Corsi from './pages/Corsi';
 import Tessera from './pages/Tessera';
 import Legal from './pages/Legal';
+import ChiSiamo from './pages/ChiSiamo';
 import BookingModal from './components/BookingModal';
 import PWAPrompt from "./components/PWAprompt";
+
 
 type PageType =
   | 'home'
@@ -17,11 +19,13 @@ type PageType =
   | 'tessera'
   | 'legal-privacy'
   | 'legal-cookie'
-  | 'legal-termini';
+  | 'legal-termini'
+  | 'chi-siamo';
 
 const VALID_PAGES: PageType[] = [
   'home', 'corsi', 'attivitapage', 'tessera',
   'legal-privacy', 'legal-cookie', 'legal-termini',
+  'chi-siamo',
 ];
 
 // Mappa per redirect (compatibilità con vecchie route)
@@ -70,6 +74,7 @@ function App() {
       case 'legal-privacy': return <Legal initialTab="privacy" />;
       case 'legal-cookie':  return <Legal initialTab="cookie" />;
       case 'legal-termini': return <Legal initialTab="termini" />;
+      case 'chi-siamo':     return <ChiSiamo onNavigate={handleNavigate} onBookingClick={openBooking} />;
       default:              return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
     }
   };

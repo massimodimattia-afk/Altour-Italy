@@ -13,6 +13,7 @@ export default function Header({ currentPage, onNavigate }: HeaderProps) {
     { id: "home",     label: "Home" },
     { id: "corsi",    label: "Accademia" },
     { id: "attivitapage", label: "Attività Outdoor" },  
+    { id: "chi-siamo", label: "Chi Siamo" },
     { id: "tessera",  label: "La Mia Tessera" },
   ];
 
