@@ -800,12 +800,33 @@ export default function Tessera() {
               <button onClick={() => window.location.href = '/'} className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 shadow-sm hover:bg-stone-100 transition-all"><ChevronLeft size={14} /><span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span></button>
               <img src="/Accesso_tessera.png" alt="Altour Italy" className="h-32 w-auto mx-auto mb-4 rounded-xl" onError={(e) => { e.currentTarget.src = "/Accesso_tessera.png"; }} />
               <h1 className="text-2xl font-black uppercase mb-6">TESSERA ALTOUR</h1>
-              {loginStep === "code" ? (
-                <div className="space-y-4">
-                  <input type="text" placeholder="ALTXXX" value={loginCode} onChange={(e) => setLoginCode(e.target.value)} className="w-full p-4 rounded-2xl bg-stone-50 border border-stone-100 text-center font-bold uppercase" />
-                  <button onClick={() => fetchUser(loginCode)} className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest">Avanti</button>
-                </div>
-              ) : (
+             {loginStep === "code" ? (
+  <div className="space-y-4">
+    <input
+      type="text"
+      inputMode="numeric"
+      value={"ALT" + loginCode}
+      onChange={(e) => {
+        const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (val.startsWith("ALT")) setLoginCode(val.slice(3));
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Backspace" && loginCode.length === 0) e.preventDefault();
+        if (e.key === "Enter" && loginCode.length > 0) fetchUser("ALT" + loginCode);
+      }}
+      maxLength={9}
+      className="w-full p-4 rounded-2xl bg-stone-50 border border-stone-100 text-center font-black uppercase text-stone-800 tracking-[0.3em] text-lg outline-none focus:border-brand-sky focus:ring-2 focus:ring-brand-sky/20 transition-all"
+    />
+
+    <button
+      onClick={() => fetchUser("ALT" + loginCode)}
+      disabled={loginCode.length === 0}
+      className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest disabled:opacity-30 transition-all active:scale-95"
+    >
+      Avanti
+    </button>
+  </div>
+) : (
                 <div className="space-y-6">
                   <p className="text-xs font-bold text-stone-400 uppercase">Inserisci il tuo PIN a {PIN_LENGTH} cifre</p>
                   <PinInput value={loginPin} onChange={setLoginPin} onComplete={handleVerifyPin} length={PIN_LENGTH} disabled={isVerifying} />
