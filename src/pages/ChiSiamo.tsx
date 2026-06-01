@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ShieldCheck, ArrowRight, Send, Star } from "lucide-react";
+import {ArrowRight, Send, Star } from "lucide-react";
 import Section, { isIOS } from "../components/Section";
 import { supabase } from "../lib/supabase";
 
@@ -269,7 +269,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             className="text-white/65 text-base md:text-xl font-medium max-w-sm md:max-w-md mx-auto leading-relaxed italic"
           >
             "Non organizziamo gite.<br />
-            Costruiamo esperienze."
+            Viviamo esperienze uniche."
           </p>
         </div>
       </Section>
@@ -286,7 +286,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
           <h2 className="text-4xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-8">
             Nati dall'amore <br />
             <span className="text-brand-sky italic font-light tracking-normal">
-              per la natura.
+              per la nostra terra.
             </span>
           </h2>
           <div className="space-y-5 text-stone-500 text-base md:text-lg font-medium leading-relaxed">

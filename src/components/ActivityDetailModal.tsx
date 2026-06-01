@@ -166,7 +166,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   {activity._tipo === 'corso' && activity.durata && (<span className="flex items-center gap-1"><Clock size={12} className="text-brand-sky" /> {activity.durata}</span>)}
                 
                   {!isTour && activity.lunghezza != null && <span className="flex items-center gap-1"><MapPin size={12} className="text-brand-sky" /> {activity.lunghezza}{!isCampo && " km"}</span>}
-                  {!isTour && activity.dislivello != null && <span className="flex items-center gap-1"><ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello}m</span>}
+                  {!isTour && activity.dislivello != null && <span className="flex items-center gap-1"><ArrowUp size={12} className="text-brand-sky" /> {activity.dislivello} m</span>}
                   {isTour && activity.lunghezza_tour && (<span className="flex items-center gap-1"><MapPin size={12} className="text-brand-sky" /> {activity.lunghezza_tour}</span>)}
                   {activity.min_partecipanti != null && (
   <span className="flex items-center gap-1">
