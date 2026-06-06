@@ -11,7 +11,6 @@ import ChiSiamo from './pages/ChiSiamo';
 import BookingModal from './components/BookingModal';
 import PWAPrompt from "./components/PWAprompt";
 
-
 type PageType =
   | 'home'
   | 'corsi'
@@ -40,10 +39,10 @@ function App() {
   const [selectedTitle, setSelectedTitle] = useState('');
   const [bookingMode, setBookingMode] = useState<'info' | 'prenota'>('info');
 
-  // Scroll to top al cambio pagina
+  // FIX 1: Scroll immediato al cambio pagina. Lo smooth scroll 
+  // durante la mutazione del DOM causa sfarfallio grave su iOS.
   useEffect(() => {
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.scrollTo({ top: 0, behavior: prefersReduced ? 'instant' : 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
   const handleNavigate = (page: string) => {
@@ -80,17 +79,17 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50 font-sans antialiased">
+    // FIX 2 & 3: min-h-[100dvh] per la barra Safari e pb-[env(...)] per non accavallarsi alla riga home di iPhone
+    <div className="min-h-[100dvh] flex flex-col bg-stone-50 font-sans antialiased pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
       <Header currentPage={currentPage} onNavigate={handleNavigate} />
 
       <main className="flex-grow relative">
-        {/* La chiave forza il remount della pagina al cambio route, ma evita animazioni conflittuali */}
-        <div key={currentPage} className="animate-[fadeIn_0.5s_ease-out]">
+        {/* FIX 4: Aggiunto ios-gpu-fix. Questo sposta il fadeIn sulla scheda grafica e previene i drop di frame */}
+        <div key={currentPage} className="animate-[fadeIn_0.5s_ease-out] ios-gpu-fix">
           {renderPage()}
         </div>
       </main>
 
-      {/* BookingModal gestito con AnimatePresence per animazioni di entrata/uscita */}
       <AnimatePresence>
         {isModalOpen && (
           <BookingModal

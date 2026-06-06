@@ -2,7 +2,8 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- FIX 1: Viewport blindato anti-zoom per effetto App Nativa -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
     <title>Altour Italy - Formazione ed Attività Outdoor</title>
     <meta name="description" content="Formazione ed attività outdoor in montagna con Altour Italy. Guide esperte, corsi professionali e avventure indimenticabili." />
@@ -10,13 +11,13 @@
     <meta name="author" content="Altour Italy" />
     <meta name="robots" content="index, follow" />
     
-    <!-- Icone ottimizzate — usa solo file presenti in public/ -->
+    <!-- Icone fisse (Il plugin inietterà quelle dinamiche del manifest) -->
     <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png" />
     <link rel="icon" type="image/png" sizes="72x72" href="/icon-72.png" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <link rel="manifest" href="/manifest.json" />
+    <!-- Manifest rimosso: ci pensa vite-plugin-pwa -->
     
-    <!-- Theme color -->
+    <!-- Theme color & iOS App Meta Tags -->
     <meta name="theme-color" content="#f5f2ed" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -47,11 +48,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://rpzbiqzjyculxquespos.supabase.co" />
     
-    <!-- Preload critico: solo hero image (LCP reale) -->
-    <!-- altour-logo.png rimosso: già eager+fetchpriority="high" nel componente -->
+    <!-- Preload critico -->
     <link rel="preload" href="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458.webp" as="image" />
     
-    <!-- Font con display swap (previene FOIT) -->
+    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
     
     <!-- CSP ottimizzata -->
@@ -60,19 +60,9 @@
   <body>
     <div id="root"></div>
     
-    <!-- Service Worker -->
-    <script>
-      if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.protocol === 'https:') {
-        window.addEventListener('load', () => {
-          setTimeout(() => {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
-              .then(reg => console.log('✅ SW registrato:', reg.scope))
-              .catch(err => console.warn('⚠️ SW fallito:', err));
-          }, 2000);
-        });
-      }
-    </script>
-    
+    <!-- FIX 2: Script manuale del Service Worker rimosso. 
+         vite-plugin-pwa inietterà il suo codice sicuro qui durante 'npm run build' -->
+         
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
