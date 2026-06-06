@@ -2,28 +2,65 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Escursioni e formazione outdoor in montagna con Altour Italy. Guide esperte, corsi professionali e avventure indimenticabili." />
-    <meta name="theme-color" content="#047857" />
+    <!-- FIX 1: Viewport blindato anti-zoom per effetto App Nativa -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <title>Altour Italy - Formazione ed Attività Outdoor</title>
+    <meta name="description" content="Formazione ed attività outdoor in montagna con Altour Italy. Guide esperte, corsi professionali e avventure indimenticabili." />
+    <meta name="keywords" content="Altour, escursioni, formazione outdoor, corsi montagna, trekking, guide alpine, attività natura, outdoor education" />
+    <meta name="author" content="Altour Italy" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Icone fisse (Il plugin inietterà quelle dinamiche del manifest) -->
+    <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png" />
+    <link rel="icon" type="image/png" sizes="72x72" href="/icon-72.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <!-- Manifest rimosso: ci pensa vite-plugin-pwa -->
+    
+    <!-- Theme color & iOS App Meta Tags -->
+    <meta name="theme-color" content="#f5f2ed" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Altour Italy" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
-    <title>Altour Italy - Escursioni e Formazione Outdoor</title>
-    <meta property="og:title" content="Altour Italy - Escursioni e Formazione Outdoor" />
-    <meta property="og:description" content="Esperienze autentiche in natura con guide esperte" />
-    <meta property="og:image" content="https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Altour Italy" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Altour Italy - Formazione ed Attività Outdoor" />
+    <meta property="og:description" content="Esperienze autentiche in natura con guide esperte. Scopri escursioni, corsi e avventure su misura per te." />
+    <meta property="og:image" content="https://altour-italy.vercel.app/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Paesaggio montano Altour Italy - Escursioni e formazione outdoor" />
+    <meta property="og:url" content="https://altour-italy.vercel.app" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:site_name" content="Altour Italy" />
+    
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Altour Italy" />
-    <meta name="twitter:description" content="Escursioni e formazione outdoor in montagna" />
-    <meta name="twitter:image" content="https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg" />
-    <script type="module" crossorigin src="/assets/index-Bi3NiiLw.js"></script>
+    <meta name="twitter:title" content="Altour Italy - Formazione ed Attività Outdoor" />
+    <meta name="twitter:description" content="Esperienze autentiche in natura con guide esperte" />
+    <meta name="twitter:image" content="https://altour-italy.vercel.app/og-image.jpg" />
+    
+    <!-- Preconnect ottimizzati -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://rpzbiqzjyculxquespos.supabase.co" />
+    
+    <!-- Preload critico -->
+    <link rel="preload" href="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20220904_150458.webp" as="image" />
+    
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&display=swap" rel="stylesheet" />
+    
+    <!-- CSP ottimizzata -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https://*.supabase.co https://*.vercel.app wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com; frame-src https://www.openstreetmap.org;" />
+    <script type="module" crossorigin src="/assets/index-JWb--QtI.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/react-BJeP1blT.js">
     <link rel="modulepreload" crossorigin href="/assets/scheduler-DYLXRpC5.js">
     <link rel="modulepreload" crossorigin href="/assets/react-dom-DJgOzpU9.js">
-    <link rel="modulepreload" crossorigin href="/assets/lucide-react-4qE4akF8.js">
+    <link rel="modulepreload" crossorigin href="/assets/lucide-react-w4srrxic.js">
     <link rel="modulepreload" crossorigin href="/assets/motion-utils-CYU-yiCP.js">
     <link rel="modulepreload" crossorigin href="/assets/motion-dom-DN4yR8xW.js">
     <link rel="modulepreload" crossorigin href="/assets/framer-motion-BaxZQFjP.js">
@@ -80,9 +117,13 @@
     <link rel="modulepreload" crossorigin href="/assets/hast-util-to-jsx-runtime-D72tjA9U.js">
     <link rel="modulepreload" crossorigin href="/assets/html-url-attributes-D46m5wfe.js">
     <link rel="modulepreload" crossorigin href="/assets/react-markdown-CGIU788h.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-dJReRlKU.css">
-  </head>
+    <link rel="stylesheet" crossorigin href="/assets/index-B65SBdrG.css">
+  <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
+    
+    <!-- FIX 2: Script manuale del Service Worker rimosso. 
+         vite-plugin-pwa inietterà il suo codice sicuro qui durante 'npm run build' -->
+         
   </body>
 </html>
