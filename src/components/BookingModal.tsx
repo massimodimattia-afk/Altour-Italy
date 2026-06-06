@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Send, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -26,6 +27,12 @@ export default function BookingModal({
     email: "",
     messaggio: "",
   });
+  
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Reset form quando si apre
   useEffect(() => {
@@ -51,30 +58,13 @@ export default function BookingModal({
     }
   }, [isOpen]);
 
-  // Gestione scroll body - MIGLIORATA
+  // FIX 1: Blocco scroll armonizzato (non litiga più con la modale Dettagli)
   useEffect(() => {
     if (isOpen) {
-      // Salva lo scroll position corrente
-      const scrollY = window.scrollY;
-      
-      // Applica stili per prevenire scroll
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-      
       return () => {
-        // Ripristina
-        const scrollY = document.body.style.top;
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        
-        // Ripristina scroll position
-        if (scrollY) {
-          window.scrollTo(0, parseInt(scrollY || '0', 10) * -1);
-        }
+        document.body.style.overflow = originalOverflow;
       };
     }
   }, [isOpen]);
@@ -114,7 +104,7 @@ export default function BookingModal({
       setFormError(validationError);
       return;
     }
-       
+        
     setIsSubmitting(true);
     setFormError(null);
     const payload = {
@@ -140,33 +130,33 @@ export default function BookingModal({
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        // FIX PRINCIPALE: z-index molto alto e isolamento stacking context
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          // Ho tolto z-[20000] da qui...
+          className="fixed inset-0 flex items-center justify-center p-4"
           style={{
-            // Isola lo stacking context
+            // FIX 2: Lo sculpiamo a ferro e fuoco qui! 99999 sconfiggerà chiunque.
+            zIndex: 99999, 
             isolation: 'isolate',
-            // Assicura che sia sopra tutto
             pointerEvents: 'auto',
           }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="booking-modal-title"
         >
-          {/* Backdrop - ora con z-index esplicito */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={!isSubmitting ? onClose : undefined}
-            className="absolute inset-0 bg-stone-900/60 backdrop-blur-md"
+            className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
             style={{ zIndex: 1 }}
           />
 
-          {/* Contenuto modale - z-index superiore al backdrop */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -331,4 +321,6 @@ export default function BookingModal({
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 }
