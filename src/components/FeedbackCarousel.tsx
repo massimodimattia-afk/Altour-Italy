@@ -1,3 +1,4 @@
+// src/components/FeedbackCarousel.tsx
 import { useEffect, useState } from "react";
 import { Star, Quote } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -23,7 +24,7 @@ export default function FeedbackCarousel() {
         .select("*")
         .eq("is_pubblicata", true)
         .order("created_at", { ascending: false })
-        .limit(6); // Mostriamo solo le ultime 6
+        .limit(6);
 
       if (!error && data) {
         setRecensioni(data);
@@ -33,11 +34,10 @@ export default function FeedbackCarousel() {
     fetchRecensioni();
   }, []);
 
-  // Se sta caricando o non ci sono recensioni approvate, nascondiamo la sezione per non lasciare buchi vuoti
   if (loading || recensioni.length === 0) return null;
 
   return (
-    <section className="py-16 md:py-24 bg-stone-100 overflow-hidden">
+    <section className="py-16 md:py-24 bg-[#f5f2ed] overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 mb-8 md:mb-12">
         <div className="flex items-center gap-3 mb-2">
           <div className="h-1 w-8 bg-brand-sky rounded-full" />
@@ -48,7 +48,6 @@ export default function FeedbackCarousel() {
         </h2>
       </div>
 
-      {/* Carosello con Scroll-Snapping nativo per massima fluidità su mobile */}
       <div 
         className="flex gap-4 md:gap-6 px-4 md:px-8 pb-8 overflow-x-auto snap-x snap-mandatory no-scrollbar ios-gpu-fix"
         style={{ WebkitOverflowScrolling: "touch" }}

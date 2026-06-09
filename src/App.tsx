@@ -12,7 +12,6 @@ import BookingModal from './components/BookingModal';
 import PWAPrompt from "./components/PWAprompt";
 import FeedbackPage from './pages/FeedbackPage';
 
-// FIX: Aggiunto 'lascia-feedback' qui!
 type PageType =
   | 'home'
   | 'corsi'
@@ -42,7 +41,15 @@ function App() {
   const [selectedTitle, setSelectedTitle] = useState('');
   const [bookingMode, setBookingMode] = useState<'info' | 'prenota'>('info');
 
-  // FIX 1: Scroll immediato al cambio pagina. Lo smooth scroll 
+  // FIX 1: Lettura dell'Hash (#) al caricamento iniziale (Invulnerabile ai redirect del server)
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && VALID_PAGES.includes(hash as PageType)) {
+      setCurrentPage(hash as PageType);
+    }
+  }, []);
+
+  // FIX 2: Scroll immediato al cambio pagina. Lo smooth scroll 
   // durante la mutazione del DOM causa sfarfallio grave su iOS.
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -52,6 +59,14 @@ function App() {
     const target = REDIRECT_MAP[page] ?? page;
     if (VALID_PAGES.includes(target as PageType)) {
       setCurrentPage(target as PageType);
+      
+      // FIX 3: Sincronizza l'URL in modo pulito. 
+      // Se l'utente fa refresh, l'app sa dove si trovava senza ricaricare la Home.
+      window.history.replaceState(
+        null, 
+        '', 
+        target === 'home' ? '/' : `#${target}`
+      );
     }
   };
 
@@ -83,12 +98,12 @@ function App() {
   };
 
   return (
-    // FIX 2 & 3: min-h-[100dvh] per la barra Safari e pb-[env(...)] per non accavallarsi alla riga home di iPhone
+    // FIX 4: min-h-[100dvh] per Safari e pb-[env(...)] per non accavallarsi alla riga home di iPhone
     <div className="min-h-[100dvh] flex flex-col bg-stone-50 font-sans antialiased pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
       <Header currentPage={currentPage} onNavigate={handleNavigate} />
 
       <main className="flex-grow relative">
-        {/* FIX 4: Aggiunto ios-gpu-fix. Questo sposta il fadeIn sulla scheda grafica e previene i drop di frame */}
+        {/* FIX 5: Aggiunto ios-gpu-fix. Sposta il fadeIn sulla GPU e previene i drop di frame */}
         <div key={currentPage} className="animate-[fadeIn_0.5s_ease-out] ios-gpu-fix">
           {renderPage()}
         </div>
