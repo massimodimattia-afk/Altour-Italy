@@ -282,7 +282,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
               {[
                 { value: "10 anni", label: "Esperienza", icon: <TrendingUp size={13} /> },
                 { value: "AIGAE",   label: "Guide",      icon: <Shield size={13} /> },
-                { value: "800+",    label: "Tesserati",  icon: <Users size={13} /> },
+                { value: "850+",    label: "Tesserati",  icon: <Users size={13} /> },
               ].map((stat, i) => (
                 <div key={i} className="flex flex-col items-center justify-center px-2">
                   <div className="text-brand-sky mb-1 md:hidden">{stat.icon}</div>

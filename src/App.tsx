@@ -10,7 +10,9 @@ import Legal from './pages/Legal';
 import ChiSiamo from './pages/ChiSiamo';
 import BookingModal from './components/BookingModal';
 import PWAPrompt from "./components/PWAprompt";
+import FeedbackPage from './pages/FeedbackPage';
 
+// FIX: Aggiunto 'lascia-feedback' qui!
 type PageType =
   | 'home'
   | 'corsi'
@@ -19,12 +21,13 @@ type PageType =
   | 'legal-privacy'
   | 'legal-cookie'
   | 'legal-termini'
-  | 'chi-siamo';
+  | 'chi-siamo'
+  | 'lascia-feedback';
 
 const VALID_PAGES: PageType[] = [
   'home', 'corsi', 'attivitapage', 'tessera',
   'legal-privacy', 'legal-cookie', 'legal-termini',
-  'chi-siamo',
+  'chi-siamo', 'lascia-feedback',
 ];
 
 // Mappa per redirect (compatibilità con vecchie route)
@@ -74,6 +77,7 @@ function App() {
       case 'legal-cookie':  return <Legal initialTab="cookie" />;
       case 'legal-termini': return <Legal initialTab="termini" />;
       case 'chi-siamo':     return <ChiSiamo onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'lascia-feedback': return <FeedbackPage onNavigate={handleNavigate} />;
       default:              return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
     }
   };

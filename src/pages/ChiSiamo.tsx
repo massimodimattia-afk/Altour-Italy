@@ -1,27 +1,21 @@
 // src/pages/ChiSiamo.tsx
-//
-// ⚠️  TEAM_MEMBERS: aggiorna con nomi, ruoli e filosofie reali delle guide.
-//     Le iniziali+colore sono un fallback dignitoso fino a quando
-//     non hai foto reali — NON usare stock photos di Unsplash.
-//
-// ⚠️  Immagini hero/sezioni: sostituisci con URL reali dal tuo bucket Supabase.
-
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Send, Star } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Section, { isIOS } from "../components/Section";
 import { supabase } from "../lib/supabase";
+import FeedbackCarousel from "../components/FeedbackCarousel";
 
 interface ChiSiamoProps {
   onNavigate: (page: string) => void;
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
 
-// ── Hero keyframes ────────────────────────────────────────────────────────────
+// ── Hero keyframes (Ottimizzate per iOS) ─────────────────────────────────────
 const HERO_KEYFRAMES = `
   @keyframes heroFadeUp {
     from { opacity: 0; transform: translate3d(0, 18px, 0); }
-    to   { opacity: 1; }
+    to   { opacity: 1; transform: translate3d(0, 0, 0); }
   }
   @keyframes heroFadeIn {
     from { opacity: 0; }
@@ -169,13 +163,12 @@ function useAnimatedCounter(target: number, duration = 1200, active = false): nu
   return value;
 }
 
-export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) {
+export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
   const [bgAnimDone, setBgAnimDone]       = useState(false);
   const [tesserateCount, setTesserateCount] = useState(0);
   const [escursioniCount, setEscursioniCount] = useState(0);
   const [statsVisible, setStatsVisible]   = useState(false);
   
-  // Impostiamo "Avventura" come filosofia attiva di default per popolare subito la card
   const [activePhilosophy, setActivePhilosophy] = useState<string>("Avventura");
   const statsRef = useRef<HTMLDivElement>(null);
 
@@ -215,7 +208,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
   const counterEscursioni = useAnimatedCounter(escursioniCount, 1000, statsVisible);
 
   return (
-    <div className="min-h-screen bg-[#f5f2ed] overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-[#f5f2ed] overflow-x-hidden">
       <style dangerouslySetInnerHTML={{ __html: HERO_KEYFRAMES }} />
 
       {/* ── 1. HERO ───────────────────────────────────────────────────────── */}
@@ -234,6 +227,8 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             willChange:              bgAnimDone ? "auto" : "transform",
             backfaceVisibility:      "hidden",
             WebkitBackfaceVisibility: "hidden",
+            transform: "translateZ(0)",
+            WebkitTransform: "translateZ(0)"
           }}
         >
           <img
@@ -246,15 +241,15 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
           />
         </motion.div>
 
-        <div className="absolute inset-0 bg-black/45" style={heroAnim(0, "heroFadeIn", 1.0)} />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[65%] to-[#f5f2ed]" />
+        <div className="absolute inset-0 bg-black/45 ios-gpu-fix" style={heroAnim(0, "heroFadeIn", 1.0)} />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[65%] to-[#f5f2ed] ios-gpu-fix" />
 
         <div className="relative z-10 text-center max-w-3xl w-full px-4 flex flex-col items-center mt-8">
           <div style={heroAnim(0.4)} className="mb-4">
             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/55 mb-3">
               Altour Italy
             </p>
-            <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter drop-shadow-2xl leading-none">
+            <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter drop-shadow-2xl leading-none ios-gpu-fix">
               Chi Siamo
             </h1>
           </div>
@@ -328,7 +323,6 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             </p>
           </div>
 
-          {/* Cloud dei Tag (Pillole di selezione) */}
           <div className="flex flex-wrap gap-2.5 mb-10">
             {Object.entries(FILOSOFIA_COLORS).map(([nome, colore]) => {
               const isActive = activePhilosophy === nome;
@@ -336,9 +330,9 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
                 <button
                   key={nome}
                   onClick={() => setActivePhilosophy(nome)}
-                  className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 outline-none ${
+                  className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 outline-none ios-gpu-fix ${
                     isActive 
-                      ? "shadow-lg scale-[1.02]" 
+                      ? "shadow-md scale-[1.02]" 
                       : "bg-white text-stone-400 hover:bg-stone-50 border border-stone-200"
                   }`}
                   style={{
@@ -354,9 +348,8 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             })}
           </div>
 
-          {/* Spotlight Card (Card centrale con il contenuto rifinita) */}
           <div 
-            className="bg-white rounded-[2rem] p-6 md:p-8 border border-stone-50 min-h-[180px] flex items-center relative overflow-hidden transition-all duration-500 max-w-4xl mx-auto"
+            className="bg-white rounded-[2rem] p-6 md:p-8 border border-stone-50 min-h-[180px] flex items-center relative overflow-hidden transition-all duration-500 max-w-4xl mx-auto ios-gpu-fix"
             style={{
               boxShadow: `0 10px 40px -10px ${FILOSOFIA_COLORS[activePhilosophy]}20`,
             }}
@@ -364,13 +357,12 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             <AnimatePresence mode="wait">
               <motion.div
                 key={activePhilosophy}
-                initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
                 className="flex flex-col sm:flex-row items-center sm:items-start gap-5 md:gap-8 text-center sm:text-left w-full z-10"
               >
-                {/* Icona Grande */}
                 <div 
                   className="w-20 h-20 md:w-24 md:h-24 rounded-[1.5rem] flex items-center justify-center text-4xl md:text-5xl flex-shrink-0 transition-colors"
                   style={{ backgroundColor: `${FILOSOFIA_COLORS[activePhilosophy]}15` }}
@@ -378,7 +370,6 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
                   {FILOSOFIA_EMOJI[activePhilosophy]}
                 </div>
                 
-                {/* Testo */}
                 <div className="flex-1 pt-1 md:pt-2">
                   <span 
                     className="text-[9px] font-black uppercase tracking-[0.3em] mb-2 block"
@@ -395,7 +386,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
                   
                   <button
                     onClick={() => onNavigate("attivitapage")}
-                    className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 px-5 py-2.5 rounded-xl"
+                    className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 px-5 py-2.5 rounded-xl ios-gpu-fix"
                     style={{ 
                       backgroundColor: `${FILOSOFIA_COLORS[activePhilosophy]}15`,
                       color: FILOSOFIA_COLORS[activePhilosophy] 
@@ -407,8 +398,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
               </motion.div>
             </AnimatePresence>
 
-            {/* Decorazione di sfondo (Emoji sfocata gigante e delicata) */}
-            <div className="absolute -bottom-8 -right-8 text-[160px] opacity-[0.04] pointer-events-none select-none blur-[2px] rotate-12 transition-all">
+            <div className="absolute -bottom-8 -right-8 text-[160px] opacity-[0.04] pointer-events-none select-none blur-[2px] rotate-12 transition-all ios-gpu-fix">
               {FILOSOFIA_EMOJI[activePhilosophy]}
             </div>
           </div>
@@ -440,14 +430,14 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             return (
               <ScrollReveal key={membro.nome} delay={idx * 0.1}>
                 <div
-                  className="bg-white rounded-[2.5rem] p-7 border border-stone-100 flex flex-col h-full"
+                  className="bg-white rounded-[2.5rem] p-7 border border-stone-100 flex flex-col h-full ios-gpu-fix"
                   style={{
                     boxShadow: "0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)",
                   }}
                 >
                   <div className="flex items-start gap-4 mb-5">
                     <div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-black flex-shrink-0 relative overflow-hidden"
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-black flex-shrink-0 relative overflow-hidden ios-gpu-fix"
                       style={{ backgroundColor: color }}
                     >
                       <div
@@ -493,7 +483,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
         <ScrollReveal>
           <div
             ref={statsRef}
-            className="bg-white rounded-[3rem] p-10 md:p-14 border border-stone-100"
+            className="bg-white rounded-[3rem] p-10 md:p-14 border border-stone-100 ios-gpu-fix"
             style={{
               boxShadow: "0 0 80px -10px rgba(14,165,233,0.10), 0 25px 50px -12px rgba(0,0,0,0.07)",
             }}
@@ -537,121 +527,9 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
         </ScrollReveal>
       </Section>
 
-      {/* ── 6. LA TESSERA ────────────────────────────────────────────────── */}
-      <Section className="max-w-4xl mx-auto px-4 py-8" delay={0.05}>
-        <ScrollReveal>
-          <div
-            className="bg-white rounded-[3rem] overflow-hidden border border-stone-50"
-            style={{
-              boxShadow: "0 0 80px -10px rgba(14,165,233,0.18), 0 0 40px -20px rgba(68,64,60,0.1), 0 25px 50px -12px rgba(0,0,0,0.1)",
-            }}
-          >
-            <div className="flex flex-col md:flex-row min-h-[280px]">
-              <div className="w-full md:w-2/5 relative h-52 md:h-auto overflow-hidden">
-                <img
-                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Chi_siamo_community.webp"
-                  alt="Tessera fedeltà Altour Italy"
-                  className="absolute inset-0 w-full h-full object-cover object-center"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
-                <div className="absolute bottom-6 left-8 text-white z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star size={14} className="text-brand-sky fill-brand-sky" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">
-                      Passaporto Altour
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
-                    Ogni scarpone<br />racconta.
-                  </h3>
-                </div>
-              </div>
+      {/* ── 6. FEEDBACK UTENTI (Sostituisce i vecchi box) ───────────────── */}
+      <FeedbackCarousel />
 
-              <div className="w-full md:w-3/5 p-8 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-3 block">
-                  Community
-                </span>
-                <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
-                  Unisciti alla <span className="text-brand-sky italic font-light tracking-normal">nostra community.</span>
-                </h2>
-                <p className="text-stone-500 text-sm font-medium max-w-sm leading-relaxed mb-6">
-                  Con la Tessera Altour ogni escursione diventa uno scarpone nel tuo passaporto. Colleziona badge, sblocca voucher, raggiungi traguardi e costruisci la tua storia.
-                </p>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => onNavigate("tessera")}
-                  className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-brand-sky transition-colors flex items-center justify-center gap-3"
-                >
-                  Scopri la Tessera <ArrowRight size={14} />
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-      </Section>
-
-      {/* ── 7. CTA FINALE ────────────────────────────────────────────────── */}
-      <Section className="max-w-4xl mx-auto px-4 py-8 pb-24" delay={0.05}>
-        <ScrollReveal>
-          <div
-            className="bg-white rounded-[3rem] overflow-hidden border border-stone-50"
-            style={{
-              boxShadow: "0 0 80px -10px rgba(14,165,233,0.18), 0 0 40px -20px rgba(68,64,60,0.1), 0 25px 50px -12px rgba(0,0,0,0.1)",
-            }}
-          >
-            <div className="flex flex-col md:flex-row min-h-[260px]">
-              <div className="w-full md:w-2/5 relative h-52 md:h-auto overflow-hidden">
-                <img
-                  src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Chi_siamo_vieni_con_noi.webp"
-                  alt="Dolomiti Altour Italy"
-                  className="absolute inset-0 w-full h-full object-cover object-[center_20%]"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
-                <div className="absolute bottom-6 left-8 text-white z-10">
-                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">
-                    Inizia la tua<br />avventura.
-                  </h3>
-                </div>
-              </div>
-
-              <div className="w-full md:w-3/5 p-8 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-3 block">
-                  Inizia ora
-                </span>
-                <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">
-                  Vieni con <span className="text-brand-sky italic font-light tracking-normal">noi.</span>
-                </h2>
-                <p className="text-stone-500 text-sm font-medium max-w-sm leading-relaxed mb-7">
-                  Esplora le attività in programma o contattaci per progettare un'esperienza su misura per te o per il tuo gruppo.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => onNavigate("attivitapage")}
-                    className="flex-1 bg-brand-sky text-white px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:bg-[#0284c7] transition-colors flex items-center justify-center gap-2 active:scale-95"
-                  >
-                    Esplora Attività <ArrowRight size={12} />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => onBookingClick("Contatto da Chi Siamo", "info")}
-                    className="flex-1 bg-brand-stone text-white px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:bg-brand-sky transition-colors flex items-center justify-center gap-2 active:scale-95"
-                  >
-                    Contattaci <Send size={12} />
-                  </motion.button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-      </Section>
     </div>
   );
 }
