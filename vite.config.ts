@@ -35,23 +35,29 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         runtimeCaching: [
+          // ✅ Solo immagini da Supabase Storage → CacheFirst (30 giorni)
           {
-            urlPattern: /^https:\/\/rpzbiqzjyculxquespos\.supabase\.co\/.*/i,
+            urlPattern: /^https:\/\/rpzbiqzjyculxquespos\.supabase\.co\/storage\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'altour-supabase-images',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 giorni
+                maxAgeSeconds: 60 * 60 * 24 * 30,
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      }
-    })
+                statuses: [0, 200],
+              },
+            },
+          },
+          // ✅ API REST Supabase → NetworkOnly (mai cacheate)
+          {
+            urlPattern: /^https:\/\/rpzbiqzjyculxquespos\.supabase\.co\/rest\/.*/i,
+            handler: 'NetworkOnly',
+          },
+        ],
+      },
+    }),
   ],
   optimizeDeps: {
     exclude: ['lucide-react'],
@@ -62,12 +68,11 @@ export default defineConfig({
     allowedHosts: true,
   },
   build: {
-    chunkSizeWarningLimit: 800, 
+    chunkSizeWarningLimit: 800,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            // Nota: vedi il consiglio qui sotto su questo blocco
             return id.toString().split('node_modules/')[1].split('/')[0].toString();
           }
         },
