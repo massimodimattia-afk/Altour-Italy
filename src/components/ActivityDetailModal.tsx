@@ -235,3 +235,5 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
   // IL FIX: Teletrasportiamo il modale nel tag <body> principale, liberandolo dalla prigione del CSS!
   return createPortal(modalContent, document.body);
 }
+
+

@@ -478,54 +478,7 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
         </div>
       </Section>
 
-      {/* ── 5. NUMERI ────────────────────────────────────────────────────── */}
-      <Section className="max-w-4xl mx-auto px-4 py-12 md:py-20" delay={0.05}>
-        <ScrollReveal>
-          <div
-            ref={statsRef}
-            className="bg-white rounded-[3rem] p-10 md:p-14 border border-stone-100 ios-gpu-fix"
-            style={{
-              boxShadow: "0 0 80px -10px rgba(14,165,233,0.10), 0 25px 50px -12px rgba(0,0,0,0.07)",
-            }}
-          >
-            <div className="text-center mb-10 md:mb-12">
-              <div className="flex items-center gap-3 mb-4 justify-center">
-                <div className="h-1 w-8 bg-brand-sky rounded-full" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky">
-                  In numeri
-                </span>
-                <div className="h-1 w-8 bg-brand-sky rounded-full" />
-              </div>
-              <h2 className="text-3xl md:text-4xl font-black text-brand-stone uppercase tracking-tighter leading-[0.95]">
-                10 anni di{" "}
-                <span className="text-brand-sky italic font-light tracking-normal">
-                  avventure.
-                </span>
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-y-2 md:divide-y-0 md:divide-x-2 divide-stone-50">
-              {[
-                { value: "10", suffix: " anni", label: "Di esperienza", note: "dal 2015" },
-                { value: counterTesserate.toString(), suffix: "+", label: "Tesserati", note: "e contando" },
-                { value: counterEscursioni.toString(), suffix: "+", label: "Attività attive", note: "ogni stagione" },
-                { value: "15", suffix: "", label: "Filosofie", note: "15 modi di stare in natura" },
-              ].map((stat, i) => (
-                <div key={i} className="flex flex-col items-center justify-center text-center px-4 py-6 md:py-0">
-                  <p className="text-3xl md:text-4xl font-black text-brand-stone leading-none mb-1 tabular-nums">
-                    {stat.value}
-                    <span className="text-brand-sky">{stat.suffix}</span>
-                  </p>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-1">
-                    {stat.label}
-                  </p>
-                  <p className="text-[9px] text-stone-300 font-medium">{stat.note}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </ScrollReveal>
-      </Section>
+      
 
       {/* ── 6. FEEDBACK UTENTI (Sostituisce i vecchi box) ───────────────── */}
       <FeedbackCarousel />
