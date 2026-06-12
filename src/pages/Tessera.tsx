@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
-import { createPortal } from "react-dom"; // ✅ Fondamentale per risolvere il bug di posizionamento
+import { createPortal } from "react-dom";
 import {
   Loader2,
   ShieldCheck,
@@ -7,7 +7,6 @@ import {
   Plus,
   ChevronRight,
   ChevronLeft,
-  Gift,
   User,
   Award,
   Trophy,
@@ -22,15 +21,15 @@ import {
   Send,
   FileText
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { supabase } from "../lib/supabase";
 
 const SESSION_KEY = "altour_session_v4";
 const PIN_LENGTH = 6;
 const SLOTS_PER_PAGE = 8;
-const BADGE_UNLOCK = 4;      // primo livello
-const BADGE_INTERMEDIO = 8;   // secondo livello
-const BADGE_COMPLETO = 16;    // terzo livello (completo)
+const BADGE_UNLOCK = 4;
+const BADGE_INTERMEDIO = 8;
+const BADGE_COMPLETO = 16;
 const MAX_REDEEM_ATTEMPTS = 5;
 const REDEEM_CODE_REGEX = /^[A-Z0-9]{4,12}$/;
 
@@ -92,26 +91,13 @@ const BADGE_EMOJI: Record<string, string> = {
 };
 
 const TESSERA_LEVELS = [
-  "Amante di attività all'aperto",
-  "Elfo dei prati",
-  "Collezionista di muschio",
-  "Principe della mappa",
-  "Guardiano delle nuvole",
-  "Mago della bussola",
-  "Spirito dei boschi",
-  "Collezionista di scarponi",
-  "Asceta dei monti",
-  "Re dell'altimetro",
-  "Saltatore di tronchi",
-  "Amico delle querce",
-  "Menestrello dei bastoncini",
-  "Duca degli scalatori",
-  "Custode del verde",
-  "Specialista dei sentieri",
-  "Gnomo delle pigne",
-  "Spiritello degli stagni",
-  "Appassionato naturalista",
-  "Leggenda vivente",
+  "Amante di attività all'aperto", "Elfo dei prati", "Collezionista di muschio", 
+  "Principe della mappa", "Guardiano delle nuvole", "Mago della bussola", 
+  "Spirito dei boschi", "Collezionista di scarponi", "Asceta dei monti", 
+  "Re dell'altimetro", "Saltatore di tronchi", "Amico delle querce", 
+  "Menestrello dei bastoncini", "Duca degli scalatori", "Custode del verde", 
+  "Specialista dei sentieri", "Gnomo delle pigne", "Spiritello degli stagni", 
+  "Appassionato naturalista", "Leggenda vivente"
 ];
 
 type TabType = "TESSERA" | "BADGE" | "TRAGUARDI";
@@ -135,27 +121,23 @@ interface UserTessera {
   quota_raggiunta?: number;
 }
 
-// --- Helper component per i Modali ---
-// Questo teletrasporta i modali sul <body> proteggendoli da Navbar e stili genitore rotti
+// ✅ FIX: Rimosso il blocco dell'overflow da qui. Ora è un semplice portal.
 const ModalPortal = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => { setMounted(true); }, []);
   if (!mounted) return null;
   return createPortal(children, document.body);
 };
 
-// Stile inline riutilizzabile e forzato per bloccare i modali esattamente al centro dello schermo
 const absoluteCenterStyle: React.CSSProperties = {
   position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  zIndex: 99999, // Altissimo per scavalcare la Navbar
+  inset: 0,
+  zIndex: 99999,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: '1.5rem'
+  padding: '1.5rem',
+  overflowY: 'auto'
 };
 
 // --- Utilities ---
@@ -202,84 +184,46 @@ function getSeason(date: Date): string {
 const ACHIEVEMENT_BADGES = [
   { id: "streak_tour", name: "Cuore verde", emoji: "🌿", description: "80 attività tra tour, campi e corsi", color: "#e94544", check: (e: EscursioneCompletata[]) => e.filter(x => x.categoria === "tour" || x.categoria === "campo"|| x.categoria === "corso").length >= 80, progress: (e: EscursioneCompletata[]) => ({ current: Math.min(e.filter(x => x.categoria === "tour" || x.categoria === "campo"|| x.categoria === "corso").length, 80), total: 80 }) },
   {
-    id: "assiduo",
-    name: "Assiduo",
-    emoji: "🎯",
-    description: "24 attività nello stesso anno",
-    color: "#01aa9f",
+    id: "assiduo", name: "Assiduo", emoji: "🎯", description: "24 attività nello stesso anno", color: "#01aa9f",
     check: (e: EscursioneCompletata[]) => {
       const perAnno: Record<number, number> = {};
-      e.forEach(attivita => {
-        const anno = new Date(attivita.data).getUTCFullYear();
-        perAnno[anno] = (perAnno[anno] || 0) + 1;
-      });
+      e.forEach(attivita => { const anno = new Date(attivita.data).getUTCFullYear(); perAnno[anno] = (perAnno[anno] || 0) + 1; });
       return Object.values(perAnno).some(count => count >= 24);
     },
     progress: (e: EscursioneCompletata[]) => {
       const perAnno: Record<number, number> = {};
-      e.forEach(attivita => {
-        const anno = new Date(attivita.data).getUTCFullYear();
-        perAnno[anno] = (perAnno[anno] || 0) + 1;
-      });
-      const maxInYear = Math.max(...Object.values(perAnno), 0);
-      return { current: Math.min(maxInYear, 24), total: 24 };
+      e.forEach(attivita => { const anno = new Date(attivita.data).getUTCFullYear(); perAnno[anno] = (perAnno[anno] || 0) + 1; });
+      return { current: Math.min(Math.max(...Object.values(perAnno), 0), 24), total: 24 };
     },
   },
   {
-    id: "collezionista",
-    name: "Collezionista",
-    emoji: "💎",
-    description: "Completa 8 filosofie",
-    color: "#946a52",
+    id: "collezionista", name: "Collezionista", emoji: "💎", description: "Completa 8 filosofie", color: "#946a52",
     check: (e: EscursioneCompletata[]) => {
       const counts: Record<string, number> = {};
-      for (const attivita of e) {
-        const filo = getFilosofiaName(attivita.colore);
-        if (filo) counts[filo] = Math.min((counts[filo] || 0) + 1, 16);
-      }
-      const filosofieComplete = Object.values(counts).filter(count => count >= 16).length;
-      return filosofieComplete >= 8;
+      for (const attivita of e) { const filo = getFilosofiaName(attivita.colore); if (filo) counts[filo] = Math.min((counts[filo] || 0) + 1, 16); }
+      return Object.values(counts).filter(count => count >= 16).length >= 8;
     },
     progress: (e: EscursioneCompletata[]) => {
       const counts: Record<string, number> = {};
-      for (const attivita of e) {
-        const filo = getFilosofiaName(attivita.colore);
-        if (filo) counts[filo] = Math.min((counts[filo] || 0) + 1, 16);
-      }
-      const filosofieComplete = Object.values(counts).filter(count => count >= 16).length;
-      return { current: Math.min(filosofieComplete, 8), total: 8 };
+      for (const attivita of e) { const filo = getFilosofiaName(attivita.colore); if (filo) counts[filo] = Math.min((counts[filo] || 0) + 1, 16); }
+      return { current: Math.min(Object.values(counts).filter(count => count >= 16).length, 8), total: 8 };
     },
   },
   {
-    id: "stagionale",
-    name: "Anima delle Stagioni",
-    emoji: "🍂",
-    description: "16 attività in ogni stagione",
-    color: "#75c43c",
+    id: "stagionale", name: "Anima delle Stagioni", emoji: "🍂", description: "16 attività in ogni stagione", color: "#75c43c",
     check: (e: EscursioneCompletata[]) => {
       const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
-      e.forEach(attivita => {
-        const stagione = getSeason(new Date(attivita.data));
-        perStagione[stagione] = Math.min((perStagione[stagione] || 0) + 1, 16);
-      });
+      e.forEach(attivita => { const stagione = getSeason(new Date(attivita.data)); perStagione[stagione] = Math.min((perStagione[stagione] || 0) + 1, 16); });
       return Object.values(perStagione).every(count => count >= 16);
     },
     progress: (e: EscursioneCompletata[]) => {
       const perStagione: Record<string, number> = { spring: 0, summer: 0, autumn: 0, winter: 0 };
-      e.forEach(attivita => {
-        const stagione = getSeason(new Date(attivita.data));
-        perStagione[stagione] = Math.min((perStagione[stagione] || 0) + 1, 16);
-      });
-      const currentSum = Object.values(perStagione).reduce((sum, count) => sum + count, 0);
-      return { current: currentSum, total: 64 };
+      e.forEach(attivita => { const stagione = getSeason(new Date(attivita.data)); perStagione[stagione] = Math.min((perStagione[stagione] || 0) + 1, 16); });
+      return { current: Object.values(perStagione).reduce((sum, count) => sum + count, 0), total: 64 };
     },
   },
   {
-    id: "esploratore_verticale",
-    name: "Esploratore Verticale",
-    emoji: "⚡",
-    description: "🟢16 · 🟡24 · 🟠16 · 🔴10 · ⚫6",
-    color: "#002f59",
+    id: "esploratore_verticale", name: "Esploratore Verticale", emoji: "⚡", description: "🟢16 · 🟡24 · 🟠16 · 🔴10 · ⚫6", color: "#002f59",
     check: (e: EscursioneCompletata[]) => {
       let facile = 0, facile_media = 0, media = 0, media_impegnativa = 0, impegnativa = 0;
       e.forEach(attivita => {
@@ -302,14 +246,13 @@ const ACHIEVEMENT_BADGES = [
         if (diff === "Media-Impegnativa") media_impegnativa = Math.min(media_impegnativa + 1, 10);
         if (diff === "Impegnativa") impegnativa = Math.min(impegnativa + 1, 6);
       });
-      const currentSum = facile + facile_media + media + media_impegnativa + impegnativa;
-      return { current: currentSum, total: 72 };
+      return { current: facile + facile_media + media + media_impegnativa + impegnativa, total: 72 };
     },
   },
 ];
 
 const IconaScarponeCustom = ({ size = 24, color = "#d6d3d1", isActive = false }: { size?: number; color?: string; isActive?: boolean }) => {
-  const style = { width: size, height: size, transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)" };
+  const style: React.CSSProperties = { width: size, height: size, transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)", willChange: "transform" };
   if (isActive) return <div style={{ ...style, backgroundColor: color, maskImage: "url(\"/scarpone.png\")", WebkitMaskImage: "url(\"/scarpone.png\")", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center" }} />;
   return <img src="/scarpone.png" alt="scarpone" style={{ ...style, filter: "grayscale(100%) opacity(0.15)" }} />;
 };
@@ -321,8 +264,7 @@ const BadgeChip = ({ filo, count, onClick }: { filo: string; count: number; onCl
 
   const levelInfo = filo === "Master" ? (count === BADGE_COMPLETO ? { level: 3, dots: 3, isUnlocked: true } : { level: 0, dots: 0, isUnlocked: false }) : getBadgeLevel(count);
   const isUnlocked = levelInfo.isUnlocked;
-  let progressText = "";
-  if (!isUnlocked) progressText = filo === "Master" ? `${count}/15` : `${count}/${BADGE_UNLOCK}`;
+  const progressText = !isUnlocked ? (filo === "Master" ? `${count}/15` : `${count}/${BADGE_UNLOCK}`) : "";
 
   return (
     <motion.div whileTap={{ scale: 0.91 }} onClick={onClick} className="flex flex-col items-center gap-1.5 cursor-pointer group">
@@ -334,7 +276,7 @@ const BadgeChip = ({ filo, count, onClick }: { filo: string; count: number; onCl
             ))}
           </div>
         )}
-        <motion.div className="w-[52px] h-[52px] md:w-[60px] md:h-[60px] rounded-2xl flex items-center justify-center transition-all relative overflow-hidden" style={isUnlocked ? { backgroundColor: color, boxShadow: `0 6px 18px ${color}45, inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.1)` } : { backgroundColor: "#f5f5f4" }} whileHover={isUnlocked ? { scale: 1.06, y: -2 } : { scale: 1.03 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
+        <motion.div className="w-[52px] h-[52px] md:w-[60px] md:h-[60px] rounded-2xl flex items-center justify-center transition-all relative overflow-hidden" style={{ ...(isUnlocked ? { backgroundColor: color, boxShadow: `0 6px 18px ${color}45, inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.1)` } : { backgroundColor: "#f5f5f4" }), willChange: 'transform' }} whileHover={isUnlocked ? { scale: 1.06, y: -2 } : { scale: 1.03 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
           {isUnlocked ? (
             <>
               <div className="absolute inset-0 opacity-20" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 60%)" }} />
@@ -363,7 +305,7 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
     const isMasterUnlocked = count === BADGE_COMPLETO;
     return (
       <div style={absoluteCenterStyle} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-        <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-2xl border border-stone-100 relative">
+        <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} style={{ willChange: 'transform, opacity' }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-2xl border border-stone-100 relative">
           <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 rounded-full text-stone-400"><X size={16} /></button>
           <div className="relative h-36 flex items-center justify-center" style={{ background: isMasterUnlocked ? "linear-gradient(145deg, #fbbf24cc, #f59e0b, #d97706aa)" : "linear-gradient(145deg, #f0eeec, #e8e5e2)" }}>
             <span style={{ fontSize: 56, filter: isMasterUnlocked ? "drop-shadow(0 4px 12px rgba(0,0,0,0.22))" : "grayscale(1) opacity(0.3)" }}>👑</span>
@@ -385,6 +327,7 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
   const isUnlocked = levelInfo.isUnlocked;
   const nextThreshold = !isUnlocked ? BADGE_UNLOCK : (count < BADGE_INTERMEDIO ? BADGE_INTERMEDIO : (count < BADGE_COMPLETO ? BADGE_COMPLETO : null));
   const remaining = nextThreshold ? nextThreshold - count : 0;
+  
   let statusText = "";
   if (!isUnlocked) statusText = `${remaining} per sbloccare`;
   else if (count < BADGE_INTERMEDIO) statusText = `${remaining} per livello 2`;
@@ -393,7 +336,7 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
 
   return (
     <div style={absoluteCenterStyle} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <motion.div initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 60, opacity: 0, scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 28 }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative">
+      <motion.div initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 60, opacity: 0, scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 28 }} style={{ willChange: 'transform, opacity' }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative">
         <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 backdrop-blur-sm rounded-full text-stone-400 hover:text-stone-700 transition-colors"><X size={16} /></button>
         <div className="relative h-36 flex items-center justify-center overflow-hidden" style={isUnlocked ? { background: `linear-gradient(145deg, ${color}cc 0%, ${color} 60%, ${color}aa 100%)` } : { background: "linear-gradient(145deg, #f0eeec 0%, #e8e5e2 100%)" }}>
           <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 50%, rgba(0,0,0,0.06) 100%)" }} />
@@ -481,13 +424,13 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-3 justify-center">
         {Array.from({ length: 3 }).map((_, i) => (
-          <input key={i} ref={el => inputRefs.current[i] = el} type="password" inputMode="numeric" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner" />
+          <input key={i} ref={el => inputRefs.current[i] = el} type="text" inputMode="numeric" pattern="\d*" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner text-security-disc" />
         ))}
       </div>
       <div className="flex gap-3 justify-center">
         {Array.from({ length: 3 }).map((_, i) => {
           const idx = 3 + i;
-          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="password" inputMode="numeric" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner" />;
+          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="text" inputMode="numeric" pattern="\d*" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner text-security-disc" />;
         })}
       </div>
     </div>
@@ -496,6 +439,7 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
 
 export default function Tessera() {
   const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [userTessera, setUserTessera] = useState<UserTessera | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("TESSERA");
@@ -506,7 +450,6 @@ export default function Tessera() {
   const [loginError, setLoginError] = useState("");
   const [pendingTessera, setPendingTessera] = useState<UserTessera | null>(null);
 
-  // Stati Riscatto
   const [showRedeem, setShowRedeem] = useState(false);
   const [redeemStep, setRedeemStep] = useState<RedeemStep>("INPUT");
   const [redeemCode, setRedeemCode] = useState("");
@@ -517,7 +460,6 @@ export default function Tessera() {
   const [newlyUnlockedBadge, setNewlyUnlockedBadge] = useState<string | null>(null);
   const [newlyUnlockedAchievement, setNewlyUnlockedAchievement] = useState<string | null>(null);
 
-  // Stati Storico
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyStep, setHistoryStep] = useState<HistoryStep>("INPUT");
   const [isSubmittingHistory, setIsSubmittingHistory] = useState(false);
@@ -565,6 +507,19 @@ export default function Tessera() {
     else setLoading(false);
   }, []);
 
+  // ✅ FIX: Controllo centralizzato dell'overflow per tutti i modali e la schermata di login
+  const isOverlayActive = !userTessera || showRedeem || showHistoryModal || !!selectedBoot || !!selectedBadge || !!selectedAchievement;
+  useEffect(() => {
+    if (isOverlayActive) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOverlayActive]);
+
   async function fetchUser(codice: string, isSession = false) {
     setLoading(true); setLoginError("");
     const { data, error } = await supabase.from("tessere").select("*").eq("codice_tessera", codice.toUpperCase().trim()).single();
@@ -575,6 +530,13 @@ export default function Tessera() {
       if (isSession) { setUserTessera(data as UserTessera); setLoading(false); }
       else { setPendingTessera(data as UserTessera); setLoginStep("pin"); setLoading(false); }
     }
+  }
+
+  async function loadDemo() {
+    setLoading(true);
+    const { data } = await supabase.from("tessere").select("*").eq("codice_tessera", "ALT000").single();
+    if (data) { setIsDemo(true); setUserTessera(data as UserTessera); }
+    setLoading(false);
   }
 
   async function completeLogin(tessera: UserTessera) {
@@ -595,7 +557,7 @@ export default function Tessera() {
 
   const handleLogout = () => {
     localStorage.removeItem(SESSION_KEY);
-    setUserTessera(null); setLoginStep("code"); setLoginCode(""); setLoginPin("");
+    setUserTessera(null); setIsDemo(false); setLoginStep("code"); setLoginCode(""); setLoginPin("");
   };
 
   const closeRedeem = useCallback(() => {
@@ -611,23 +573,30 @@ export default function Tessera() {
     const normalized = redeemCode.toUpperCase().trim();
     if (!REDEEM_CODE_REGEX.test(normalized)) { setRedeemError("Formato non valido."); return; }
     setIsVerifying(true); setRedeemError(""); setRedeemAttempts(n => n + 1);
+    
     const { data, error } = await supabase.from("escursioni").select("id, titolo, filosofia, categoria, difficolta, codici_usati").contains("codici_riscatto", [normalized]).single();
     if (error || !data) { setRedeemError("Codice non valido."); setIsVerifying(false); return; }
     if ((data.codici_usati as string[] | null)?.includes(normalized)) { setRedeemError("Codice già usato."); setIsVerifying(false); return; }
     if (escursioniCompletateParsed.some(e => e.titolo === data.titolo)) { setRedeemError("Già riscattato."); setIsVerifying(false); return; }
+    
     const color = getFilosofiaColor(data.filosofia);
     const newEntry: EscursioneCompletata = { titolo: data.titolo, colore: color, data: new Date().toISOString(), ...(data.categoria ? { categoria: data.categoria } : {}), ...(data.difficolta ? { difficolta: data.difficolta } : {}) };
     const updatedList = [...escursioniCompletateParsed, newEntry];
+    
     const oldBadges = computeEarnedBadges(escursioniCompletateParsed);
     const newBadges = computeEarnedBadges(updatedList);
     const justUnlocked = newBadges.find(b => !oldBadges.includes(b)) ?? null;
+    
     const oldAchievements = ACHIEVEMENT_BADGES.filter(ab => ab.check(escursioniCompletateParsed)).map(ab => ab.id);
     const newAchievements = ACHIEVEMENT_BADGES.filter(ab => ab.check(updatedList)).map(ab => ab.id);
     const justUnlockedAchievement = newAchievements.find(id => !oldAchievements.includes(id)) ?? null;
+    
     const updatePayload: any = { escursioni_completate: updatedList };
     if (justUnlocked) updatePayload.badges_filosofia = [...badgesFilosofiaParsed, justUnlocked];
+    
     const { data: saved, error: saveErr } = await supabase.from("tessere").update(updatePayload).eq("id", userTessera.id).select();
     if (saveErr || !saved) { setRedeemError("Errore salvataggio."); setIsVerifying(false); return; }
+    
     setUserTessera(saved[0] as UserTessera);
     setPendingActivity({ titolo: data.titolo, filosofia: data.filosofia ?? null, categoria: data.categoria ?? undefined, difficolta: data.difficolta ?? undefined });
     setChosenColor(color); setNewlyUnlockedBadge(justUnlocked); setNewlyUnlockedAchievement(justUnlockedAchievement);
@@ -636,18 +605,13 @@ export default function Tessera() {
 
   const closeHistoryModal = useCallback(() => {
     if (isSubmittingHistory) return;
-    setShowHistoryModal(false);
-    setHistoryStep("INPUT");
-    setHistoryError("");
+    setShowHistoryModal(false); setHistoryStep("INPUT"); setHistoryError("");
   }, [isSubmittingHistory]);
 
   const submitHistoryRequest = async () => {
     if (!userTessera) return;
-    setIsSubmittingHistory(true);
-    setHistoryError("");
-
+    setIsSubmittingHistory(true); setHistoryError("");
     try {
-      // ⚠️ ATTENZIONE: Sostituisci "NOME_TABELLA" con il nome della tua tabella contatti/richieste
       const { error } = await supabase.from("contatti").insert([
         {
           nome: `${userTessera.nome_escursionista} ${userTessera.cognome_escursionista}`.trim(),
@@ -715,18 +679,28 @@ export default function Tessera() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#f5f2ed]"><Loader2 className="animate-spin text-sky-500" /></div>;
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const swipeThreshold = 50;
+    const totalPages = stats?.totalPages || 1;
+    
+    if (info.offset.x < -swipeThreshold && currentPage < totalPages - 1) {
+      setCurrentPage((p) => p + 1);
+    } else if (info.offset.x > swipeThreshold && currentPage > 0) {
+      setCurrentPage((p) => p - 1);
+    }
+  };
+
+  if (loading) return <div className="min-h-[100dvh] flex items-center justify-center bg-[#f5f2ed]"><Loader2 className="animate-spin text-sky-500" /></div>;
 
   return (
-    <div className="min-h-screen bg-[#f5f2ed] text-stone-800 pb-20">
+    <div className="min-h-[100dvh] bg-[#f5f2ed] text-stone-800 pb-20">
       
-      {/* Login Screen protetto col Portal per evitare bug UI se per caso la main view ha transform */}
       <ModalPortal>
         <AnimatePresence mode="wait">
           {!userTessera && (
             <div style={absoluteCenterStyle}>
               <motion.div key="loginBg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#f5f2ed]" />
-              <motion.div key="loginBox" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center">
+              <motion.div key="loginBox" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center">
                 <button onClick={() => window.location.href = '/'} className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 shadow-sm hover:bg-stone-100 transition-all"><ChevronLeft size={14} /><span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span></button>
                 <img src="/Accesso_tessera.png" alt="Altour Italy" className="h-32 w-auto mx-auto mb-4 rounded-xl" onError={(e) => { e.currentTarget.src = "/Accesso_tessera.png"; }} />
                 <h1 className="text-2xl font-black uppercase mb-6">TESSERA ALTOUR</h1>
@@ -738,6 +712,7 @@ export default function Tessera() {
                       maxLength={9} className="w-full p-4 rounded-2xl bg-stone-50 border border-stone-100 text-center font-black uppercase text-stone-800 tracking-[0.3em] text-lg outline-none focus:border-brand-sky focus:ring-2 focus:ring-brand-sky/20 transition-all"
                     />
                     <button onClick={() => fetchUser("ALT" + loginCode)} disabled={loginCode.length === 0} className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest disabled:opacity-30 transition-all active:scale-95">Avanti</button>
+                    <button onClick={loadDemo} className="w-full p-3 rounded-2xl font-black uppercase tracking-widest text-[10px] text-stone-900 border border-stone-100 hover:bg-stone-50 transition-all active:scale-95">Anteprima senza tessera</button>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -796,7 +771,7 @@ export default function Tessera() {
           <div className="max-w-xl mx-auto px-4 relative z-30 -mt-10">
             <AnimatePresence mode="wait">
              {activeTab === "TESSERA" && (
-                <motion.div key="tessera" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }}>
+                <motion.div key="tessera" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }} style={{ willChange: 'transform, opacity' }}>
                   <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
                     <div className="flex items-center gap-5 mb-8">
                       <div className="relative flex-shrink-0">
@@ -835,7 +810,13 @@ export default function Tessera() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-2 md:gap-4 mb-8">
+                    <motion.div 
+                      drag="x" 
+                      dragConstraints={{ left: 0, right: 0 }} 
+                      dragElastic={0.2} 
+                      onDragEnd={handleDragEnd} 
+                      className="grid grid-cols-4 gap-2 md:gap-4 mb-8 touch-pan-y"
+                    >
                       {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
                         const esc = escursioniCompletateParsed?.[currentPage * SLOTS_PER_PAGE + i];
                         return (
@@ -844,7 +825,7 @@ export default function Tessera() {
                           </motion.div>
                         );
                       })}
-                    </div>
+                    </motion.div>
 
                     <div className="flex justify-between items-center pt-6 border-t border-stone-50">
                       <button disabled={currentPage === 0} onClick={() => setCurrentPage((p) => p - 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90"><ChevronLeft size={20} /></button>
@@ -853,19 +834,34 @@ export default function Tessera() {
                     </div>
                   </div>
 
-                  <motion.button onClick={() => setShowRedeem(true)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
-                    <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
-                  </motion.button>
+                  <motion.button 
+  onClick={() => setShowRedeem(true)} 
+  disabled={isDemo} 
+  whileHover={isDemo ? {} : { scale: 1.02 }} 
+  whileTap={isDemo ? {} : { scale: 0.98 }} 
+  className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all disabled:opacity-40 disabled:pointer-events-none"
+>
+  {/* Lo shimmer gira solo se la tessera NON è un'anteprima demo */}
+  {!isDemo && (
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
+  )}
+  <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
+</motion.button>
 
-                  <motion.button onClick={() => setShowHistoryModal(true)} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full mt-4 p-5 bg-white border-2 border-stone-200 text-stone-700 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:border-stone-300 hover:shadow-md transition-all">
-                    <History size={20} strokeWidth={2.5} /> Richiedi Storico
-                  </motion.button>
+               <motion.button 
+  onClick={() => setShowHistoryModal(true)} 
+  disabled={isDemo} // ✅ Blocca il click e le animazioni se è una demo
+  whileHover={isDemo ? {} : { scale: 1.02 }} 
+  whileTap={isDemo ? {} : { scale: 0.98 }} 
+  className="w-full mt-4 p-5 bg-white border-2 border-stone-200 text-stone-700 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none"
+>
+  <History size={20} strokeWidth={2.5} /> Richiedi Storico
+</motion.button>
                 </motion.div>
               )}
 
               {activeTab === "BADGE" && (
-                <motion.div key="badge" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
+                <motion.div key="badge" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }} style={{ willChange: 'transform, opacity' }} className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
                   <div className="flex items-center gap-4 mb-8">
                     <div className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center shadow-lg"><Award size={24} className="text-white" /></div>
                     <div>
@@ -882,7 +878,7 @@ export default function Tessera() {
               )}
 
               {activeTab === "TRAGUARDI" && (
-                <motion.div key="traguardi" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
+                <motion.div key="traguardi" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ type: "spring", damping: 25, stiffness: 200 }} style={{ willChange: 'transform, opacity' }} className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
                   <div className="flex items-center gap-4 mb-8">
                     <div className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center shadow-lg"><Trophy size={24} className="text-white" /></div>
                     <div>
@@ -920,7 +916,6 @@ export default function Tessera() {
             </AnimatePresence>
           </div>
 
-          {/* ✅ USO DEL PORTAL + STYLE INLINE: IL BUG E' STATO RISOLTO */}
           <ModalPortal>
             <AnimatePresence>
               
@@ -928,7 +923,7 @@ export default function Tessera() {
               {showRedeem && (
                 <div style={absoluteCenterStyle}>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeRedeem} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
                     <button onClick={closeRedeem} disabled={isVerifying} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
                     <AnimatePresence mode="wait">
                       {redeemStep === "INPUT" ? (
@@ -954,11 +949,11 @@ export default function Tessera() {
                 </div>
               )}
 
-              {/* Modal Richiesta Storico - WORDING CORRETTO, EMAIL RIMOSSA */}
+              {/* Modal Richiesta Storico */}
               {showHistoryModal && (
                 <div style={absoluteCenterStyle}>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeHistoryModal} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
                     <button onClick={closeHistoryModal} disabled={isSubmittingHistory} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
                     <AnimatePresence mode="wait">
                       {historyStep === "INPUT" ? (
@@ -998,7 +993,7 @@ export default function Tessera() {
               {selectedBoot && (
                 <div style={absoluteCenterStyle}>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBoot(null)} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
                     <button onClick={() => setSelectedBoot(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
                     <div className="flex flex-col items-center text-center">
                       <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-xl" style={{ backgroundColor: selectedBoot.colore + "15", border: `1px solid ${selectedBoot.colore}20` }}>
@@ -1027,7 +1022,7 @@ export default function Tessera() {
               {selectedAchievement && (
                 <div style={absoluteCenterStyle}>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedAchievement(null)} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
                     <button onClick={() => setSelectedAchievement(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
                     <div className="flex flex-col items-center text-center">
                       <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-8 bg-stone-50 border-2 border-stone-100 shadow-xl"><span className="text-6xl drop-shadow-sm">{selectedAchievement.emoji}</span></div>
@@ -1056,6 +1051,10 @@ export default function Tessera() {
             @keyframes shimmer {
               0% { transform: translateX(-100%); }
               100% { transform: translateX(100%); }
+            }
+            .text-security-disc {
+              -webkit-text-security: disc;
+              text-security: disc;
             }
           `}</style>
         </>
