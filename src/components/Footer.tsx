@@ -108,9 +108,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black">
                 &copy; {new Date().getFullYear()} Altour Italy
               </p>
-              <p className="text-[8px] text-stone-700 font-bold uppercase tracking-[0.1em]">
-                P.IVA 04412340263
-              </p>
+
             </div>
 
             <div className="flex flex-col items-center gap-4">

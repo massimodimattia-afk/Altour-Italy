@@ -103,6 +103,7 @@ const TESSERA_LEVELS = [
 type TabType = "TESSERA" | "BADGE" | "TRAGUARDI";
 type RedeemStep = "INPUT" | "SUCCESS";
 type HistoryStep = "INPUT" | "SUCCESS";
+type SupportStep = "INPUT" | "SUCCESS";
 
 interface EscursioneCompletata { titolo: string; colore: string; data: string; categoria?: string; difficolta?: string; }
 interface UserTessera { 
@@ -121,7 +122,6 @@ interface UserTessera {
   quota_raggiunta?: number;
 }
 
-// ✅ FIX: Rimosso il blocco dell'overflow da qui. Ora è un semplice portal.
 const ModalPortal = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -424,13 +424,13 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-3 justify-center">
         {Array.from({ length: 3 }).map((_, i) => (
-          <input key={i} ref={el => inputRefs.current[i] = el} type="text" inputMode="numeric" pattern="\d*" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner text-security-disc" />
+          <input key={i} ref={el => inputRefs.current[i] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner text-security-disc" />
         ))}
       </div>
       <div className="flex gap-3 justify-center">
         {Array.from({ length: 3 }).map((_, i) => {
           const idx = 3 + i;
-          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="text" inputMode="numeric" pattern="\d*" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner text-security-disc" />;
+          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner text-security-disc" />;
         })}
       </div>
     </div>
@@ -464,6 +464,13 @@ export default function Tessera() {
   const [historyStep, setHistoryStep] = useState<HistoryStep>("INPUT");
   const [isSubmittingHistory, setIsSubmittingHistory] = useState(false);
   const [historyError, setHistoryError] = useState("");
+
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportStep, setSupportStep] = useState<SupportStep>("INPUT");
+  const [supportData, setSupportData] = useState({ nome: "", codice: "", contatto: "", problema: "", richiediStorico: false });
+  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
+  const [supportError, setSupportError] = useState("");
+  const inputSupportRef = useRef<HTMLInputElement>(null);
 
   const [selectedBoot, setSelectedBoot] = useState<EscursioneCompletata | null>(null);
   const [selectedBadge, setSelectedBadge] = useState<{ filo: string; count: number } | null>(null);
@@ -507,8 +514,13 @@ export default function Tessera() {
     else setLoading(false);
   }, []);
 
-  // ✅ FIX: Controllo centralizzato dell'overflow per tutti i modali e la schermata di login
-  const isOverlayActive = !userTessera || showRedeem || showHistoryModal || !!selectedBoot || !!selectedBadge || !!selectedAchievement;
+  useEffect(() => {
+    if (showSupportModal && supportStep === "INPUT" && inputSupportRef.current) {
+      setTimeout(() => inputSupportRef.current?.focus(), 100);
+    }
+  }, [showSupportModal, supportStep]);
+
+  const isOverlayActive = !userTessera || showRedeem || showHistoryModal || showSupportModal || !!selectedBoot || !!selectedBadge || !!selectedAchievement;
   useEffect(() => {
     if (isOverlayActive) {
       document.body.style.overflow = 'hidden';
@@ -629,6 +641,39 @@ export default function Tessera() {
     }
   };
 
+  const closeSupportModal = useCallback(() => {
+    if (isSubmittingSupport) return;
+    setShowSupportModal(false); 
+    setSupportStep("INPUT"); 
+    setSupportError("");
+    setSupportData({ nome: "", codice: "", contatto: "", problema: "", richiediStorico: false });
+  }, [isSubmittingSupport]);
+
+  const submitSupportRequest = async () => {
+    if (!supportData.nome || !supportData.codice || !supportData.contatto) {
+      setSupportError("Compila tutti i campi richiesti.");
+      return;
+    }
+    setIsSubmittingSupport(true);
+    setSupportError("");
+    try {
+      const { error } = await supabase.from("contatti").insert([
+        {
+          nome: supportData.nome.trim(),
+          email: supportData.contatto.trim(),
+          messaggio: `RICHIESTA SUPPORTO ACCESSO TESSERA\nCodice Inserito: ${supportData.codice}\nRichiede anche storico: ${supportData.richiediStorico ? "SÌ" : "NO"}\nProblema descritto:\n${supportData.problema || "Nessun dettaglio extra."}`,
+          attivita: "[INFO] Problemi Login"
+        }
+      ]);
+      if (error) throw error;
+      setSupportStep("SUCCESS");
+    } catch (err) {
+      setSupportError("Si è verificato un errore, riprova o scrivici su WhatsApp.");
+    } finally {
+      setIsSubmittingSupport(false);
+    }
+  };
+
   const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userTessera) return;
@@ -700,7 +745,7 @@ export default function Tessera() {
           {!userTessera && (
             <div style={absoluteCenterStyle}>
               <motion.div key="loginBg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#f5f2ed]" />
-              <motion.div key="loginBox" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center">
+              <motion.div key="loginBox" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center flex flex-col">
                 <button onClick={() => window.location.href = '/'} className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 shadow-sm hover:bg-stone-100 transition-all"><ChevronLeft size={14} /><span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span></button>
                 <img src="/Accesso_tessera.png" alt="Altour Italy" className="h-32 w-auto mx-auto mb-4 rounded-xl" onError={(e) => { e.currentTarget.src = "/Accesso_tessera.png"; }} />
                 <h1 className="text-2xl font-black uppercase mb-6">TESSERA ALTOUR</h1>
@@ -725,9 +770,67 @@ export default function Tessera() {
                   </div>
                 )}
                 {loginError && <p className="mt-4 text-red-500 text-xs font-bold">{loginError}</p>}
+                
+                <div className="mt-8 pt-6 border-t border-stone-100">
+                  <button onClick={() => setShowSupportModal(true)} className="text-[10px] font-black uppercase text-stone-400 hover:text-sky-500 transition-colors underline underline-offset-4 active:scale-95">
+                    Problemi ad accedere? Contattaci
+                  </button>
+                </div>
               </motion.div>
             </div>
           )}
+
+          {/* Modal Supporto Form (con animazione di successo coerente) */}
+          {showSupportModal && (
+            <div style={absoluteCenterStyle}>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeSupportModal} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm z-[100]" />
+              <motion.div initial={{ scale: 0.9, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="relative z-[101] w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+                <button onClick={closeSupportModal} disabled={isSubmittingSupport} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
+                
+                <AnimatePresence mode="wait">
+                  {supportStep === "INPUT" ? (
+                    <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                      <div className="text-center mb-6">
+                        <h3 className="text-xl font-black uppercase tracking-tight">Supporto</h3>
+                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Non trovi il PIN o la tessera?</p>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <input type="text" placeholder="Nome e Cognome" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.nome} onChange={(e) => setSupportData({...supportData, nome: e.target.value})} />
+                        <input ref={inputSupportRef} type="text" inputMode="numeric" placeholder="Codice Tessera (es. 210)" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.codice} onChange={(e) => setSupportData({...supportData, codice: e.target.value.replace(/\D/g, "")})} />
+                        <input type="text" placeholder="La tua Email o Cellulare" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.contatto} onChange={(e) => setSupportData({...supportData, contatto: e.target.value})} />
+                        
+                        <label className="flex items-center gap-3 p-2 bg-stone-50 rounded-2xl cursor-pointer select-none active:scale-[0.99] transition-all">
+                          <input type="checkbox" checked={supportData.richiediStorico} onChange={(e) => setSupportData({...supportData, richiediStorico: e.target.checked})} className="w-5 h-5 rounded-md border-stone-300 text-sky-500 focus:ring-sky-500 cursor-pointer" />
+                          <span className="text-[10px] font-black uppercase text-stone-600 tracking-wider leading-tight">Richiedi anche caricamento storico attività passate</span>
+                        </label>
+
+                        <textarea placeholder="Descrivi il problema (opzionale)..." className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold h-20 resize-none border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.problema} onChange={(e) => setSupportData({...supportData, problema: e.target.value})} />
+                        
+                        {supportError && <p className="text-red-500 text-[10px] font-black mt-2 uppercase text-center py-2 bg-red-50 rounded-lg">{supportError}</p>}
+                        
+                        <button onClick={submitSupportRequest} disabled={isSubmittingSupport} className="w-full mt-2 bg-sky-500 text-white p-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-sky-200 active:scale-95 transition-all flex justify-center items-center gap-2">
+                          {isSubmittingSupport ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> Invia Richiesta</>}
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center">
+                      <div className="mb-4"><CheckCircle2 size={48} className="text-emerald-400 mx-auto" /></div>
+                      <div className="mb-6 p-6 rounded-3xl bg-emerald-50"><FileText size={40} className="text-emerald-500" /></div>
+                      <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1">Richiesta Inviata</h3>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-6 leading-relaxed">
+                        Il team ha ricevuto la tua segnalazione e ti aiuterà al più presto a rientrare!
+                      </p>
+                      <button onClick={closeSupportModal} className="w-full mt-2 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg">Perfetto!</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+              </motion.div>
+            </div>
+          )}
+
         </AnimatePresence>
       </ModalPortal>
 
@@ -835,28 +938,27 @@ export default function Tessera() {
                   </div>
 
                   <motion.button 
-  onClick={() => setShowRedeem(true)} 
-  disabled={isDemo} 
-  whileHover={isDemo ? {} : { scale: 1.02 }} 
-  whileTap={isDemo ? {} : { scale: 0.98 }} 
-  className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all disabled:opacity-40 disabled:pointer-events-none"
->
-  {/* Lo shimmer gira solo se la tessera NON è un'anteprima demo */}
-  {!isDemo && (
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
-  )}
-  <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
-</motion.button>
+                    onClick={() => setShowRedeem(true)} 
+                    disabled={isDemo} 
+                    whileHover={isDemo ? {} : { scale: 1.02 }} 
+                    whileTap={isDemo ? {} : { scale: 0.98 }} 
+                    className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {!isDemo && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
+                    )}
+                    <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
+                  </motion.button>
 
-               <motion.button 
-  onClick={() => setShowHistoryModal(true)} 
-  disabled={isDemo} // ✅ Blocca il click e le animazioni se è una demo
-  whileHover={isDemo ? {} : { scale: 1.02 }} 
-  whileTap={isDemo ? {} : { scale: 0.98 }} 
-  className="w-full mt-4 p-5 bg-white border-2 border-stone-200 text-stone-700 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none"
->
-  <History size={20} strokeWidth={2.5} /> Richiedi Storico
-</motion.button>
+                  <motion.button 
+                    onClick={() => setShowHistoryModal(true)} 
+                    disabled={isDemo} 
+                    whileHover={isDemo ? {} : { scale: 1.02 }} 
+                    whileTap={isDemo ? {} : { scale: 0.98 }} 
+                    className="w-full mt-4 p-5 bg-white border-2 border-stone-200 text-stone-700 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    <History size={20} strokeWidth={2.5} /> Richiedi Storico
+                  </motion.button>
                 </motion.div>
               )}
 
