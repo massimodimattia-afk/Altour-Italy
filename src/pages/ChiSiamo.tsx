@@ -1,5 +1,5 @@
 // src/pages/ChiSiamo.tsx
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, UIEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Section, { isIOS } from "../components/Section";
@@ -38,95 +38,29 @@ function heroAnim(
   };
 }
 
-// ── ScrollReveal: disabilitato su iOS per evitare jank ───────────────────────
+// ── ScrollReveal: corretto per Desktop e sicuro per GPU ──────────────────────
 const ScrollReveal = isIOS
-  ? ({ children }: { children: React.ReactNode }) => <>{children}</>
+  ? ({ children, className }: { children: React.ReactNode; className?: string }) => <div className={className}>{children}</div>
   : ({
       children,
       delay = 0,
+      className = "",
     }: {
       children: React.ReactNode;
       delay?: number;
+      className?: string;
     }) => (
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
+        // Fix: Invece del margin negativo che bloccava il PC, si attiva al 5% di visibilità
+        viewport={{ once: true, amount: 0.05 }} 
         transition={{ duration: 0.5, delay, ease: "easeOut" }}
+        className={className}
       >
         {children}
       </motion.div>
     );
-
-// ── PhilosophyPanel: usa motion solo su non-iOS ──────────────────────────────
-function PhilosophyPanel({
-  activePhilosophy,
-  onNavigate,
-}: {
-  activePhilosophy: string;
-  onNavigate: (page: string) => void;
-}) {
-  const color   = FILOSOFIA_COLORS[activePhilosophy];
-  const emoji   = FILOSOFIA_EMOJI[activePhilosophy];
-  const desc    = FILOSOFIA_DESC[activePhilosophy];
-
-  const inner = (
-    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 md:gap-8 text-center sm:text-left w-full z-10">
-      <div
-        className="w-20 h-20 md:w-24 md:h-24 rounded-[1.5rem] flex items-center justify-center text-4xl md:text-5xl flex-shrink-0"
-        style={{ backgroundColor: `${color}15` }}
-      >
-        {emoji}
-      </div>
-
-      <div className="flex-1 pt-1 md:pt-2">
-        <span
-          className="text-[9px] font-black uppercase tracking-[0.3em] mb-2 block"
-          style={{ color }}
-        >
-          Identità Altour
-        </span>
-        <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-brand-stone mb-2 leading-none">
-          {activePhilosophy}
-        </h3>
-        <p className="text-stone-500 text-sm md:text-base font-medium leading-relaxed mb-5 italic max-w-lg mx-auto sm:mx-0">
-          "{desc}"
-        </p>
-        <button
-          onClick={() => onNavigate("attivitapage")}
-          className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-widest active:scale-95 transition-transform px-5 py-2.5 rounded-xl"
-          style={{
-            backgroundColor: `${color}15`,
-            color,
-          }}
-        >
-          Esplora attività <ArrowRight size={14} />
-        </button>
-      </div>
-    </div>
-  );
-
-  if (isIOS) {
-    return (
-      <div key={activePhilosophy} className="w-full">
-        {inner}
-      </div>
-    );
-  }
-
-  return (
-    <motion.div
-      key={activePhilosophy}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
-      className="w-full"
-    >
-      {inner}
-    </motion.div>
-  );
-}
 
 // ── Design system ─────────────────────────────────────────────────────────────
 const FILOSOFIA_COLORS: Record<string, string> = {
@@ -196,7 +130,7 @@ const TEAM_MEMBERS = [
     nome:      "Gloria C.",
     ruolo:     "Social Media",
     filosofia: "Benessere",
-    bio:       "Entrepreneur digitale, promotrice del Benessere, amante della natura, delle avventure e delle grandi storie di vita, ben raccontate.",
+    bio:       "Entrepreneur digitale, amante della natura, delle avventure e delle grandi storie di vita, ben raccontate.",
   },
   {
     iniziali:  "RS",
@@ -220,6 +154,76 @@ const TEAM_MEMBERS = [
     bio:       "Data Analyst di giorno. Di notte: apprendista lettore di cartine al contrario, eterno curioso ricercatore dello zenit, aspirante smanettone.",
   },
 ];
+
+// ── PhilosophyPanel: usa motion solo su non-iOS ──────────────────────────────
+function PhilosophyPanel({
+  activePhilosophy,
+  onNavigate,
+}: {
+  activePhilosophy: string;
+  onNavigate: (page: string) => void;
+}) {
+  const color  = FILOSOFIA_COLORS[activePhilosophy];
+  const emoji  = FILOSOFIA_EMOJI[activePhilosophy];
+  const desc   = FILOSOFIA_DESC[activePhilosophy];
+
+  const inner = (
+    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 md:gap-8 text-center sm:text-left w-full z-10 transform-gpu">
+      <div
+        className="w-20 h-20 md:w-24 md:h-24 rounded-[1.5rem] flex items-center justify-center text-4xl md:text-5xl flex-shrink-0"
+        style={{ backgroundColor: `${color}15` }}
+      >
+        {emoji}
+      </div>
+
+      <div className="flex-1 pt-1 md:pt-2">
+        <span
+          className="text-[9px] font-black uppercase tracking-[0.3em] mb-2 block"
+          style={{ color }}
+        >
+          Identità Altour
+        </span>
+        <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-brand-stone mb-2 leading-none">
+          {activePhilosophy}
+        </h3>
+        <p className="text-stone-500 text-sm md:text-base font-medium leading-relaxed mb-5 italic max-w-lg mx-auto sm:mx-0">
+          "{desc}"
+        </p>
+        <button
+          onClick={() => onNavigate("attivitapage")}
+          className="inline-flex items-center gap-2 text-[10px] md:text-[9px] font-black uppercase tracking-widest active:scale-95 transition-transform px-5 py-3 md:py-2.5 rounded-xl min-h-[44px]"
+          style={{
+            backgroundColor: `${color}15`,
+            color,
+          }}
+        >
+          Esplora attività <ArrowRight size={14} />
+        </button>
+      </div>
+    </div>
+  );
+
+  if (isIOS) {
+    return (
+      <div key={activePhilosophy} className="w-full">
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      key={activePhilosophy}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className="w-full"
+    >
+      {inner}
+    </motion.div>
+  );
+}
 
 // ── TeamCardInner: contenuto riusabile tra desktop grid e mobile carousel ─────
 function TeamCardInner({
@@ -275,8 +279,12 @@ function TeamCardInner({
 export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
   const [bgAnimDone,       setBgAnimDone]       = useState(false);
   const [activePhilosophy, setActivePhilosophy] = useState<string>("Avventura");
+  
+  // Stato per l'indicatore del carosello mobile
+  const [activeTeamIndex, setActiveTeamIndex] = useState(0);
 
   const pillsRef = useRef<HTMLDivElement>(null);
+  const teamCarouselRef = useRef<HTMLDivElement>(null);
 
   // ── Pill click: aggiorna stato e scrolla il pill attivo in view ─────────────
   const handlePhilosophyClick = useCallback(
@@ -302,6 +310,16 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
     []
   );
 
+  // Aggiorna l'indicatore del carosello Team su mobile durante lo scroll
+  const handleTeamScroll = useCallback((e: UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const scrollPosition = container.scrollLeft;
+    const cardWidth = container.offsetWidth * 0.78; // 78vw come da stile
+    const gap = 16; // 1rem gap
+    const index = Math.round(scrollPosition / (cardWidth + gap));
+    setActiveTeamIndex(index);
+  }, []);
+
   const activeColor = FILOSOFIA_COLORS[activePhilosophy];
 
   return (
@@ -314,10 +332,8 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
         as="section"
         className="relative flex items-center justify-center overflow-hidden min-h-[55vh] md:min-h-[60vh]"
       >
-
-        {/* Immagine: scale animata solo su non-iOS; su iOS parte già a scale(1) */}
         {isIOS ? (
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 transform-gpu translate-z-0">
             <img
               src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Braies.webp"
               className="absolute inset-0 w-full h-full object-cover object-[center_30%]"
@@ -448,11 +464,6 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
             </p>
           </div>
 
-          {/*
-            Pills: scroll orizzontale su mobile (snap + scrollbar-hide),
-            flex-wrap su desktop. Il -mx-4 px-4 dà l'effetto "edge-to-edge"
-            tipico delle app native iOS.
-          */}
           <div
             ref={pillsRef}
             className="
@@ -462,6 +473,7 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
               scrollbar-hide
               -mx-4 px-4 md:mx-0 md:px-0
               pb-1 md:pb-0
+              transform-gpu translate-z-0
             "
           >
             {Object.entries(FILOSOFIA_COLORS).map(([nome, colore]) => {
@@ -472,10 +484,11 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
                   data-phil={nome}
                   onClick={() => handlePhilosophyClick(nome)}
                   className={`
-                    px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest
+                    px-4 py-3 md:py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest
                     flex items-center gap-2 outline-none
                     transition-all duration-200 active:scale-95
                     snap-start shrink-0 md:shrink
+                    min-h-[44px] md:min-h-0
                     ${isActive
                       ? "shadow-md"
                       : "bg-white text-stone-400 border border-stone-200"
@@ -496,7 +509,7 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
 
           {/* Card filosofia attiva */}
           <div
-            className="bg-white rounded-[2rem] p-6 md:p-8 border border-stone-50 min-h-[180px] flex items-center relative overflow-hidden transition-shadow duration-500 max-w-4xl mx-auto"
+            className="bg-white rounded-[2rem] p-6 md:p-8 border border-stone-50 min-h-[180px] flex items-center relative overflow-hidden transition-shadow duration-500 max-w-4xl mx-auto transform-gpu"
             style={{
               boxShadow: `0 10px 40px -10px ${activeColor}30`,
             }}
@@ -536,20 +549,14 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
           </div>
         </div>
 
-        {/*
-          Mobile: carousel snap orizzontale, card w-[82vw] con peek.
-          Desktop (md+): grid 3 colonne classico, nessun overflow.
-          Il wrapper mobile usa -mx-4 px-4 per edge-to-edge nativo iOS.
-        */}
-
-        {/* ── Desktop grid ── */}
+        {/* ── Desktop grid (Fix applicato qui per PC: className h-full) ── */}
         <div className="hidden md:grid md:grid-cols-3 gap-6">
           {TEAM_MEMBERS.map((membro, idx) => {
             const color = FILOSOFIA_COLORS[membro.filosofia] ?? "#5aaadd";
             return (
-              <ScrollReveal key={`d-${membro.nome}`} delay={idx * 0.08}>
+              <ScrollReveal key={`d-${membro.nome}`} delay={idx * 0.08} className="h-full">
                 <div
-                  className="bg-white rounded-[2.5rem] p-7 border border-stone-100 flex flex-col h-full"
+                  className="bg-white rounded-[2.5rem] p-7 border border-stone-100 flex flex-col h-full transform-gpu transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                   style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}
                 >
                   <TeamCardInner membro={membro} color={color} />
@@ -561,6 +568,8 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
 
         {/* ── Mobile carousel ── */}
         <div
+          ref={teamCarouselRef}
+          onScroll={handleTeamScroll}
           className="
             flex md:hidden gap-4
             overflow-x-auto
@@ -568,6 +577,8 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
             scrollbar-hide
             -mx-4 px-4
             pb-4
+            transform-gpu translate-z-0
+            after:content-[''] after:block after:w-4 after:shrink-0
           "
         >
           {TEAM_MEMBERS.map((membro) => {
@@ -578,7 +589,7 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
                 className="
                   bg-white rounded-[2.5rem] p-6 border border-stone-100
                   flex flex-col
-                  snap-start shrink-0
+                  snap-center shrink-0
                   w-[78vw]
                 "
                 style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)" }}
@@ -589,13 +600,15 @@ export default function ChiSiamo({ onNavigate }: ChiSiamoProps) {
           })}
         </div>
 
-        {/* Indicatore scroll su mobile: puntini pill */}
+        {/* Indicatore scroll su mobile dinamico */}
         <div className="flex md:hidden justify-center gap-1.5 mt-5">
           {TEAM_MEMBERS.map((_, i) => (
             <div
               key={i}
-              className="h-1.5 rounded-full bg-stone-200 transition-all duration-300"
-              style={{ width: i === 0 ? "20px" : "6px" }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === activeTeamIndex ? "bg-brand-stone" : "bg-stone-200"
+              }`}
+              style={{ width: i === activeTeamIndex ? "20px" : "6px" }}
             />
           ))}
         </div>

@@ -336,7 +336,7 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
 
   return (
     <div style={absoluteCenterStyle} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <motion.div initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 60, opacity: 0, scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 28 }} style={{ willChange: 'transform, opacity' }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative">
+      <motion.div initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 60, opacity: 0, scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 28 }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative" style={{ willChange: 'transform, opacity' }}>
         <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 backdrop-blur-sm rounded-full text-stone-400 hover:text-stone-700 transition-colors"><X size={16} /></button>
         <div className="relative h-36 flex items-center justify-center overflow-hidden" style={isUnlocked ? { background: `linear-gradient(145deg, ${color}cc 0%, ${color} 60%, ${color}aa 100%)` } : { background: "linear-gradient(145deg, #f0eeec 0%, #e8e5e2 100%)" }}>
           <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 50%, rgba(0,0,0,0.06) 100%)" }} />
@@ -424,13 +424,13 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-3 justify-center">
         {Array.from({ length: 3 }).map((_, i) => (
-          <input key={i} ref={el => inputRefs.current[i] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner text-security-disc" />
+          <input key={i} ref={el => inputRefs.current[i] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner" />
         ))}
       </div>
       <div className="flex gap-3 justify-center">
         {Array.from({ length: 3 }).map((_, i) => {
           const idx = 3 + i;
-          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner text-security-disc" />;
+          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner" />;
         })}
       </div>
     </div>
@@ -462,9 +462,11 @@ export default function Tessera() {
 
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyStep, setHistoryStep] = useState<HistoryStep>("INPUT");
+  const [historyEmail, setHistoryEmail] = useState("");
   const [isSubmittingHistory, setIsSubmittingHistory] = useState(false);
   const [historyError, setHistoryError] = useState("");
 
+  // Stati Supporto
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [supportStep, setSupportStep] = useState<SupportStep>("INPUT");
   const [supportData, setSupportData] = useState({ nome: "", codice: "", contatto: "", problema: "", richiediStorico: false });
@@ -622,12 +624,17 @@ export default function Tessera() {
 
   const submitHistoryRequest = async () => {
     if (!userTessera) return;
+    if (!historyEmail.trim() || !/^\S+@\S+\.\S+$/.test(historyEmail)) {
+      setHistoryError("Inserisci un indirizzo email valido.");
+      return;
+    }
     setIsSubmittingHistory(true); setHistoryError("");
     try {
+      // ⚠️ ASSICURATI CHE PUNTI A UN DB ESISTENTE (Es: "contatti")
       const { error } = await supabase.from("contatti").insert([
         {
           nome: `${userTessera.nome_escursionista} ${userTessera.cognome_escursionista}`.trim(),
-          email: userTessera.email_utente || "Non fornita",
+          email: historyEmail.trim().toLowerCase(),
           messaggio: `RICHIESTA CARICAMENTO STORICO VECCHIE ATTIVITÀ\nCodice Tessera: ${userTessera.codice_tessera}`,
           attivita: "[INFO] Popolamento Storico Tessera"
         }
@@ -650,18 +657,21 @@ export default function Tessera() {
   }, [isSubmittingSupport]);
 
   const submitSupportRequest = async () => {
-    if (!supportData.nome || !supportData.codice || !supportData.contatto) {
-      setSupportError("Compila tutti i campi richiesti.");
+    // ✅ Validazione aggiornata: codice_tessera rimosso da quelle obbligatorie
+    if (!supportData.nome || !supportData.contatto) {
+      setSupportError("Nome e Contatto sono obbligatori.");
       return;
     }
     setIsSubmittingSupport(true);
     setSupportError("");
     try {
+      // ⚠️ ASSICURATI CHE PUNTI A UN DB ESISTENTE (Es: "contatti")
       const { error } = await supabase.from("contatti").insert([
         {
           nome: supportData.nome.trim(),
           email: supportData.contatto.trim(),
-          messaggio: `RICHIESTA SUPPORTO ACCESSO TESSERA\nCodice Inserito: ${supportData.codice}\nRichiede anche storico: ${supportData.richiediStorico ? "SÌ" : "NO"}\nProblema descritto:\n${supportData.problema || "Nessun dettaglio extra."}`,
+          // ✅ Gestione codice opzionale: se vuoto, inietta "Non fornito" nel corpo del messaggio
+          messaggio: `RICHIESTA SUPPORTO ACCESSO TESSERA\nCodice Inserito: ${supportData.codice || "Non fornito"}\nRichiede anche storico: ${supportData.richiediStorico ? "SÌ" : "NO"}\nProblema descritto:\n${supportData.problema || "Nessun dettaglio extra."}`,
           attivita: "[INFO] Problemi Login"
         }
       ]);
@@ -780,7 +790,7 @@ export default function Tessera() {
             </div>
           )}
 
-          {/* Modal Supporto Form (con animazione di successo coerente) */}
+          {/* Modal Supporto Form (Codice reso Opzionale) */}
           {showSupportModal && (
             <div style={absoluteCenterStyle}>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeSupportModal} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm z-[100]" />
@@ -790,14 +800,17 @@ export default function Tessera() {
                 <AnimatePresence mode="wait">
                   {supportStep === "INPUT" ? (
                     <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                      <div className="text-center mb-6">
+                      <div className="text-center mb-5">
                         <h3 className="text-xl font-black uppercase tracking-tight">Supporto</h3>
                         <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Non trovi il PIN o la tessera?</p>
                       </div>
                       
                       <div className="space-y-3">
                         <input type="text" placeholder="Nome e Cognome" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.nome} onChange={(e) => setSupportData({...supportData, nome: e.target.value})} />
-                        <input ref={inputSupportRef} type="text" inputMode="numeric" placeholder="Codice Tessera (es. 210)" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.codice} onChange={(e) => setSupportData({...supportData, codice: e.target.value.replace(/\D/g, "")})} />
+                        
+                        {/* ✅ INPUT MODIFICATO CON PAROLA CHIAVE (OPZIONALE) */}
+                        <input ref={inputSupportRef} type="text" inputMode="numeric" placeholder="Codice Tessera (opzionale)" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.codice} onChange={(e) => setSupportData({...supportData, codice: e.target.value.replace(/\D/g, "")})} />
+                        
                         <input type="text" placeholder="La tua Email o Cellulare" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.contatto} onChange={(e) => setSupportData({...supportData, contatto: e.target.value})} />
                         
                         <label className="flex items-center gap-3 p-2 bg-stone-50 rounded-2xl cursor-pointer select-none active:scale-[0.99] transition-all">
@@ -826,11 +839,9 @@ export default function Tessera() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-
               </motion.div>
             </div>
           )}
-
         </AnimatePresence>
       </ModalPortal>
 
@@ -951,7 +962,10 @@ export default function Tessera() {
                   </motion.button>
 
                   <motion.button 
-                    onClick={() => setShowHistoryModal(true)} 
+                    onClick={() => {
+                      setHistoryEmail(userTessera.email_utente || ""); 
+                      setShowHistoryModal(true);
+                    }} 
                     disabled={isDemo} 
                     whileHover={isDemo ? {} : { scale: 1.02 }} 
                     whileTap={isDemo ? {} : { scale: 0.98 }} 
@@ -1063,11 +1077,18 @@ export default function Tessera() {
                           <div className="text-center mb-6">
                             <div className="inline-flex p-4 bg-stone-100 rounded-2xl mb-4"><History className="text-stone-600" size={28} /></div>
                             <h3 className="text-2xl font-black uppercase tracking-tight">Aggiorna Storico</h3>
-                            <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-4 leading-relaxed">
-                              Vuoi recuperare lo storico delle tue attività? <br/><br/>
-                              Il nostro team verificherà le tue partecipazioni passate e caricherà i tuoi vecchi scarponi direttamente qui, sulla tua Tessera Digitale.
+                            <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-2 mb-4 leading-relaxed">
+                              Conferma l'email per consentire al team di associare correttamente i tuoi vecchi scarponi a questa tessera digitale.
                             </p>
                           </div>
+                          
+                          <input 
+                            type="text"
+                            placeholder="Inserisci la tua email..."
+                            className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all mb-2"
+                            value={historyEmail}
+                            onChange={(e) => setHistoryEmail(e.target.value)}
+                          />
                           
                           {historyError && <p className="text-red-500 text-[10px] font-black mb-2 mt-2 uppercase text-center py-2 bg-red-50 rounded-lg">{historyError}</p>}
                           
