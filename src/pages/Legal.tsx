@@ -78,10 +78,9 @@ function PrivacyContent() {
     <>
       <Section title="Titolare del Trattamento">
         <p>
-          <strong>Altour Italy</strong> — Claudio Corazza<br />
-          P.IVA 04412340263<br />
+          <strong>Altour Italy</strong> — Claudio Corazza
           Via/Indirizzo: Roma, Italia — 00151<br />
-          Email: <a href="mailto:info.altouritaly@gmail.com">info.altouritaly@gmail.com</a><br />
+          Email: <a href="mailto:info@altouritaly.it">info@altouritaly.it</a><br />
           Telefono: +39 328 1613762
         </p>
         <p>
@@ -197,7 +196,7 @@ function PrivacyContent() {
       <Section title="Diritti dell'Interessato">
         <p>
           In qualsiasi momento puoi esercitare i seguenti diritti scrivendo a{" "}
-          <a href="mailto:info.altouritaly@gmail.com">info.altouritaly@gmail.com</a>:
+          <a href="mailto:info@altouritaly.it">info@altouritaly.it</a>:
         </p>
         <ul>
           <li>Accesso, rettifica o cancellazione dei tuoi dati</li>
@@ -353,7 +352,7 @@ function TerminiContent() {
       </Section>
 
       <Section title="Contatti">
-        <p>Per qualsiasi domanda: <a href="mailto:info.altouritaly@gmail.com">info.altouritaly@gmail.com</a> — +39 328 1613762</p>
+        <p>Per qualsiasi domanda: <a href="mailto:info@altouritaly.it">info@altouritaly.it</a> — +39 328 1613762</p>
       </Section>
     </>
   );
