@@ -35,7 +35,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               Contatti
             </h3>
             <div className="flex flex-col space-y-4 w-full font-bold">
-              <a href="mailto:info.altouritaly@gmail.com" className="flex items-center justify-center md:justify-start gap-4 text-stone-300 hover:text-brand-sky transition-colors group">
+              <a href="mailto:info@altouritaly.it" className="flex items-center justify-center md:justify-start gap-4 text-stone-300 hover:text-brand-sky transition-colors group">
                 <div className="p-2.5 bg-white/5 rounded-lg group-hover:bg-brand-sky/20 transition-all">
                   <Mail size={16} />
                 </div>
