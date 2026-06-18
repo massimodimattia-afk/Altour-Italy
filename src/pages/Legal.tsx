@@ -179,7 +179,7 @@ function PrivacyContent() {
           Non forniamo consapevolmente i nostri servizi online a minorenni senza il consenso del
           genitore o tutore legale. Se sei genitore e ritieni che tuo figlio ci abbia fornito dati
           senza il tuo consenso, contattaci a{" "}
-          <a href="mailto:info.altouritaly@gmail.com">info.altouritaly@gmail.com</a>: provvederemo
+          <a href="mailto:info@altouritaly.it">info@altouritaly.it</a>: provvederemo
           alla rimozione immediata dei dati.
         </p>
       </Section>

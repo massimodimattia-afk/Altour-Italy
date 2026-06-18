@@ -39,7 +39,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <div className="p-2.5 bg-white/5 rounded-lg group-hover:bg-brand-sky/20 transition-all">
                   <Mail size={16} />
                 </div>
-                <span className="text-[12px] tracking-tight">info.altouritaly@gmail.com</span>
+                <span className="text-[12px] tracking-tight">info@altouritaly.it</span>
               </a>
 
               <a href="tel:+393281613762" className="flex items-center justify-center md:justify-start gap-4 text-stone-300 hover:text-brand-sky transition-colors group">
