@@ -973,6 +973,18 @@ export default function Tessera() {
                   >
                     <History size={20} strokeWidth={2.5} /> Richiedi Storico
                   </motion.button>
+                  
+
+                  {/* NUOVO PULSANTE FEEDBACK */}
+                  <motion.button 
+  onClick={() => window.location.href = "https://www.altouritaly.it/#lascia-feedback"}
+  disabled={isDemo} 
+  whileHover={isDemo ? {} : { scale: 1.02 }} 
+  whileTap={isDemo ? {} : { scale: 0.98 }} 
+  className="w-full mt-4 p-5 bg-stone-50 border border-stone-200 text-stone-600 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:bg-white hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none"
+>
+  <span className="text-lg">⭐</span> Lascia un Feedback
+</motion.button>
                 </motion.div>
               )}
 
