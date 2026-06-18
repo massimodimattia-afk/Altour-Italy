@@ -306,7 +306,7 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
     return (
       <div style={absoluteCenterStyle} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
         <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} style={{ willChange: 'transform, opacity' }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-2xl border border-stone-100 relative">
-          <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 rounded-full text-stone-400"><X size={16} /></button>
+          <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 rounded-full text-stone-400 touch-manipulation"><X size={16} /></button>
           <div className="relative h-36 flex items-center justify-center" style={{ background: isMasterUnlocked ? "linear-gradient(145deg, #fbbf24cc, #f59e0b, #d97706aa)" : "linear-gradient(145deg, #f0eeec, #e8e5e2)" }}>
             <span style={{ fontSize: 56, filter: isMasterUnlocked ? "drop-shadow(0 4px 12px rgba(0,0,0,0.22))" : "grayscale(1) opacity(0.3)" }}>👑</span>
           </div>
@@ -337,7 +337,7 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
   return (
     <div style={absoluteCenterStyle} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <motion.div initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 60, opacity: 0, scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 28 }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative" style={{ willChange: 'transform, opacity' }}>
-        <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 backdrop-blur-sm rounded-full text-stone-400 hover:text-stone-700 transition-colors"><X size={16} /></button>
+        <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/60 backdrop-blur-sm rounded-full text-stone-400 hover:text-stone-700 transition-colors touch-manipulation"><X size={16} /></button>
         <div className="relative h-36 flex items-center justify-center overflow-hidden" style={isUnlocked ? { background: `linear-gradient(145deg, ${color}cc 0%, ${color} 60%, ${color}aa 100%)` } : { background: "linear-gradient(145deg, #f0eeec 0%, #e8e5e2 100%)" }}>
           <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 50%, rgba(0,0,0,0.06) 100%)" }} />
           <motion.div initial={{ scale: 0.5, rotate: -12, opacity: 0 }} animate={{ scale: 1, rotate: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 280, damping: 18, delay: 0.06 }} className="relative z-10" style={{ fontSize: 56, lineHeight: 1, filter: isUnlocked ? "drop-shadow(0 4px 12px rgba(0,0,0,0.22))" : "grayscale(1) opacity(0.3)" }}>{emoji}</motion.div>
@@ -424,13 +424,13 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-3 justify-center">
         {Array.from({ length: 3 }).map((_, i) => (
-          <input key={i} ref={el => inputRefs.current[i] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner" />
+          <input key={i} ref={el => inputRefs.current[i] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[i] || ""} onChange={(e) => handleChange(i, e)} onKeyDown={(e) => handleKeyDown(i, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner touch-manipulation text-[16px]" />
         ))}
       </div>
       <div className="flex gap-3 justify-center">
         {Array.from({ length: 3 }).map((_, i) => {
           const idx = 3 + i;
-          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner" />;
+          return <input key={idx} ref={el => inputRefs.current[idx] = el} type="password" inputMode="numeric" pattern="\d*" maxLength={1} value={value[idx] || ""} onChange={(e) => handleChange(idx, e)} onKeyDown={(e) => handleKeyDown(idx, e)} onPaste={handlePaste} disabled={disabled} className="w-12 h-12 text-center text-2xl font-black bg-stone-50 border-2 border-stone-100 rounded-xl outline-none focus:border-brand-sky transition-all shadow-inner touch-manipulation text-[16px]" />;
         })}
       </div>
     </div>
@@ -522,27 +522,38 @@ export default function Tessera() {
     }
   }, [showSupportModal, supportStep]);
 
-  const isOverlayActive = !userTessera || showRedeem || showHistoryModal || showSupportModal || !!selectedBoot || !!selectedBadge || !!selectedAchievement;
+  // FIX: Rimosso !userTessera per evitare body scroll lock al logout
+  const isOverlayActive = showRedeem || showHistoryModal || showSupportModal || !!selectedBoot || !!selectedBadge || !!selectedAchievement;
   useEffect(() => {
     if (isOverlayActive) {
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = 'unset';
-    };
+      document.body.style.overflow = '';
+    }
   }, [isOverlayActive]);
 
   async function fetchUser(codice: string, isSession = false) {
     setLoading(true); setLoginError("");
-    const { data, error } = await supabase.from("tessere").select("*").eq("codice_tessera", codice.toUpperCase().trim()).single();
+    const { data, error } = await supabase
+      .from("tessere").select("*")
+      .eq("codice_tessera", codice.toUpperCase().trim()).single();
     if (error || !data) {
       if (!isSession) setLoginError("Codice tessera non trovato.");
       setLoading(false);
     } else {
-      if (isSession) { setUserTessera(data as UserTessera); setLoading(false); }
-      else { setPendingTessera(data as UserTessera); setLoginStep("pin"); setLoading(false); }
+      if (isSession) {
+        setActiveTab("TESSERA");
+        setCurrentPage(0);
+        setUserTessera(data as UserTessera);
+        setLoading(false);
+      } else {
+        setPendingTessera(data as UserTessera);
+        setLoginStep("pin");
+        setLoading(false);
+      }
     }
   }
 
@@ -554,10 +565,17 @@ export default function Tessera() {
   }
 
   async function completeLogin(tessera: UserTessera) {
-    const { data } = await supabase.from("tessere").select("*").eq("codice_tessera", tessera.codice_tessera).single();
+    const { data } = await supabase
+      .from("tessere").select("*")
+      .eq("codice_tessera", tessera.codice_tessera).single();
     const clean = (data ?? tessera) as UserTessera;
+    setActiveTab("TESSERA");
+    setCurrentPage(0);
     setUserTessera(clean);
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ code: clean.codice_tessera, expires: Date.now() + 7 * 24 * 60 * 60 * 1000 }));
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      code: clean.codice_tessera,
+      expires: Date.now() + 7 * 24 * 60 * 60 * 1000
+    }));
   }
 
   async function handleVerifyPin() {
@@ -571,7 +589,13 @@ export default function Tessera() {
 
   const handleLogout = () => {
     localStorage.removeItem(SESSION_KEY);
-    setUserTessera(null); setIsDemo(false); setLoginStep("code"); setLoginCode(""); setLoginPin("");
+    setUserTessera(null);
+    setIsDemo(false);
+    setLoginStep("code");
+    setLoginCode("");
+    setLoginPin("");
+    setActiveTab("TESSERA");
+    setCurrentPage(0);
   };
 
   const closeRedeem = useCallback(() => {
@@ -630,7 +654,6 @@ export default function Tessera() {
     }
     setIsSubmittingHistory(true); setHistoryError("");
     try {
-      // ⚠️ ASSICURATI CHE PUNTI A UN DB ESISTENTE (Es: "contatti")
       const { error } = await supabase.from("contatti").insert([
         {
           nome: `${userTessera.nome_escursionista} ${userTessera.cognome_escursionista}`.trim(),
@@ -657,7 +680,6 @@ export default function Tessera() {
   }, [isSubmittingSupport]);
 
   const submitSupportRequest = async () => {
-    // ✅ Validazione aggiornata: codice_tessera rimosso da quelle obbligatorie
     if (!supportData.nome || !supportData.contatto) {
       setSupportError("Nome e Contatto sono obbligatori.");
       return;
@@ -665,12 +687,10 @@ export default function Tessera() {
     setIsSubmittingSupport(true);
     setSupportError("");
     try {
-      // ⚠️ ASSICURATI CHE PUNTI A UN DB ESISTENTE (Es: "contatti")
       const { error } = await supabase.from("contatti").insert([
         {
           nome: supportData.nome.trim(),
           email: supportData.contatto.trim(),
-          // ✅ Gestione codice opzionale: se vuoto, inietta "Non fornito" nel corpo del messaggio
           messaggio: `RICHIESTA SUPPORTO ACCESSO TESSERA\nCodice Inserito: ${supportData.codice || "Non fornito"}\nRichiede anche storico: ${supportData.richiediStorico ? "SÌ" : "NO"}\nProblema descritto:\n${supportData.problema || "Nessun dettaglio extra."}`,
           attivita: "[INFO] Problemi Login"
         }
@@ -753,36 +773,38 @@ export default function Tessera() {
       <ModalPortal>
         <AnimatePresence mode="wait">
           {!userTessera && (
-            <div style={absoluteCenterStyle}>
+            // FIX IOS: touchAction e overscrollBehavior per gestire il bounce scrolling
+            <div style={{...absoluteCenterStyle, touchAction: "none", overscrollBehavior: "none"}}>
               <motion.div key="loginBg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#f5f2ed]" />
               <motion.div key="loginBox" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center flex flex-col">
-                <button onClick={() => window.location.href = '/'} className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 shadow-sm hover:bg-stone-100 transition-all"><ChevronLeft size={14} /><span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span></button>
+                <button onClick={() => window.location.href = '/'} className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 shadow-sm hover:bg-stone-100 transition-all touch-manipulation"><ChevronLeft size={14} /><span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span></button>
                 <img src="/Accesso_tessera.png" alt="Altour Italy" className="h-32 w-auto mx-auto mb-4 rounded-xl" onError={(e) => { e.currentTarget.src = "/Accesso_tessera.png"; }} />
                 <h1 className="text-2xl font-black uppercase mb-6">TESSERA ALTOUR</h1>
               {loginStep === "code" ? (
                   <div className="space-y-4">
+                    {/* FIX IOS: text-[16px] forza il resize per uccidere lo zoom nativo */}
                     <input type="text" inputMode="numeric" value={"ALT" + loginCode}
                       onChange={(e) => { const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); if (val.startsWith("ALT")) setLoginCode(val.slice(3)); }}
                       onKeyDown={(e) => { if (e.key === "Backspace" && loginCode.length === 0) e.preventDefault(); if (e.key === "Enter" && loginCode.length > 0) fetchUser("ALT" + loginCode); }}
-                      maxLength={9} className="w-full p-4 rounded-2xl bg-stone-50 border border-stone-100 text-center font-black uppercase text-stone-800 tracking-[0.3em] text-lg outline-none focus:border-brand-sky focus:ring-2 focus:ring-brand-sky/20 transition-all"
+                      maxLength={9} className="w-full p-4 rounded-2xl bg-stone-50 border border-stone-100 text-center font-black uppercase text-stone-800 tracking-[0.3em] text-[16px] md:text-lg outline-none focus:border-brand-sky focus:ring-2 focus:ring-brand-sky/20 transition-all touch-manipulation"
                     />
-                    <button onClick={() => fetchUser("ALT" + loginCode)} disabled={loginCode.length === 0} className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest disabled:opacity-30 transition-all active:scale-95">Avanti</button>
-                    <button onClick={loadDemo} className="w-full p-3 rounded-2xl font-black uppercase tracking-widest text-[10px] text-stone-900 border border-stone-100 hover:bg-stone-50 transition-all active:scale-95">Anteprima senza tessera</button>
+                    <button onClick={() => fetchUser("ALT" + loginCode)} disabled={loginCode.length === 0} className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest disabled:opacity-30 transition-all active:scale-95 touch-manipulation">Avanti</button>
+                    <button onClick={loadDemo} className="w-full p-3 rounded-2xl font-black uppercase tracking-widest text-[10px] text-stone-900 border border-stone-100 hover:bg-stone-50 transition-all active:scale-95 touch-manipulation">Anteprima senza tessera</button>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     <p className="text-xs font-bold text-stone-400 uppercase">Inserisci il tuo PIN a {PIN_LENGTH} cifre</p>
                     <PinInput value={loginPin} onChange={setLoginPin} onComplete={handleVerifyPin} length={PIN_LENGTH} disabled={isVerifying} />
-                    <button onClick={handleVerifyPin} disabled={isVerifying || loginPin.length !== PIN_LENGTH} className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest">
+                    <button onClick={handleVerifyPin} disabled={isVerifying || loginPin.length !== PIN_LENGTH} className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest touch-manipulation">
                       {isVerifying ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Accedi"}
                     </button>
-                    <button onClick={() => { setLoginStep("code"); setLoginPin(""); setLoginError(""); }} className="text-[10px] font-black uppercase text-stone-300 mt-4">Indietro</button>
+                    <button onClick={() => { setLoginStep("code"); setLoginPin(""); setLoginError(""); }} className="text-[10px] font-black uppercase text-stone-300 mt-4 touch-manipulation">Indietro</button>
                   </div>
                 )}
                 {loginError && <p className="mt-4 text-red-500 text-xs font-bold">{loginError}</p>}
                 
                 <div className="mt-8 pt-6 border-t border-stone-100">
-                  <button onClick={() => setShowSupportModal(true)} className="text-[10px] font-black uppercase text-stone-400 hover:text-sky-500 transition-colors underline underline-offset-4 active:scale-95">
+                  <button onClick={() => setShowSupportModal(true)} className="text-[10px] font-black uppercase text-stone-400 hover:text-sky-500 transition-colors underline underline-offset-4 active:scale-95 touch-manipulation">
                     Problemi ad accedere? Contattaci
                   </button>
                 </div>
@@ -790,12 +812,12 @@ export default function Tessera() {
             </div>
           )}
 
-          {/* Modal Supporto Form (Codice reso Opzionale) */}
+          {/* Modal Supporto Form */}
           {showSupportModal && (
-            <div style={absoluteCenterStyle}>
+            <div style={{...absoluteCenterStyle, touchAction: "none", overscrollBehavior: "none"}}>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeSupportModal} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm z-[100]" />
               <motion.div initial={{ scale: 0.9, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} className="relative z-[101] w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
-                <button onClick={closeSupportModal} disabled={isSubmittingSupport} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
+                <button onClick={closeSupportModal} disabled={isSubmittingSupport} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
                 
                 <AnimatePresence mode="wait">
                   {supportStep === "INPUT" ? (
@@ -806,23 +828,22 @@ export default function Tessera() {
                       </div>
                       
                       <div className="space-y-3">
-                        <input type="text" placeholder="Nome e Cognome" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.nome} onChange={(e) => setSupportData({...supportData, nome: e.target.value})} />
+                        <input type="text" placeholder="Nome e Cognome" className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all touch-manipulation" value={supportData.nome} onChange={(e) => setSupportData({...supportData, nome: e.target.value})} />
                         
-                        {/* ✅ INPUT MODIFICATO CON PAROLA CHIAVE (OPZIONALE) */}
-                        <input ref={inputSupportRef} type="text" inputMode="numeric" placeholder="Codice Tessera (opzionale)" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.codice} onChange={(e) => setSupportData({...supportData, codice: e.target.value.replace(/\D/g, "")})} />
+                        <input ref={inputSupportRef} type="text" inputMode="numeric" placeholder="Codice Tessera (opzionale)" className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all touch-manipulation" value={supportData.codice} onChange={(e) => setSupportData({...supportData, codice: e.target.value.replace(/\D/g, "")})} />
                         
-                        <input type="text" placeholder="La tua Email o Cellulare" className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.contatto} onChange={(e) => setSupportData({...supportData, contatto: e.target.value})} />
+                        <input type="text" placeholder="La tua Email o Cellulare" className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all touch-manipulation" value={supportData.contatto} onChange={(e) => setSupportData({...supportData, contatto: e.target.value})} />
                         
-                        <label className="flex items-center gap-3 p-2 bg-stone-50 rounded-2xl cursor-pointer select-none active:scale-[0.99] transition-all">
+                        <label className="flex items-center gap-3 p-2 bg-stone-50 rounded-2xl cursor-pointer select-none active:scale-[0.99] transition-all touch-manipulation">
                           <input type="checkbox" checked={supportData.richiediStorico} onChange={(e) => setSupportData({...supportData, richiediStorico: e.target.checked})} className="w-5 h-5 rounded-md border-stone-300 text-sky-500 focus:ring-sky-500 cursor-pointer" />
                           <span className="text-[10px] font-black uppercase text-stone-600 tracking-wider leading-tight">Richiedi anche caricamento storico attività passate</span>
                         </label>
 
-                        <textarea placeholder="Descrivi il problema (opzionale)..." className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold h-20 resize-none border-2 border-transparent focus:border-sky-500 outline-none transition-all" value={supportData.problema} onChange={(e) => setSupportData({...supportData, problema: e.target.value})} />
+                        <textarea placeholder="Descrivi il problema (opzionale)..." className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold h-20 resize-none border-2 border-transparent focus:border-sky-500 outline-none transition-all touch-manipulation" value={supportData.problema} onChange={(e) => setSupportData({...supportData, problema: e.target.value})} />
                         
                         {supportError && <p className="text-red-500 text-[10px] font-black mt-2 uppercase text-center py-2 bg-red-50 rounded-lg">{supportError}</p>}
                         
-                        <button onClick={submitSupportRequest} disabled={isSubmittingSupport} className="w-full mt-2 bg-sky-500 text-white p-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-sky-200 active:scale-95 transition-all flex justify-center items-center gap-2">
+                        <button onClick={submitSupportRequest} disabled={isSubmittingSupport} className="w-full mt-2 bg-sky-500 text-white p-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-sky-200 active:scale-95 transition-all flex justify-center items-center gap-2 touch-manipulation">
                           {isSubmittingSupport ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> Invia Richiesta</>}
                         </button>
                       </div>
@@ -835,7 +856,7 @@ export default function Tessera() {
                       <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-6 leading-relaxed">
                         Il team ha ricevuto la tua segnalazione e ti aiuterà al più presto a rientrare!
                       </p>
-                      <button onClick={closeSupportModal} className="w-full mt-2 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg">Perfetto!</button>
+                      <button onClick={closeSupportModal} className="w-full mt-2 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg touch-manipulation">Perfetto!</button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -852,7 +873,7 @@ export default function Tessera() {
             <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Hero_tessera.webp" className="absolute inset-0 w-full h-full object-cover object-[center_60%]" alt="header bg" />
             <div className="absolute inset-0 bg-black/25" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[50%] to-black/40" />
-            <button onClick={handleLogout} className="absolute top-4 right-4 p-3 bg-black/20 backdrop-blur-md rounded-full text-white border border-white/10 z-50 hover:bg-black/40 transition-all"><LogOut size={18} /></button>
+            <button onClick={handleLogout} className="absolute top-4 right-4 p-3 bg-black/20 backdrop-blur-md rounded-full text-white border border-white/10 z-50 hover:bg-black/40 transition-all touch-manipulation"><LogOut size={18} /></button>
             <div className="relative z-20 px-4 flex flex-col items-center">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                 <h1 className="text-3xl md:text-5xl font-black text-white uppercase drop-shadow-lg tracking-tight">Passaporto Altour</h1>
@@ -874,7 +895,7 @@ export default function Tessera() {
             <div className="max-w-xl mx-auto flex gap-3">
               {(["TESSERA", "BADGE", "TRAGUARDI"] as TabType[]).map((tab) => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab ? "bg-[#5aaadd] text-white shadow-xl scale-[1.02]" : "bg-white text-stone-400 border border-stone-100 hover:bg-stone-50"}`}>
+                  className={`flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 touch-manipulation ${activeTab === tab ? "bg-[#5aaadd] text-white shadow-xl scale-[1.02]" : "bg-white text-stone-400 border border-stone-100 hover:bg-stone-50"}`}>
                   {tab}
                 </button>
               ))}
@@ -889,11 +910,11 @@ export default function Tessera() {
                   <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
                     <div className="flex items-center gap-5 mb-8">
                       <div className="relative flex-shrink-0">
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-20 h-20 rounded-[2rem] bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center shadow-inner cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-20 h-20 rounded-[2rem] bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center shadow-inner cursor-pointer touch-manipulation" onClick={() => fileInputRef.current?.click()}>
                           {userTessera.avatar_url ? <img src={userTessera.avatar_url} className="w-full h-full object-cover object-center" alt="avatar" /> : <User size={32} className="text-stone-300" />}
                           {avatarUploading && <div className="absolute inset-0 bg-black/30 rounded-[2rem] flex items-center justify-center"><Loader2 className="w-6 h-6 text-white animate-spin" /></div>}
                         </motion.div>
-                        <button onClick={() => fileInputRef.current?.click()} disabled={avatarUploading} className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center hover:bg-stone-50 active:scale-90 transition-all disabled:opacity-50"><Camera size={13} className="text-stone-600" /></button>
+                        <button onClick={() => fileInputRef.current?.click()} disabled={avatarUploading} className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center hover:bg-stone-50 active:scale-90 transition-all disabled:opacity-50 touch-manipulation"><Camera size={13} className="text-stone-600" /></button>
                         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
                       </div>
                       <div>
@@ -942,9 +963,9 @@ export default function Tessera() {
                     </motion.div>
 
                     <div className="flex justify-between items-center pt-6 border-t border-stone-50">
-                      <button disabled={currentPage === 0} onClick={() => setCurrentPage((p) => p - 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90"><ChevronLeft size={20} /></button>
+                      <button disabled={currentPage === 0} onClick={() => setCurrentPage((p) => p - 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90 touch-manipulation"><ChevronLeft size={20} /></button>
                       <span className="text-[11px] font-black uppercase text-stone-300 tracking-[0.2em]">Pagina {currentPage + 1} di {stats?.totalPages}</span>
-                      <button disabled={currentPage >= (stats?.totalPages || 1) - 1} onClick={() => setCurrentPage((p) => p + 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90"><ChevronRight size={20} /></button>
+                      <button disabled={currentPage >= (stats?.totalPages || 1) - 1} onClick={() => setCurrentPage((p) => p + 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90 touch-manipulation"><ChevronRight size={20} /></button>
                     </div>
                   </div>
 
@@ -953,7 +974,7 @@ export default function Tessera() {
                     disabled={isDemo} 
                     whileHover={isDemo ? {} : { scale: 1.02 }} 
                     whileTap={isDemo ? {} : { scale: 0.98 }} 
-                    className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all disabled:opacity-40 disabled:pointer-events-none"
+                    className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-all disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
                   >
                     {!isDemo && (
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
@@ -969,22 +990,28 @@ export default function Tessera() {
                     disabled={isDemo} 
                     whileHover={isDemo ? {} : { scale: 1.02 }} 
                     whileTap={isDemo ? {} : { scale: 0.98 }} 
-                    className="w-full mt-4 p-5 bg-white border-2 border-stone-200 text-stone-700 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none"
+                    className="w-full mt-4 p-5 bg-white border-2 border-stone-200 text-stone-700 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
                   >
                     <History size={20} strokeWidth={2.5} /> Richiedi Storico
                   </motion.button>
                   
-
-                  {/* NUOVO PULSANTE FEEDBACK */}
+                  {/* PULSANTE FEEDBACK */}
                   <motion.button 
-  onClick={() => window.location.href = "https://www.altouritaly.it/#lascia-feedback"}
-  disabled={isDemo} 
-  whileHover={isDemo ? {} : { scale: 1.02 }} 
-  whileTap={isDemo ? {} : { scale: 0.98 }} 
-  className="w-full mt-4 p-5 bg-stone-50 border border-stone-200 text-stone-600 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:bg-white hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none"
->
-  <span className="text-lg">⭐</span> Lascia un Feedback
-</motion.button>
+                    onClick={() => {
+                      const target = document.getElementById("lascia-feedback");
+                      if (target) {
+                        target.scrollIntoView({ behavior: "smooth" });
+                      } else {
+                        window.open("https://www.altouritaly.it/#lascia-feedback", "_blank", "noopener,noreferrer");
+                      }
+                    }}
+                    disabled={isDemo} 
+                    whileHover={isDemo ? {} : { scale: 1.02 }} 
+                    whileTap={isDemo ? {} : { scale: 0.98 }} 
+                    className="w-full mt-4 p-5 bg-stone-50 border border-stone-200 text-stone-600 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:bg-white hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
+                  >
+                    <span className="text-xl">⭐</span> Lascia un Feedback
+                  </motion.button>
                 </motion.div>
               )}
 
@@ -1052,14 +1079,14 @@ export default function Tessera() {
                 <div style={absoluteCenterStyle}>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeRedeem} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
                   <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
-                    <button onClick={closeRedeem} disabled={isVerifying} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
+                    <button onClick={closeRedeem} disabled={isVerifying} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
                     <AnimatePresence mode="wait">
                       {redeemStep === "INPUT" ? (
                         <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                           <div className="text-center mb-8"><div className="inline-flex p-4 bg-sky-50 rounded-2xl mb-4"><Plus className="text-sky-500" size={28} /></div><h3 className="text-2xl font-black uppercase tracking-tight">Codice Scarpone</h3><p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Inserisci il codice ricevuto</p></div>
-                          <input className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-2xl font-black uppercase outline-none focus:border-sky-500 transition-all shadow-inner" placeholder="****" value={redeemCode} onChange={(e) => setRedeemCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && verifyCode()} />
+                          <input className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-2xl font-black uppercase outline-none focus:border-sky-500 transition-all shadow-inner touch-manipulation text-[16px]" placeholder="****" value={redeemCode} onChange={(e) => setRedeemCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && verifyCode()} />
                           {redeemError && <p className="text-red-500 text-[10px] font-black mt-3 uppercase text-center py-2 bg-red-50 rounded-lg">{redeemError}</p>}
-                          <button onClick={verifyCode} disabled={isVerifying} className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg">{isVerifying ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Verifica Codice"}</button>
+                          <button onClick={verifyCode} disabled={isVerifying} className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg touch-manipulation">{isVerifying ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Verifica Codice"}</button>
                         </motion.div>
                       ) : (
                         <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center">
@@ -1069,7 +1096,7 @@ export default function Tessera() {
                           <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-4">Scarpone Riscattato! 🎉</p>
                           {newlyUnlockedBadge && <div className="w-full p-3 rounded-xl bg-sky-50 text-center"><span className="text-[9px] font-black uppercase tracking-widest text-sky-700">Nuovo badge: {newlyUnlockedBadge}</span></div>}
                           {newlyUnlockedAchievement && <div className="w-full p-3 rounded-xl bg-purple-50 text-center mt-2"><span className="text-[9px] font-black uppercase tracking-widest text-purple-700">Traguardo sbloccato!</span></div>}
-                          <button onClick={closeRedeem} className="w-full mt-4 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg">Perfetto!</button>
+                          <button onClick={closeRedeem} className="w-full mt-4 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg touch-manipulation">Perfetto!</button>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -1079,10 +1106,10 @@ export default function Tessera() {
 
               {/* Modal Richiesta Storico */}
               {showHistoryModal && (
-                <div style={absoluteCenterStyle}>
+                <div style={{...absoluteCenterStyle, touchAction: "none", overscrollBehavior: "none"}}>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeHistoryModal} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
                   <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
-                    <button onClick={closeHistoryModal} disabled={isSubmittingHistory} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
+                    <button onClick={closeHistoryModal} disabled={isSubmittingHistory} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
                     <AnimatePresence mode="wait">
                       {historyStep === "INPUT" ? (
                         <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
@@ -1097,14 +1124,14 @@ export default function Tessera() {
                           <input 
                             type="text"
                             placeholder="Inserisci la tua email..."
-                            className="w-full bg-stone-50 p-4 rounded-2xl text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all mb-2"
+                            className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all mb-2 touch-manipulation"
                             value={historyEmail}
                             onChange={(e) => setHistoryEmail(e.target.value)}
                           />
                           
                           {historyError && <p className="text-red-500 text-[10px] font-black mb-2 mt-2 uppercase text-center py-2 bg-red-50 rounded-lg">{historyError}</p>}
                           
-                          <button onClick={submitHistoryRequest} disabled={isSubmittingHistory} className="w-full mt-4 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg flex justify-center items-center gap-2">
+                          <button onClick={submitHistoryRequest} disabled={isSubmittingHistory} className="w-full mt-4 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg flex justify-center items-center gap-2 touch-manipulation">
                             {isSubmittingHistory ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> Invia Richiesta</>}
                           </button>
                         </motion.div>
@@ -1116,7 +1143,7 @@ export default function Tessera() {
                           <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-6 leading-relaxed">
                             L'organizzazione ha ricevuto la richiesta. La tua Tessera verrà aggiornata al termine delle verifiche!
                           </p>
-                          <button onClick={closeHistoryModal} className="w-full mt-2 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg">Perfetto!</button>
+                          <button onClick={closeHistoryModal} className="w-full mt-2 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg touch-manipulation">Perfetto!</button>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -1129,7 +1156,7 @@ export default function Tessera() {
                 <div style={absoluteCenterStyle}>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBoot(null)} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
                   <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
-                    <button onClick={() => setSelectedBoot(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
+                    <button onClick={() => setSelectedBoot(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
                     <div className="flex flex-col items-center text-center">
                       <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-xl" style={{ backgroundColor: selectedBoot.colore + "15", border: `1px solid ${selectedBoot.colore}20` }}>
                         <IconaScarponeCustom size={80} color={selectedBoot.colore} isActive={true} />
@@ -1158,7 +1185,7 @@ export default function Tessera() {
                 <div style={absoluteCenterStyle}>
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedAchievement(null)} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
                   <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
-                    <button onClick={() => setSelectedAchievement(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90"><X size={20} /></button>
+                    <button onClick={() => setSelectedAchievement(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
                     <div className="flex flex-col items-center text-center">
                       <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-8 bg-stone-50 border-2 border-stone-100 shadow-xl"><span className="text-6xl drop-shadow-sm">{selectedAchievement.emoji}</span></div>
                       <h3 className="text-2xl font-black uppercase leading-tight mb-3 tracking-tight">{selectedAchievement.name}</h3>
