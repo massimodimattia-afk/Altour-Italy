@@ -194,6 +194,15 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [drawerOpen, setDrawerOpen]     = useState(false);
   const [drawerClosing, setDrawerClosing] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  
 
   const closeDrawer = () => {
     setDrawerClosing(true);
@@ -324,12 +333,12 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
             </div>
             <button
               onClick={() => {
-                if (window.innerWidth < 768) {
-                  setDrawerOpen(true);
-                } else {
-                  document.getElementById("zaino-quiz-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
-              }}
+  if (isMobile) {
+    setDrawerOpen(true);
+  } else {
+    document.getElementById("zaino-quiz-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}}
               className="flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest text-white active:scale-95 transition-transform"
               style={{
                 background: "linear-gradient(135deg, #81ccb0, #5aaadd)",

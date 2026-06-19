@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, RotateCcw, Sparkles, X, Check } from "lucide-react";
 import { supabase } from "../lib/supabase";
@@ -197,12 +197,12 @@ function ItemCard({ item, isIn, isDisabled, onAdd, onRemove }: any) {
   const [showPopup, setShowPopup] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const checkSize = () => setIsMobile(window.innerWidth < 640);
-    checkSize();
-    window.addEventListener("resize", checkSize);
-    return () => window.removeEventListener("resize", checkSize);
-  }, []);
+useEffect(() => {
+  const check = () => setIsMobile(window.innerWidth < 768);
+  check();
+  window.addEventListener("resize", check);
+  return () => window.removeEventListener("resize", check);
+}, []);
 
   useEffect(() => {
     if (showPopup && isMobile) document.body.style.overflow = "hidden";
