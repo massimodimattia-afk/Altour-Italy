@@ -11,6 +11,7 @@ import ChiSiamo from './pages/ChiSiamo';
 import BookingModal from './components/BookingModal';
 import PWAPrompt from "./components/PWAprompt";
 import FeedbackPage from './pages/FeedbackPage';
+import { Analytics } from "@vercel/analytics/react"; // FIX: Import corretto per React SPA
 
 type PageType =
   | 'home'
@@ -29,7 +30,6 @@ const VALID_PAGES: PageType[] = [
   'chi-siamo', 'lascia-feedback',
 ];
 
-// Mappa per redirect (compatibilità con vecchie route)
 const REDIRECT_MAP: Record<string, PageType> = {
   escursioni: 'attivitapage',
   campi: 'attivitapage',
@@ -41,7 +41,6 @@ function App() {
   const [selectedTitle, setSelectedTitle] = useState('');
   const [bookingMode, setBookingMode] = useState<'info' | 'prenota'>('info');
 
-  // FIX 1: Lettura dell'Hash (#) al caricamento iniziale (Invulnerabile ai redirect del server)
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
     if (hash && VALID_PAGES.includes(hash as PageType)) {
@@ -49,8 +48,6 @@ function App() {
     }
   }, []);
 
-  // FIX 2: Scroll immediato al cambio pagina. Lo smooth scroll 
-  // durante la mutazione del DOM causa sfarfallio grave su iOS.
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
@@ -60,8 +57,6 @@ function App() {
     if (VALID_PAGES.includes(target as PageType)) {
       setCurrentPage(target as PageType);
       
-      // FIX 3: Sincronizza l'URL in modo pulito. 
-      // Se l'utente fa refresh, l'app sa dove si trovava senza ricaricare la Home.
       window.history.replaceState(
         null, 
         '', 
@@ -78,7 +73,6 @@ function App() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    // Attendi la fine dell'animazione di uscita prima di pulire il titolo
     setTimeout(() => setSelectedTitle(''), 500);
   };
 
@@ -98,12 +92,10 @@ function App() {
   };
 
   return (
-    // FIX 4: min-h-[100dvh] per Safari e pb-[env(...)] per non accavallarsi alla riga home di iPhone
     <div className="min-h-[100dvh] flex flex-col bg-stone-50 font-sans antialiased pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
       <Header currentPage={currentPage} onNavigate={handleNavigate} />
 
       <main className="flex-grow relative">
-        {/* FIX 5: Aggiunto ios-gpu-fix. Sposta il fadeIn sulla GPU e previene i drop di frame */}
         <div key={currentPage} className="animate-[fadeIn_0.5s_ease-out] ios-gpu-fix">
           {renderPage()}
         </div>
@@ -122,6 +114,9 @@ function App() {
 
       <Footer onNavigate={handleNavigate} />
       <PWAPrompt />
+      
+      {/* COMPONENTE ANALYTICS: Traccerà tutti i cambi di hash in tempo reale */}
+      <Analytics />
     </div>
   );
 }
