@@ -43,53 +43,16 @@ const ITEMS: Item[] = [
   { id: "gps", emoji: "📡", label: "GPS", zone: "right", zoneRow: 3, hint: "Esplori zone selvagge. La tecnologia è la tua sicurezza fuori dai sentieri battuti.", hintTag: "Wild" },
 ];
 
-// Nuovo Mapping Alleggerito (Solo Atmosfera, zero difficoltà)
 const ITEM_THEME_MAPPING: Record<string, ItemThemeMapping> = {
-  map: { 
-    categorie: ["tour", "intera giornata", "giornata"], 
-    filosofie: ["Borghi più belli", "Formazione", "Trek urbano", "Eventi", "Acqua e cielo"],
-    fallback: ["Cammini"]
-  },
-  boots: { 
-    categorie: ["tour", "mezza giornata"], 
-    filosofie: ["Avventura", "Cammini", "Immersi nel verde"],
-    fallback: ["Formazione"]
-  },
-  poles: { 
-    categorie: ["intera giornata", "giornata", "tour"], 
-    filosofie: ["Avventura", "Tracce sulla neve"],
-    fallback: ["Immersi nel verde"]
-  },
-  compass: { 
-    categorie: ["intera giornata", "giornata"], 
-    filosofie: ["Luoghi dello spirito", "Novità", "Immersi nel verde"],
-    fallback: ["Avventura"]
-  },
-  water: { 
-    categorie: ["mezza giornata"], 
-    filosofie: ["Benessere", "Trek urbano", "Acqua e cielo", "Educazione all'aperto"],
-    fallback: ["Immersi nel verde"]
-  },
-  medkit: { 
-    categorie: ["mezza giornata"], 
-    filosofie: ["Educazione all'aperto", "Benessere"],
-    fallback: ["Formazione"]
-  },
-  jacket: { 
-    categorie: ["intera giornata", "giornata", "tour"], 
-    filosofie: ["Tracce sulla neve", "Speciali"],
-    fallback: ["Avventura"]
-  },
-  torch: { 
-    categorie: ["tour"], 
-    filosofie: ["Cielo stellato", "Cammini", "Avventura"],
-    fallback: ["Immersi nel verde", "Speciali"]
-  },
-  gps: { 
-    categorie: ["intera giornata", "giornata", "tour"], 
-    filosofie: ["Avventura", "Novità"],
-    fallback: ["Tracce sulla neve", "Speciali"]
-  },
+  map: { categorie: ["tour", "intera giornata", "giornata"], filosofie: ["Borghi più belli", "Formazione", "Trek urbano", "Eventi", "Acqua e cielo"], fallback: ["Cammini"] },
+  boots: { categorie: ["tour", "mezza giornata"], filosofie: ["Avventura", "Cammini", "Immersi nel verde"], fallback: ["Formazione"] },
+  poles: { categorie: ["intera giornata", "giornata", "tour"], filosofie: ["Avventura", "Tracce sulla neve"], fallback: ["Immersi nel verde"] },
+  compass: { categorie: ["intera giornata", "giornata"], filosofie: ["Luoghi dello spirito", "Novità", "Immersi nel verde"], fallback: ["Avventura"] },
+  water: { categorie: ["mezza giornata"], filosofie: ["Benessere", "Trek urbano", "Acqua e cielo", "Educazione all'aperto"], fallback: ["Immersi nel verde"] },
+  medkit: { categorie: ["mezza giornata"], filosofie: ["Educazione all'aperto", "Benessere"], fallback: ["Formazione"] },
+  jacket: { categorie: ["intera giornata", "giornata", "tour"], filosofie: ["Tracce sulla neve", "Speciali"], fallback: ["Avventura"] },
+  torch: { categorie: ["tour"], filosofie: ["Cielo stellato", "Cammini", "Avventura"], fallback: ["Immersi nel verde", "Speciali"] },
+  gps: { categorie: ["intera giornata", "giornata", "tour"], filosofie: ["Avventura", "Novità"], fallback: ["Tracce sulla neve", "Speciali"] },
 };
 
 const ITEM_WEIGHT: Record<string, number> = {
@@ -99,50 +62,31 @@ const ITEM_WEIGHT: Record<string, number> = {
 };
 
 const PROFILI = {
-  base: {
-    titolo: "L'Esploratore Curioso", sottotitolo: "Pronto a iniziare",
-    descrizione: "Cerchi esperienze dolci e rigeneranti, perfette per muovere i primi passi in natura con curiosità.",
-    icona: "🌱", colore: "#81ccb0", bg: "rgba(129,204,176,0.10)", border: "rgba(129,204,176,0.30)",
-  },
-  intermedio: {
-    titolo: "Il Camminatore Consapevole", sottotitolo: "Esperienza in crescita",
-    descrizione: "Hai già familiarità con l'outdoor. Sei pronto per avventure più strutturate e percorsi con un po' di sfida.",
-    icona: "⛰️", colore: "#5aaadd", bg: "rgba(90,170,221,0.10)", border: "rgba(90,170,221,0.30)",
-  },
-  avanzato: {
-    titolo: "L'Avventuriero Esperto", sottotitolo: "Pronto a osare",
-    descrizione: "Cerchi esperienze intense e immersive, percorsi impegnativi e atmosfere selvagge lontano dalla folla.",
-    icona: "🏔️", colore: "#9f8270", bg: "rgba(159,130,112,0.10)", border: "rgba(159,130,112,0.30)",
-  },
+  base: { titolo: "L'Esploratore Curioso", sottotitolo: "Pronto a iniziare", descrizione: "Cerchi esperienze dolci e rigeneranti, perfette per muovere i primi passi in natura con curiosità.", icona: "🌱", colore: "#81ccb0", bg: "rgba(129,204,176,0.10)", border: "rgba(129,204,176,0.30)" },
+  intermedio: { titolo: "Il Camminatore Consapevole", sottotitolo: "Esperienza in crescita", descrizione: "Hai già familiarità con l'outdoor. Sei pronto per avventure più strutturate e percorsi con un po' di sfida.", icona: "⛰️", colore: "#5aaadd", bg: "rgba(90,170,221,0.10)", border: "rgba(90,170,221,0.30)" },
+  avanzato: { titolo: "L'Avventuriero Esperto", sottotitolo: "Pronto a osare", descrizione: "Cerchi esperienze intense e immersive, percorsi impegnativi e atmosfere selvagge lontano dalla folla.", icona: "🏔️", colore: "#9f8270", bg: "rgba(159,130,112,0.10)", border: "rgba(159,130,112,0.30)" },
 } as const;
 
-// ─── GATEKEEPER DI SICUREZZA ──────────────────────────────────────────────────
 const PROFILE_DIFFICULTY_MAP: Record<keyof typeof PROFILI, string[]> = {
   base: ["Facile", "Facile-Media", "Media"],
   intermedio: ["Facile-Media", "Media", "Media-Impegnativa"],
   avanzato: ["Media", "Media-Impegnativa", "Impegnativa", "Molto Impegnativa"]
 };
 
-// ─── Logica di Scoring & Profilazione ──────────────────────────────────────────
 function scoreEscursione(esc: Escursione, selectedItems: string[]): number {
   let score = 0;
   const catDB = esc.categoria?.toLowerCase() || "";
   const filoDB = esc.filosofia || "";
 
-  // 1. SCORING TEMATICO
   selectedItems.forEach(itemId => {
     const mapping = ITEM_THEME_MAPPING[itemId];
     if (!mapping) return;
-
     if (mapping.filosofie.includes(filoDB)) score += 15;
     else if (mapping.fallback.includes(filoDB)) score += 8;
-
     if (mapping.categorie.some(c => catDB.includes(c))) score += 10;
   });
 
-  // 2. MAGIC COMBOS (Sinergie che premiano scenari molto precisi)
   const has = (id: string) => selectedItems.includes(id);
-
   if (has("map") && has("gps") && (filoDB === "Avventura" || filoDB === "Novità")) score += 25;
   if (has("compass") && has("torch") && (filoDB === "Luoghi dello spirito" || filoDB === "Cammini")) score += 25;
   if (has("water") && has("medkit") && (filoDB === "Benessere" || filoDB === "Educazione all'aperto")) score += 25;
@@ -166,6 +110,7 @@ function BackpackSVG({ glowing, itemCount }: { glowing: boolean; itemCount: numb
         animate={glowing ? { scale: [1, 1.05, 1], rotate: [0, -1, 1, 0] } : { scale: 1 }}
         transition={{ duration: 0.6, repeat: glowing ? Infinity : 0 }}
         className="relative z-10"
+        style={{ transform: "translateZ(0)", WebkitBackfaceVisibility: "hidden" }}
       >
         <AnimatePresence>
           {glowing && (
@@ -197,16 +142,31 @@ function ItemCard({ item, isIn, isDisabled, onAdd, onRemove }: any) {
   const [showPopup, setShowPopup] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-useEffect(() => {
-  const check = () => setIsMobile(window.innerWidth < 768);
-  check();
-  window.addEventListener("resize", check);
-  return () => window.removeEventListener("resize", check);
-}, []);
-
   useEffect(() => {
-    if (showPopup && isMobile) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "unset";
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Scroll-lock robusto (con ripristino posizione) quando il popup è apert su mobile
+  useEffect(() => {
+    if (showPopup && isMobile) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollY);
+      };
+    }
   }, [showPopup, isMobile]);
 
   const getTooltipPosition = () => {
@@ -227,6 +187,7 @@ useEffect(() => {
         className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl transition-all shadow-sm border ${
           isIn ? "bg-white border-[#81ccb0] shadow-lg z-10" : isDisabled ? "bg-stone-100 opacity-30 grayscale" : "bg-white border-transparent"
         }`}
+        style={{ transform: "translateZ(0)", WebkitBackfaceVisibility: "hidden" }}
       >
         <span className={isIn ? "opacity-100" : "opacity-80"}>{item.emoji}</span>
         {isIn && (
@@ -241,14 +202,23 @@ useEffect(() => {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className={`fixed inset-0 z-[100] ${isMobile ? "bg-black/40 backdrop-blur-md" : "bg-transparent"}`}
+              transition={{ duration: 0.18 }}
+              className={`fixed inset-0 z-[100] ${isMobile ? "bg-black/40" : "bg-transparent"}`}
+              style={isMobile ? {
+                backdropFilter: "blur(6px)",
+                WebkitBackdropFilter: "blur(6px)",
+                transform: "translateZ(0)",
+                WebkitBackfaceVisibility: "hidden",
+              } : undefined}
               onClick={() => setShowPopup(false)}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: isMobile ? 20 : 0 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: isMobile ? 20 : 0 }}
+              transition={{ duration: 0.18 }}
               className={`z-[101] ${isMobile ? "fixed inset-0 flex items-center justify-center p-6" : `absolute w-64 ${getTooltipPosition()}`}`}
+              style={{ transform: "translateZ(0)", WebkitBackfaceVisibility: "hidden" }}
             >
               <div className="bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 w-full max-w-[320px]">
                 <div className="flex justify-between items-center mb-4">
@@ -277,25 +247,34 @@ useEffect(() => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 interface AttivitaQuizProps {
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
+  /** Se fornito, evita la fetch interna a Supabase (passata già da AttivitaPage) */
+  escursioni?: Escursione[];
+  /** Nasconde il titolo interno (usato quando il drawer ha già il proprio header) */
+  hideHeader?: boolean;
 }
 
-export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
+export default function AttivitaQuiz({ onBookingClick, escursioni, hideHeader }: AttivitaQuizProps) {
   const [step, setStep] = useState<"items" | "result">("items");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [recommended, setRecommended] = useState<Escursione | null>(null);
   const [profile, setProfile] = useState<keyof typeof PROFILI>("base");
-  const [escursioniPool, setEscursioniPool] = useState<Escursione[]>([]);
+  const [escursioniPool, setEscursioniPool] = useState<Escursione[]>(escursioni ?? []);
   const [shownIds, setShownIds] = useState<string[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isComputing, setIsComputing] = useState(false);
 
+  // Fetch interna SOLO se il parent non ha già fornito i dati (evita doppia query Supabase)
   useEffect(() => {
+    if (escursioni && escursioni.length > 0) {
+      setEscursioniPool(escursioni);
+      return;
+    }
     supabase.from("escursioni").select("*").eq("is_active", true).order("data", { ascending: true })
       .then(({ data, error }) => {
         if (!error && data) setEscursioniPool((data as any[]).map(e => ({ ...e, _tipo: "escursione" })));
       });
-  }, []);
+  }, [escursioni]);
 
   const isFull = selectedItems.length === 3;
   const addItem = (id: string) => !isFull && setSelectedItems(p => [...p, id]);
@@ -306,31 +285,25 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
     setIsComputing(true);
 
     setTimeout(() => {
-      // 1. Calcoliamo il profilo utente per il Gatekeeper
       const currentProfileKey = computeProfile(selectedItems);
       setProfile(currentProfileKey);
-      
+
       const allowedDifficulties = PROFILE_DIFFICULTY_MAP[currentProfileKey];
 
-      // 2. Filtro di sicurezza (Hard Constraint)
       let poolSicuro = escursioniPool.filter(esc => {
-        const diff = esc.difficolta || "Media"; 
+        const diff = esc.difficolta || "Media";
         return allowedDifficulties.includes(diff);
       });
 
-      // Fallback: se il DB non ha escursioni che fittano perfettamente, usiamo il pool totale
       if (poolSicuro.length === 0) poolSicuro = escursioniPool;
 
-      // 3. Analisi Tematica & Combo
       let bestMatch = poolSicuro[0];
       let maxScore = -Infinity;
 
       poolSicuro.forEach(esc => {
         let currentScore = scoreEscursione(esc, selectedItems);
-        
-        if (shownIds.includes(esc.id)) currentScore -= 30; // Penalizza ripetizioni
-        currentScore += Math.random() * 2; // Tie-breaker
-
+        if (shownIds.includes(esc.id)) currentScore -= 30;
+        currentScore += Math.random() * 2;
         if (currentScore > maxScore) {
           maxScore = currentScore;
           bestMatch = esc;
@@ -363,18 +336,20 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
 
       <AnimatePresence mode="wait">
         {step === "items" && (
-          <motion.div key="items" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.3 }} className="p-5 sm:p-7 md:p-8">
-            <div className="mb-5">
-              <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1" style={{ color: "#81ccb0" }}>Trova la tua escursione</p>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#44403c] uppercase tracking-tighter leading-[0.9] mb-1">
-                Cosa metti<br />
-                <span className="font-light italic" style={{ color: "#9f8270" }}>nel tuo zaino?</span>
-              </h2>
-              <div className="h-1 w-10 rounded-full mt-2.5" style={{ background: "#81ccb0" }} />
-              <p className="text-stone-400 text-xs font-medium mt-2.5">
-                Scegli <strong className="text-[#44403c]">3 oggetti</strong> — tocca un oggetto per scoprire cosa rappresenta
-              </p>
-            </div>
+          <motion.div key="items" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.25 }} className="p-5 sm:p-7 md:p-8">
+            {!hideHeader && (
+              <div className="mb-5">
+                <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1" style={{ color: "#81ccb0" }}>Trova la tua escursione</p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#44403c] uppercase tracking-tighter leading-[0.9] mb-1">
+                  Cosa metti<br />
+                  <span className="font-light italic" style={{ color: "#9f8270" }}>nel tuo zaino?</span>
+                </h2>
+                <div className="h-1 w-10 rounded-full mt-2.5" style={{ background: "#81ccb0" }} />
+                <p className="text-stone-400 text-xs font-medium mt-2.5">
+                  Scegli <strong className="text-[#44403c]">3 oggetti</strong> — tocca un oggetto per scoprire cosa rappresenta
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-2 sm:gap-4 items-center mb-3">
               <div className="flex flex-col gap-3 sm:gap-4 items-center w-14 sm:w-16 shrink-0">
@@ -423,7 +398,7 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
             <AnimatePresence>
               {isFull && (
                 <motion.button
-                  initial={{ opacity: 0, y: 12, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8 }} transition={{ type: "spring", stiffness: 280, damping: 22 }} onClick={runAnalysis} disabled={isComputing}
+                  initial={{ opacity: 0, y: 12, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8 }} transition={{ type: "spring", stiffness: 320, damping: 26 }} onClick={runAnalysis} disabled={isComputing}
                   className="w-full min-h-[52px] py-4 rounded-2xl font-black uppercase text-xs tracking-widest text-white flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-60"
                   style={{ background: "linear-gradient(135deg, #81ccb0 0%, #5aa89a 100%)", boxShadow: "0 8px 28px rgba(129,204,176,0.35)" }}
                 >
@@ -441,12 +416,12 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
         )}
 
         {step === "result" && recommended && (
-          <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: "easeOut" }} className="p-5 sm:p-7 md:p-10 text-center">
+          <motion.div key="result" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: "easeOut" }} className="p-5 sm:p-7 md:p-10 text-center">
             <div className="flex justify-center gap-3 mb-5">
               {selectedItems.map((id, idx) => {
                 const it = ITEMS.find(i => i.id === id);
                 return (
-                  <motion.div key={id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 + idx * 0.07 }} className="flex flex-col items-center gap-1">
+                  <motion.div key={id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 + idx * 0.05 }} className="flex flex-col items-center gap-1">
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-2xl sm:text-3xl" style={{ background: "white", boxShadow: "0 2px 10px rgba(159,130,112,0.12), 0 0 0 2px rgba(129,204,176,0.4)" }}>
                       {it?.emoji}
                     </div>
@@ -456,14 +431,14 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
               })}
             </div>
 
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="rounded-2xl p-4 mb-4 text-center" style={{ background: currentProfile.bg, border: `1.5px solid ${currentProfile.border}` }}>
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 16 }} className="text-4xl mb-2">{currentProfile.icona}</motion.div>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }} className="rounded-2xl p-4 mb-4 text-center" style={{ background: currentProfile.bg, border: `1.5px solid ${currentProfile.border}` }}>
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.16, type: "spring", stiffness: 340, damping: 18 }} className="text-4xl mb-2">{currentProfile.icona}</motion.div>
               <h3 className="text-xl font-black uppercase tracking-tighter mb-0.5" style={{ color: currentProfile.colore }}>{currentProfile.titolo}</h3>
               <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mb-2">{currentProfile.sottotitolo}</p>
               <p className="text-xs text-stone-500 font-medium leading-relaxed">{currentProfile.descrizione}</p>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="rounded-2xl overflow-hidden mb-4" style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }} className="rounded-2xl overflow-hidden mb-4" style={{ background: "white", boxShadow: "0 2px 12px rgba(159,130,112,0.1), 0 0 0 1px rgba(159,130,112,0.08)" }}>
               <div className="relative h-44">
                 <img src={recommended.immagine_url || "/altour-logo.png"} className="w-full h-full object-cover" alt={recommended.titolo} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
@@ -489,7 +464,7 @@ export default function AttivitaQuiz({ onBookingClick }: AttivitaQuizProps) {
               </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.44 }} className="flex gap-2">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.32 }} className="flex gap-2">
               <button onClick={runAnalysis} className="flex-1 min-h-[48px] py-3.5 rounded-2xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 active:scale-95 hover:bg-stone-100 transition-all" style={{ background: "white", boxShadow: "0 2px 8px rgba(159,130,112,0.1), 0 0 0 1.5px rgba(159,130,112,0.15)", color: "#44403c" }}>
                 <RotateCcw size={11} /> Altra proposta
               </button>
