@@ -1,10 +1,8 @@
+// src/pages/Home.tsx
 import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import {
   Clock,
   TrendingUp,
-  Gift,
-  Star,
-  Send,
   Shield,
   Users,
   ArrowRight,
@@ -14,7 +12,8 @@ import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion } from "framer-motion";
 import { CourseCard, Corso } from "../components/CourseCard";
-import Section, { isIOS } from "../components/Section";
+import Section from "../components/Section";
+import FeedbackCarousel from "../components/FeedbackCarousel"; // <-- Aggiunto import
 
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
@@ -41,13 +40,12 @@ interface HomeProps {
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
 
-// ─── Skeleton (Memoizzato per evitare re-render continui) ─────────────────────
+// ─── Skeleton ─────────────────────
 const SkeletonCard = memo(() => (
   <div
     className="bg-white rounded-2xl overflow-hidden flex flex-col ios-gpu-fix"
     style={{
-      boxShadow:
-        "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
     }}
   >
     <div className="aspect-[3/2] bg-stone-100 animate-pulse" />
@@ -116,15 +114,6 @@ function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
-const PRESET_VOUCHERS = [
-  { amount: 10,  tag: null,      highlight: false },
-  { amount: 20,  tag: null,      highlight: false },
-  { amount: 60,  tag: "Top",     highlight: true  },
-  { amount: 100, tag: null,      highlight: false },
-  { amount: 200, tag: "Premium", highlight: false },
-  { amount: 300, tag: null,      highlight: false },
-];
-
 function heroAnim(
   delay: number,
   name: "heroFadeUp" | "heroFadeIn" = "heroFadeUp",
@@ -135,19 +124,6 @@ function heroAnim(
   };
 }
 
-const ScrollReveal = isIOS
-  ? ({ children }: { children: React.ReactNode }) => <>{children}</>
-  : ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.5, delay, ease: "easeOut" }}
-      >
-        {children}
-      </motion.div>
-    );
-
 export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [featuredActivities, setFeaturedActivities] = useState<FeaturedActivity[]>([]);
   const [courses, setCourses]                       = useState<Corso[]>([]);
@@ -156,10 +132,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [isDetailOpen, setIsDetailOpen]             = useState(false);
   const [bgAnimDone, setBgAnimDone]                 = useState(false);
 
-  // FIX 1: Lazy initialization di isMobile. Valutato una sola volta in modo sicuro.
-  const [isMobile] = useState(() => 
-    typeof window !== "undefined" && window.innerWidth < 768
-  );
+  const [isMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
 
   useEffect(() => {
     async function loadData() {
@@ -217,8 +190,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ed] overflow-x-hidden">
 
-      {/* FIX 2: Tag <style> rimosso. Il CSSOM non viene più ricalcolato inutilmente su iOS */}
-
+      {/* ─── 1. HERO ───────────────────── */}
       <Section animate={false} fullHeight as="section" className="flex items-center justify-center overflow-hidden">
         <motion.div
           className="absolute inset-0"
@@ -295,6 +267,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </Section>
 
+      {/* ─── 2. ACCADEMIA ───────────────────── */}
       <Section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
           <div>
@@ -323,47 +296,8 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </Section>
 
-      <Section className="max-w-4xl mx-auto px-4 py-12 md:py-20" delay={0.05}>
-        <ScrollReveal>
-          <div className="bg-white rounded-[2.5rem] overflow-hidden border border-stone-50 ios-gpu-fix" style={{ boxShadow: "0 0 80px -10px rgba(14,165,233,0.18), 0 0 40px -20px rgba(68,64,60,0.1), 0 25px 50px -12px rgba(0,0,0,0.1)" }}>
-            <div className="flex flex-col md:flex-row min-h-[360px]">
-              <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
-                <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp" alt="Paesaggio innevato" className="absolute inset-0 w-full h-full object-cover object-center" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }} />
-                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent ios-gpu-fix" />
-                <div className="absolute bottom-6 left-8 text-white z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star size={14} className="text-brand-sky fill-brand-sky" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Gift Experience</span>
-                  </div>
-                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">Regala un'<br />avventura.</h3>
-                </div>
-              </div>
-              <div className="w-full md:w-3/5 p-8 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
-                <p className="text-stone-500 text-sm font-medium leading-relaxed mb-6">Un'emozione da regalare a chi ami — utilizzabile per ogni tipo di esperienza Altour.</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-4">Scegli l'importo</p>
-                <div className="grid grid-cols-3 gap-2.5 mb-5">
-                  {PRESET_VOUCHERS.map(({ amount, tag, highlight }) => (
-                    <motion.button key={amount} whileHover={{ y: -2, scale: 1.04 }} whileTap={{ scale: 0.95 }} onClick={() => onBookingClick(`Voucher Regalo da ${amount}€`)} className={`relative flex flex-col items-center justify-center py-4 rounded-xl font-black transition-colors border-2 ios-gpu-fix ${highlight ? "border-brand-sky bg-brand-sky text-white shadow-md shadow-sky-100" : "border-stone-200 bg-white text-brand-stone hover:border-brand-sky hover:text-brand-sky"}`}>
-                      <span className="text-base font-black leading-none">{amount}€</span>
-                      {tag && <span className={`text-[7px] font-black uppercase tracking-wider mt-1 ${highlight ? "text-white/75" : "text-stone-400"}`}>{tag}</span>}
-                    </motion.button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex-1 h-px bg-stone-200" />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-stone-300">oppure</span>
-                  <div className="flex-1 h-px bg-stone-200" />
-                </div>
-                <motion.button whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} onClick={() => onBookingClick("Richiesta Gift Voucher Personalizzato")} className="w-full bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-lg hover:bg-brand-sky transition-colors flex items-center justify-center gap-2 ios-gpu-fix">
-                  <Gift size={12} /> Importo personalizzato
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-      </Section>
-
-      <Section className="max-w-6xl mx-auto px-4 py-20 md:py-32">
+      {/* ─── 3. ATTIVITÀ OUTDOOR ───────────────────── */}
+      <Section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -409,73 +343,13 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </Section>
 
-     {/* ─── SEZIONE PROGETTI PERSONALIZZATI (Esistente) ───────────────────── */}
-      <Section className="max-w-4xl mx-auto px-4 py-8" delay={0.05}>
-        <ScrollReveal>
-          <div className="bg-white rounded-[2.5rem] overflow-hidden border border-stone-50 ios-gpu-fix" style={{ boxShadow: "0 0 80px -10px rgba(14,165,233,0.18), 0 0 40px -20px rgba(68,64,60,0.1), 0 25px 50px -12px rgba(0,0,0,0.1)" }}>
-            <div className="flex flex-col md:flex-row min-h-[280px]">
-              <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
-                <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Box_avventura.webp" alt="Escursione personalizzata" className="absolute inset-0 w-full h-full object-cover object-[center_30%]" loading="lazy" decoding="async" />
-                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent ios-gpu-fix" />
-                <div className="absolute bottom-6 left-8 text-white z-10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp size={14} className="text-brand-sky" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em]">Progetti Personalizzati</span>
-                  </div>
-                  <h3 className="text-2xl font-black uppercase leading-none tracking-tighter italic">Su misura, <br /> per te.</h3>
-                </div>
-              </div>
-              <div className="w-full md:w-3/5 p-10 md:p-14 flex flex-col justify-center bg-[#faf9f7]">
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky mb-3 block">Progetti Personalizzati</span>
-                <h2 className="text-2xl md:text-3xl font-black text-brand-stone uppercase tracking-tighter leading-none mb-3">Avventura <span className="text-brand-sky italic font-light tracking-normal">su misura.</span></h2>
-                <p className="text-stone-500 text-sm font-medium max-w-sm leading-relaxed mb-8">Hai un'idea specifica? Progettiamo tour privati e team building tracciando la rotta insieme a te.</p>
-                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => onBookingClick("Esperienza su Misura", "info")} className="w-full md:w-auto bg-brand-stone text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl hover:bg-brand-sky transition-colors flex items-center justify-center gap-3 ios-gpu-fix">
-                  Contattaci <Send size={14} />
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </ScrollReveal>
-      </Section>
+      {/* ─── 4. FEEDBACK CAROUSEL (Spostato qui) ───────────────────── */}
+      <FeedbackCarousel />
 
-      {/* ─── MODALE DETTAGLI (Esistente) ───────────────────── */}
+      {/* ─── MODALE DETTAGLI ───────────────────── */}
       {selectedActivity && (
         <ActivityDetailModal activity={selectedActivity} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} onBookingClick={onBookingClick} />
       )}
-
-      {/* ─── PREMIUM RESPONSIVE STICKY FAB (Invisibile nei Modali, discreto su Desktop) ───────────────────── */}
-      <motion.a
-        href="https://wa.me/393281613762"
-        target="_blank"
-        rel="noopener noreferrer"
-        initial={{ scale: 0, opacity: 0 }}
-        animate={
-          isDetailOpen 
-            ? { scale: 0, opacity: 0, pointerEvents: "none" } 
-            : { scale: 1, opacity: isMobile ? 1 : 0.85, pointerEvents: "auto" }
-        }
-        transition={{ delay: isDetailOpen ? 0 : 0.4, type: "spring", stiffness: 280, damping: 22 }}
-        whileHover={{ scale: 1.06, opacity: 1, y: -2 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed z-[90] flex items-center justify-center rounded-full ios-gpu-fix transition-opacity duration-200
-                   bottom-6 right-6 w-14 h-14 
-                   md:bottom-8 md:right-8 md:w-12 md:h-12"
-        style={{ 
-          background: "linear-gradient(145deg, #2ecc71 0%, #25D366 40%, #1aab52 100%)", 
-          boxShadow: "0 1px 0 0 rgba(255,255,255,0.2) inset, 0 -1px 0 0 rgba(0,0,0,0.15) inset, 0 8px 24px -4px rgba(37,211,102,0.4), 0 2px 6px -1px rgba(0,0,0,0.12)" 
-        }}
-        aria-label="Contattaci su WhatsApp"
-      >
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 24 24" 
-          fill="white" 
-          className="w-6 h-6 md:w-5 md:h-5 relative"
-        >
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-        </svg>
-      </motion.a>
-
     </div>
   );
 }
