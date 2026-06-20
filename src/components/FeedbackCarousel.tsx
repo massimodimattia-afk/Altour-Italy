@@ -108,9 +108,10 @@ export default function FeedbackCarousel() {
       </div>
 
       {/* Contenitore Carosello */}
+      {/* Contenitore Carosello */}
       <div 
         ref={carouselRef}
-        className="flex gap-4 md:gap-6 px-5 pb-8 overflow-x-auto snap-x snap-mandatory scrollbar-hide ios-gpu-fix transform-gpu"
+        className="flex gap-4 md:gap-6 px-5 pb-8 overflow-x-auto snap-x snap-mandatory ios-gpu-fix transform-gpu [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {recensioni.map((rec, index) => {

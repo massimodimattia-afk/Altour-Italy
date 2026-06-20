@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, ArrowRight, Sparkles, SlidersHorizontal } from "lucide-react";
+import { Calendar, Clock, ArrowRight, SlidersHorizontal } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
@@ -193,7 +193,6 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [drawerOpen, setDrawerOpen]     = useState(false);
-  const [drawerClosing, setDrawerClosing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -228,11 +227,9 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     }
   }, [drawerOpen]);
 
-  const closeDrawer = () => {
-    setDrawerClosing(true);
-    setDrawerOpen(false);
-    setTimeout(() => setDrawerClosing(false), 320);
-  };
+ const closeDrawer = () => {
+  setDrawerOpen(false);
+};
 
   useEffect(() => {
     async function load() {
@@ -513,7 +510,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                 ))}
               </AnimatePresence>
             </div>
-            
+
             {visibleCount < filtered.length && (
               <div className="flex justify-center mt-8">
                 <button
