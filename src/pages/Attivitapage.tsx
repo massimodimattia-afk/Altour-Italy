@@ -337,7 +337,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
           initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="mb-6 rounded-[2rem] overflow-hidden"
+          className="hidden md:block mb-6 rounded-[2rem] overflow-hidden"
           style={{
             background: "linear-gradient(135deg, #81ccb010 0%, #5aaadd12 50%, #f4d98c0e 100%)",
             border: "1.5px solid rgba(129,204,176,0.25)",
@@ -536,15 +536,18 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
               initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
               transition={{ type: "spring", stiffness: 340, damping: 28 }}
               onClick={() => setDrawerOpen(true)}
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2.5 px-6 py-4 rounded-full text-white font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-transform"
+              // CLASSI AGGIORNATE: w-[85vw] max-w-[320px] e justify-center per un look nativo
+              className="fixed z-40 flex items-center justify-center gap-2.5 px-6 py-4 rounded-[1.25rem] text-white font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-transform left-1/2 -translate-x-1/2 w-[85vw] max-w-[320px]"
               style={{
+                // LA MAGIA PER iOS: Usa la safe-area o un minimo di 24px (1.5rem)
+                bottom: "calc(max(1.5rem, env(safe-area-inset-bottom)))", 
                 background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
                 boxShadow: "0 8px 32px rgba(90,170,221,0.35)",
                 transform: "translateZ(0)",
                 WebkitBackfaceVisibility: "hidden",
               }}
             >
-              <Sparkles size={14} /> Trova la tua escursione
+              <Sparkles size={16} /> Trova la tua escursione
             </motion.button>
           )}
         </AnimatePresence>

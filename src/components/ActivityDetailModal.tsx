@@ -1,10 +1,10 @@
+// src/components/ActivityDetailModal.tsx
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, TrendingUp,
   Briefcase as Backpack, Mountain, MapPin, ArrowUp, ExternalLink, Users, Clock
 } from "lucide-react";
 import { useState, useEffect } from "react";
-// IL FIX: Importiamo createPortal
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 
@@ -49,16 +49,19 @@ interface ActivityDetailModalProps {
   onBookingClick: (title: string, mode?: 'info' | 'prenota') => void;
 }
 
-function MiniMap({ lat, lng }: { lat: number; lng: number }) {
+// Passiamo un prop aggiuntivo per sapere se possiamo renderizzare l'iframe
+function MiniMap({ lat, lng, isAnimationDone }: { lat: number; lng: number; isAnimationDone: boolean }) {
   const nLat = Number(lat);
   const nLng = Number(lng);
   if (isNaN(nLat) || isNaN(nLng) || (nLat === 0 && nLng === 0)) return null;
+  
   const delta = 0.005;
   const bbox = `${nLng - delta},${nLat - delta},${nLng + delta},${nLat + delta}`;
   const osmSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${nLat},${nLng}`;
-  const googleMapsUrl = `https://www.google.com/maps?q=${nLat},${nLng}`;
+  const googleMapsUrl = `http://googleusercontent.com/maps.google.com/maps?q=${nLat},${nLng}`;
+
   return (
-    <div className="rounded-2xl overflow-hidden border border-stone-100 relative mt-4 shadow-sm">
+    <div className="rounded-2xl overflow-hidden border border-stone-100 relative mt-4 shadow-sm transform-gpu">
       <div className="flex items-center justify-between px-4 py-3 bg-stone-50 border-b border-stone-100">
         <div className="flex items-center gap-2">
           <MapPin size={13} className="text-brand-sky shrink-0" />
@@ -69,8 +72,16 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
           Apri App <ExternalLink size={10} />
         </a>
       </div>
+      
       <div className="relative h-48 bg-stone-100 w-full">
-        <iframe title="Mappa" src={osmSrc} width="100%" height="100%" style={{ border: "none" }} loading="lazy" />
+        {/* L'iframe viene caricato solo al termine dell'animazione per evitare crolli di framerate su iOS */}
+        {isAnimationDone ? (
+          <iframe title="Mappa" src={osmSrc} width="100%" height="100%" style={{ border: "none" }} loading="lazy" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-stone-300 animate-pulse">
+            <MapPin size={24} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -79,14 +90,19 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
 export default function ActivityDetailModal({ activity, isOpen, onClose, onBookingClick }: ActivityDetailModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
+  
+  // Stato fondamentale per le performance
+  const [isAnimationDone, setIsAnimationDone] = useState(false);
 
-  // Per evitare errori di Hydration e assicurarci che document esista
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (activity?.id) setCurrentImageIndex(0);
+    if (activity?.id) {
+      setCurrentImageIndex(0);
+      setIsAnimationDone(false); // Reset all'apertura di una nuova attività
+    }
   }, [activity?.id]);
 
   useEffect(() => {
@@ -94,11 +110,11 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
+      setIsAnimationDone(false); // Reset alla chiusura
     }
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  // Se non siamo nel browser o non abbiamo un'attività, non mostrare nulla
   if (!mounted) return null;
 
   const images = activity ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[] : [];
@@ -119,28 +135,30 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
     return <p>{equipment}</p>;
   };
 
-  // IL FIX: Impacchettiamo l'intero modale nella costante modalContent
   const modalContent = (
     <AnimatePresence>
       {isOpen && activity && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-8" style={{ isolation: 'isolate' }}>
           
-          {/* Overlay scuro */}
+          {/* Overlay scuro: Rimosso il backdrop-blur-sm per prestazioni iOS di picco */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-stone-900/65"
           />
 
           {/* Container Principale Modale */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="relative bg-white w-full max-w-5xl flex flex-col md:flex-row overflow-hidden rounded-[2rem] shadow-2xl max-h-[90vh] z-[10001]"
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ type: "spring", stiffness: 350, damping: 30 }}
+            onAnimationComplete={() => setIsAnimationDone(true)} // Sblocca i componenti pesanti
+            style={{ willChange: "transform, opacity" }} // Suggerimento vitale per la GPU
+            className="relative bg-white w-full max-w-5xl flex flex-col md:flex-row overflow-hidden rounded-[2rem] shadow-2xl max-h-[90vh] z-[10001] transform-gpu"
           >
             {/* Bottone Chiudi */}
             <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg active:scale-90 transition-transform">
@@ -188,6 +206,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 <div className="prose prose-sm max-w-none text-stone-600 font-medium">
                   <ReactMarkdown>{normalizeMarkdown(activity.descrizione_estesa || activity.descrizione || "")}</ReactMarkdown>
                 </div>
+                
                 {activity.attrezzatura && (
                   <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
@@ -197,6 +216,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     <div className="text-xs text-stone-600 leading-relaxed">{formatEquipmentList(activity.attrezzatura)}</div>
                   </div>
                 )}
+                
                 {isCampo && activity.servizi && (
                   <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
@@ -208,7 +228,9 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     </div>
                   </div>
                 )}
-                {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} />}
+
+                {/* La mappa aspetta il permesso dallo stato dell'animazione */}
+                {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} isAnimationDone={isAnimationDone} />}
               </div>
 
               {/* Footer */}
@@ -219,7 +241,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 </div>
                 <button
                   onClick={() => onBookingClick(bookingTitle || "", 'prenota')}
-                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
+                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95 transform-gpu"
                 >
                   Prenota Ora <TrendingUp size={15} />
                 </button>
@@ -232,8 +254,5 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
     </AnimatePresence>
   );
 
-  // IL FIX: Teletrasportiamo il modale nel tag <body> principale, liberandolo dalla prigione del CSS!
   return createPortal(modalContent, document.body);
 }
-
-
