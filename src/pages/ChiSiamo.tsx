@@ -9,13 +9,11 @@ interface ChiSiamoProps {
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
 
+// Ridotto a una singola fila (3 importi) per renderlo più lean
 const PRESET_VOUCHERS = [
-  { amount: 10,  tag: null,      highlight: false },
-  { amount: 20,  tag: null,      highlight: false },
   { amount: 60,  tag: "Top",     highlight: true  },
   { amount: 100, tag: null,      highlight: false },
   { amount: 200, tag: "Premium", highlight: false },
-  { amount: 300, tag: null,      highlight: false },
 ];
 
 function heroAnim(
@@ -191,7 +189,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
     <div className="min-h-[100dvh] bg-[#f5f2ed] overflow-x-hidden antialiased selection:bg-brand-sky/20">
 
       {/* ─── 1. HERO ───────────────────── */}
-      <Section animate={false} as="section" className="relative flex items-center justify-center overflow-hidden min-h-[45vh] md:min-h-[55vh]">
+      <Section animate={false} as="section" className="relative flex items-center justify-center overflow-hidden min-h-[45vh] md:min-h-[60vh]">
         <div className="absolute inset-0 transform-gpu scale-100">
           <picture>
             <source media="(max-width: 768px)" srcSet="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Braies.webp" /> 
@@ -205,37 +203,51 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             />
           </picture>
         </div>
-        <div className="absolute inset-0 bg-black/40 ios-gpu-fix" style={heroAnim(0, "heroFadeIn", 0.8)} />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[75%] to-[#f5f2ed] ios-gpu-fix" />
+        <div className="absolute inset-0 bg-black/45 ios-gpu-fix" style={heroAnim(0, "heroFadeIn", 1.0)} />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[65%] to-[#f5f2ed] ios-gpu-fix" />
 
-        <div className="relative z-10 text-center max-w-3xl w-full px-4 flex flex-col items-center" style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}>
-          <div style={heroAnim(0.2)} className="mb-3 ios-gpu-fix">
-            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-white/60 mb-2">Altour Italy</p>
-            <h1 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter drop-shadow-md leading-none">Chi Siamo</h1>
+        <div className="relative z-10 text-center max-w-3xl w-full px-4 flex flex-col items-center" style={{ paddingTop: "max(2rem, env(safe-area-inset-top))" }}>
+          <div style={heroAnim(0.4)} className="mb-4 ios-gpu-fix">
+            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-white/55 mb-3">Altour Italy</p>
+            <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none">Chi Siamo</h1>
           </div>
-          <p style={heroAnim(0.4, "heroFadeUp", 0.5)} className="text-white/70 text-sm md:text-lg font-medium max-w-xs md:max-w-md mx-auto leading-relaxed italic ios-gpu-fix">
+          <p style={heroAnim(0.7, "heroFadeUp", 0.7)} className="text-white/65 text-base md:text-xl font-medium max-w-sm md:max-w-md mx-auto leading-relaxed italic mt-2 ios-gpu-fix">
             "Non organizziamo gite.<br />Viviamo esperienze uniche."
           </p>
         </div>
       </Section>
 
       {/* ─── 2. MANIFESTO ───────────────────── */}
-      <Section className="max-w-3xl mx-auto px-5 py-16 md:py-24">
+      <Section className="max-w-3xl mx-auto px-5 py-20 md:py-28">
         <ScrollReveal>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-1 w-6 bg-brand-sky rounded-full" />
+          <div className="flex items-center gap-3 mb-8">
+            <div className="h-1 w-8 bg-brand-sky rounded-full" />
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky">La nostra storia</span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.95] mb-6">
+          <h2 className="text-4xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-8">
             Nati dall'amore <br />
             <span className="text-brand-sky italic font-light tracking-normal">per la nostra terra.</span>
           </h2>
-          <div className="space-y-4 text-stone-500 text-sm md:text-base font-medium leading-relaxed">
+          <div className="space-y-5 text-stone-500 text-base md:text-lg font-medium leading-relaxed">
             <p>
-              Siamo partiti da un'idea semplice: far conoscere l'Italia a chi si senta viaggiatore e non turista! Ecco il nome: <strong className="text-brand-stone font-black">Altour Italy</strong>, cioè <em>Tour alternativi in Italia</em>. Esperienze in piccoli gruppi accompagnati da esperte Guide Ambientali Escursionistiche.
+              Siamo partiti da un'idea semplice: far conoscere l'Italia a chi si senta viaggiatore e non turista!
+              Ecco, quindi, il nome: <strong className="text-brand-stone font-black">Altour Italy</strong> cioè <em>Tour alternativi in Italia</em>.
+              Esperienze da condividere in piccoli gruppi accompagnati da esperte Guide Ambientali Escursionistiche che si prenderanno
+              cura di te e ti faranno conoscere un'altra Italia, più genuina e meno turistica.
             </p>
             <p>
-              Ci consideriamo "artigiani" che confezionano un abito su misura, una parentesi spensierata da regalarsi in un clima di amicizia, serenità e rispetto della natura.
+              Voci originali fuori dal coro, le nostre proposte, passo dopo passo ti faranno visitare luoghi unici con occhi diversi.
+              Ci consideriamo "artigiani" che confezionano un abito su misura, una parentesi spensierata, una coccola da regalarsi in
+              un clima di amicizia, serenità e rispetto.
+            </p>
+            <p>
+              Negli ultimi 10 anni abbiamo accompagnato centinaia di persone, abbiamo costruito un'Accademia per formare nuove guide,
+              abbiamo creato una community di persone appassionate che raccolgono scarponi come medaglie.
+            </p>
+            <p>
+              Non ci interessano le performance e le sfide contro il tempo. Ci interessa che ogni esperienza ci arricchisca, ci faccia
+              tornare a casa più sereni, ci regali una storia da raccontare e un'immagine da condividere così che il tempo passato
+              insieme sia ricco di significati.
             </p>
           </div>
         </ScrollReveal>
@@ -352,7 +364,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
         </div>
       </Section>
 
-      {/* ─── 5. GIFT EXPERIENCE (Importato da Home) ───────────────────── */}
+      {/* ─── 5. GIFT EXPERIENCE ───────────────────── */}
       <Section className="max-w-4xl mx-auto px-4 py-12 md:py-16" delay={0.05}>
         <ScrollReveal>
           <div className="bg-white rounded-[2.5rem] overflow-hidden border border-stone-50 ios-gpu-fix" style={{ boxShadow: "0 0 80px -10px rgba(14,165,233,0.18), 0 0 40px -20px rgba(68,64,60,0.1), 0 25px 50px -12px rgba(0,0,0,0.1)" }}>
@@ -393,7 +405,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
         </ScrollReveal>
       </Section>
 
-      {/* ─── 6. PROGETTI PERSONALIZZATI (Importato da Home) ───────────────────── */}
+      {/* ─── 6. PROGETTI PERSONALIZZATI ───────────────────── */}
       <Section className="max-w-4xl mx-auto px-4 pb-16 md:pb-24" delay={0.05}>
         <ScrollReveal>
           <div className="bg-white rounded-[2.5rem] overflow-hidden border border-stone-50 ios-gpu-fix" style={{ boxShadow: "0 0 80px -10px rgba(14,165,233,0.18), 0 0 40px -20px rgba(68,64,60,0.1), 0 25px 50px -12px rgba(0,0,0,0.1)" }}>
