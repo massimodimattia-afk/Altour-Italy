@@ -461,6 +461,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
       </div>
 
       {/* ── Contenuto principale ──────────────────────────────────────────── */}
+      {/* ── Contenuto principale ──────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-20">
 
         {visible.length === 0 && !loading ? (
@@ -468,18 +469,40 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
             className="py-20 text-center"
           >
-            <p className="text-5xl mb-4">🏔️</p>
-            <p className="text-brand-stone font-black uppercase tracking-widest text-sm mb-2">Nessuna attività disponibile</p>
-            <p className="text-stone-400 text-xs font-medium mb-6">Non ci sono risultati per questo filtro al momento.</p>
-            <button
-              onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
-              className="px-6 py-3 bg-brand-sky text-white rounded-2xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all"
-            >
-              Vedi tutte le attività
-            </button>
+            {/* ... Nessuna attività ... */}
           </motion.div>
         ) : (
           <>
+            {/* ── NUOVO PULSANTE MOBILE IN-FLOW (Visibile solo su schermi piccoli) ── */}
+            <div className="md:hidden mb-6 mt-2">
+              <button
+                onClick={handleInizia}
+                className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white shadow-lg active:scale-95 transition-transform"
+                style={{
+                  background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
+                  boxShadow: "0 8px 24px rgba(129,204,176,0.25)",
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-11 h-11 rounded-[0.9rem] bg-white/20 flex items-center justify-center text-xl flex-shrink-0">
+                    🎒
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/80 mb-0.5">
+                      Non sai cosa scegliere?
+                    </p>
+                    <p className="text-[13px] font-black uppercase tracking-widest leading-none">
+                      Prepara lo zaino
+                    </p>
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <ArrowRight size={16} className="text-white" />
+                </div>
+              </button>
+            </div>
+
+            {/* ── Griglia delle Card ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               <AnimatePresence mode="popLayout">
                 {visible.map((activity, idx) => (
@@ -490,7 +513,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                 ))}
               </AnimatePresence>
             </div>
-
+            
             {visibleCount < filtered.length && (
               <div className="flex justify-center mt-8">
                 <button
@@ -528,31 +551,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
 
       </div>
 
-      {/* ── Mobile: pill sticky ──────────────────────────────────────────── */}
-      <div className="md:hidden">
-        <AnimatePresence>
-          {!drawerOpen && !drawerClosing && (
-            <motion.button
-              initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 340, damping: 28 }}
-              onClick={() => setDrawerOpen(true)}
-              // CLASSI AGGIORNATE: w-[85vw] max-w-[320px] e justify-center per un look nativo
-              className="fixed z-40 flex items-center justify-center gap-2.5 px-6 py-4 rounded-[1.25rem] text-white font-black uppercase text-[10px] tracking-widest shadow-2xl active:scale-95 transition-transform left-1/2 -translate-x-1/2 w-[85vw] max-w-[320px]"
-              style={{
-                // LA MAGIA PER iOS: Usa la safe-area o un minimo di 24px (1.5rem)
-                bottom: "calc(max(1.5rem, env(safe-area-inset-bottom)))", 
-                background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
-                boxShadow: "0 8px 32px rgba(90,170,221,0.35)",
-                transform: "translateZ(0)",
-                WebkitBackfaceVisibility: "hidden",
-              }}
-            >
-              <Sparkles size={16} /> Trova la tua escursione
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
-
+      
       {/* ── Drawer mobile in PORTAL: bypassa qualsiasi containing-block da transform di antenati ── */}
       {mounted && createPortal(
         <div className="md:hidden">
