@@ -1,5 +1,5 @@
 // src/pages/ChiSiamo.tsx
-import { useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Gift, Star, TrendingUp, Send } from "lucide-react";
 import Section, { isIOS } from "../components/Section";
@@ -77,7 +77,6 @@ const FILOSOFIA_DESC: Record<string, string> = {
   "Trek urbano":           "Passeggiare senza fretta",
 };
 
-// Aggiunta la proprietà opzionale 'immagine'. Lasciala vuota per usare le iniziali!
 const TEAM_MEMBERS = [
   { iniziali: "CC", immagine: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/avatars/avatars/313cf930-636d-409a-b95d-ee964766381a.jpg", nome: "Claudio C.", ruolo: "Co-Fondatore & Guida AIGAE", filosofia: "Avventura", bio: "Guida ambientale escursionistica certificata AIGAE. Ha percorso migliaia di km tra Dolomiti e Appennini." },
   { iniziali: "GC", immagine: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/avatars/avatars/d371fc77-3431-4725-a0b7-562f9a675a09.jpg", nome: "Gloria C.", ruolo: "Social Media", filosofia: "Benessere", bio: "Entrepreneur digitale, amante della natura, delle avventure e delle grandi storie di vita, ben raccontate." },
@@ -108,7 +107,6 @@ function PhilosophyPanel({ activePhilosophy, onNavigate }: { activePhilosophy: s
     </div>
   );
 
-  // iOS static fallback for AnimatePresence
   if (isIOS) return <div className="w-full">{inner}</div>;
 
   return (
@@ -122,15 +120,26 @@ function TeamCardInner({ membro, color }: { membro: (typeof TEAM_MEMBERS)[number
   return (
     <>
       <div className="flex items-start gap-4 mb-4">
-        {/* Supporto per Immagine Profilo o Fallback Iniziali */}
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-black flex-shrink-0 relative overflow-hidden bg-stone-100" style={!membro.immagine ? { backgroundColor: color } : {}}>
-          {membro.immagine ? (
-            <img src={membro.immagine} alt={membro.nome} className="absolute inset-0 w-full h-full object-cover" loading="lazy" decoding="async" />
-          ) : (
-            <>
-              <div className="absolute inset-0 opacity-20" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 60%)" }} />
-              <span className="relative z-10">{membro.iniziali}</span>
-            </>
+        {/* FALLBACK INTELLIGENTE: Se l'immagine si rompe, scompare svelando le iniziali sotto! */}
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-lg font-black flex-shrink-0 relative overflow-hidden bg-stone-100" style={{ backgroundColor: color }}>
+          
+          {/* Base: Le iniziali colorate sono SEMPRE disegnate */}
+          <div className="absolute inset-0 opacity-20 z-0" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 60%)" }} />
+          <span className="relative z-0">{membro.iniziali}</span>
+          
+          {/* Sopra: L'immagine copre le iniziali. Se fallisce, diventa invisibile. */}
+          {membro.immagine && (
+            <img 
+              src={membro.immagine} 
+              alt={membro.nome} 
+              className="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300 bg-white" 
+              loading="lazy" 
+              decoding="async"
+              onError={(e) => {
+                // Se l'immagine non viene trovata o è bloccata, la rendiamo trasparente!
+                e.currentTarget.style.opacity = '0';
+              }} 
+            />
           )}
         </div>
         
@@ -150,7 +159,6 @@ function TeamCardInner({ membro, color }: { membro: (typeof TEAM_MEMBERS)[number
 export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) {
   const [activePhilosophy, setActivePhilosophy] = useState<string>("Avventura");
 
-  // Funzione alleggerita al massimo (niente più calcoli di scroll!)
   const handlePhilosophyClick = useCallback((nome: string) => {
     setActivePhilosophy(nome);
   }, []);
@@ -158,7 +166,8 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
   const activeColor = FILOSOFIA_COLORS[activePhilosophy];
 
   return (
-    <div className="min-h-[100dvh] bg-[#f5f2ed] overflow-x-hidden antialiased selection:bg-brand-sky/20">
+    // FIX ANTI-WOBBLE: Aggiunti w-full max-w-[100vw]
+    <div className="min-h-[100dvh] w-full max-w-[100vw] bg-[#f5f2ed] overflow-x-hidden antialiased selection:bg-brand-sky/20">
 
       {/* ─── 1. HERO ───────────────────── */}
       <Section animate={false} as="section" className="relative flex items-center justify-center overflow-hidden min-h-[45vh] md:min-h-[60vh]">
@@ -225,7 +234,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
         </ScrollReveal>
       </Section>
 
-      {/* ─── 3. LE 15 FILOSOFIE (Flex Wrap Layout) ───────────────────── */}
+      {/* ─── 3. LE 15 FILOSOFIE (Layout Flex Wrap confermato) ───────────────────── */}
       <Section className="max-w-5xl mx-auto px-5 py-12 md:py-20">
         <ScrollReveal>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -238,10 +247,11 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
                 15 modi di <br /><span className="text-brand-sky italic font-light tracking-normal">vedere il mondo.</span>
               </h2>
             </div>
-           
+            <p className="text-stone-400 text-xs md:text-sm font-medium max-w-xs leading-relaxed">
+              Ogni attività appartiene a una filosofia. Seleziona un'identità per scoprirla.
+            </p>
           </div>
 
-          {/* Nuovo Layout a Wrap: le pillole si affiancano naturalmente e vanno a capo */}
           <div className="flex flex-wrap gap-2 md:gap-2.5 mb-8 transform-gpu">
             {Object.entries(FILOSOFIA_COLORS).map(([nome, colore]) => {
               const isActive = activePhilosophy === nome;
@@ -276,7 +286,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
         </ScrollReveal>
       </Section>
 
-      {/* ─── 4. IL TEAM ───────────────────── */}
+      {/* ─── 4. IL TEAM (Layout Griglia Verticale confermato) ───────────────────── */}
       <Section className="max-w-5xl mx-auto px-5 py-12 md:py-20">
         <div className="mb-8 md:mb-12">
           <div className="flex items-center gap-3 mb-3">
@@ -288,7 +298,6 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
           </h2>
         </div>
 
-        {/* Griglia unificata: 1 colonna mobile (Lista), 3 colonne desktop */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {TEAM_MEMBERS.map((membro, idx) => {
             const color = FILOSOFIA_COLORS[membro.filosofia] ?? "#5aaadd";
@@ -313,7 +322,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             <div className="flex flex-col md:flex-row min-h-[360px]">
               <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
                 <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp" alt="Paesaggio innevato" className="absolute inset-0 w-full h-full object-cover object-center" loading="lazy" decoding="async" />
-                  <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
                 <div className="absolute bottom-6 left-8 text-white z-10">
                   <div className="flex items-center gap-2 mb-2">
                     <Star size={14} className="text-brand-sky fill-brand-sky" />
@@ -347,7 +356,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
         </ScrollReveal>
       </Section>
 
-      {/* ─── 6. PROGETTI PERSONALIZZATI (Aumentato margine inferiore) ───────────────────── */}
+      {/* ─── 6. PROGETTI PERSONALIZZATI ───────────────────── */}
       <Section className="max-w-4xl mx-auto px-4 pb-24 md:pb-32" delay={0.05}>
         <ScrollReveal>
           <div className="bg-white rounded-[2.5rem] overflow-hidden border border-stone-50 transform-gpu" style={{ boxShadow: "0 0 80px -10px rgba(14,165,233,0.18), 0 0 40px -20px rgba(68,64,60,0.1), 0 25px 50px -12px rgba(0,0,0,0.1)" }}>
