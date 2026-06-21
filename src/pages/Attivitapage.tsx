@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+// src/pages/AttivitaPage.tsx
+import { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, ArrowRight, SlidersHorizontal } from "lucide-react";
+import { Calendar, Clock, ArrowRight, SlidersHorizontal, Search } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
@@ -57,6 +58,7 @@ function formatMarkdown(text: string | null): string {
     .replace(/__(.*?)__/g, "<strong>$1</strong>")
     .replace(/_(.*?)_/g, "<em>$1</em>");
 }
+
 const FILOSOFIA_COLORS: Record<string, string> = {
   "Avventura": "#e94544", "Benessere": "#a5d9c9", "Borghi più belli": "#946a52",
   "Cammini": "#e3c45d", "Educazione all'aperto": "#01aa9f", "Eventi": "#ffc0cb",
@@ -128,11 +130,11 @@ function ActivityCard({
           className="absolute inset-0 w-full h-full object-cover"
           loading={idx < 4 ? "eager" : "lazy"} decoding="async" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-{isEsc
-  ? esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
-  : ((activity as Campo).filosofia || (activity as Campo).slug) && 
-    <FilosofiaBadge value={(activity as Campo).filosofia || (activity as Campo).slug} />
-}
+        {isEsc
+          ? esc?.filosofia && <FilosofiaBadge value={esc.filosofia} />
+          : ((activity as Campo).filosofia || (activity as Campo).slug) && 
+            <FilosofiaBadge value={(activity as Campo).filosofia || (activity as Campo).slug} />
+        }
       </div>
       <div className="p-4 md:p-5 flex flex-col flex-grow">
         <div className="flex items-center gap-2.5 mb-2 flex-wrap">
@@ -148,7 +150,7 @@ function ActivityCard({
             </span>
           )}
         </div>
-        <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
+        <h3 className="text-sm md:text-base font-black text-brand-stone uppercase tracking-tight leading-none line-clamp-2 mb-1.5">
           {activity.titolo}
         </h3>
         <p className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium"
@@ -193,10 +195,10 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [drawerOpen, setDrawerOpen]     = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile]         = useState(false);
+  const [mounted, setMounted]           = useState(false);
+  const [searchQuery, setSearchQuery]   = useState("");
 
-  // ── Rilevamento mobile (per scegliere drawer vs scroll) ───────────────────
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -204,10 +206,8 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // ── Mount flag: createPortal richiede document.body, disponibile solo client-side ──
   useEffect(() => { setMounted(true); }, []);
 
-  // ── Scroll-lock del body mentre il drawer è aperto (fix "scrolla sotto") ──
   useEffect(() => {
     if (drawerOpen) {
       const scrollY = window.scrollY;
@@ -227,9 +227,9 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     }
   }, [drawerOpen]);
 
- const closeDrawer = () => {
-  setDrawerOpen(false);
-};
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+  };
 
   useEffect(() => {
     async function load() {
@@ -243,7 +243,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         descrizione: row.descrizione ?? null, descrizione_estesa: row.descrizione_estesa ?? null,
         immagine_url: row.immagine_url ?? null,
         servizi: row.servizi ?? null,
-        slug: row.slug, prezzo: row.prezzo ?? null, durata: row.durata ?? null,
+        slug: row.slug, prezzo: row.prezzo ?? null, duration: row.durata ?? null,
         difficolta: row.difficolta ?? null, lunghezza: row.lunghezza ?? null,
         filosofia: row.filosofia ?? null, lat: row.lat ?? null, lng: row.lng ?? null,
         min_partecipanti: row.min_partecipanti ?? null,
@@ -254,29 +254,44 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     load();
   }, []);
 
-  const allActivities: Activity[] = [...escursioni, ...campi].sort((a, b) => {
-    const da = (a as any).data ? new Date((a as any).data).getTime() : Infinity;
-    const db = (b as any).data ? new Date((b as any).data).getTime() : Infinity;
-    return da - db;
-  });
+  const allActivities: Activity[] = useMemo(() => {
+    return [...escursioni, ...campi].sort((a, b) => {
+      const da = (a as any).data ? new Date((a as any).data).getTime() : Infinity;
+      const db = (b as any).data ? new Date((b as any).data).getTime() : Infinity;
+      return da - db;
+    });
+  }, [escursioni, campi]);
 
-  const filtered: Activity[] = (() => {
-    if (!activeFilter) return allActivities;
-    switch (activeFilter) {
-      case "mezza_giornata":  return escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza"));
-      case "intera_giornata": return escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera"));
-      case "tour":            return escursioni.filter(e => e.categoria?.toLowerCase() === "tour");
-      case "campi":           return campi;
+  const filtered: Activity[] = useMemo(() => {
+    let base = allActivities;
+    
+    if (activeFilter) {
+      switch (activeFilter) {
+        case "mezza_giornata":  base = escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza")); break;
+        case "intera_giornata": base = escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera")); break;
+        case "tour":            base = escursioni.filter(e => e.categoria?.toLowerCase() === "tour"); break;
+        case "campi":           base = campi; break;
+      }
     }
-  })();
+
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
+      base = base.filter(a => 
+        a.titolo.toLowerCase().includes(q) || 
+        (a.descrizione && a.descrizione.toLowerCase().includes(q))
+      );
+    }
+
+    return base;
+  }, [allActivities, activeFilter, escursioni, campi, searchQuery]);
 
   const visible = filtered.slice(0, visibleCount);
 
-  const FILTERS: { key: FilterKey; label: string; emoji: string; count: number; color: string; textColor?: string }[] = [
-    { key: "mezza_giornata", label: "Mezza giornata", emoji: "🌤", count: escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza")).length,          color: "#5aaadd" },
-    { key: "intera_giornata",label: "Intera giornata", emoji: "☀️", count: escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera")).length, color: "#81ccb0" },
-    { key: "tour",           label: "Tour",           emoji: "🏔", count: escursioni.filter(e => e.categoria?.toLowerCase() === "tour").length,                 color: "#f4d98c", textColor: "#7a5e00" },
-    { key: "campi",          label: "Campi Estivi",   emoji: "⛺️", count: campi.length,                                                                        color: "#9f8270" },
+  const FILTERS = [
+    { key: "mezza_giornata" as const, label: "Mezza giornata", emoji: "🌤", count: escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza")).length,          color: "#5aaadd" },
+    { key: "intera_giornata" as const,label: "Intera giornata", emoji: "☀️", count: escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera")).length, color: "#81ccb0" },
+    { key: "tour" as const,           label: "Tour",           emoji: "🏔", count: escursioni.filter(e => e.categoria?.toLowerCase() === "tour").length,                 color: "#f4d98c", textColor: "#7a5e00" },
+    { key: "campi" as const,          label: "Campi Estivi",   emoji: "⛺️", count: campi.length,                                                                       color: "#9f8270" },
   ];
 
   const openDetails = (a: Activity) => {
@@ -297,7 +312,6 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     }
   };
 
-
   if (loading) return (
     <div className="max-w-6xl mx-auto px-4 pt-8 pb-20">
       <div className="h-10 w-52 bg-stone-200 rounded-2xl animate-pulse mb-2" />
@@ -313,7 +327,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   );
 
   return (
-    <div className="bg-[#f5f2ed] min-h-screen">
+    <div className="bg-[#f5f2ed] min-h-screen antialiased">
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 pt-8 pb-0">
@@ -329,7 +343,45 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         </div>
         <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
-        {/* ── Banner quiz zaino ─────────────────────────────────────────── */}
+       {/* ── BARRA DI RICERCA PREMIUM ── */}
+        <div className="mb-10 mt-6 flex justify-center px-2">
+          <div className="relative w-full max-w-2xl group">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setVisibleCount(ITEMS_PER_LOAD);
+              }}
+              placeholder="Cerca escursione, luogo, stagione..."
+              // Il padding-left (pl-14) garantisce che il testo non tocchi l'icona
+              className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-base md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
+            />
+            
+            {/* Icona di ricerca */}
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-sky pointer-events-none transition-transform duration-300 group-focus-within:scale-110 group-focus-within:text-[#0284c7]">
+              <Search size={20} strokeWidth={3} />
+            </div>
+            
+            {/* Bottone reset con animazione morbida */}
+            <AnimatePresence>
+              {searchQuery && (
+                <motion.button 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 text-xs active:scale-90 transition-colors font-black"
+                >
+                  ✕
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* ── Banner quiz zaino (Nasconde su mobile, gestito in-flow sotto) ── */}
         <motion.div
           initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -372,58 +424,57 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         </motion.div>
 
         {/* ── Filtri mobile ─────────────────────────────────── */}
-<div className="md:hidden mb-10 mt-2 px-1">
-  <div className="flex justify-between items-center mb-4 px-1">
-    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
-      Tipo di Esperienza
-    </span>
-    {activeFilter && (
-      <button 
-        onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
-        className="text-[10px] font-black uppercase tracking-widest text-brand-sky border-b border-brand-sky/30 pb-0.5"
-      >
-        Tutte
-      </button>
-    )}
-  </div>
-
-  <div className="flex flex-wrap gap-2">
-    {FILTERS.map((f) => {
-      const isActive = activeFilter === f.key;
-      return (
-        <button
-          key={f.key}
-          onClick={() => toggleFilter(f.key)}
-          className={`flex-1 min-w-[140px] flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 border ${
-            isActive
-              ? "bg-white border-stone-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)] translate-y-[-2px]"
-              : "bg-stone-200/40 border-transparent text-stone-500"
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <span 
-              className="w-2 h-2 rounded-full shadow-sm" 
-              style={{ backgroundColor: f.color }} 
-            />
-            <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? "text-brand-stone" : "text-stone-500"}`}>
-              {f.label}
+        <div className="md:hidden mb-6 mt-2 px-1">
+          <div className="flex justify-between items-center mb-4 px-1">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
+              Tipo di Esperienza
             </span>
+            {activeFilter && (
+              <button 
+                onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+                className="text-[10px] font-black uppercase tracking-widest text-brand-sky border-b border-brand-sky/30 pb-0.5"
+              >
+                Tutte
+              </button>
+            )}
           </div>
-          
-          {f.count > 0 && (
-            <span className="text-[8px] font-bold opacity-40">
-              {f.count}
-            </span>
-          )}
-        </button>
-      );
-    })}
-  </div>
-</div>
+
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((f) => {
+              const isActive = activeFilter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => toggleFilter(f.key)}
+                  className={`flex-1 min-w-[140px] flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 border ${
+                    isActive
+                      ? "bg-white border-stone-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)] translate-y-[-2px]"
+                      : "bg-stone-200/40 border-transparent text-stone-500"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span 
+                      className="w-2 h-2 rounded-full shadow-sm" 
+                      style={{ backgroundColor: f.color }} 
+                    />
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? "text-brand-stone" : "text-stone-500"}`}>
+                      {f.label}
+                    </span>
+                  </div>
+                  {f.count > 0 && (
+                    <span className="text-[8px] font-bold opacity-40">
+                      {f.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      {/* ── Filtri sticky desktop ─────────────────────────────────────────── */}
-      <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed] border-b border-stone-200/60 py-3">
+      {/* ── Filtri sticky desktop (Inibito l'overflow-x per stabilità strutturale) ── */}
+      <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed] border-b border-stone-200/60 py-3 overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 flex items-center gap-2">
           <button
             onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
@@ -436,7 +487,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
           >
             <SlidersHorizontal size={12} />
           </button>
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {FILTERS.map(f => {
               const isActive = activeFilter === f.key;
               return (
@@ -458,43 +509,50 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
       </div>
 
       {/* ── Contenuto principale ──────────────────────────────────────────── */}
-      {/* ── Contenuto principale ──────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 pt-5 pb-20">
+      <div className="max-w-6xl mx-auto px-4 pt-4 pb-20">
 
         {visible.length === 0 && !loading ? (
           <motion.div
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="py-20 text-center"
+            className="py-20 text-center bg-white rounded-[2rem] border border-stone-100 p-8 shadow-sm"
           >
-            {/* ... Nessuna attività ... */}
+            <p className="text-4xl mb-3">🏔️</p>
+            <h3 className="text-brand-stone font-black uppercase tracking-widest text-xs mb-1">Nessuna attività trovata</h3>
+            <p className="text-stone-400 text-[11px] font-medium mb-6">Non ci sono escursioni corrispondenti alla tua ricerca o al filtro attivo.</p>
+            <button
+              onClick={() => { setActiveFilter(null); setSearchQuery(""); setVisibleCount(ITEMS_PER_LOAD); }}
+              className="px-5 py-3 bg-brand-sky text-white rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all shadow-sm"
+            >
+              Azzera tutto
+            </button>
           </motion.div>
         ) : (
           <>
-            {/* ── NUOVO PULSANTE MOBILE IN-FLOW (Visibile solo su schermi piccoli) ── */}
-            <div className="md:hidden mb-6 mt-2">
+            {/* ── PULSANTE MOBILE IN-FLOW (Sotto la barra di ricerca) ── */}
+            <div className="md:hidden mb-6 mt-1">
               <button
                 onClick={handleInizia}
-                className="w-full flex items-center justify-between px-5 py-4 rounded-2xl text-white shadow-lg active:scale-95 transition-transform"
+                className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-white shadow-md active:scale-95 transition-transform"
                 style={{
                   background: "linear-gradient(135deg, #81ccb0, #5aaadd)",
-                  boxShadow: "0 8px 24px rgba(129,204,176,0.25)",
+                  boxShadow: "0 6px 20px rgba(129,204,176,0.2)",
                 }}
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-[0.9rem] bg-white/20 flex items-center justify-center text-xl flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl flex-shrink-0">
                     🎒
                   </div>
                   <div className="text-left">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/80 mb-0.5">
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/80 mb-0.5">
                       Non sai cosa scegliere?
                     </p>
-                    <p className="text-[13px] font-black uppercase tracking-widest leading-none">
+                    <p className="text-xs font-black uppercase tracking-widest leading-none">
                       Prepara lo zaino
                     </p>
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                  <ArrowRight size={16} className="text-white" />
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <ArrowRight size={14} className="text-white" />
                 </div>
               </button>
             </div>
@@ -511,6 +569,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
               </AnimatePresence>
             </div>
 
+            {/* Pulsante Load More */}
             {visibleCount < filtered.length && (
               <div className="flex justify-center mt-8">
                 <button
@@ -524,7 +583,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
           </>
         )}
 
-        {/* ── Quiz zaino desktop inline ─────────────────────────────────── */}
+       {/* ── Quiz zaino desktop inline ─────────────────────────────────── */}
         <div id="zaino-quiz-section" className="hidden md:block mt-24">
           <div className="flex flex-col items-center mb-12">
             <div className="h-16 w-px bg-gradient-to-b from-transparent to-stone-200" />
@@ -548,6 +607,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
 
       </div>
 
+      {/* 👇 DA QUI IN GIÙ È LA PARTE CHE MANCAVA 👇 */}
       
       {/* ── Drawer mobile in PORTAL: bypassa qualsiasi containing-block da transform di antenati ── */}
       {mounted && createPortal(
@@ -619,6 +679,8 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         </div>,
         document.body
       )}
+
+      {/* ☝️ FINO A QUI ☝️ */}
 
       <ActivityDetailModal
         activity={selectedActivity}
