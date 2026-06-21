@@ -343,27 +343,33 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
         </div>
         <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
-       {/* ── BARRA DI RICERCA PREMIUM ── */}
+       {/* ── BARRA DI RICERCA PREMIUM + FIX TASTIERA MOBILE ── */}
         <div className="mb-10 mt-6 flex justify-center px-2">
-          <div className="relative w-full max-w-2xl group">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault(); // Evita il ricaricamento della pagina
+              (document.activeElement as HTMLElement)?.blur(); // Chiude la tastiera su iOS/Android
+            }}
+            className="relative w-full max-w-2xl group"
+          >
             <input
               type="text"
+              enterKeyHint="search" // Mostra il tasto "Cerca" sulla tastiera del telefono
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setVisibleCount(ITEMS_PER_LOAD);
               }}
               placeholder="Cerca escursione, luogo, stagione..."
-              // Il padding-left (pl-14) garantisce che il testo non tocchi l'icona
               className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-base md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
             />
             
-            {/* Icona di ricerca */}
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-sky pointer-events-none transition-transform duration-300 group-focus-within:scale-110 group-focus-within:text-[#0284c7]">
+            {/* Icona di ricerca (Grigia da vuota, diventa azzurra e si ingrandisce al click) */}
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-brand-sky">
               <Search size={20} strokeWidth={3} />
             </div>
             
-            {/* Bottone reset con animazione morbida */}
+            {/* Bottone reset */}
             <AnimatePresence>
               {searchQuery && (
                 <motion.button 
@@ -371,6 +377,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.15 }}
+                  type="button" // Previene l'invio accidentale del form
                   onClick={() => setSearchQuery("")}
                   className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 text-xs active:scale-90 transition-colors font-black"
                 >
@@ -378,7 +385,7 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
                 </motion.button>
               )}
             </AnimatePresence>
-          </div>
+          </form>
         </div>
 
         {/* ── Banner quiz zaino (Nasconde su mobile, gestito in-flow sotto) ── */}

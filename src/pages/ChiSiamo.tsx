@@ -1,5 +1,5 @@
 // src/pages/ChiSiamo.tsx
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Gift, Star, TrendingUp, Send } from "lucide-react";
 import Section, { isIOS } from "../components/Section";
