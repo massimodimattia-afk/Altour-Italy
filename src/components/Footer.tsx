@@ -58,38 +58,38 @@ export default function Footer({ onNavigate }: FooterProps) {
             </div>
           </div>
 
-          {/* 3. SOCIAL COMMUNITY - Aggiunto WhatsApp */}
+          {/* 3. SOCIAL COMMUNITY - Aggiunto WhatsApp con colori */}
           <div className="flex flex-col items-center md:items-start">
             <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-8 opacity-50">
               Community
             </h3>
             <div className="flex flex-row md:flex-col gap-3 w-full max-w-[300px] md:max-w-none">
               
-              {/* Instagram */}
+              {/* Instagram con sfumatura */}
               <motion.a
                 href="https://www.instagram.com/altouritaly/"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileTap={{ scale: 0.95 }}
-                className="flex-1 flex items-center justify-center gap-3 px-4 py-4 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 transition-all"
+                className="flex-1 flex items-center justify-center gap-3 px-4 py-4 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-pink-600 transition-all"
               >
                 <Instagram size={18} />
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Instagram</span>
               </motion.a>
 
-              {/* Facebook */}
+              {/* Facebook blu */}
               <motion.a
                 href="https://www.facebook.com/AltourItaly"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileTap={{ scale: 0.95 }}
-                className="flex-1 flex items-center justify-center gap-3 px-4 py-4 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 transition-all"
+                className="flex-1 flex items-center justify-center gap-3 px-4 py-4 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-blue-700 transition-all"
               >
                 <Facebook size={18} />
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Facebook</span>
               </motion.a>
 
-              {/* WhatsApp */}
+              {/* WhatsApp verde */}
               <motion.a
                 href="https://wa.me/393281613762"
                 target="_blank"
