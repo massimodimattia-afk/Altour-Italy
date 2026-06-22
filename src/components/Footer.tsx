@@ -1,4 +1,4 @@
-import { Instagram, Mail, Phone, Heart, Facebook, MapPin } from "lucide-react";
+import { Instagram, Mail, Phone, Heart, Facebook, MapPin, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface FooterProps {
@@ -58,12 +58,14 @@ export default function Footer({ onNavigate }: FooterProps) {
             </div>
           </div>
 
-          {/* 3. SOCIAL COMMUNITY - Flex row su mobile per risparmiare spazio */}
+          {/* 3. SOCIAL COMMUNITY - Aggiunto WhatsApp */}
           <div className="flex flex-col items-center md:items-start">
             <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-8 opacity-50">
               Community
             </h3>
             <div className="flex flex-row md:flex-col gap-3 w-full max-w-[300px] md:max-w-none">
+              
+              {/* Instagram */}
               <motion.a
                 href="https://www.instagram.com/altouritaly/"
                 target="_blank"
@@ -75,6 +77,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Instagram</span>
               </motion.a>
 
+              {/* Facebook */}
               <motion.a
                 href="https://www.facebook.com/AltourItaly"
                 target="_blank"
@@ -85,11 +88,24 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <Facebook size={18} />
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Facebook</span>
               </motion.a>
+
+              {/* WhatsApp */}
+              <motion.a
+                href="https://wa.me/393281613762"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileTap={{ scale: 0.95 }}
+                className="flex-1 flex items-center justify-center gap-3 px-4 py-4 bg-white/5 border border-white/10 text-[#25D366] md:text-white rounded-xl hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all"
+              >
+                <MessageCircle size={18} />
+                <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">WhatsApp</span>
+              </motion.a>
+
             </div>
           </div>
         </div>
 
-        {/* FOOTER BOTTOM - Più arioso e ordinato */}
+        {/* FOOTER BOTTOM */}
         <div className="border-t border-white/5 mt-16 pt-10">
           <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-10">
             {["Privacy Policy", "Cookie Policy", "Termini"].map((link) => (
@@ -108,7 +124,6 @@ export default function Footer({ onNavigate }: FooterProps) {
               <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black">
                 &copy; {new Date().getFullYear()} Altour Italy
               </p>
-
             </div>
 
             <div className="flex flex-col items-center gap-4">
