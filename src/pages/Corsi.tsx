@@ -3,7 +3,9 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import ReactMarkdown from "react-markdown";
-import { ArrowRight, Sparkles, BookOpen } from "lucide-react";
+import { ArrowRight, Sparkles, BookOpen, ShieldCheck } from "lucide-react";
+// Import allineato con il nome del componente esportato
+import { AltourTacticsModal } from '../components/AltourTactics';
 
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   prezzo_teorico?: number | null;
@@ -77,7 +79,6 @@ function FilosofiaBadge({ value }: { value: string | null | undefined }) {
   );
 }
 
-// ── Pricing block — toggle due opzioni (Tutto / Teoria) ──────────────────────
 type PricingOption = "bundle" | "teorico";
 
 function PricingBlock({
@@ -99,7 +100,6 @@ function PricingBlock({
 
   const [selected, setSelected] = useState<PricingOption>("bundle");
 
-  // Determina il prezzo corrente in base alla selezione
   const getCurrentPrice = () => {
     if (selected === "bundle" && corso.prezzo_bundle != null) {
       return Number(corso.prezzo_bundle);
@@ -129,7 +129,6 @@ function PricingBlock({
             Richiedi Info
           </button>
         </div>
-        {/* Bottone Vedi programma completo */}
         <button
           onClick={() => onOpenDetails(corso)}
           className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
@@ -140,7 +139,6 @@ function PricingBlock({
     );
   }
 
-  // Opzioni disponibili per il toggle (solo bundle e teoria)
   const opts: { key: PricingOption; label: string; price: number | null | undefined; icon: React.ReactNode }[] = [
     ...(corso.prezzo_bundle != null
       ? [{ key: "bundle" as PricingOption, label: "Tutto", price: Number(corso.prezzo_bundle), icon: <Sparkles size={10} /> }]
@@ -157,7 +155,6 @@ function PricingBlock({
 
   return (
     <div className="space-y-3">
-      {/* Toggle prezzi */}
       <div className="flex rounded-2xl p-1 gap-1" style={{ background: "rgba(0,0,0,0.04)" }}>
         {opts.map(opt => {
           const isActive = selected === opt.key;
@@ -192,7 +189,6 @@ function PricingBlock({
         })}
       </div>
 
-      {/* CTA Richiedi Info (senza prezzo) */}
       <button
         onClick={() => onBook(bookLabel, "info")}
         className="w-full bg-brand-sky hover:bg-brand-stone text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
@@ -201,7 +197,6 @@ function PricingBlock({
         <ArrowRight size={11} />
       </button>
 
-      {/* Bottone Vedi programma completo */}
       <button
         onClick={() =>
           onOpenDetails({
@@ -248,6 +243,10 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  
+  // STATO LOCALE PER GESTIRE L'APERTURA DEL TEST TACTICS
+  const [isTacticsOpen, setIsTacticsOpen] = useState(false);
+
   const coursesGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -302,6 +301,26 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         </h1>
         <div className="h-1.5 w-12 bg-brand-sky rounded-full" />
       </div>
+
+      {/* SEZIONE COMPONENTE: PULSANTE / BANNER DI INIZIO TEST TACTICS */}
+<div className="mb-12 p-6 rounded-[1.5rem] md:rounded-[2rem] bg-white border border-stone-200 text-stone-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl shadow-stone-200/50">
+  <div className="space-y-1.5">
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-sky/10 border border-brand-sky/20 text-brand-sky text-[9px] font-black uppercase tracking-wider">
+      <ShieldCheck size={11} />
+      <span>Valutazione Competenze</span>
+    </div>
+    <h2 className="text-xl font-black uppercase tracking-tight text-stone-900">Test d'Ingresso Accademia</h2>
+    <p className="text-stone-500 text-xs font-medium max-w-xl leading-relaxed">
+      Non sai quale livello scegliere? Rispondi ai bivi decisionali del nostro simulatore di orienteering e scopri subito qual è il percorso didattico più adatto alle tue lacune tecniche.
+    </p>
+  </div>
+  <button
+    onClick={() => setIsTacticsOpen(true)}
+    className="w-full md:w-auto bg-brand-sky hover:bg-stone-900 hover:text-white text-white px-6 py-3.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shrink-0 active:scale-95 shadow-md shadow-brand-sky/10"
+  >
+    Inizia il Test Rapido
+  </button>
+</div>
 
       {error && (
         <div className="mb-8 rounded-2xl border border-rose-100 bg-rose-50 px-6 py-4 text-rose-600 text-sm font-bold">
@@ -376,6 +395,11 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         onClose={handleCloseDetail}
         onBookingClick={onBookingClick}
       />
+
+      {/* RENDER DELLA MODALE TACTICS GESTITO CON IL PORTAL ESTERNO */}
+      {isTacticsOpen && (
+        <AltourTacticsModal onClose={() => setIsTacticsOpen(false)} />
+      )}
     </div>
   );
 }

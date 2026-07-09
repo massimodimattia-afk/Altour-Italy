@@ -29,14 +29,13 @@
 }
 
 @layer utilities {
-  /* Unificata con la classe usata nel Home.tsx */
+  /* ─── ESISTENTE: Unificata con la classe usata nel Home.tsx ─── */
   .ios-gpu-fix,
   .force-gpu {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
     transform: translate3d(0,0,0);
     -webkit-transform: translate3d(0,0,0);
-    /* Rimosso will-change per prevenire memory leak su WebKit */
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -46,19 +45,68 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* ─── NUOVO: ALTOUR TACTICS UTILITIES (ZERO BLUR, MAX FLUIDITY) ─── */
+  .at-safe-pt { padding-top: env(safe-area-inset-top, 0px); }
+  .at-safe-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+  /* Sfondo principale del gioco: solido e accelerato via hardware */
+  .at-panel-fixed {
+    background-color: #020617; /* Slate 950 */
+  }
+
+  /* Pannelli interni: Colore pieno, niente filtri costosi */
+  .at-panel-inner {
+    background-color: rgba(15, 23, 42, 0.98); /* Slate 900 quasi opaco */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Card risposte: Solid slate per azzerare il sovraccarico WebKit */
+  .at-card-solid {
+    background-color: #1e293b; /* Slate 800 solido */
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  /* Ottimizzazione touch targets per evitare delay di pressione su Safari */
+  .at-choice-btn {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+  }
+  .at-choice-btn:active { 
+    transform: scale3d(0.97, 0.97, 1); 
+  }
+
+  /* Animazioni 3D-Accelerated */
+  .at-active-ring { 
+    animation: atPulseRing 2s cubic-bezier(0.215, 0.610, 0.355, 1) infinite; 
+  }
+  .at-animate-slide-up { 
+    animation: atSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+  }
+}
+
+/* ─── KEYFRAMES ALTOUR TACTICS (Solo 3D Transforms) ─── */
+@keyframes atPulseRing {
+  0% { transform: scale3d(0.7, 0.7, 1); opacity: 0.8; }
+  100% { transform: scale3d(2.3, 2.3, 1); opacity: 0; }
+}
+@keyframes atSlideUp {
+  from { transform: translate3d(0, 16px, 0); opacity: 0; }
+  to   { transform: translate3d(0, 0, 0); opacity: 1; }
 }
 
 /* ─── ANIMAZIONI HERO (Migrate da Home.tsx) ─── */
 @keyframes heroFadeUp {
   from { opacity: 0; transform: translate3d(0, 18px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 @keyframes heroFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* ─── iOS FIX - PATCH ANTI-FLICKERING ─── */
+/* ─── iOS FIX - PATCH ANTI-FLICKERING (INTATTA) ─── */
 @supports (-webkit-touch-callout: none) {
   
   /* 1. IL VERO FIX: Uccidi la sfocatura (blur) solo su iOS */
@@ -78,8 +126,11 @@
   }
 
   /* 3. Fix specifico per la modale (L'isolation isola i calcoli della GPU) */
-  .fixed.inset-0 {
+  /* Aggunto in modo sicuro .at-panel-fixed senza alterare .fixed.inset-0 */
+  .fixed.inset-0,
+  .at-panel-fixed {
     transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     isolation: isolate;
   }
 }
