@@ -2,21 +2,18 @@ import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
 // --- 1. TYPING & INTERFACES ---
-export type SkillTag =
-  | 'abbigliamento' | 'attrezzatura1' | 'calzature' | 'cartografia'
-  | 'alimentazione' | 'allenamento' | 'ecocompatibilita' | 'orientamento_strumentale'
-  | 'prevenzione' | 'primosoccorso' | 'sentieristica'
-  | 'attrezzatura2' | 'geodesia' | 'meteorologia' | 'parchi' | 'progettazione';
-
+export type SkillTag = 'orientamento' | 'meteo' | 'tecnica' | 'sopravvivenza' | 'emergenza';
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 export type CourseLevel = 'base' | 'intermedio' | 'avanzato';
 
 interface Choice {
   text: string;
-  isCorrect: boolean;
+  isCorrect: boolean; // Se isGamble è true, questo valore viene sovrascritto dal caso
   explanation: string;
   damage?: number;
+  bonus?: number; // Punti extra
   skillTag: SkillTag;
+  isGamble?: boolean; // Attiva la meccanica Rischio/Premio (50% probabilità)
 }
 
 interface Stage {
@@ -34,32 +31,15 @@ interface Course {
   skill: SkillTag;
   title: string;
   desc: string;
+  url: string;
 }
 
-const ALL_SKILL_TAGS: SkillTag[] = [
-  'abbigliamento', 'attrezzatura1', 'calzature', 'cartografia',
-  'alimentazione', 'allenamento', 'ecocompatibilita', 'orientamento_strumentale',
-  'prevenzione', 'primosoccorso', 'sentieristica',
-  'attrezzatura2', 'geodesia', 'meteorologia', 'parchi', 'progettazione',
-];
-
 const SKILL_LABELS: Record<SkillTag, string> = {
-  abbigliamento: 'Abbigliamento',
-  attrezzatura1: 'Attrezzatura I',
-  calzature: 'Calzature',
-  cartografia: 'Cartografia',
-  alimentazione: 'Alimentazione',
-  allenamento: 'Allenamento',
-  ecocompatibilita: 'Comportamenti Ecocompatibili',
-  orientamento_strumentale: 'Orientamento Strumentale',
-  prevenzione: 'Prevenzione Pericoli',
-  primosoccorso: 'Primo Soccorso',
-  sentieristica: 'Sentieristica',
-  attrezzatura2: 'Attrezzatura Avanzata',
-  geodesia: 'Geodesia',
-  meteorologia: 'Meteorologia',
-  parchi: 'Parchi e Aree Protette',
-  progettazione: 'Progettazione Escursioni',
+  orientamento: 'Orientamento & Navigazione',
+  meteo: 'Gestione Meteo',
+  tecnica: 'Tecnica di Progressione',
+  sopravvivenza: 'Gestione Risorse & Ambiente',
+  emergenza: 'Gestione Emergenze & Primo Soccorso',
 };
 
 const NEXT_LEVEL: Record<CourseLevel, CourseLevel | null> = {
@@ -68,167 +48,126 @@ const NEXT_LEVEL: Record<CourseLevel, CourseLevel | null> = {
   avanzato: null,
 };
 
-// --- 2. DATABASE LOCALE DEI CORSI ---
+// --- 2. DATABASE CORSI ALTOUR ---
 const LOCAL_COURSES: Course[] = [
-  { id: 'b1', level: 'base', skill: 'abbigliamento', title: 'Abbigliamento in Montagna', desc: 'Stratificazione e scelta dei materiali per ogni condizione meteo.' },
-  { id: 'b2', level: 'base', skill: 'attrezzatura1', title: 'Attrezzatura I', desc: 'Zaino, bastoncini e dotazione essenziale per l\'escursionismo base.' },
-  { id: 'b3', level: 'base', skill: 'calzature', title: 'Calzature da Trekking', desc: 'Come scegliere e allacciare le scarpe giuste per ogni terreno.' },
-  { id: 'b4', level: 'base', skill: 'cartografia', title: 'Lettura della Carta Geografica', desc: 'Impara a leggere la mappa IGM e usare la bussola con sicurezza.' },
-  { id: 'i1', level: 'intermedio', skill: 'alimentazione', title: 'Alimentazione in Escursione', desc: 'Cosa mangiare prima, durante e dopo per non calare di energie.' },
-  { id: 'i2', level: 'intermedio', skill: 'allenamento', title: 'Allenamento per l\'Escursionismo', desc: 'Preparazione fisica e gestione del ritmo in salita e discesa.' },
-  { id: 'i3', level: 'intermedio', skill: 'ecocompatibilita', title: 'Comportamenti Ecocompatibili', desc: 'Muoversi in montagna nel rispetto dell\'ambiente e della fauna.' },
-  { id: 'i4', level: 'intermedio', skill: 'orientamento_strumentale', title: 'Orientamento Strumentale', desc: 'GPS, bussola e mappa insieme, fuori sentiero e senza visibilità.' },
-  { id: 'i5', level: 'intermedio', skill: 'prevenzione', title: 'Prevenzione Pericoli', desc: 'Riconoscere e gestire i rischi oggettivi del terreno montano.' },
-  { id: 'i6', level: 'intermedio', skill: 'primosoccorso', title: 'Primo Soccorso in Montagna', desc: 'Gestire un infortunio e valutare l\'evacuazione in sicurezza.' },
-  { id: 'i7', level: 'intermedio', skill: 'sentieristica', title: 'Sentieristica', desc: 'Tempi di percorrenza, varianti e pianificazione del rientro.' },
-  { id: 'a1', level: 'avanzato', skill: 'attrezzatura2', title: 'Attrezzatura II', desc: 'Ramponcini, piccozza e tecnica su nevai e terreno impervio.' },
-  { id: 'a2', level: 'avanzato', skill: 'geodesia', title: 'Elementi di Geodesia', desc: 'Altimetria, coordinate e calibrazione degli strumenti di quota.' },
-  { id: 'a3', level: 'avanzato', skill: 'meteorologia', title: 'Elementi di Meteorologia', desc: 'Leggere il cielo e i bollettini per anticipare i cambi repentini.' },
-  { id: 'a4', level: 'avanzato', skill: 'parchi', title: 'Parchi ed Aree Protette', desc: 'Regolamenti e rispetto delle zone protette e della fauna selvatica.' },
-  { id: 'a5', level: 'avanzato', skill: 'progettazione', title: 'Progettazione di una Escursione', desc: 'Pianificare dislivelli, tempistiche e vie di fuga a tavolino.' },
+  { id: 'b1', level: 'base', skill: 'orientamento', title: 'Corso Base: Cartografia', desc: 'Impara a orientarti sui sentieri con carta e bussola.', url: '/corsi/base-cartografia' },
+  { id: 'b2', level: 'base', skill: 'tecnica', title: 'Abbigliamento & Attrezzatura', desc: 'Prepara lo zaino perfetto ed evita brutte sorprese.', url: '/corsi/base-attrezzatura-1' },
+  { id: 'i1', level: 'intermedio', skill: 'meteo', title: 'Meteo Montano & Prevenzione', desc: 'Anticipa i temporali e muoviti in sicurezza.', url: '/corsi/intermedio-meteorologia' },
+  { id: 'i2', level: 'intermedio', skill: 'sopravvivenza', title: 'Alimentazione & Ritmo', desc: 'Gestisci le tue energie nelle escursioni lunghe.', url: '/corsi/intermedio-allenamento' },
+  { id: 'a1', level: 'avanzato', skill: 'emergenza', title: 'Gestione Emergenze', desc: 'Protocolli di sicurezza, bivacco d\'emergenza e chiamate SOS.', url: '/corsi/avanzato-emergenze' },
+  { id: 'a2', level: 'avanzato', skill: 'tecnica', title: 'Terreni Impervi & Attrezzatura Avanzata', desc: 'Affronta ghiaioni, nevai e tratti esposti con padronanza.', url: '/corsi/avanzato-attrezzatura-2' },
 ];
 
-// --- 3. DATI DI GIOCO AD ELEVATA COMPLESSITÀ ---
+// --- 3. SCENARI ESPERIENZIALI (Orienteering RPG) ---
 const STAGES_DATA: Record<DifficultyLevel, Stage[]> = {
   easy: [
     {
-      id: 0, title: "Equidistanza e Curve di Livello", subtitle: "Cartografia",
-      description: "Su una tavoletta IGM 1:25.000 riscontri che tra due curve direttrici consecutive sono interposte 4 curve ordinarie. Qual è il dislivello geometrico reale espresso tra due curve ordinarie contigue?",
+      id: 0, title: "Il Bivio nel Bosco", subtitle: "Decisione Rapida",
+      description: "Sei nel fitto del bosco. Il sentiero segnato (CAI) è ostruito da alberi caduti. Sulla destra c'è una traccia ben battuta ma senza bandierine bianche e rosse.",
       coords: { x: 50, y: 110 },
       choices: [
-        { text: "25 metri di dislivello verticale per ciascun intervallo.", isCorrect: true, explanation: "Esatto. L'equidistanza standard IGM 1:25.000 è di 25 metri. Le direttrici distano 100m l'una dall'altra e lo spazio tra le ordinarie ne mappa fedelmente la frazione.", skillTag: 'cartografia' },
-        { text: "5 metri, calcolati in base al fattore di scala planimetrico ridotto.", isCorrect: false, damage: 1, explanation: "Sbagliato. Confondi l'equidistanza altimetrica con i millimetri grafici di proiezione in piano.", skillTag: 'cartografia' }
+        { text: "Tiro fuori la mappa/GPS per capire come aggirare l'ostacolo restando vicino al sentiero.", isCorrect: true, explanation: "Saggio! Le tracce non segnate spesso sono 'sentieri di animali' che finiscono in un dirupo.", skillTag: 'orientamento' },
+        { text: "Prendo la traccia di destra, sembra larga e sicuramente riporterà sul sentiero principale.", isCorrect: false, damage: 1, explanation: "Pessima idea. Ti sei appena infilato in una traccia di cinghiali. Hai perso 30 minuti per tornare indietro.", skillTag: 'orientamento' }
       ]
     },
     {
-      id: 1, title: "Convezione e Strati Termici", subtitle: "Abbigliamento",
-      description: "Stai risalendo un crinale esposto a Nord con temperatura di 4°C e vento costante a 35 km/h. La sudorazione ha bagnato il primo strato. Quale combinazione di materiali massimizza l'evacuazione dell'umidità prevenendo l'ipotermia da conduzione?",
-      coords: { x: 120, y: 55 },
+      id: 1, title: "Incontro con i Cani", subtitle: "Gestione Ambiente",
+      description: "Esci dal bosco. Sul sentiero davanti a te c'è un gregge di pecore sorvegliato da tre grossi cani da pastore maremmani che iniziano ad abbaiare.",
+      coords: { x: 150, y: 50 },
       choices: [
-        { text: "Polipropilene o lana merino a contatto; guscio esterno in PTFE (Gore-Tex) traspirante.", isCorrect: true, explanation: "Ottimo. Il polipropilene non assorbe acqua e la trasferisce all'esterno, mentre la membrana in PTFE blocca il wind-chill senza intrappolare il vapore.", skillTag: 'abbigliamento' },
-        { text: "Primo strato in cotone pettinato ad alta densità accoppiato a un layer intermedio in microfibra.", isCorrect: false, damage: 1, explanation: "Sbagliato. Il cotone trattiene l'umidità fino al suo nucleo, accelerando il raffreddamento corporeo per conduzione termica appena il vento colpisce il tessuto.", skillTag: 'abbigliamento' }
+        { text: "Mi fermo, evito di fissarli negli occhi e aggiro il gregge passandoci largo senza fare movimenti bruschi.", isCorrect: true, explanation: "Esatto! I cani fanno solo il loro lavoro. Mantenere la calma e fare un ampio giro è la scelta più sicura.", skillTag: 'sopravvivenza' },
+        { text: "Alzo i bastoncini da trekking per spaventarli e proseguo dritto sul mio sentiero.", isCorrect: false, damage: 1, explanation: "Errore pericoloso! Alzare i bastoni viene visto come una minaccia e potrebbe innescare un attacco.", skillTag: 'sopravvivenza' }
       ]
     },
     {
-      id: 2, title: "Serraggio Bi-Zona in Discesa", subtitle: "Calzature",
-      description: "Devi affrontare una discesa tecnica di 800 metri di dislivello su ghiaione instabile. Come configuri l'allacciatura degli scarponi per azzerare i traumi subungueali all'avampiede?",
-      coords: { x: 190, y: 110 },
+      id: 2, title: "Il Torrente Ingrossato", subtitle: "Scelta di Percorso",
+      description: "A causa della pioggia di ieri, il ruscello che devi attraversare si è gonfiato. L'acqua è torbida e copre le pietre su cui avresti dovuto poggiare i piedi.",
+      coords: { x: 250, y: 120 },
       choices: [
-        { text: "Serraggio vigoroso sul collo del piede e bloccaggio sui ganci della caviglia per immobilizzare il tallone sul fondo.", isCorrect: true, explanation: "Corretto. Bloccando saldamente il collo del piede si impedisce lo scivolamento anteriore delle dita contro il puntale, preservando le unghie dai microtraumi da impatto.", skillTag: 'calzature' },
-        { text: "Allacciatura uniformemente tesa ed esasperata sulla punta per rendere la tomaia un blocco rigido.", isCorrect: false, damage: 1, explanation: "Sbagliato. Costringere le dita blocca la microcircolazione e amplifica gli urti diretti sul puntale della scarpa.", skillTag: 'calzature' }
-      ]
-    },
-    {
-      id: 3, title: "Bilanciamento dei Carichi Asiali", subtitle: "Attrezzatura I",
-      description: "Stai assemblando uno zaino da 50 litri per un trekking d'alta quota di più giorni. Dove posizioni gli elementi a maggiore densità (tenda pesante, cibo, riserva idrica principale) per non destabilizzare il baricentro scheletrico?",
-      coords: { x: 260, y: 55 },
-      choices: [
-        { text: "A ridosso dello schienale nella zona medio-alta (altezza scapole), centrati rispetto alla colonna.", isCorrect: true, explanation: "Corretto. Posizionare i carichi pesanti vicino al dorso e alti allinea lo zaino al baricentro del corpo, riducendo lo sforzo compensativo dei muscoli lombari.", skillTag: 'attrezzatura1' },
-        { text: "Sul fondo dello zaino, subito sopra l'asola inferiore del sacco a pelo.", isCorrect: false, damage: 1, explanation: "Sbagliato. I pesi sul fondo esercitano una leva che tira il busto all'indietro, sbilanciando l'andatura e sovraccaricando le spalle.", skillTag: 'attrezzatura1' }
+        { text: "Cerco un guado migliore più a monte o a valle. Se è troppo forte, torno indietro.", isCorrect: true, explanation: "Ottima decisione. L'acqua torbida nasconde buche e sassi scivolosi, la corrente è più forte di quanto sembri.", skillTag: 'tecnica' },
+        { text: "Mi tolgo gli scarponi per non bagnarli e attraverso a piedi nudi in fretta.", isCorrect: false, damage: 1, explanation: "Sbagliato! A piedi nudi non hai aderenza. Scivoli, batti il ginocchio e ti ritrovi bagnato e infreddolito.", skillTag: 'tecnica' }
       ]
     }
   ],
   medium: [
     {
-      id: 0, title: "Depauperamento del Glicogeno", subtitle: "Alimentazione",
-      description: "Al termine di una salita intensa avverti spossatezza improvvisa, leggera disarticolazione motoria e vertigini. Sono passate 4 ore dall'ultimo spuntino. Qual è l'approccio nutrizionale corretto per contrastare il catabolismo?",
+      id: 0, title: "La Nebbia Sale", subtitle: "Disorientamento",
+      description: "Stai camminando su un crinale erboso. All'improvviso sale un nebbione fitto, tipico degli Appennini: non vedi a due metri dal naso e i segnavia scompaiono.",
       coords: { x: 50, y: 110 },
       choices: [
-        { text: "Assunzione immediata di carboidrati semplici a indice glicemico elevato, seguiti dopo 15 minuti da zuccheri complessi.", isCorrect: true, explanation: "Esatto. Le scorte di glicogeno muscolare ed epatico sono sature. Serve glucosio immediato nel sangue per via sublinguale, stabilizzato poi da amidi a lento rilascio.", skillTag: 'alimentazione' },
-        { text: "Integrazione massiva di amminoacidi ramificati (BCAA) puri disciolti in un litro di acqua ipotonica.", isCorrect: false, damage: 1, explanation: "Sbagliato. In piena crisi ipoglicemica le proteine non tamponano la carenza di ATP ematico nel breve termine.", skillTag: 'alimentazione' }
+        { text: "Mi fermo immediatamente. Prendo la bussola/GPS e cerco di ripercorrere i miei passi verso l'ultimo segnavia noto.", isCorrect: true, explanation: "Mossa da vero escursionista. Fermarsi evita di finire su un versante pericoloso.", skillTag: 'meteo' },
+        { text: "Continuo a camminare cercando di scendere verso valle il più in fretta possibile.", isCorrect: false, damage: 1, explanation: "Trappola letale. Scendere a caso con la nebbia porta quasi sempre su salti di roccia o fossi ciechi.", skillTag: 'meteo' }
       ]
     },
     {
-      id: 1, title: "Soglia di Lattato e Compensazione", subtitle: "Allenamento",
-      description: "Durante una salita ripida la frequenza cardiaca supera l'85% della FcMax, innescando bruciore muscolare e iperventilazione. Quale accorgimento biomeccanico adotti per ritornare in regime aerobico?",
+      id: 1, title: "Il Compagno in Crisi", subtitle: "Gestione Gruppo",
+      description: "Il tuo compagno di escursione è sudato freddo, respira a fatica e non riesce a tenere il passo. Mancano 2 ore al rifugio in salita.",
       coords: { x: 120, y: 55 },
       choices: [
-        { text: "Passo del montanaro: estensione e bloccaggio osseo del ginocchio a ogni passo per concedere una frazione di secondo di riposo ai quadricipiti.", isCorrect: true, explanation: "Perfetto. Il micro-riposo scheletrico permette la riossigenazione dei tessuti e lo smaltimento parziale dell'acido lattico accumulato oltre la soglia anaerobica.", skillTag: 'allenamento' },
-        { text: "Aumento della frequenza dei passi accorciando l'andatura e flettendo costantemente il busto in avanti.", isCorrect: false, damage: 1, explanation: "Sbagliato. La flessione continua mantiene i muscoli in contrazione isometrica perenne, accelerando l'asfissia cellulare.", skillTag: 'allenamento' }
+        { text: "Ci fermiamo all'ombra. Lo faccio bere, gli do carboidrati rapidi (zuccheri) e rallentiamo drasticamente il passo.", isCorrect: true, explanation: "Perfetto. È una classica crisi di zuccheri (ipoglicemia). Il riposo e lo zucchero fanno miracoli.", skillTag: 'sopravvivenza' },
+        { text: "Gli dico di farsi forza, prendo il suo zaino per alleggerirlo e lo spingo a camminare veloce per arrivare prima.", isCorrect: false, damage: 1, explanation: "Sbagliato. Spingere oltre il limite chi è in crisi metabolica porta al collasso o allo svenimento.", skillTag: 'sopravvivenza' }
       ]
     },
     {
-      id: 2, title: "Triangolazione e Azimut Strumentale", subtitle: "Orientamento Strumentale",
-      description: "Ti trovi fuori sentiero e devi determinare la tua posizione di stazionamento sulla carta. Individui due picchi visibili all'orizzonte. Quale sequenza tecnica applichi con la bussola?",
+      id: 2, title: "La Corsa contro il Tempo", subtitle: "Sfida & Rischio",
+      description: "Sei in ritardo. Il sole sta per tramontare. La traccia ufficiale fa un lungo e noioso giro a zig-zag. Vedi un canalone dritto (non segnato) che scende verso il parcheggio.",
       coords: { x: 190, y: 110 },
       choices: [
-        { text: "Rilevo l'Azimut magnetico dei picchi, lo converto in Azimut geografico, calcolo i Contrazimut e traccio le linee sulla mappa partendo dai picchi.", isCorrect: true, explanation: "Eccellente. Il punto di intersezione delle due linee di Contrazimut geografico proiettate sulla carta determinerà matematicamente il tuo punto di stazionamento.", skillTag: 'orientamento_strumentale' },
-        { text: "Rilevo l'Azimut dei picchi e traccio le medesime rette orientando la bussola direttamente sulla mappa senza variazioni numeriche.", isCorrect: false, damage: 1, explanation: "Sbagliato. Se non calcoli il contrazimut (+/- 180°) e la declinazione magnetica locale, le linee se proietteranno nella direzione opposta.", skillTag: 'orientamento_strumentale' }
-      ]
-    },
-    {
-      id: 3, title: "Trauma Cranico Commotivo in Ambiente Remoto", subtitle: "Primo Soccorso",
-      description: "Un escursionista viene colpito alla testa da una pietra. Perde conoscenza per 30 secondi, dopodiché rinviene lucido ma manifesta nausea, cefalea intensa e amnesia retrograda. Come intervieni?",
-      coords: { x: 260, y: 55 },
-      choices: [
-        { text: "Immobilizzo l'asse spinale, lo mantengo supino a riposo assoluto e allerto immediatamente il Soccorso Alpino (112/CNSAS).", isCorrect: true, explanation: "Corretto. L'amnesia e la perdita di coscienza indicano un trauma commotivo con potenziale rischio di ematoma intracranico latente. È tassativo il trasporto medico aeroportato.", skillTag: 'primosoccorso' },
-        { text: "Gli somministro un analgesico Fans per la cefalea e lo incito a camminare lentamente verso valle per evitare l'ipotermia.", isCorrect: false, damage: 2, explanation: "Grave errore. I Fans possono esacerbare un'emorragia interna intracranica. Muovere il paziente in questo stato è estremamente rischioso.", skillTag: 'primosoccorso' }
-      ]
-    },
-    {
-      id: 4, title: "Formula Empirica CAI dei Tempi", subtitle: "Sentieristica",
-      description: "Devi calcolare i tempi di percorrenza di un tracciato di tipo E che presenta un dislivello positivo di 900 metri e uno sviluppo planimetrico lineare di 8 chilometri. Qual è la stima corretta?",
-      coords: { x: 330, y: 90 },
-      choices: [
-        { text: "Circa 4 ore complessive (3h per il dislivello + 2h per lo sviluppo, sommando il valore maggiore al 50% del minore).", isCorrect: true, explanation: "Esatto. La regola ufficiale CAI prevede di stimare 300m/h in salita e 4km/h in piano, sommando poi al tempo maggiore la metà del tempo minore.", skillTag: 'sentieristica' },
-        { text: "2 ore e 30 minuti, dividendo gli 8 km per il passo medio escursionistico di 4 km/h e ignorando la quota.", isCorrect: false, damage: 1, explanation: "Sbagliato. Omettere il dislivello nel calcolo del tempo escursionistico porta a macroscopici errori di pianificazione, con rischio di farsi sorprendere dal buio.", skillTag: 'sentieristica' }
+        { text: "Tengo il sentiero ufficiale, tiro fuori la torcia frontale e cammino sicuro anche al buio.", isCorrect: true, bonus: 50, explanation: "Scelta prudente che paga sempre in montagna. Niente rischi inutili.", skillTag: 'orientamento' },
+        { text: "Rischio e mi butto giù per il canalone! Devo recuperare tempo.", isCorrect: false, damage: 2, isGamble: true, explanation: "Il rischio non ha pagato! Il canalone finiva in un salto di roccia. Sei dovuto tornare su al buio, sfiancato.", skillTag: 'emergenza' }
       ]
     }
   ],
   hard: [
     {
-      id: 0, title: "Arresto della Scivolata su Pendio Ghiacciato", subtitle: "Attrezzatura Avanzata",
-      description: "Perdi l'equilibrio su un nevaio ripido inclinato a 35° e inizi a scivolare a testa a valle in posizione supina (pancia in su). Qual è l'esatta sequenza cinetica di auto-arresto (self-arrest) con la piccozza?",
+      id: 0, title: "Il Suono Preoccupante", subtitle: "Micro-Meteorologia",
+      description: "Sei in prossimità della vetta (2500m). Senti un ronzio simile a un 'friggitore' nell'aria e i peli delle braccia si drizzano. Il cielo si è annuvolato.",
       coords: { x: 50, y: 110 },
       choices: [
-        { text: "Afferro la piccozza al petto, ruoto il busto piantando la becca lateralmente per fare perno, mi giro prono e sollevo i piedi da terra.", isCorrect: true, explanation: "Eccellente tecnica alpinistica. Sollevare i piedi è vitale: se i ramponi o gli scarponi impuntassero la neve a forte velocità, il corpo verrebbe catapultato all'indietro con traumi spinali severi.", skillTag: 'attrezzatura2' },
-        { text: "Faccio leva piantando direttamente i tacchi degli scarponi e spingo il puntale della piccozza sotto il bacino.", isCorrect: false, damage: 1, explanation: "Manovra letale. Piantare i piedi causa il ribaltamento immediato e incontrollato del corpo in aria.", skillTag: 'attrezzatura2' }
+        { text: "Mollo bastoncini e piccozza metallica, scendo di quota di corsa evitando creste e rocce isolate.", isCorrect: true, explanation: "Sopravvivenza pura. È l'effetto corona (Fuoco di Sant'Elmo): un fulmine sta per cadere esattamente lì.", skillTag: 'meteo' },
+        { text: "Mi accovaccio dove sono, nascondendomi sotto un masso o una grotta di roccia isolata per ripararmi dalla pioggia.", isCorrect: false, damage: 1, explanation: "Fatale! Rintanarsi in anfratti o grotte durante una tempesta elettrica ti trasforma nel cavo di messa a terra del fulmine.", skillTag: 'meteo' }
       ]
     },
     {
-      id: 1, title: "Ondulazione del Geoide e Quota Ortometrica", subtitle: "Geodesia",
-      description: "Il tuo ricevitore satellitare GPS indica una quota geometrica riferita all'ellissoide WGS84 di 1650 metri, ma la carta topografica ufficiale riporta una quota ortometrica di 1602 metri. Quale fattore fisico geodetico determina questa discrepanza?",
+      id: 1, title: "La Pietraia Traditrice", subtitle: "Tecnica in Discesa",
+      description: "Inizi la discesa su un ripido ghiaione formato da sassi grandi come pugni. Al primo passo, le pietre franano e inizi a scivolare.",
       coords: { x: 130, y: 55 },
       choices: [
-        { text: "L'ondulazione del geoide (lo scostamento della superficie equipotenziale del campo gravitazionale terrestre rispetto all'ellissoide matematico).", isCorrect: true, explanation: "Geodesia pura! Le mappe riportano quote ortometriche riferite al geoide (livello del mare), mentre il GPS legge una quota matematica pura sull'ellissoide WGS84.", skillTag: 'geodesia' },
-        { text: "L'errore di rifrazione troposferica zenitale causato dal surriscaldamento estivo delle rocce in quota.", isCorrect: false, damage: 1, explanation: "Sbagliato. Gli errori atmosferici causano fluttuazioni dinamiche di pochi metri, non uno scostamento geodetico sistematico di questa entità.", skillTag: 'geodesia' }
+        { text: "Piego leggermente le ginocchia, appoggio il peso sui talloni e 'scio' assecondando la frana del ghiaietto.", isCorrect: true, explanation: "Tecnica corretta. Sul ghiaione fine bisogna far scivolare il tallone per affondarlo, sfruttando le pietre come ammortizzatore.", skillTag: 'tecnica' },
+        { text: "Mi butto col peso all'indietro o mi siedo, frenando con le mani e coi glutei.", isCorrect: false, damage: 1, explanation: "Dolorosissimo! Sedendosi si perde ogni controllo direzionale, trasformandosi in bersagli per i sassi che rotolano da monte.", skillTag: 'tecnica' }
       ]
     },
     {
-      id: 2, title: "Indicatori di Ciclogenesi Convettiva", subtitle: "Meteorologia",
-      description: "Ti trovi su una cresta esposta. Il barometro registra un calo di 4 hPa in meno di tre ore, il vento ruota bruscamente da Sud-Ovest a Nord-Ovest e noti la comparsa di Altocumulus lenticularis castellanus stabili. Cosa sta per verificarsi?",
+      id: 2, title: "S.O.S. Remoto", subtitle: "Emergenza Assoluta",
+      description: "Il tuo compagno scivola in un canalone e non riesce a muovere la gamba (sospetta frattura). Non c'è campo per il cellulare.",
       coords: { x: 210, y: 115 },
       choices: [
-        { text: "L'approssimarsi imminente di un fronte freddo attivo a rapido sviluppo convettivo con associati fenomeni temporaleschi violenti.", isCorrect: true, explanation: "Esatto. La rotazione repentina del vento accoppiata al calo barometrico repentino anticipa la linea di groppo del fronte freddo in quota. Massima allerta fulmini.", skillTag: 'meteorologia' },
-        { text: "Il consolidamento di un'inversione termica da subsidenza anticiclonica subtropicale.", isCorrect: false, damage: 1, explanation: "Sbagliato. L'anticiclone causa un aumento della pressione (hPa) e una stabilizzazione della colonna d'aria, l'esatto opposto dello scenario descritto.", skillTag: 'meteorologia' }
-      ]
-    },
-    {
-      id: 3, title: "Point of No Return Temporale (PNR)", subtitle: "Progettazione Escursione",
-      description: "Stai conducendo una cordata su una cresta alpinistica valutata AD. La progressione reale è di 150m/h a fronte dei 250m/h stimati. Mancano 3 ore alla vetta e la discesa richiede 4 ore. I temporali termoconvettivi sono previsti per le ore 14:00. Sono le 10:30. Qual è la condotta di comando corretta?",
-      coords: { x: 290, y: 55 },
-      choices: [
-        { text: "Ho intercettato il PNR temporale di sicurezza. Interrompo l'ascesa e inizio la ritirata attrezzando le calate sulle vie di fuga previste.", isCorrect: true, explanation: "Decisione ineccepibile. Continuando arriveresti in cima alle 13:30, esponendo la cordata in cresta durante il picco dell'attività elettrica atmosferica.", skillTag: 'progettazione' },
-        { text: "Forzo l'andatura passando a una progressione in conserva corta disancorata per recuperare il gap orario entro le 13:00.", isCorrect: false, damage: 1, explanation: "Molto rischioso. Aumentare la velocità su terreno AD senza protezioni adeguate incrementa esponenzialmente la probabilità di errore umano fatale.", skillTag: 'progettazione' }
-      ]
-    },
-    {
-      id: 4, title: "Regolamenti Comunitari ZPS", subtitle: "Parchi e Aree Protette",
-      description: "Durante la pianificazione di un intranet invernale fuori sentiero, incroci i confini di una Zona di Protezione Speciale (ZPS - Rete Natura 2000) istituita per la tutela svernante dei tetraonidi. Quale restrizione etologica e legale si applica?",
-      coords: { x: 360, y: 90 },
-      choices: [
-        { text: "Divieto assoluto di attraversamento delle aree forestali di rifugio per prevenire l'involo da stress, che causerebbe un consumo letale delle riserve energetiche.", isCorrect: true, explanation: "Esatto. Lo shock cinetico da disturbo antropico costringe i tetraonidi a consumare calorie insostituibili in inverno, portandoli alla morte per sfinimento termico.", skillTag: 'parchi' },
-        { text: "Obbligo di marcia esclusivamente in gruppi superiori a 5 unità per minimizzare l'impatto visivo globale.", isCorrect: false, damage: 1, explanation: "Sbagliato. I gruppi numerosi amplificano il raggio di disturbo acustico e cinetico, peggiorando l'impatto sulla fauna protetta.", skillTag: 'parchi' }
+        { text: "Lo metto in sicurezza e al caldo, poi vado da solo a cercare campo o il rifugio più vicino segnando il mio percorso.", isCorrect: true, explanation: "Scelta difficile ma giusta. Un ferito fermo al freddo peggiora rapidamente; bisogna cercare aiuto mappando il punto esatto.", skillTag: 'emergenza' },
+        { text: "Costruisco una barella di fortuna con rami e zaini e cerco di trascinarlo io verso valle.", isCorrect: false, damage: 2, explanation: "Errore da film! Trasportare un ferito senza barelle professionali su terreno impervio peggiora le fratture e sfinisce entrambi.", skillTag: 'emergenza' }
       ]
     }
   ]
 };
 
+// --- FUNZIONI DI SUPPORTO GAMIFICATION ---
+interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  condition: (score: number, maxStreak: number, lives: number, diff: string) => boolean;
+}
+
+const GAME_BADGES: Badge[] = [
+  { id: 'perfect', name: 'Macchina da Guerra', icon: '🔥', condition: (_, maxStreak, __, diff) => maxStreak >= 3 && diff === 'hard' },
+  { id: 'survivor', name: 'Intoccabile', icon: '🛡️', condition: (_, __, lives, diff) => lives === (diff === 'hard' ? 1 : diff === 'medium' ? 2 : 3) },
+  { id: 'scorer', name: 'High Roller', icon: '💎', condition: (score) => score >= 500 },
+];
+
 interface Props {
   onClose: () => void;
 }
 
-// --- 4. COMPONENTE MAPPA SVG LIGHT THEME COERENTE ---
+// --- 4. COMPONENTE MAPPA SVG LIGHT THEME ---
 function TrailMap({ currentStage, stages }: { currentStage: number, stages: Stage[] }) {
   const pathD = "M 50 110 Q 100 50, 150 50 T 250 120 T 350 40";
   const finalDest = { x: 350, y: 40 };
@@ -242,11 +181,11 @@ function TrailMap({ currentStage, stages }: { currentStage: number, stages: Stag
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center space-x-1.5 bg-stone-100 py-1 px-2.5 rounded-full border border-stone-200 text-[9px] font-black text-brand-stone tracking-wider">
           <span className="w-1.5 h-1.5 rounded-full bg-brand-sky animate-pulse"></span>
-          <span>VALUTAZIONE TATTICA ATTIVA</span>
+          <span>TRACCIATO GPS</span>
         </div>
         {!isWon && (
           <span className="text-[9px] font-black text-stone-400 tracking-wider">
-            SNODO {currentStage + 1} DI {totalSteps}
+            BIVIO {currentStage + 1} DI {totalSteps}
           </span>
         )}
       </div>
@@ -254,13 +193,8 @@ function TrailMap({ currentStage, stages }: { currentStage: number, stages: Stag
       <svg className="w-full h-24 mt-2" viewBox="0 0 400 150">
         <path d={pathD} fill="none" stroke="#e7e5e4" strokeWidth="6" strokeLinecap="round" />
         <path 
-          d={pathD} 
-          fill="none" 
-          stroke="#5aaadd" // brand-sky coerente
-          strokeWidth="6" 
-          strokeLinecap="round"
-          strokeDasharray="400"
-          strokeDashoffset={isWon ? 0 : 400 - (currentStage * (400 / totalSteps))}
+          d={pathD} fill="none" stroke="#5aaadd" strokeWidth="6" strokeLinecap="round"
+          strokeDasharray="400" strokeDashoffset={isWon ? 0 : 400 - (currentStage * (400 / totalSteps))}
           className="transition-all duration-700 ease-out"
         />
 
@@ -271,26 +205,17 @@ function TrailMap({ currentStage, stages }: { currentStage: number, stages: Stag
             <g key={node.id}>
               {isActive && <circle cx={node.coords.x} cy={node.coords.y} r="14" className="fill-brand-sky/20 animate-pulse" style={{ transformOrigin: `${node.coords.x}px ${node.coords.y}px` }} />}
               <circle 
-                cx={node.coords.x} 
-                cy={node.coords.y} 
-                r="8" 
-                className={`transition-all duration-300 ${
-                  isActive ? 'fill-white stroke-brand-sky stroke-[4px]' 
-                  : isCompleted ? 'fill-brand-sky stroke-none' 
-                  : 'fill-stone-200 stroke-stone-300 stroke-2'
-                }`}
+                cx={node.coords.x} cy={node.coords.y} r="8" 
+                className={`transition-all duration-300 ${isActive ? 'fill-white stroke-brand-sky stroke-[4px]' : isCompleted ? 'fill-brand-sky stroke-none' : 'fill-stone-200 stroke-stone-300 stroke-2'}`}
               />
             </g>
           );
         })}
 
-        <circle cx={finalDest.x} cy={finalDest.y} r="10" className={`transition-all duration-300 ${isWon ? 'fill-amber-500 stroke-none' : 'fill-stone-200 stroke-stone-300 stroke-2'}`} />
+        <circle cx={finalDest.x} cy={finalDest.y} r="10" className={`transition-all duration-300 ${isWon ? 'fill-emerald-500 stroke-none' : 'fill-stone-200 stroke-stone-300 stroke-2'}`} />
         <path d="M 347 38 L 350 43 L 355 35" fill="none" stroke={isWon ? '#fff' : '#a8a29e'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 
-        <g style={{ 
-          transform: `translate3d(${activeCoord.x}px, ${activeCoord.y}px, 0)`,
-          transition: 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}>
+        <g style={{ transform: `translate3d(${activeCoord.x}px, ${activeCoord.y}px, 0)`, transition: 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)' }}>
           <g transform="translate(-10, -28)">
             <path d="M10 0C4.48 0 0 4.48 0 10c0 5.25 10 13 10 13s10-7.75 10-13c0-5.52-4.48-10-10-10z" className="fill-brand-sky" />
             <circle cx="10" cy="10" r="4" className="fill-white"/>
@@ -315,7 +240,7 @@ export function AltourTacticsModal({ onClose }: Props) {
   if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-brand-stone/70 sm:p-6 transition-opacity">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-brand-stone/80 backdrop-blur-sm sm:p-6 transition-opacity">
       <div className="w-full h-[100dvh] sm:h-[85vh] sm:max-h-[850px] max-w-md bg-stone-50 sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col relative sm:border-[6px] border-white text-stone-900 touch-none select-none overscroll-none">
         <AltourTacticsEngine onClose={onClose} />
       </div>
@@ -324,24 +249,23 @@ export function AltourTacticsModal({ onClose }: Props) {
   );
 }
 
-// --- 6. MOTORE PRINCIPALE ---
+// --- 6. MOTORE PRINCIPALE ESPERIENZIALE ---
 function AltourTacticsEngine({ onClose }: Props) {
   const [gameState, setGameState] = useState<'START' | 'PLAYING' | 'WON' | 'LOST'>('START');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('easy');
   const [currentStage, setCurrentStage] = useState(0);
+  
+  // STATISTICHE DI GIOCO
   const [lives, setLives] = useState(3);
   const [maxLives, setMaxLives] = useState(3);
-  
-  // Meccanica di Engagement: Streak Combo
+  const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxCombo] = useState(0);
+  const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
 
-  const emptyErrors = () => ALL_SKILL_TAGS.reduce((acc, tag) => {
-    acc[tag] = 0;
-    return acc;
-  }, {} as Record<SkillTag, number>);
-
+  const emptyErrors = () => Object.keys(SKILL_LABELS).reduce((acc, tag) => ({ ...acc, [tag]: 0 }), {} as Record<SkillTag, number>);
   const [errorsBySkill, setErrorsBySkill] = useState<Record<SkillTag, number>>(emptyErrors());
+  
   const [selectedChoice, setSelectedChoice] = useState<Choice | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
@@ -354,14 +278,12 @@ function AltourTacticsEngine({ onClose }: Props) {
       .sort((a, b) => errorsBySkill[b] - errorsBySkill[a]);
   }, [errorsBySkill]);
 
-  // --- MOTORE DI RACCOMANDAZIONE CORSI ---
   const suggestedCourse = useMemo(() => {
     if (gameState !== 'WON' && gameState !== 'LOST') return null;
     const currentLevel: CourseLevel = difficulty === 'hard' ? 'avanzato' : difficulty === 'medium' ? 'intermedio' : 'base';
 
     if (weakAreas.length > 0) {
       const match = LOCAL_COURSES.find(c => c.level === currentLevel && c.skill === weakAreas[0]);
-      // CORRETTO: targetLevel riceve il valore di currentLevel
       if (match) return { course: match, isGrowth: false, targetLevel: currentLevel };
     }
 
@@ -371,7 +293,7 @@ function AltourTacticsEngine({ onClose }: Props) {
       if (growthCourse) return { course: growthCourse, isGrowth: true, targetLevel: nextLevel };
     }
 
-    const refine = LOCAL_COURSES.find(c => c.level === 'avanzato' && c.skill === 'progettazione');
+    const refine = LOCAL_COURSES.find(c => c.level === 'avanzato' && c.skill === 'emergenza');
     return refine ? { course: refine, isGrowth: true, targetLevel: 'avanzato' } : null;
   }, [gameState, weakAreas, difficulty]);
 
@@ -380,9 +302,11 @@ function AltourTacticsEngine({ onClose }: Props) {
     setDifficulty(diff);
     setMaxLives(initialLives);
     setLives(initialLives);
-    setCurrentStage(0);
+    setScore(0);
     setStreak(0);
     setMaxCombo(0);
+    setCurrentStage(0);
+    setEarnedBadges([]);
     setErrorsBySkill(emptyErrors());
     setSelectedChoice(null);
     setShowFeedback(false);
@@ -391,29 +315,41 @@ function AltourTacticsEngine({ onClose }: Props) {
 
   const handleChoiceClick = (choice: Choice) => {
     if (showFeedback) return;
-    setSelectedChoice(choice);
+    
+    // MECCANICA GAMBLE (Lascia o Raddoppia)
+    let processedChoice = { ...choice };
+    if (choice.isGamble) {
+      const gambleWins = Math.random() > 0.5;
+      processedChoice.isCorrect = gambleWins;
+      processedChoice.explanation = gambleWins 
+        ? "Hai sfidato la sorte... e ti è andata bene! Hai guadagnato tempo e punti bonus preziosi."
+        : "La montagna non perdona l'azzardo. La tua scelta si è rivelata disastrosa, perdi salute e tempo.";
+    }
+
+    setSelectedChoice(processedChoice);
     setShowFeedback(true);
 
-    if (choice.isCorrect) {
-      setStreak(prev => {
-        const nextStreak = prev + 1;
-        if (nextStreak > maxStreak) setMaxCombo(nextStreak);
-        return nextStreak;
-      });
+    if (processedChoice.isCorrect) {
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      if (newStreak > maxStreak) setMaxCombo(newStreak);
+      
+      const streakBonus = newStreak > 1 ? (newStreak * 20) : 0;
+      setScore(s => s + 100 + streakBonus + (processedChoice.bonus || 0));
     } else {
       setStreak(0); 
-      setLives(prev => Math.max(0, prev - (choice.damage || 1)));
-      setErrorsBySkill(prev => ({ ...prev, [choice.skillTag]: prev[choice.skillTag] + 1 }));
+      setLives(prev => Math.max(0, prev - (processedChoice.damage || 1)));
+      setErrorsBySkill(prev => ({ ...prev, [processedChoice.skillTag]: prev[processedChoice.skillTag] + 1 }));
     }
   };
 
   const handleAdvance = () => {
     if (lives <= 0) {
-      setGameState('LOST');
+      finishGame('LOST');
       return;
     }
     if (currentStage + 1 >= stages.length) {
-      setGameState('WON');
+      finishGame('WON');
     } else {
       setCurrentStage(prev => prev + 1);
       setSelectedChoice(null);
@@ -421,10 +357,15 @@ function AltourTacticsEngine({ onClose }: Props) {
     }
   };
 
-  // ─── NUOVA LOGICA SMART PER IL RIATTERRAGGIO IN ACCADEMIA ───
+  const finishGame = (status: 'WON' | 'LOST') => {
+    // Calcolo Badges
+    const unlocked = GAME_BADGES.filter(b => b.condition(score, maxStreak, lives, difficulty));
+    setEarnedBadges(unlocked);
+    setGameState(status);
+  };
+
   const handleCTAClick = () => {
-    onClose(); // Chiude la modale pulendo lo scroll lock del body
-    // Forza il riatterraggio morbido sull'ancora della pagina corsi attiva
+    onClose(); 
     window.location.hash = 'corsi';
   };
 
@@ -434,19 +375,27 @@ function AltourTacticsEngine({ onClose }: Props) {
       <header className="px-5 py-4 border-b border-stone-200 flex items-center justify-between shrink-0 bg-white z-10 pt-safe">
         <div>
           <span className="text-brand-stone font-black tracking-tighter text-lg block leading-none">ALTOUR</span>
-          <span className="text-[10px] text-brand-sky font-black uppercase tracking-widest">Academy Tactics</span>
+          <span className="text-[10px] text-brand-sky font-black uppercase tracking-widest">Outdoor Simulator</span>
         </div>
+        
         <div className="flex items-center space-x-3">
-          {gameState === 'PLAYING' && streak >= 2 && (
-            <div className="bg-brand-sky/10 border border-brand-sky/20 px-2 py-1 rounded-md flex items-center space-x-1 animate-pulse">
-              <span className="text-[8px] font-black text-brand-sky uppercase tracking-wider">STREAK</span>
-              <span className="text-xs font-black text-brand-sky">×{streak}</span>
+          {gameState === 'PLAYING' && (
+            <div className="flex items-center space-x-2">
+              {streak >= 2 && (
+                <div className="bg-amber-100 border border-amber-200 px-2 py-0.5 rounded flex items-center space-x-1 animate-pulse">
+                  <span className="text-[10px] font-black text-amber-600">🔥 ×{streak}</span>
+                </div>
+              )}
+              <div className="bg-stone-100 px-2 py-0.5 rounded font-black text-stone-600 text-xs border border-stone-200">
+                {score} <span className="text-[9px] text-stone-400">PT</span>
+              </div>
             </div>
           )}
+
           {gameState === 'PLAYING' && (
             <div className="flex space-x-1 bg-stone-100 py-1.5 px-2.5 rounded-full border border-stone-200">
               {Array.from({ length: maxLives }).map((_, i) => (
-                <div key={i} className={`w-2.5 h-3 rounded-sm transition-colors ${i < lives ? 'bg-brand-sky' : 'bg-stone-300'}`} />
+                <div key={i} className={`w-2.5 h-3 rounded-sm transition-colors ${i < lives ? 'bg-rose-500' : 'bg-stone-300'}`} />
               ))}
             </div>
           )}
@@ -459,25 +408,26 @@ function AltourTacticsEngine({ onClose }: Props) {
       {/* --- MENU START --- */}
       {gameState === 'START' && (
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center overflow-y-auto pb-safe">
-          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center border border-stone-200 mb-6 shadow-sm">
+          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center border border-stone-200 mb-6 shadow-sm relative">
             <svg className="w-8 h-8 text-brand-stone" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.446l6-1.912a1.859 1.859 0 001.03-1.454V3.059c0-.738-.491-1.37-1.203-1.536l-6 1.382a1.853 1.853 0 00-1.397 0l-6-1.382A1.853 1.853 0 005.18 3.059v12.938c0 .78.518 1.464 1.285 1.638l6 1.382a1.853 1.853 0 001.397 0z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-black text-brand-stone mb-2 leading-tight uppercase tracking-tighter">Valutazione Tattica</h1>
-          <p className="text-stone-500 text-sm mb-8 max-w-xs font-medium">Affronta l'analisi dei bivi decisionali d'alta quota per individuare le tue carenze dottrinali.</p>
+          <h1 className="text-3xl font-black text-brand-stone mb-2 leading-tight uppercase tracking-tighter">Il Bivio Tattico</h1>
+          <p className="text-stone-500 text-sm mb-8 max-w-xs font-medium">Immergiti in un'avventura interattiva. Risolvi imprevisti, gestisci il meteo e accumula punti esplorazione.</p>
           
           <div className="w-full max-w-xs space-y-3">
             {(['easy', 'medium', 'hard'] as DifficultyLevel[]).map((diff) => (
               <button 
-                key={diff} 
-                onClick={() => startGame(diff)} 
+                key={diff} onClick={() => startGame(diff)} 
                 className="w-full bg-white border border-stone-200 hover:border-brand-sky hover:shadow-md p-4 rounded-2xl text-left transition-all active:scale-95 flex justify-between items-center shadow-sm"
               >
                 <div>
-                  <span className="block text-sm font-black text-brand-stone uppercase tracking-tight">{diff === 'easy' ? 'Livello Base' : diff === 'medium' ? 'Livello Intermedio' : 'Livello Avanzato'}</span>
-                  <span className="text-[10px] text-stone-400 font-bold uppercase mt-1 inline-block queen-leading">
-                    {diff === 'easy' ? 'Cartografia IGM, Layers, Allacciature' : diff === 'medium' ? 'Fisiologia, Orientamento Strumentale, Traumatologia' : 'Autosoccorso, Geodesia, Micro-Meteorologia'}
+                  <span className="block text-sm font-black text-brand-stone uppercase tracking-tight">
+                    {diff === 'easy' ? '🌲 Esploratore (Facile)' : diff === 'medium' ? '🦅 Escursionista (Medio)' : '🏔️ Alpinista (Esperto)'}
+                  </span>
+                  <span className="text-[10px] text-stone-400 font-bold uppercase mt-1 inline-block">
+                    {diff === 'easy' ? '3 Vite • Scenari Forestali' : diff === 'medium' ? '2 Vite • Gestione Imprevisti' : '1 Vita • Alta Quota Estrema'}
                   </span>
                 </div>
                 <svg className="w-5 h-5 text-brand-sky shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
@@ -493,32 +443,36 @@ function AltourTacticsEngine({ onClose }: Props) {
           <TrailMap currentStage={currentStage} stages={stages} />
 
           <div className="flex-1 bg-white border border-stone-200 rounded-2xl p-5 flex flex-col min-h-0 overflow-y-auto shadow-sm">
-            <span className="inline-block text-[9px] font-black uppercase tracking-widest text-white bg-brand-sky px-2 py-1 rounded mb-3 w-max">{stageData.subtitle}</span>
-            <h2 className="text-lg font-black text-brand-stone mb-3 leading-snug uppercase tracking-tight">{stageData.title}</h2>
-            <p className="text-stone-600 text-xs sm:text-sm mb-6 leading-relaxed font-medium">{stageData.description}</p>
+            <span className="inline-block text-[9px] font-black uppercase tracking-widest text-white bg-brand-sky px-2 py-1 rounded mb-3 w-max">
+              {stageData.subtitle}
+            </span>
+            <h2 className="text-xl font-black text-brand-stone mb-3 leading-snug uppercase tracking-tight">{stageData.title}</h2>
+            <p className="text-stone-600 text-sm mb-6 leading-relaxed font-medium">{stageData.description}</p>
 
             <div className="mt-auto space-y-3 shrink-0">
               {!showFeedback ? (
                 stageData.choices.map((choice, idx) => (
                   <button 
-                    key={idx} 
-                    onClick={() => handleChoiceClick(choice)} 
-                    className="w-full text-left bg-stone-50 hover:bg-stone-100 border border-stone-200 p-4 rounded-xl text-brand-stone text-xs sm:text-sm font-bold transition-all active:scale-[0.98] shadow-sm"
+                    key={idx} onClick={() => handleChoiceClick(choice)} 
+                    className="w-full text-left bg-stone-50 hover:bg-stone-100 border border-stone-200 p-4 rounded-xl text-brand-stone text-sm font-bold transition-all active:scale-[0.98] shadow-sm flex flex-col"
                   >
-                    {choice.text}
+                    <span>{choice.text}</span>
+                    {choice.isGamble && (
+                      <span className="text-[10px] text-amber-500 uppercase mt-2 block">🎲 Scelta Rischiosa (50% Probabilità)</span>
+                    )}
                   </button>
                 ))
               ) : (
-                <div className={`p-4 rounded-xl border transition-all ${selectedChoice?.isCorrect ? 'bg-stone-50 border-brand-sky/40' : 'bg-rose-50 border-rose-200'}`}>
-                  <p className={`font-black mb-1.5 text-xs uppercase tracking-wider ${selectedChoice?.isCorrect ? 'text-brand-sky' : 'text-rose-700'}`}>
-                    {selectedChoice?.isCorrect ? 'Decisione Corretta' : 'Decisione Errata'}
+                <div className={`p-4 rounded-xl border transition-all ${selectedChoice?.isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'}`}>
+                  <p className={`font-black mb-1.5 text-sm uppercase tracking-wider ${selectedChoice?.isCorrect ? 'text-emerald-700' : 'text-rose-700'}`}>
+                    {selectedChoice?.isCorrect ? 'Sopravvivenza Garantita' : 'Scelta Fatale'}
                   </p>
-                  <p className="text-xs text-stone-600 mb-4 leading-relaxed font-medium">{selectedChoice?.explanation}</p>
+                  <p className="text-xs text-stone-600 mb-5 leading-relaxed font-medium">{selectedChoice?.explanation}</p>
                   <button 
                     onClick={handleAdvance} 
-                    className={`w-full py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest text-white transition-all active:scale-[0.98] shadow-md ${selectedChoice?.isCorrect ? 'bg-brand-sky hover:bg-brand-sky/90' : 'bg-brand-stone hover:bg-brand-stone/90'}`}
+                    className={`w-full py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest text-white transition-all active:scale-[0.98] shadow-md ${selectedChoice?.isCorrect ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-brand-stone hover:bg-stone-800'}`}
                   >
-                    {lives <= 0 ? 'Vedi Analisi Carenze' : 'Prosegui'}
+                    {lives <= 0 ? 'Fine del Viaggio' : 'Prosegui il Tracciato'}
                   </button>
                 </div>
               )}
@@ -527,36 +481,40 @@ function AltourTacticsEngine({ onClose }: Props) {
         </div>
       )}
 
-      {/* --- VITTORIA / SCONFITTA (Con Riatterraggio Dinamico) --- */}
+      {/* --- VITTORIA / SCONFITTA --- */}
       {(gameState === 'WON' || gameState === 'LOST') && (
         <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto pb-safe bg-stone-50">
           
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 border-4 shadow-md ${gameState === 'WON' ? 'bg-stone-100 text-brand-sky border-white' : 'bg-rose-100 text-rose-600 border-white'}`}>
+          <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 border-4 shadow-md ${gameState === 'WON' ? 'bg-emerald-100 text-emerald-600 border-white' : 'bg-rose-100 text-rose-600 border-white'}`}>
              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               {gameState === 'WON' 
-                 ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /> 
-                 : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-               }
+               {gameState === 'WON' ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />}
              </svg>
           </div>
           
-          <h1 className="text-2xl font-black text-brand-stone uppercase tracking-tighter mb-2">{gameState === 'WON' ? (weakAreas.length === 0 ? 'Analisi Perfetta!' : 'Analisi Conclusa') : 'Smarrito in Quota'}</h1>
-          <p className="text-stone-500 text-xs sm:text-sm mb-4 text-center max-w-[280px] font-medium">
-            {gameState === 'WON' 
-              ? (weakAreas.length === 0 ? 'Nessun errore riscontrato: padroneggi interamente i moduli didattici.' : 'Simulazione completata. Il sistema ha rilevato alcune lacune operative.') 
-              : 'I bivi decisionali falliti espongono l\'escursionista a pericoli oggettivi gravi.'}
+          <h1 className="text-2xl font-black text-brand-stone uppercase tracking-tighter mb-1">{gameState === 'WON' ? 'Traguardo Raggiunto!' : 'Smarrito in Quota'}</h1>
+          <p className="text-stone-500 text-xs mb-6 text-center max-w-[280px] font-medium">
+            {gameState === 'WON' ? 'Hai dimostrato istinto e freddezza in ambiente ostile.' : 'Gli imprevisti della montagna non perdonano.'}
           </p>
 
-          <div className="bg-white border border-stone-200 p-3.5 rounded-xl flex justify-between items-center w-full max-w-sm mb-4 shadow-sm">
-            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Miglior Streak Consecutiva</span>
-            <span className="text-xs font-black text-brand-sky">×{maxStreak}</span>
+          <div className="bg-white border border-stone-200 p-4 rounded-xl flex items-center justify-between w-full max-w-sm mb-4 shadow-sm">
+            <div>
+              <p className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Punteggio Totale</p>
+              <p className="text-2xl font-black text-brand-stone">{score} <span className="text-sm text-stone-400">PT</span></p>
+            </div>
+            {earnedBadges.length > 0 && (
+              <div className="flex gap-1">
+                {earnedBadges.map(b => (
+                  <div key={b.id} className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-lg" title={b.name}>{b.icon}</div>
+                ))}
+              </div>
+            )}
           </div>
 
           {weakAreas.length > 0 && (
             <div className="w-full max-w-sm flex flex-wrap justify-center gap-1.5 mb-6">
               {weakAreas.map(tag => (
                 <span key={tag} className="text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-150 px-2.5 py-1 rounded-full">
-                  {SKILL_LABELS[tag]} × {errorsBySkill[tag]}
+                  ⚠️ {SKILL_LABELS[tag]} × {errorsBySkill[tag]}
                 </span>
               ))}
             </div>
@@ -565,25 +523,24 @@ function AltourTacticsEngine({ onClose }: Props) {
           {suggestedCourse && (
             <div className="w-full max-w-sm bg-white p-6 rounded-3xl border border-stone-200 text-left mb-6 shadow-xl shadow-stone-200/40">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-sky/10 text-brand-sky text-[9px] font-black uppercase tracking-wider mb-4 border border-brand-sky/20">
-                <span>{suggestedCourse.isGrowth ? 'PERCORSO DI CRESCITA IN ACCADEMIA' : 'MODULO DI RECUPERO IN ACCADEMIA'}</span>
+                <span>{suggestedCourse.isGrowth ? '🎯 IL TUO PROSSIMO LIVELLO' : '🛠️ AREA DI MIGLIORAMENTO'}</span>
               </div>
               
               <h3 className="text-base font-black text-brand-stone uppercase tracking-tight mb-1.5">{suggestedCourse.course.title}</h3>
               <p className="text-xs text-stone-500 mb-5 leading-relaxed font-medium">{suggestedCourse.course.desc}</p>
               
-              {/* Bottone modificato per chiudere la modale e riagganciare la griglia corsi in SPA */}
               <button 
                 onClick={handleCTAClick} 
                 className="w-full bg-brand-sky hover:bg-brand-sky/90 text-white font-black uppercase tracking-widest py-3.5 rounded-xl text-[10px] transition-all active:scale-95 flex justify-center items-center space-x-2 shadow-lg"
               >
-                <span>Filtra Corsi {suggestedCourse.targetLevel.toUpperCase()}</span>
+                <span>Vai ai Corsi {suggestedCourse.targetLevel.toUpperCase()}</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
               </button>
             </div>
           )}
 
           <button onClick={() => setGameState('START')} className="text-[10px] font-black uppercase tracking-widest text-stone-400 hover:text-stone-600 transition-colors py-2 px-4">
-            Ripeti Test Competenze
+            Rigioca Avventura
           </button>
         </div>
       )}
