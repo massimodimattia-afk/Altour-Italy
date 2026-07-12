@@ -5,7 +5,8 @@ import ActivityDetailModal from "../components/ActivityDetailModal";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Sparkles, BookOpen, ShieldCheck } from "lucide-react";
 // Import allineato con il nome del componente esportato
-import { AltourTacticsModal } from '../components/AltourTactics';
+// Cambia AltourTacticsModal con AltourEntryTestModal
+import { AltourEntryTestModal } from '../components/AltourTactics';
 
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   prezzo_teorico?: number | null;
@@ -398,7 +399,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
 
       {/* RENDER DELLA MODALE TACTICS GESTITO CON IL PORTAL ESTERNO */}
       {isTacticsOpen && (
-        <AltourTacticsModal onClose={() => setIsTacticsOpen(false)} />
+        <AltourEntryTestModal onClose={() => setIsTacticsOpen(false)} />
       )}
     </div>
   );
