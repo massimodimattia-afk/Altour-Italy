@@ -82,6 +82,8 @@ const STEPS: Step[] = [
   { id: 'q-impluvio', kind: 'knowledge', type: 'single', tag: 'Mettiti alla prova', question: 'Quale definizione associeresti alla parola "impluvio"?', options: [ { id: 'a', label: 'Manufatto costruito lungo l\'alveo di un torrente' }, { id: 'b', label: 'Linea che unisce i punti più depressi di una valle', isCorrect: true, skillTag: 'cartografia' }, { id: 'c', label: 'Depressione di forma arrotondata' }, { id: 'd', label: 'Scavo più o meno profondo eseguito per raggiungere falde idriche' }, { id: 'e', label: 'Nessuna delle precedenti' } ] },
 ];
 
+const NEXT_LEVEL: Record<CourseLevel, CourseLevel | null> = { base: 'intermedio', intermedio: 'avanzato', avanzato: null };
+
 interface Props {
   onClose: () => void;
 }
@@ -91,7 +93,7 @@ interface Answer {
   otherText?: string;
 }
 
-// --- 3. PORTAL WRAPPER (iOS Layout) ---
+// --- 3. PORTAL WRAPPER ---
 export function AltourEntryTestModal({ onClose }: Props) {
   const [mounted, setMounted] = useState(false);
 
@@ -106,7 +108,6 @@ export function AltourEntryTestModal({ onClose }: Props) {
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex flex-col justify-end sm:justify-center items-center bg-stone-900/80 backdrop-blur-sm sm:p-6 transition-all duration-300">
-      {/* Wrapper altezza fissa controllata (max 90% schermo) con clip del contenuto */}
       <div className="w-full h-[95dvh] sm:h-auto sm:max-h-[85vh] max-w-lg bg-stone-50 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col relative text-stone-900 overflow-hidden">
         <EntryTestEngine onClose={onClose} />
       </div>
@@ -227,8 +228,6 @@ function EntryTestEngine({ onClose }: Props) {
   }, [phase, answers]);
 
   const isOptionSelected = (optionId: string) => draftSelection.includes(optionId);
-  
-  // Rendi visibile il footer SOLO se la domanda è a risposta multipla, o se ha cliccato "Altro..."
   const requiresFooterAction = phase === 'TEST' && (step.type === 'multi' || (step.type === 'single' && showOtherInput));
   const canContinueMulti = draftSelection.length > 0 && (!showOtherInput || otherDraft.trim().length > 0 || draftSelection.some(id => id !== OTHER_ID));
 
@@ -247,12 +246,12 @@ function EntryTestEngine({ onClose }: Props) {
 
       {phase === 'TEST' && (
         <>
-          {/* PROGRESS BAR FISSA */}
+          {/* PROGRESS BAR */}
           <div className="shrink-0 h-1 w-full bg-stone-200">
             <div className="h-full transition-all duration-500 ease-out" style={{ width: `${progressPct}%`, backgroundColor: BRAND_COLOR }} />
           </div>
 
-          {/* MAIN CONTENT - UNICA AREA SCROLLABILE */}
+          {/* MAIN CONTENT - TEST */}
           <main className="flex-1 overflow-y-auto px-5 py-6 bg-stone-50">
             <div className="flex items-center justify-between mb-5">
               {stepIndex > 0 ? (
@@ -315,7 +314,7 @@ function EntryTestEngine({ onClose }: Props) {
                   <button
                     onClick={() => step.type === 'single' ? handleSingleTap(OTHER_ID) : handleMultiToggle(OTHER_ID)}
                     className="w-full text-left p-4 text-[15px] font-semibold flex items-center justify-between"
-                    style={{ color: isOptionSelected(OTHER_ID) ? '#2d5063' : '#44403c' }} // text-stone-700
+                    style={{ color: isOptionSelected(OTHER_ID) ? '#2d5063' : '#44403c' }}
                   >
                     Altro…
                     {step.type === 'multi' && (
@@ -346,7 +345,7 @@ function EntryTestEngine({ onClose }: Props) {
             </div>
           </main>
 
-          {/* FOOTER AZIONI FISSO - Mai nascosto dallo scorrimento */}
+          {/* FOOTER AZIONI FISSO (Per risposte multiple) */}
           {requiresFooterAction && (
             <footer className="shrink-0 bg-white border-t border-stone-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] z-20 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
               <button
@@ -364,58 +363,71 @@ function EntryTestEngine({ onClose }: Props) {
       )}
 
       {phase === 'RESULT' && result && (
-        <main className="flex-1 flex flex-col items-center justify-center p-6 pb-[max(2rem,env(safe-area-inset-bottom))] overflow-y-auto bg-stone-50">
-          
-          <div 
-            className="w-24 h-24 rounded-full flex items-center justify-center mb-6 border-4 border-white shadow-xl"
-            style={{ backgroundColor: BRAND_BG_LIGHT, color: BRAND_COLOR }}
-          >
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 6.75V15m6-6v8.25m.503 3.446l6-1.912a1.859 1.859 0 001.03-1.454V3.059c0-.738-.491-1.37-1.203-1.536l-6 1.382a1.853 1.853 0 00-1.397 0l-6-1.382A1.853 1.853 0 005.18 3.059v12.938c0 .78.518 1.464 1.285 1.638l6 1.382a1.853 1.853 0 001.397 0z" />
-            </svg>
+        /* FIX DEFINITIVO: Rimosso flex-col-centering nativo e introdotta la classe flex-col items-center.
+           Lo scroll ora è naturale e l'uso di shrink-0 impedisce a iOS di schiacciare i blocchi di testo e la card. */
+        <main className="flex-1 overflow-y-auto px-5 py-6 pb-[max(2rem,env(safe-area-inset-bottom))] bg-stone-50 flex flex-col items-center">
+          <div className="w-full max-w-sm flex flex-col items-center text-center space-y-6 py-4 my-auto">
+            
+            {/* ICONA CORSO */}
+            <div 
+              className="w-20 h-20 rounded-full flex items-center justify-center border-4 border-white shadow-xl shrink-0"
+              style={{ backgroundColor: BRAND_BG_LIGHT, color: BRAND_COLOR }}
+            >
+              <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 6.75V15m6-6v8.25m.503 3.446l6-1.912a1.859 1.859 0 001.03-1.454V3.059c0-.738-.491-1.37-1.203-1.536l-6 1.382a1.853 1.853 0 00-1.397 0l-6-1.382A1.853 1.853 0 005.18 3.059v12.938c0 .78.518 1.464 1.285 1.638l6 1.382a1.853 1.853 0 001.397 0z" />
+              </svg>
+            </div>
+
+            {/* LIVELLO CALCOLATO */}
+            <div className="space-y-1 shrink-0">
+              <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 block">Il tuo livello consigliato</span>
+              <h1 className="text-4xl font-black text-stone-900 mb-1 capitalize tracking-tight">{result.level}</h1>
+            </div>
+
+            {/* SUBTITLE */}
+            <p className="text-stone-600 text-[15px] font-medium leading-relaxed max-w-[320px] shrink-0">
+              Hai risposto correttamente a <strong style={{ color: BRAND_COLOR }}>{result.correctCount} domande su {result.totalKnowledge}</strong>. Basandoci sulla tua esperienza, ecco da dare ti consigliamo di partire.
+            </p>
+
+            {/* CARD PRODOTTO FINALE - Con shrink-0 non si restringerà mai su nessun dispositivo */}
+            {result.course && (
+              <div className="w-full bg-white p-6 rounded-3xl border border-stone-200 text-left shadow-xl shadow-stone-200/40 relative overflow-hidden shrink-0">
+                <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: BRAND_COLOR }} />
+                <div 
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest mb-4"
+                  style={{ backgroundColor: BRAND_BG_LIGHT, color: BRAND_COLOR }}
+                >
+                  <span>Corso Suggerito</span>
+                </div>
+                <h3 className="text-xl font-black text-stone-900 leading-tight mb-2">{result.course.title}</h3>
+                <p className="text-sm text-stone-500 mb-6 leading-relaxed font-medium">{result.course.desc}</p>
+                <button
+                  onClick={() => window.open(result.course!.url, '_blank')}
+                  className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold uppercase tracking-widest py-4 rounded-xl text-xs transition-all active:scale-[0.98] flex justify-center items-center space-x-2 shadow-md"
+                >
+                  <span>Scopri in Academy</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            )}
+
+            {/* SEZIONE GAE INFO */}
+            {result.wantsGAE && (
+              <div className="w-full bg-stone-100 border border-stone-200 p-5 rounded-2xl text-left shrink-0">
+                <div className="flex items-start gap-3">
+                  <svg className="w-6 h-6 text-stone-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <p className="text-[13px] text-stone-700 font-medium leading-relaxed">
+                    Il percorso per diventare <strong className="text-stone-900">Guida Ambientale Escursionistica</strong> va oltre i corsi Academy standard. Contattaci per costruire un iter dedicato.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* RESTART */}
+            <button onClick={handleRestart} className="text-xs font-bold uppercase tracking-widest text-stone-400 hover:text-stone-700 transition-colors py-3 px-6 shrink-0 pt-2">
+              Rifai il Test
+            </button>
           </div>
-
-          <span className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-2">Il tuo livello consigliato</span>
-          <h1 className="text-4xl font-black text-stone-900 mb-3 capitalize tracking-tight">{result.level}</h1>
-          <p className="text-stone-600 text-[15px] mb-8 text-center max-w-[320px] font-medium leading-relaxed">
-            Hai risposto correttamente a <strong style={{ color: BRAND_COLOR }}>{result.correctCount} domande su {result.totalKnowledge}</strong>. Basandoci sulla tua esperienza, ecco da dove ti consigliamo di partire.
-          </p>
-
-          {result.course && (
-            <div className="w-full max-w-sm bg-white p-6 rounded-3xl border border-stone-200 text-left mb-6 shadow-xl shadow-stone-200/40 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: BRAND_COLOR }} />
-              <div 
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest mb-4"
-                style={{ backgroundColor: BRAND_BG_LIGHT, color: BRAND_COLOR }}
-              >
-                <span>Corso Suggerito</span>
-              </div>
-              <h3 className="text-xl font-black text-stone-900 leading-tight mb-2">{result.course.title}</h3>
-              <p className="text-sm text-stone-500 mb-6 leading-relaxed font-medium">{result.course.desc}</p>
-              <button
-                onClick={() => window.open(result.course!.url, '_blank')}
-                className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold uppercase tracking-widest py-4 rounded-xl text-xs transition-all active:scale-[0.98] flex justify-center items-center space-x-2 shadow-md"
-              >
-                <span>Scopri in Academy</span>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
-              </button>
-            </div>
-          )}
-
-          {result.wantsGAE && (
-            <div className="w-full max-w-sm bg-stone-100 border border-stone-200 p-5 rounded-2xl text-left mb-8">
-              <div className="flex items-start gap-3">
-                <svg className="w-6 h-6 text-stone-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <p className="text-[13px] text-stone-700 font-medium leading-relaxed">
-                  Il percorso per diventare <strong className="text-stone-900">Guida Ambientale Escursionistica</strong> va oltre i corsi Academy standard. Contattaci per costruire un iter dedicato.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <button onClick={handleRestart} className="text-xs font-bold uppercase tracking-widest text-stone-400 hover:text-stone-700 transition-colors py-3 px-6 mt-auto">
-            Rifai il Test
-          </button>
         </main>
       )}
     </>
