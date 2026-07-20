@@ -151,6 +151,38 @@ export interface Database {
           created_at?: string
         }
       }
+      altour_leads: {
+        Row: {
+          id: string
+          created_at: string
+          nome: string
+          cognome: string
+          email: string
+          livello_suggerito: string
+          punteggio: number
+          vuole_gae: boolean
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          nome: string
+          cognome: string
+          email: string
+          livello_suggerito: string
+          punteggio: number
+          vuole_gae?: boolean
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          nome?: string
+          cognome?: string
+          email?: string
+          livello_suggerito?: string
+          punteggio?: number
+          vuole_gae?: boolean
+        }
+      }
     }
   }
 }

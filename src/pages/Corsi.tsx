@@ -5,8 +5,8 @@ import ActivityDetailModal from "../components/ActivityDetailModal";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Sparkles, BookOpen, ShieldCheck } from "lucide-react";
 // Import allineato con il nome del componente esportato
-// Cambia AltourTacticsModal con AltourEntryTestModal
-import { AltourEntryTestModal } from '../components/AltourTactics';
+// Cambia AltourTacticsModal con AltourTactics
+import { AltourTactics } from '../components/AltourTactics';
 
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   prezzo_teorico?: number | null;
@@ -312,7 +312,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
     </div>
     <h2 className="text-xl font-black uppercase tracking-tight text-stone-900">Test d'Ingresso Accademia</h2>
     <p className="text-stone-500 text-xs font-medium max-w-xl leading-relaxed">
-      Non sai quale livello scegliere? Rispondi ai bivi decisionali del nostro simulatore di orienteering e scopri subito qual è il percorso didattico più adatto alle tue lacune tecniche.
+      Rispondi al nostro test e scopri subito qual è il percorso didattico più adatto a te.
     </p>
   </div>
   <button
@@ -399,7 +399,7 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
 
       {/* RENDER DELLA MODALE TACTICS GESTITO CON IL PORTAL ESTERNO */}
       {isTacticsOpen && (
-        <AltourEntryTestModal onClose={() => setIsTacticsOpen(false)} />
+        <AltourTactics onClose={() => setIsTacticsOpen(false)} />
       )}
     </div>
   );
