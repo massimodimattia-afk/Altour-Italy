@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { supabase } from '../lib/supabase'; // Centralizzato e tipizzato con <Database>
+import { supabase } from '../lib/supabase';
 
 // --- 1. TYPING & DATI SENTIERISTICI ---
 type SkillTag =
@@ -65,35 +65,38 @@ const GAE_OPTION_ID = 'obiettivo-gae';
 const BRAND_COLOR = '#7aaecd';
 const BRAND_BG_LIGHT = 'rgba(122, 174, 205, 0.1)';
 
+// Pesi aggiornati in base alle nuove opzioni[cite: 1]
 const EXPERIENCE_WEIGHT: Record<string, number> = {
-  'esp-oltre20': 4,
-  'esp-5-20': 3,
-  'esp-1-5': 2,
-  'esp-meno1': 0, 
-  'esp-zero': 0,  
+  'esp-oltre10': 4,
+  'esp-2-10': 3,
+  'esp-meno2': 2,
+  'esp-zero': 0, 
 };
 
 const STEPS: Step[] = [
   // --- SEZIONE 1: PROFILAZIONE INTERATTIVA ---
-  { id: 'esperienza', kind: 'profiling', type: 'single', tag: 'Il tuo profilo', question: 'Da quanti anni pratichi attività escursionistica?', allowOther: true, options: [ { id: 'esp-oltre20', label: 'Da oltre 20 anni' }, { id: 'esp-5-20', label: 'Tra i 5 e i 20 anni' }, { id: 'esp-1-5', label: 'Tra 1 e 5 anni' }, { id: 'esp-meno1', label: 'Meno di 1 anno' }, { id: 'esp-zero', label: 'Non ho esperienza' } ] },
-  { id: 'frequenza', kind: 'profiling', type: 'single', tag: 'Il tuo profilo', question: 'Con quale frequenza esci in natura?', allowOther: true, options: [ { id: 'freq-mai', label: 'Mai' }, { id: 'freq-1-3anno', label: '1/3 volte l\'anno' }, { id: 'freq-mese', label: 'Una volta al mese' }, { id: 'freq-settimana', label: 'Ogni settimana' }, { id: 'freq-piu-settimana', label: 'Più volte a settimana' } ] },
-  { id: 'modalita', kind: 'profiling', type: 'multi', tag: 'Il tuo profilo', question: 'Quando vuoi svolgere una attività preferisci ... (anche più scelte)', allowOther: true, options: [ { id: 'mod-solo', label: 'Andare da sol@' }, { id: 'mod-pari', label: 'Essere accompagnat@ da persone con la tua stessa esperienza' }, { id: 'mod-esperto', label: 'Uscire con qualcuno più preparato ed esperto di te, che non sia un professionista' }, { id: 'mod-guida', label: 'Affidarti ad una Guida' } ] },
-  { id: 'corso-pregresso', kind: 'profiling', type: 'single', tag: 'Il tuo profilo', question: 'Hai gia\' frequentato un corso di escursionismo?', allowOther: true, options: [ { id: 'corso-no', label: 'No' }, { id: 'corso-cai', label: 'Sì, organizzato dal Club Alpino Italiano' }, { id: 'corso-prof', label: 'Sì, organizzato da un professionista del settore' }, { id: 'corso-ente', label: 'Sì, organizzato da un Ente formatore' } ] },
-  { id: 'obiettivo', kind: 'objective', type: 'multi', tag: 'I tuoi obiettivi', question: 'Quale obiettivo hai frequentando un corso di escursionismo? (anche più scelte)', allowOther: true, options: [ { id: 'obiettivo-cartografia', label: 'Saper leggere ed interpretare una carta topografica così da percorrere in autonomia sentieri comodi e ben segnati e non dipendere da strumenti elettronici (smartphone/GPS)', skillTag: 'cartografia' }, { id: 'obiettivo-strumenti', label: 'Saper usare correttamente carta, bussola e altimetro per potermi muovere con maggior sicurezza su ogni tipo di sentiero', skillTag: 'orientamento_strumentale' }, { id: 'obiettivo-progettazione', label: 'Avere le conoscenze e la consapevolezza per progettare una escursione o un trekking in ogni stagione dell\'anno', skillTag: 'progettazione' }, { id: GAE_OPTION_ID, label: 'Avere le basi per diventare una Guida Ambientale Escursionistica' } ] },
+  { id: 'esperienza', kind: 'profiling', type: 'single', tag: 'Il tuo profilo', question: 'Da quanti anni pratichi l\'attività escursionistica?', allowOther: true, options: [ { id: 'esp-oltre10', label: 'Da oltre 10 anni' }, { id: 'esp-2-10', label: 'Tra i 2 e i 10 anni' }, { id: 'esp-meno2', label: 'Meno di 2 anni' }, { id: 'esp-zero', label: 'Non ho esperienza' } ] }, //[cite: 1]
+  { id: 'frequenza', kind: 'profiling', type: 'single', tag: 'Il tuo profilo', question: 'Con quale frequenza esci in natura?', allowOther: true, options: [ { id: 'freq-mai', label: 'Mai' }, { id: 'freq-1-3anno', label: '1/3 volte l\'anno' }, { id: 'freq-mese', label: 'Una volta al mese' }, { id: 'freq-settimana', label: 'Ogni settimana' } ] }, //[cite: 1]
+  { id: 'modalita', kind: 'profiling', type: 'multi', tag: 'Il tuo profilo', question: 'Quando vuoi svolgere una attività preferisci ... (anche più scelte)', allowOther: true, options: [ { id: 'mod-solo', label: 'Andare da sol@' }, { id: 'mod-pari', label: 'Essere accompagnat@ da persone con la tua stessa esperienza' }, { id: 'mod-esperto', label: 'Uscire con qualcuno più preparato ed esperto di te, che non sia un professionista' }, { id: 'mod-guida', label: 'Affidarti ad una Guida' } ] }, //[cite: 1]
+  { id: 'corso-pregresso', kind: 'profiling', type: 'single', tag: 'Il tuo profilo', question: 'Hai gia\' frequentato un corso di escursionismo?', allowOther: true, options: [ { id: 'corso-no', label: 'No' }, { id: 'corso-cai', label: 'Sì, organizzato dal Club Alpino Italiano' }, { id: 'corso-prof', label: 'Sì, organizzato da un professionista del settore' }, { id: 'corso-ente', label: 'Sì, organizzato da un Ente formatore' } ] }, //[cite: 1]
+  { id: 'obiettivo', kind: 'objective', type: 'multi', tag: 'I tuoi obiettivi', question: 'Quale obiettivo hai frequentando un corso di escursionismo? (anche più scelte)', allowOther: true, options: [ { id: 'obiettivo-cartografia', label: 'Saper leggere ed interpretare una carta topografica e non dipendere da strumenti elettronici', skillTag: 'cartografia' }, { id: 'obiettivo-strumenti', label: 'Saper usare correttamente carta, bussola e altimetro', skillTag: 'orientamento_strumentale' }, { id: 'obiettivo-progettazione', label: 'Avere le conoscenze e la consapevolezza per progettare una escursione in ogni stagione dell\'anno', skillTag: 'progettazione' }, { id: GAE_OPTION_ID, label: 'Avere le basi per diventare una Guida Ambientale Escursionistica' } ] }, //[cite: 1]
   
   // --- SEZIONE 2: RISPOSTE DI MERITO TECNICO ---
-  { id: 'q-calzature', kind: 'knowledge', type: 'single', tag: 'Calzature e cura del piede', scenario: 'Sei in Costiera Amalfitana e splende il sole. Per percorrere il Sentiero degli Dèi, da Bomerano a Positano...', question: 'Quale calzatura sceglieresti?', options: [ { id: 'a', label: 'Scarpe da ginnastica' }, { id: 'b', label: 'Una classica pedula', isCorrect: true, skillTag: 'calzature' }, { id: 'c', label: 'Infradito' }, { id: 'd', label: 'Un sandalo da escursionismo' }, { id: 'e', label: 'Nessuna delle precedenti' } ] },
-  { id: 'q-abbigliamento', kind: 'knowledge', type: 'single', tag: 'Abbigliamento', scenario: 'Stai scendendo verso l\'Abbazia di S. Pietro in Valle in un bosco a prevalenza di leccio e pino d\'Aleppo quando all\'improvviso inizia a grandinare violentemente.', question: 'Come ti comporteresti?', options: [ { id: 'a', label: 'Rallento ma continuo a camminare' }, { id: 'b', label: 'Indosso la mantella e continuo a scendere' }, { id: 'c', label: 'Mi riparo sotto un albero indossando il guscio' }, { id: 'd', label: 'Mi fermo, indosso il windstopper e aspetto che finisca di grandinare' }, { id: 'e', label: 'Nessuna delle precedenti', isCorrect: true, skillTag: 'abbigliamento' } ] },
-  { id: 'q-zaino', kind: 'knowledge', type: 'single', tag: 'Attrezzatura Base', question: 'Qual è il carico ideale dello zaino in relazione al peso corporeo?', options: [ { id: 'a', label: 'Intorno al 10%', isCorrect: true, skillTag: 'attrezzatura1' }, { id: 'b', label: 'Tra il 15 e il 20%' }, { id: 'c', label: 'Il 25%' }, { id: 'd', label: 'Dipende dall\'età e dall\'allenamento' }, { id: 'e', label: 'L\'unica cosa che conta è che abbia una capienza di almeno 25 litri' } ] },
-  { id: 'q-cartografia', kind: 'knowledge', type: 'single', tag: 'Lettura ed interpretazione di una carta topografica', scenario: 'Per l\'uscita nella Riserva Naturale di Monte Mario sto utilizzando una fotocopia della carta topografica ufficiale ormai introvabile.', question: 'Quali caratteristiche della carta sono esattamente riprodotte nella fotocopia?', options: [ { id: 'a', label: 'Le distanze' }, { id: 'b', label: 'I simboli', isCorrect: true, skillTag: 'cartografia' }, { id: 'c', label: 'La scala' }, { id: 'd', label: 'L\'equidistanza' }, { id: 'e', label: 'Tutte le precedenti' } ] },
-  { id: 'q-impluvio', kind: 'knowledge', type: 'single', tag: 'Glossario', question: 'Quale definizione associeresti alla parola IMPLUVIO?', options: [ { id: 'a', label: 'Manufatto costruito lungo l\'alveo di un torrente' }, { id: 'b', label: 'Depressione di forma arrotondata' }, { id: 'c', label: 'Nessuna delle risposte proposte' }, { id: 'd', label: 'Scavo più o meno profondo eseguito per raggiungere falde idriche' }, { id: 'e', label: 'Linea che unisce i punti più depressi di una valle', isCorrect: true, skillTag: 'cartografia' } ] },
-  { id: 'q-alimentazione', kind: 'knowledge', type: 'single', tag: 'Alimentazione', scenario: 'Escursione invernale da Campo dell\'Osso a Monte Autore, procedi con le ciaspole. Hai una borraccia con 1,5 litri d\'acqua.', question: 'Qual\' è la gestione ottimale di questo principio nutritivo?', options: [ { id: 'a', label: 'Bevo quando ho sete' }, { id: 'b', label: 'Bevo ad intervalli regolari anche se non ho sete', isCorrect: true, skillTag: 'alimentazione' }, { id: 'c', label: 'Cerco di bere il meno possibile per non fermarmi' }, { id: 'd', label: 'Bevo quando arrivo alla meta e mi fermo per mangiare ed ammirare il panorama' }, { id: 'e', label: 'Esaurisco l\'acqua in salita potendomi dissetare con la neve al ritorno' } ] },
-  { id: 'q-allenamento', kind: 'knowledge', type: 'single', tag: 'Allenamento', scenario: 'Se ti dicessi che con l\'esercizio e la costanza puoi perfezionare la tua respirazione nella camminata...', question: 'Quale atteggiamento metteresti in atto?', options: [ { id: 'a', label: 'Evito il sovrappeso e il fumo' }, { id: 'b', label: 'Sincronizzo il respiro con il movimento delle braccia' }, { id: 'c', label: 'Eseguo una respirazione completa e diaframmatica' }, { id: 'd', label: 'Devo concentrarmi sull\'espirazione' }, { id: 'e', label: 'Tutti i precedenti', isCorrect: true, skillTag: 'allenamento' } ] },
-  { id: 'q-eco', kind: 'knowledge', type: 'single', tag: 'Comportamenti Ecocompatibili', scenario: 'Durante una uscita didattica di un corso base di escursionismo sui Monti Prenestini un allievo dopo aver mangiato una banana getta in mezzo ai rovi la buccia.', question: 'Come valuti il suo comportamento?', options: [ { id: 'a', label: 'Corretto, la buccia è degradabile in poco tempo' }, { id: 'b', label: 'Opinabile' }, { id: 'c', label: 'Corretto, sta lasciando del cibo per gli animali selvatici' }, { id: 'd', label: 'Sbagliato', isCorrect: true, skillTag: 'ecocompatibilita' }, { id: 'e', label: 'Corretto, non posso appesantire lo zaino con i rifiuti' } ] },
-  { id: 'q-prevenzione', kind: 'knowledge', type: 'single', tag: 'Prevenzione Pericoli', scenario: 'Ti trovi a pernottare in un rifugio in quota. Il sentiero da percorrere l\'indomani in una bella giornata passa ai piedi di una parete rocciosa.', question: 'In quale momento della giornata devi evitare di trovarti in quel tratto?', options: [ { id: 'a', label: 'Nelle prime ore del giorno', isCorrect: true, skillTag: 'prevenzione' }, { id: 'b', label: 'Quando il sole è allo zenit' }, { id: 'c', label: 'Nelle prime ore del pomeriggio, per possibili temporali' }, { id: 'd', label: 'Al tramonto' } ] },
-  { id: 'q-soccorso', kind: 'knowledge', type: 'single', tag: 'Primo Soccorso', question: 'In Italia ci sono quattro tipi di serpenti velenosi della famiglia dei Viperidi. Come si soccorre il morso di una vipera?', options: [ { id: 'a', label: 'Pratico un taglio a croce congiungente i morsi e poi cauterizzo la ferita' }, { id: 'b', label: 'Chiamo i soccorsi ed aspetto' }, { id: 'c', label: 'Metto a riposo l\'infortunato e applico un bendaggio compressivo a monte del morso', isCorrect: true, skillTag: 'primosoccorso' }, { id: 'd', label: 'Uso il siero antivipera e poi chiamo i soccorsi' } ] },
-  { id: 'q-sentieri', kind: 'knowledge', type: 'single', tag: 'Sentieristica', question: 'La rete CAI identifica un sentiero sul terreno attraverso una numerazione di tre cifre. Quali indicano il numero del sentiero?', options: [ { id: 'a', label: 'Le prime due, l\'ultima indica la zona' }, { id: 'b', label: 'Le ultime due, la prima indica il settore', isCorrect: true, skillTag: 'sentieristica' }, { id: 'c', label: 'Tutte e tre' }, { id: 'd', label: 'Le prime due, l\'ultima indica l\'area' }, { id: 'e', label: 'Nessuna delle precedenti' } ] },
-  { id: 'q-orientamento', kind: 'knowledge', type: 'single', tag: 'Orientamento Strumentale', scenario: 'Sei in Val Pusteria e stai percorrendo la Romerweg da Dobbiaco a Monguelfo. Vuoi conoscere esattamente la tua posizione.', question: 'Quale strumento utilizzeresti?', options: [ { id: 'a', label: 'La carta topografica' }, { id: 'b', label: 'La bussola' }, { id: 'c', label: 'L\'altimetro' }, { id: 'd', label: 'Carta, bussola ed altimetro', isCorrect: true, skillTag: 'orientamento_strumentale' }, { id: 'e', label: 'Nessuna delle precedenti' } ] }
+  { id: 'q-calzature', kind: 'knowledge', type: 'single', tag: 'Calzature e cura del piede', scenario: 'Sei in Costiera Amalfitana e splende il sole. Per percorrere il Sentiero degli Dèi, da Bomerano a Positano,', question: 'Quale calzatura sceglieresti?', options: [ { id: 'a', label: 'Scarpe da ginnastica' }, { id: 'b', label: 'Una classica pedula', isCorrect: true, skillTag: 'calzature' }, { id: 'c', label: 'Infradito' }, { id: 'd', label: 'Un sandalo da escursionismo' }, { id: 'e', label: 'Una qualsiasi tra le precedenti' } ] }, //[cite: 1]
+  { id: 'q-abbigliamento', kind: 'knowledge', type: 'single', tag: 'Abbigliamento', scenario: 'Stai scendendo verso l\'Abbazia di S. Pietro in Valle in un bosco a prevalenza di leccio e pino d\'Aleppo quando all\'improvviso inizia a grandinare violentemente.', question: 'Come ti comporteresti?', options: [ { id: 'a', label: 'Rallenti ma continui a camminare' }, { id: 'b', label: 'Indossi la mantella e continui a scendere' }, { id: 'c', label: 'Ti ripari sotto un albero indossando il guscio', isCorrect: true, skillTag: 'abbigliamento' }, { id: 'd', label: 'Ti fermi, indossi il windstopper e aspetti che finisca di grandinare' }, { id: 'e', label: 'Nessuna delle precedenti' } ] }, //[cite: 1]
+  { id: 'q-zaino', kind: 'knowledge', type: 'single', tag: 'Attrezzatura Base', question: 'Qual è il carico ideale dello zaino in relazione al peso corporeo?', options: [ { id: 'a', label: 'Intorno al 10%', isCorrect: true, skillTag: 'attrezzatura1' }, { id: 'b', label: 'Tra il 15 e il 20%' }, { id: 'c', label: 'Il 25%' }, { id: 'd', label: 'Dipende dall\'età e dall\'allenamento' }, { id: 'e', label: 'L\'unica cosa che conta è che abbia una capienza di almeno 25 litri' } ] }, //[cite: 1]
+  { id: 'q-cartografia', kind: 'knowledge', type: 'single', tag: 'Lettura ed interpretazione di una carta topografica', scenario: 'Per l\'uscita nella Riserva Naturale di Monte Mario sto utilizzando una fotocopia della carta topografica ufficiale ormai introvabile.', question: 'Quali caratteristiche della carta sono esattamente riprodotte nella fotocopia?', options: [ { id: 'a', label: 'Le distanze' }, { id: 'b', label: 'I simboli' }, { id: 'c', label: 'La scala' }, { id: 'd', label: 'L\'equidistanza', isCorrect: true, skillTag: 'cartografia' }, { id: 'e', label: 'Tutte le precedenti' } ] }, //[cite: 1]
+  { id: 'q-impluvio', kind: 'knowledge', type: 'single', tag: 'Glossario', question: 'Quale definizione associeresti alla parola IMPLUVIO?', options: [ { id: 'a', label: 'Manufatto costruito lungo l\'alveo di un torrente' }, { id: 'b', label: 'Depressione di forma arrotondata' }, { id: 'c', label: 'Nessuna delle risposte proposte' }, { id: 'd', label: 'Scavo più o meno profondo eseguito per raggiungere falde idriche' }, { id: 'e', label: 'Linea che unisce i punti più depressi di una valle', isCorrect: true, skillTag: 'cartografia' } ] }, //[cite: 1]
+  { id: 'q-alimentazione', kind: 'knowledge', type: 'single', tag: 'Alimentazione', scenario: 'Escursione invernale con le ciaspole da Campo dell\'Osso a Monte Autore. Hai con te una borraccia contenente 1,5 litri di acqua.', question: 'Qual\' è la gestione ottimale di questo principio nutritivo?', options: [ { id: 'a', label: 'Bevo quando ho sete' }, { id: 'b', label: 'Bevo ad intervalli regolari anche se non ho sete', isCorrect: true, skillTag: 'alimentazione' }, { id: 'c', label: 'Cerco di bere il meno possibile perché non voglio perdere tempo visto che procedo lentamente e le ore di luce sono poche' }, { id: 'd', label: 'Bevo quando arrivo alla meta e mi fermo per mangiare ed ammirare il panorama' }, { id: 'e', label: 'Esaurisco l\'acqua durante la salita, nel ritorno potrei dissetarmi con la neve.' } ] }, //[cite: 1]
+  { id: 'q-allenamento', kind: 'knowledge', type: 'single', tag: 'Allenamento', question: 'Se ti dicessi che con l\'esercizio e la costanza puoi perfezionare la tua respirazione nella camminata, quale atteggiamento metteresti in atto?', options: [ { id: 'a', label: 'Evito il sovrappeso e il fumo' }, { id: 'b', label: 'Sincronizzo il respiro con il movimento delle braccia' }, { id: 'c', label: 'Eseguo una respirazione completa e diaframmatica' }, { id: 'd', label: 'Devo concentrarmi sull\'espirazione' }, { id: 'e', label: 'Tutti i precedenti', isCorrect: true, skillTag: 'allenamento' } ] }, //[cite: 1]
+  { id: 'q-eco', kind: 'knowledge', type: 'single', tag: 'Comportamenti Ecocompatibili', scenario: 'Durante una uscita didattica sui Monti Prenestini un allievo dopo aver mangiato una banana getta in mezzo ai rovi la buccia.', question: 'Come valuti il suo comportamento?', options: [ { id: 'a', label: 'Corretto, la buccia è degradabile in poco tempo' }, { id: 'b', label: 'Opinabile' }, { id: 'c', label: 'Corretto, sta lasciando del cibo per gli animali selvatici' }, { id: 'd', label: 'Sbagliato', isCorrect: true, skillTag: 'ecocompatibilita' }, { id: 'e', label: 'Corretto, non posso appesantire lo zaino con i rifiuti' } ] }, //[cite: 1]
+  { id: 'q-prevenzione', kind: 'knowledge', type: 'single', tag: 'Prevenzione Pericoli', scenario: 'Ti trovi a pernottare in un rifugio ad una quota superiore al limite del pascolo, e stai studiando il sentiero da percorrere l\'indomani sapendo che sarà una bella giornata. Il sentiero passa ai piedi di una parete rocciosa.', question: 'In quale momento della giornata devi evitare di trovarti in quel tratto?', options: [ { id: 'a', label: 'Nelle prime ore del giorno', isCorrect: true, skillTag: 'prevenzione' }, { id: 'b', label: 'Quando il sole è allo zenit' }, { id: 'c', label: 'Nelle prime ore del pomeriggio, per possibili temporali' }, { id: 'd', label: 'Al tramonto' }, { id: 'e', label: 'Nessuna delle precedenti' } ] }, //[cite: 1]
+  { id: 'q-soccorso', kind: 'knowledge', type: 'single', tag: 'Primo Soccorso', question: 'In Italia sono presenti molti tipi di serpenti ma solo quattro appartengono alla famiglia dei Viperidi e sono velenosi. Come si soccorre il morso di una vipera?', options: [ { id: 'a', label: 'Pratico un taglio a croce congiungente i morsi e poi cauterizzo la ferita' }, { id: 'b', label: 'Chiamo i soccorsi ed aspetto' }, { id: 'c', label: 'Metto a riposo l\'infortunato e applico un bendaggio compressivo a monte del morso', isCorrect: true, skillTag: 'primosoccorso' }, { id: 'd', label: 'Uso il siero antivipera e poi chiamo i soccorsi' }, { id: 'e', label: 'Chiamo i soccorsi e accompagno velocemente a valle l\'infortunato' } ] }, //[cite: 1]
+  { id: 'q-sentieri', kind: 'knowledge', type: 'single', tag: 'Sentieristica', question: 'La rete sentieristica del CAI permette di identificare sul terreno un sentiero attraverso una numerazione di tre cifre. Quali di queste cifre indicano il numero del sentiero?', options: [ { id: 'a', label: 'Le prime due, l\'ultima indica la zona' }, { id: 'b', label: 'Le ultime due, la prima indica il settore', isCorrect: true, skillTag: 'sentieristica' }, { id: 'c', label: 'Tutte e tre' }, { id: 'd', label: 'Le prime due, l\'ultima indica l\'area' }, { id: 'e', label: 'Nessuna delle precedenti' } ] }, //[cite: 1]
+  { id: 'q-orientamento', kind: 'knowledge', type: 'single', tag: 'Orientamento Strumentale', scenario: 'Sono in bellissimo bosco di conifere in Val Pusteria e sto percorrendo la Romerweg da Dobbiaco a Monguelfo.', question: 'Voglio conoscere esattamente la mia posizione, quale strumento utilizzeresti?', options: [ { id: 'a', label: 'La carta topografica' }, { id: 'b', label: 'La bussola' }, { id: 'c', label: 'L\'altimetro' }, { id: 'd', label: 'Carta, bussola ed altimetro' }, { id: 'e', label: 'Solo carta ed altimetro', isCorrect: true, skillTag: 'orientamento_strumentale' } ] }, //[cite: 1]
+  { id: 'q-pedanca', kind: 'knowledge', type: 'single', tag: 'Glossario', question: 'Quale definizione associeresti alla parola PEDANCA?', options: [ { id: 'a', label: 'Parete continua di pali squadrati e affiancati, infissi nel terreno' }, { id: 'b', label: 'Diramazione secondaria di un massiccio montuoso' }, { id: 'c', label: 'Elevatore per liquidi o materiali terrosi' }, { id: 'd', label: 'Impianto per il trasporto di merci' }, { id: 'e', label: 'Trave o asse di legno gettata da una riva all\'altra di un ruscello o di un fosso', isCorrect: true, skillTag: 'sentieristica' } ] }, //[cite: 1]
+  { id: 'q-strumentazione', kind: 'knowledge', type: 'single', tag: 'Strumentazione', scenario: 'Sto percorrendo il sentiero che da Balme (1432m) arriva al Rifugio Gastaldi (2659m). Durante l\'ascesa l\'altimetro, anche se continuamente tarato, mi indica sempre una quota inferiore a quella indicata sulla carta.', question: 'Che conclusioni posso trarre?', options: [ { id: 'a', label: 'Il tempo tende a migliorare', isCorrect: true, skillTag: 'meteorologia' }, { id: 'b', label: 'Nessuna, probabilmente lo strumento non funziona' }, { id: 'c', label: 'Il tempo tende a peggiorare' }, { id: 'd', label: 'Sto percorrendo un sentiero diverso da quello scelto' }, { id: 'e', label: 'La carta non è accurata' } ] }, //[cite: 1]
+  { id: 'q-simboli', kind: 'knowledge', type: 'single', tag: 'Simboli', scenario: 'Stai svolgendo una prova di orienteering e sulla mappa trovi un simbolo di colore nero: un cerchio con al suo centro un punto.', question: 'Che cosa dovrai cercare?', options: [ { id: 'a', label: 'Un albero isolato' }, { id: 'b', label: 'Un cippo', isCorrect: true, skillTag: 'cartografia' }, { id: 'c', label: 'Una fontana con acqua potabile' }, { id: 'd', label: 'Un oggetto particolare' }, { id: 'e', label: 'Un masso con una cavità centrale' } ] } //[cite: 1]
 ];
 
 interface Props {
@@ -162,9 +165,9 @@ function AltourTacticsEngine({ onClose }: Props) {
   };
 
   const handleSingleTap = (optionId: string) => {
-    if (optionId === OTHER_ID) {
+    if (optionId === OTHER_ID || optionId === 'altro' || optionId.includes('altro')) {
       setShowOtherInput(true);
-      setDraftSelection([OTHER_ID]);
+      setDraftSelection([optionId]);
       setTimeout(() => inputRef.current?.focus(), 50);
       return;
     }
@@ -173,7 +176,7 @@ function AltourTacticsEngine({ onClose }: Props) {
   };
 
   const handleMultiToggle = (optionId: string) => {
-    if (optionId === OTHER_ID) {
+    if (optionId === OTHER_ID || optionId === 'altro' || optionId.includes('altro')) {
       setShowOtherInput(prev => {
         if (!prev) setTimeout(() => inputRef.current?.focus(), 50);
         return !prev;
@@ -262,6 +265,8 @@ function AltourTacticsEngine({ onClose }: Props) {
     setSubmitError('');
 
     try {
+      const risposteFormattate = JSON.parse(JSON.stringify(answers));
+
       const { error } = await supabase
         .from('altour_leads')
         .insert([
@@ -272,6 +277,7 @@ function AltourTacticsEngine({ onClose }: Props) {
             livello_suggerito: result?.level || 'base',
             punteggio: result?.correctCount || 0,
             vuole_gae: result?.wantsGAE || false,
+            risposte_dettagliate: risposteFormattate 
           }
         ] as any);
 
@@ -288,7 +294,7 @@ function AltourTacticsEngine({ onClose }: Props) {
 
   const isOptionSelected = (optionId: string) => draftSelection.includes(optionId);
   const requiresFooterAction = phase === 'TEST' && (step.type === 'multi' || (step.type === 'single' && showOtherInput));
-  const canContinueMulti = draftSelection.length > 0 && (!showOtherInput || otherDraft.trim().length > 0 || draftSelection.some(id => id !== OTHER_ID));
+  const canContinueMulti = draftSelection.length > 0 && (!showOtherInput || otherDraft.trim().length > 0 || draftSelection.some(id => !id.includes('altro') && id !== OTHER_ID));
 
   return (
     <>
@@ -509,7 +515,7 @@ function AltourTacticsEngine({ onClose }: Props) {
               style={{ backgroundColor: BRAND_BG_LIGHT, color: BRAND_COLOR }}
             >
               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 6.75V15m6-6v8.25m.503 3.446l6-1.912a1.859 1.859 0 001.03-1.454V3.059c0-.738-.491-1.37-1.203-1.536l-6 1.382a1.853 1.853 0 00-1.397 0l-6-1.382A1.853 1.853 0 005.18 3.059v12.938c0 .78.518 1.464 1.285 1.638l6 1.382a1.853 1.853 0 00(1.397 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 6.75V15m6-6v8.25m.503 3.446l6-1.912a1.859 1.859 0 001.03-1.454V3.059c0-.738-.491-1.37-1.203-1.536l-6 1.382a1.853 1.853 0 00-1.397 0l-6-1.382A1.853 1.853 0 005.18 3.059v12.938c0 .78.518 1.464 1.285 1.638l6 1.382a1.853 1.853 0 001.397 0z" />
               </svg>
             </div>
 
@@ -519,7 +525,7 @@ function AltourTacticsEngine({ onClose }: Props) {
             </div>
 
             <p className="text-stone-600 text-sm sm:text-[15px] font-medium leading-relaxed max-w-[320px] shrink-0">
-              In base all'esperienza sul campo e alle risposte fornite (<strong style={{ color: BRAND_COLOR }}>{result.correctCount} su {result.totalKnowledge}</strong>), ti suggeriamo di consolidare la tua formazione con il modulo indicato[cite: 1].
+              In base all'esperienza sul campo e alle risposte fornite (<strong style={{ color: BRAND_COLOR }}>{result.correctCount} su {result.totalKnowledge}</strong>), ti suggeriamo di consolidare la tua formazione con il modulo indicato.
             </p>
 
             {result.course && (
@@ -552,7 +558,7 @@ function AltourTacticsEngine({ onClose }: Props) {
                 <div className="flex items-start gap-3">
                   <svg className="w-6 h-6 shrink-0 mt-0.5" style={{ color: BRAND_COLOR }} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   <p className="text-[12px] text-stone-600 font-medium leading-relaxed">
-                    Il percorso per acquisire le competenze da <strong className="text-stone-900">Guida Ambientale Escursionistica</strong> prevede moduli specifici[cite: 1]. La segreteria ti contatterà per definire l'iter didattico.
+                    Il percorso per acquisire le competenze da <strong className="text-stone-900">Guida Ambientale Escursionistica</strong> prevede moduli specifici. La segreteria ti contatterà per definire l'iter didattico.
                   </p>
                 </div>
               </div>

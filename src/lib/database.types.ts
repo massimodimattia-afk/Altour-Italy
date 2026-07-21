@@ -38,68 +38,95 @@ export interface Database {
       escursioni: {
         Row: {
           id: string
-          titolo: string
-          descrizione: string
-          data: string
-          difficolta: 'Facile' | 'Medio' | 'Difficile'
-          prezzo: number
-          immagine_url: string | null
-          posti_disponibili: number
           created_at: string
+          data: string | null
+          titolo: string
+          descrizione: string | null
+          descrizione_estesa: string | null
+          prezzo: number
+          difficolta: string | null
+          posti_disponibili: number
+          immagine_url: string | null
+          gallery_urls: string[] | null
+          durata: string | null
+          attrezzatura_consigliata: string | null
+          attrezzatura: string | null
+          categoria: 'giornata' | 'multi_giorno' | null
         }
         Insert: {
           id?: string
-          titolo: string
-          descrizione: string
-          data: string
-          difficolta: 'Facile' | 'Medio' | 'Difficile'
-          prezzo?: number
-          immagine_url?: string | null
-          posti_disponibili?: number
           created_at?: string
+          data?: string | null
+          titolo: string
+          descrizione?: string | null
+          descrizione_estesa?: string | null
+          prezzo: number
+          difficolta?: string | null
+          posti_disponibili: number
+          immagine_url?: string | null
+          gallery_urls?: string[] | null
+          durata?: string | null
+          attrezzatura_consigliata?: string | null
+          attrezzatura?: string | null
+          categoria?: 'giornata' | 'multi_giorno' | null
         }
         Update: {
           id?: string
-          titolo?: string
-          descrizione?: string
-          data?: string
-          difficolta?: 'Facile' | 'Medio' | 'Difficile'
-          prezzo?: number
-          immagine_url?: string | null
-          posti_disponibili?: number
           created_at?: string
+          data?: string | null
+          titolo?: string
+          descrizione?: string | null
+          descrizione_estesa?: string | null
+          prezzo?: number
+          difficolta?: string | null
+          posti_disponibili?: number
+          immagine_url?: string | null
+          gallery_urls?: string[] | null
+          durata?: string | null
+          attrezzatura_consigliata?: string | null
+          attrezzatura?: string | null
+          categoria?: 'giornata' | 'multi_giorno' | null
         }
       }
       corsi: {
         Row: {
           id: string
-          titolo: string
-          descrizione: string
-          durata: string
-          prezzo: number
-          immagine_url: string | null
-          categoria: string
           created_at: string
+          titolo: string
+          descrizione: string | null
+          descrizione_estesa: string | null
+          prezzo: number
+          durata: string | null
+          immagine_url: string | null
+          gallery_urls: string[] | null
+          categoria: string | null
+          attrezzatura_consigliata: string | null
         }
         Insert: {
           id?: string
-          titolo: string
-          descrizione: string
-          durata: string
-          prezzo?: number
-          immagine_url?: string | null
-          categoria: string
           created_at?: string
+          titolo: string
+          descrizione?: string | null
+          descrizione_estesa?: string | null
+          prezzo: number
+          durata?: string | null
+          immagine_url?: string | null
+          gallery_urls?: string[] | null
+          categoria?: string | null
+          attrezzatura_consigliata?: string | null
         }
         Update: {
           id?: string
-          titolo?: string
-          descrizione?: string
-          durata?: string
-          prezzo?: number
-          immagine_url?: string | null
-          categoria?: string
           created_at?: string
+          titolo?: string
+          descrizione?: string | null
+          descrizione_estesa?: string | null
+          prezzo?: number
+          durata?: string | null
+          immagine_url?: string | null
+          gallery_urls?: string[] | null
+          categoria?: string | null
+          attrezzatura_consigliata?: string | null
         }
       }
       prenotazioni: {
@@ -161,6 +188,7 @@ export interface Database {
           livello_suggerito: string
           punteggio: number
           vuole_gae: boolean
+          risposte_dettagliate: Json | null
         }
         Insert: {
           id?: string
@@ -171,6 +199,7 @@ export interface Database {
           livello_suggerito: string
           punteggio: number
           vuole_gae?: boolean
+          risposte_dettagliate?: Json | null
         }
         Update: {
           id?: string
@@ -181,8 +210,18 @@ export interface Database {
           livello_suggerito?: string
           punteggio?: number
           vuole_gae?: boolean
+          risposte_dettagliate?: Json | null
         }
       }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
     }
   }
 }
