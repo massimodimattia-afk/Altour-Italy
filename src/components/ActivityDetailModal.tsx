@@ -198,12 +198,11 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             animate="visible"
             exit="hidden"
             onAnimationComplete={() => setIsAnimationDone(true)}
-            // FIX: h-auto avvolge il contenuto strettamente. max-h-[85vh] previene che esca dallo schermo.
-            className="relative bg-white w-full h-full md:h-auto md:max-h-[85vh] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden transform-gpu overscroll-none"
+            className="relative bg-white w-full h-full md:h-[80vh] md:min-h-[520px] md:max-h-[750px] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden transform-gpu overscroll-none"
             style={{ willChange: "transform, opacity", zIndex: 10001 }}
           >
             
-            {/* Azioni Alte MOBILE - Visibili solo < md, fluttuanti sull'immagine */}
+            {/* Azioni Alte MOBILE */}
             <div className="absolute top-4 right-4 z-50 flex md:hidden items-center gap-2">
               {activity.slug && (
                 <button
@@ -221,11 +220,11 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               </button>
             </div>
 
-            {/* --- COLONNA SINISTRA: IMMAGINI --- */}
-            <div className="relative w-full md:w-1/2 h-[35vh] md:h-auto shrink-0 bg-stone-100 overflow-hidden">
+            {/* --- COLONNA SINISTRA: IMMAGINE --- */}
+            <div className="relative w-full md:w-1/2 h-[35vh] md:h-full shrink-0 bg-stone-100 overflow-hidden">
               <img 
                 src={images[currentImageIndex] || IMG_FALLBACK} 
-                className="absolute inset-0 w-full h-full object-cover" 
+                className="w-full h-full object-cover" 
                 alt={activity.titolo} 
                 loading={images.length > 1 && currentImageIndex > 0 ? "lazy" : "eager"}
               />
@@ -243,9 +242,8 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               )}
             </div>
 
-            {/* --- COLONNA DESTRA: TESTO --- */}
-            {/* FIX: Rimosso flex-1 che forzava l'allungamento innaturale della colonna */}
-            <div className="w-full md:w-1/2 flex flex-col overflow-hidden bg-white">
+            {/* --- COLONNA DESTRA: CONTENUTO E TESTO --- */}
+            <div className="w-full md:w-1/2 flex flex-col h-full overflow-hidden bg-white min-h-0">
               
               {/* HEADER */}
               <div className="px-5 pt-5 pb-3 border-b border-stone-50 shrink-0">
@@ -290,10 +288,9 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               </div>
 
               {/* CORPO SCROLLABILE */}
-              {/* FIX: Aggiunto min-h-0 per permettere lo scroll corretto quando si tocca il max-h e rimosso flex-1 esplosivo */}
               <div 
                 ref={scrollableContentRef}
-                className="overflow-y-auto px-5 py-5 space-y-6 overscroll-contain bg-white min-h-0" 
+                className="flex-1 overflow-y-auto px-5 py-5 space-y-6 overscroll-contain bg-white min-h-0" 
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 <div className="prose prose-sm max-w-none prose-stone text-stone-600 font-medium prose-headings:font-black prose-headings:uppercase prose-headings:text-brand-stone prose-a:text-brand-sky prose-strong:text-brand-stone">
@@ -325,20 +322,22 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} isAnimationDone={isAnimationDone} />}
               </div>
 
-              {/* FOOTER */}
+              {/* FOOTER MOBILE-SAFE (Spazio vuoto a destra per il bottone Cookie) */}
               <div 
-                className="pl-14 pr-5 pt-4 pb-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-3 md:gap-4 bg-stone-50/95 backdrop-blur-md shrink-0 transform-gpu overscroll-none z-10"
+                className="pl-5 pr-16 py-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-4 bg-stone-50/95 backdrop-blur-md shrink-0 transform-gpu overscroll-none z-10"
                 style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
               >
                 <div className="shrink-0 min-w-[3.5rem]">
                   <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-1">Quota</span>
                   <span className="text-2xl font-black text-brand-stone leading-none">€{activity.prezzo || "—"}</span>
                 </div>
+                
                 <button
                   onClick={() => onBookingClick(activity.titolo)}
-                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 px-2 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95 transform-gpu min-h-[48px]"
+                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-3.5 px-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-md hover:shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-[0.98] transform-gpu min-h-[48px]"
                 >
-                  <span className="truncate">Prenota Ora</span> <TrendingUp size={15} className="shrink-0" />
+                  <span className="truncate">Prenota Ora</span> 
+                  <TrendingUp size={15} className="shrink-0" />
                 </button>
               </div>
 
