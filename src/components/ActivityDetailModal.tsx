@@ -86,6 +86,9 @@ export interface Activity {
   lunghezza_tour?: string | null;
   dislivello?: number | null;
   categoria?: string | null;
+  filosofia?: string | null;
+  attrezzatura?: string | null;
+  servizi?: string | null;
   _tipo?: 'escursione' | 'campo' | 'corso' | null;
   lat?: number | null;
   lng?: number | null;
@@ -128,7 +131,6 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
     return normalizeMarkdown(activity?.descrizione_estesa || activity?.descrizione);
   }, [activity]);
 
-  // Modificato per gestire sia mobile (Web Share API) che Desktop (Clipboard Fallback)
   const handleShare = useCallback(async () => {
     if (!activity?.slug) return;
     const shareUrl = `${window.location.origin}${window.location.pathname}#attivitapage/${activity.slug}`;
@@ -186,7 +188,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             exit="hidden"
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="absolute inset-0 bg-stone-900/70"
+            className="absolute inset-0 bg-stone-900/70 cursor-pointer"
             aria-hidden="true"
           />
 
@@ -196,8 +198,8 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             animate="visible"
             exit="hidden"
             onAnimationComplete={() => setIsAnimationDone(true)}
-            // FIX DIMENSIONI: Altezza bloccata a 600px su desktop (max 85vh per schermi piccoli). Larghezza controllata (max-w-5xl).
-            className="relative bg-white w-full h-full md:h-[600px] md:max-h-[85vh] md:max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden transform-gpu overscroll-none"
+            // FIX: h-auto avvolge il contenuto strettamente. max-h-[85vh] previene che esca dallo schermo.
+            className="relative bg-white w-full h-full md:h-auto md:max-h-[85vh] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden transform-gpu overscroll-none"
             style={{ willChange: "transform, opacity", zIndex: 10001 }}
           >
             
@@ -220,8 +222,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             </div>
 
             {/* --- COLONNA SINISTRA: IMMAGINI --- */}
-            {/* FIX: h-full fisso su desktop */}
-            <div className="relative w-full md:w-1/2 h-[35vh] md:h-full shrink-0 bg-stone-100 overflow-hidden">
+            <div className="relative w-full md:w-1/2 h-[35vh] md:h-auto shrink-0 bg-stone-100 overflow-hidden">
               <img 
                 src={images[currentImageIndex] || IMG_FALLBACK} 
                 className="absolute inset-0 w-full h-full object-cover" 
@@ -243,7 +244,8 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             </div>
 
             {/* --- COLONNA DESTRA: TESTO --- */}
-            <div className="w-full md:w-1/2 flex flex-col flex-1 md:h-full overflow-hidden bg-white">
+            {/* FIX: Rimosso flex-1 che forzava l'allungamento innaturale della colonna */}
+            <div className="w-full md:w-1/2 flex flex-col overflow-hidden bg-white">
               
               {/* HEADER */}
               <div className="px-5 pt-5 pb-3 border-b border-stone-50 shrink-0">
@@ -252,7 +254,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     {activity.titolo}
                   </h2>
                   
-                  {/* FIX: Azioni Alte DESKTOP - Nel flusso del documento, MAI sovrapposte */}
+                  {/* Azioni Alte DESKTOP */}
                   <div className="hidden md:flex items-center gap-2 shrink-0">
                     {activity.slug && (
                       <button
@@ -288,22 +290,35 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               </div>
 
               {/* CORPO SCROLLABILE */}
+              {/* FIX: Aggiunto min-h-0 per permettere lo scroll corretto quando si tocca il max-h e rimosso flex-1 esplosivo */}
               <div 
                 ref={scrollableContentRef}
-                className="flex-1 overflow-y-auto px-5 py-5 space-y-6 overscroll-contain bg-white" 
+                className="overflow-y-auto px-5 py-5 space-y-6 overscroll-contain bg-white min-h-0" 
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 <div className="prose prose-sm max-w-none prose-stone text-stone-600 font-medium prose-headings:font-black prose-headings:uppercase prose-headings:text-brand-stone prose-a:text-brand-sky prose-strong:text-brand-stone">
                   <ReactMarkdown>{normalizedDesc}</ReactMarkdown>
                 </div>
                 
-                {activity.descrizione && (
+                {activity.attrezzatura && (
                   <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 transform-gpu">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
                       <Backpack size={14} className="text-brand-sky" />
                       {activity._tipo === 'corso' ? "Argomenti trattati" : "Equipaggiamento consigliato"}
                     </h4>
-                    <div className="text-xs text-stone-600 leading-relaxed font-medium">{formatEquipmentList(activity.descrizione)}</div>
+                    <div className="text-xs text-stone-600 leading-relaxed font-medium">{formatEquipmentList(activity.attrezzatura)}</div>
+                  </div>
+                )}
+
+                {isCampo && activity.servizi && (
+                  <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 transform-gpu">
+                    <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
+                      <Backpack size={14} className="text-brand-sky" />
+                      Attività in programma
+                    </h4>
+                    <div className="text-xs text-stone-600 leading-relaxed font-medium">
+                      {formatEquipmentList(activity.servizi)}
+                    </div>
                   </div>
                 )}
                 
@@ -311,16 +326,19 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               </div>
 
               {/* FOOTER */}
-              <div className="px-5 py-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-4 bg-stone-50/70 shrink-0 transform-gpu overscroll-none">
-                <div className="shrink-0">
+              <div 
+                className="pl-14 pr-5 pt-4 pb-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-3 md:gap-4 bg-stone-50/95 backdrop-blur-md shrink-0 transform-gpu overscroll-none z-10"
+                style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+              >
+                <div className="shrink-0 min-w-[3.5rem]">
                   <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-1">Quota</span>
                   <span className="text-2xl font-black text-brand-stone leading-none">€{activity.prezzo || "—"}</span>
                 </div>
                 <button
                   onClick={() => onBookingClick(activity.titolo)}
-                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95 transform-gpu min-h-[48px]"
+                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-4 px-2 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95 transform-gpu min-h-[48px]"
                 >
-                  Prenota Ora <TrendingUp size={15} />
+                  <span className="truncate">Prenota Ora</span> <TrendingUp size={15} className="shrink-0" />
                 </button>
               </div>
 
