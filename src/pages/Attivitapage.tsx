@@ -44,10 +44,6 @@ type FilterKey = "mezza_giornata" | "intera_giornata" | "tour" | "campi";
 interface AttivitaPageProps {
   onNavigate: (page: string) => void;
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
-}
-interface AttivitaPageProps {
-  onNavigate: (page: string) => void;
-  onBookingClick: (title: string, mode?: "info" | "prenota") => void;
   initialSlug?: string | null;
 }
 
@@ -173,8 +169,6 @@ const ActivityCard = forwardRef<HTMLDivElement, {
   );
 });
 
-
-
 const SkeletonCard = () => (
   <div className="bg-white rounded-2xl overflow-hidden border border-stone-100 flex flex-col">
     <div className="aspect-[3/2] bg-stone-100 animate-pulse" />
@@ -244,50 +238,49 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
     setDrawerOpen(false);
   };
 
-  // DOPO (corretto)
-useEffect(() => {
-  async function load() {
-    const [{ data: escData }, { data: campiData }] = await Promise.all([
-      supabase.from("escursioni").select("*").eq("is_active", true).order("data", { ascending: true }),
-      supabase.from("campi").select("*").order("created_at", { ascending: false }),
-    ]);
-    if (escData) setEscursioni((escData as any[]).map(e => ({ ...e, _tipo: "escursione" as const })));
-    if (campiData) setCampi((campiData as any[]).map(row => ({
-      id: row.id, created_at: row.created_at, titolo: row.titolo,
-      descrizione: row.descrizione ?? null, descrizione_estesa: row.descrizione_estesa ?? null,
-      immagine_url: row.immagine_url ?? null,
-      servizi: row.servizi ?? null,
-      slug: row.slug, prezzo: row.prezzo ?? null, duration: row.durata ?? null,
-      difficolta: row.difficolta ?? null, lunghezza: row.lunghezza ?? null,
-      filosofia: row.filosofia ?? null, lat: row.lat ?? null, lng: row.lng ?? null,
-      min_partecipanti: row.min_partecipanti ?? null,
-      _tipo: "campo" as const,
-    })));
-    setLoading(false);
-  }
-  load();
-}, []);
-
-useEffect(() => {
-  if (loading || !initialSlug) return;
-  const found = allActivities.find(a => (a as any).slug === initialSlug);
-  if (found) openDetails(found, false);
-}, [loading, initialSlug, allActivities]);
-
-useEffect(() => {
-  const handleHashChange = () => {
-    const [, slug] = window.location.hash.replace('#', '').split('/');
-    if (!slug) {
-      setIsDetailOpen(false);
-      setTimeout(() => setSelectedActivity(null), 300);
-    } else {
-      const found = allActivities.find(a => (a as any).slug === slug);
-      if (found) openDetails(found, false);
+  useEffect(() => {
+    async function load() {
+      const [{ data: escData }, { data: campiData }] = await Promise.all([
+        supabase.from("escursioni").select("*").eq("is_active", true).order("data", { ascending: true }),
+        supabase.from("campi").select("*").order("created_at", { ascending: false }),
+      ]);
+      if (escData) setEscursioni((escData as any[]).map(e => ({ ...e, _tipo: "escursione" as const })));
+      if (campiData) setCampi((campiData as any[]).map(row => ({
+        id: row.id, created_at: row.created_at, titolo: row.titolo,
+        descrizione: row.descrizione ?? null, descrizione_estesa: row.descrizione_estesa ?? null,
+        immagine_url: row.immagine_url ?? null,
+        servizi: row.servizi ?? null,
+        slug: row.slug, prezzo: row.prezzo ?? null, duration: row.durata ?? null,
+        difficolta: row.difficolta ?? null, lunghezza: row.lunghezza ?? null,
+        filosofia: row.filosofia ?? null, lat: row.lat ?? null, lng: row.lng ?? null,
+        min_partecipanti: row.min_partecipanti ?? null,
+        _tipo: "campo" as const,
+      })));
+      setLoading(false);
     }
-  };
-  window.addEventListener('hashchange', handleHashChange);
-  return () => window.removeEventListener('hashchange', handleHashChange);
-}, [allActivities]);
+    load();
+  }, []);
+
+  useEffect(() => {
+    if (loading || !initialSlug) return;
+    const found = allActivities.find(a => (a as any).slug === initialSlug);
+    if (found) openDetails(found, false);
+  }, [loading, initialSlug, allActivities]);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const [, slug] = window.location.hash.replace('#', '').split('/');
+      if (!slug) {
+        setIsDetailOpen(false);
+        setTimeout(() => setSelectedActivity(null), 300);
+      } else {
+        const found = allActivities.find(a => (a as any).slug === slug);
+        if (found) openDetails(found, false);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [allActivities]);
 
   const filtered: Activity[] = useMemo(() => {
     let base = allActivities;
@@ -318,23 +311,33 @@ useEffect(() => {
     { key: "mezza_giornata" as const, label: "Mezza giornata", emoji: "🌤", count: escursioni.filter(e => e.categoria?.toLowerCase().includes("mezza")).length,          color: "#5aaadd" },
     { key: "intera_giornata" as const,label: "Intera giornata", emoji: "☀️", count: escursioni.filter(e => e.categoria?.toLowerCase() === "giornata" || e.categoria?.toLowerCase().includes("intera")).length, color: "#81ccb0" },
     { key: "tour" as const,           label: "Tour",           emoji: "🏔", count: escursioni.filter(e => e.categoria?.toLowerCase() === "tour").length,                 color: "#f4d98c", textColor: "#7a5e00" },
-    { key: "campi" as const,          label: "Campi Estivi",   emoji: "⛺️", count: campi.length,                                                                       color: "#9f8270" },
+    { key: "campi" as const,          label: "Campi Estivi",   emoji: "⛺️", count: campi.length,                                                                        color: "#9f8270" },
   ];
 
   const openDetails = (a: Activity, updateHash = true) => {
-  const detail = a._tipo === "campo" ? campoToDetail(a as Campo) : a;
-  setSelectedActivity(detail);
-  setIsDetailOpen(true);
-  if (updateHash && (detail as any).slug) {
-    window.history.pushState(null, "", `#attivitapage/${(detail as any).slug}`);
-  }
-};
+    const detail = a._tipo === "campo" ? campoToDetail(a as Campo) : a;
+    setSelectedActivity(detail);
+    setIsDetailOpen(true);
+    
+    if (updateHash && (detail as any).slug) {
+      window.history.replaceState(
+        null, 
+        "", 
+        window.location.pathname + window.location.search + `#attivitapage/${(detail as any).slug}`
+      );
+    }
+  };
 
-const closeDetails = () => {
-  setIsDetailOpen(false);
-  setTimeout(() => setSelectedActivity(null), 300);
-  window.history.pushState(null, "", "#attivitapage");
-};
+  const closeDetails = () => {
+    setIsDetailOpen(false);
+    setTimeout(() => setSelectedActivity(null), 300);
+    
+    window.history.replaceState(
+      null, 
+      "", 
+      window.location.pathname + window.location.search + "#attivitapage"
+    );
+  };
 
   const toggleFilter = (key: FilterKey) => {
     setActiveFilter(prev => prev === key ? null : key);
@@ -401,7 +404,7 @@ const closeDetails = () => {
               className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-base md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
             />
             
-            {/* Icona di ricerca (Grigia da vuota, diventa azzurra e si ingrandisce al click) */}
+            {/* Icona di ricerca */}
             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-brand-sky">
               <Search size={20} strokeWidth={3} />
             </div>
@@ -425,7 +428,7 @@ const closeDetails = () => {
           </form>
         </div>
 
-        {/* ── Banner quiz zaino (Nasconde su mobile, gestito in-flow sotto) ── */}
+        {/* ── Banner quiz zaino ── */}
         <motion.div
           initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -517,7 +520,7 @@ const closeDetails = () => {
         </div>
       </div>
 
-      {/* ── Filtri sticky desktop (Inibito l'overflow-x per stabilità strutturale) ── */}
+      {/* ── Filtri sticky desktop ── */}
       <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed] border-b border-stone-200/60 py-3 overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 flex items-center gap-2">
           <button
@@ -572,7 +575,7 @@ const closeDetails = () => {
           </motion.div>
         ) : (
           <>
-            {/* ── PULSANTE MOBILE IN-FLOW (Sotto la barra di ricerca) ── */}
+            {/* ── PULSANTE MOBILE IN-FLOW ── */}
             <div className="md:hidden mb-6 mt-1">
               <button
                 onClick={handleInizia}
@@ -651,9 +654,7 @@ const closeDetails = () => {
 
       </div>
 
-      {/* 👇 DA QUI IN GIÙ È LA PARTE CHE MANCAVA 👇 */}
-      
-      {/* ── Drawer mobile in PORTAL: bypassa qualsiasi containing-block da transform di antenati ── */}
+      {/* ── Drawer mobile in PORTAL ── */}
       {mounted && createPortal(
         <div className="md:hidden">
           <AnimatePresence>
@@ -724,14 +725,12 @@ const closeDetails = () => {
         document.body
       )}
 
-      {/* ☝️ FINO A QUI ☝️ */}
-
       <ActivityDetailModal
-  activity={selectedActivity}
-  isOpen={isDetailOpen}
-  onClose={closeDetails}
-  onBookingClick={(title, mode) => onBookingClick(title, mode)}
-/>
+        activity={selectedActivity}
+        isOpen={isDetailOpen}
+        onClose={closeDetails}
+        onBookingClick={(title: string) => onBookingClick(title, "prenota")}
+      />
     </div>
   );
 }
