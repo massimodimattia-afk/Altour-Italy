@@ -77,7 +77,10 @@ export interface Activity {
   titolo: string;
   descrizione: string | null;
   descrizione_estesa?: string | null;
-  prezzo: number;
+  prezzo?: number | string | null;
+  prezzo_bundle?: number | string | null;
+  prezzo_teorico?: number | string | null;
+  selectedOption?: "bundle" | "teorico";
   immagine_url: string | null;
   gallery_urls?: string[] | null;
   difficolta?: string | null;
@@ -117,7 +120,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
       setIsAnimationDone(false);
       scrollableContentRef.current?.scrollTo(0, 0);
     }
-  }, [activity?.id]);
+  }, [activity]);
 
   const images = useMemo(() => {
     return activity ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[] : [];
@@ -126,6 +129,28 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
   const hasMap = Boolean(activity?.lat && activity?.lng);
   const isTour = activity?.categoria?.toLowerCase() === "tour";
   const isCampo = activity?._tipo === "campo";
+
+  // Calcolo dinamico del prezzo basato sull'opzione selezionata nella card
+  const currentPrice = useMemo(() => {
+    if (!activity) return null;
+    if (activity._tipo === 'corso' && activity.prezzo_teorico != null) {
+      return activity.selectedOption === "teorico"
+        ? Number(activity.prezzo_teorico)
+        : Number(activity.prezzo_bundle);
+    }
+    return activity.prezzo;
+  }, [activity]);
+
+  // Etichetta prenotazione dinamica
+  const bookingLabel = useMemo(() => {
+    if (!activity) return "";
+    if (activity._tipo === 'corso' && activity.prezzo_teorico != null) {
+      return activity.selectedOption === "teorico"
+        ? `${activity.titolo} — Modulo Teorico`
+        : `${activity.titolo} — Pacchetto Completo`;
+    }
+    return activity.titolo;
+  }, [activity]);
 
   const normalizedDesc = useMemo(() => {
     return normalizeMarkdown(activity?.descrizione_estesa || activity?.descrizione);
@@ -322,21 +347,25 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} isAnimationDone={isAnimationDone} />}
               </div>
 
-              {/* FOOTER MOBILE-SAFE (Spazio vuoto a destra per il bottone Cookie) */}
+              {/* FOOTER MOBILE-SAFE (Senza mini-selettore) */}
               <div 
                 className="pl-5 pr-16 py-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-4 bg-stone-50/95 backdrop-blur-md shrink-0 transform-gpu overscroll-none z-10"
                 style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
               >
-                <div className="shrink-0 min-w-[3.5rem]">
-                  <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-1">Quota</span>
-                  <span className="text-2xl font-black text-brand-stone leading-none">€{activity.prezzo || "—"}</span>
+                <div className="shrink-0 flex flex-col justify-center min-w-[3.5rem]">
+                  <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-1">
+                    Quota
+                  </span>
+                  <span className="text-2xl font-black text-brand-stone leading-none">
+                    €{currentPrice || "—"}
+                  </span>
                 </div>
                 
                 <button
-                  onClick={() => onBookingClick(activity.titolo)}
+                  onClick={() => onBookingClick(bookingLabel)}
                   className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-3.5 px-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-md hover:shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-[0.98] transform-gpu min-h-[48px]"
                 >
-                  <span className="truncate">Prenota Ora</span> 
+                  <span className="truncate">Richiedi Info</span> 
                   <TrendingUp size={15} className="shrink-0" />
                 </button>
               </div>
