@@ -41,12 +41,16 @@ function App() {
   const [selectedTitle, setSelectedTitle] = useState('');
   const [bookingMode, setBookingMode] = useState<'info' | 'prenota'>('info');
 
-  useEffect(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash && VALID_PAGES.includes(hash as PageType)) {
-      setCurrentPage(hash as PageType);
-    }
-  }, []);
+  const [initialSlug, setInitialSlug] = useState<string | null>(null);
+
+useEffect(() => {
+  const raw = window.location.hash.replace('#', '');
+  const [hash, slug] = raw.split('/');
+  if (hash && VALID_PAGES.includes(hash as PageType)) {
+    setCurrentPage(hash as PageType);
+    if (slug) setInitialSlug(slug);
+  }
+}, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -80,7 +84,7 @@ function App() {
     switch (currentPage) {
       case 'home':          return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'corsi':         return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'attivitapage':  return <Attivitapage onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'attivitapage':  return <Attivitapage onNavigate={handleNavigate} onBookingClick={openBooking} initialSlug={initialSlug} />;
       case 'tessera':       return <Tessera />;
       case 'legal-privacy': return <Legal initialTab="privacy" />;
       case 'legal-cookie':  return <Legal initialTab="cookie" />;

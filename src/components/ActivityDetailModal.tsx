@@ -1,7 +1,7 @@
 // src/components/ActivityDetailModal.tsx
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, TrendingUp,
+  X, TrendingUp, Share2,
   Briefcase as Backpack, Mountain, MapPin, ArrowUp, ExternalLink, Users, Clock
 } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -152,21 +152,52 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
 
           {/* Container Principale Modale */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            onAnimationComplete={() => setIsAnimationDone(true)} // Sblocca i componenti pesanti
-            style={{ willChange: "transform, opacity" }} // Suggerimento vitale per la GPU
-            className="relative bg-white w-full max-w-5xl flex flex-col md:flex-row overflow-hidden rounded-[2rem] shadow-2xl max-h-[90vh] z-[10001] transform-gpu"
-          >
+  initial={{ opacity: 0, scale: 0.95, y: 15 }}
+  animate={{ opacity: 1, scale: 1, y: 0 }}
+  exit={{ opacity: 0, scale: 0.95, y: 15 }}
+  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+  onAnimationComplete={() => setIsAnimationDone(true)}
+  style={{
+    willChange: "transform, opacity",
+    maxHeight: "90vh",
+    maxWidth: "64rem",
+    zIndex: 10001,
+    borderRadius: "2rem",
+    overflow: "hidden",
+  }}
+  className="relative bg-white w-full flex flex-col md:flex-row shadow-2xl transform-gpu"
+>
+
+            {/* Bottone Condividi — subito prima del bottone Chiudi esistente */}
+<div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+  {activity.slug && (
+    <button
+      onClick={async () => {
+        const shareUrl = `${window.location.origin}${window.location.pathname}#attivitapage/${activity.slug}`;
+        if (navigator.share) {
+          try { await navigator.share({ title: activity.titolo, url: shareUrl }); } catch {}
+        } else {
+          await navigator.clipboard.writeText(shareUrl);
+        }
+      }}
+      className="p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg active:scale-90 transition-transform"
+      title="Condividi"
+    >
+      <Share2 size={18} />
+    </button>
+  )}
+  <button onClick={onClose} className="p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg active:scale-90 transition-transform">
+    <X size={20} />
+  </button>
+</div>
+)
             {/* Bottone Chiudi */}
             <button onClick={onClose} className="absolute top-4 right-4 z-50 p-2 bg-white/90 backdrop-blur-md rounded-full shadow-lg active:scale-90 transition-transform">
               <X size={20} />
             </button>
 
             {/* Colonna Immagine */}
-            <div className="w-full md:w-1/2 h-64 md:h-auto relative shrink-0">
+            <div className="w-full md:w-1/2 h-64 md:h-auto relative shrink-0" style={{ maxHeight: "90vh" }}>
               <img src={images[currentImageIndex] || IMG_FALLBACK} className="absolute inset-0 w-full h-full object-cover" alt={activity.titolo} />
               {images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">

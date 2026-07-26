@@ -45,6 +45,11 @@ interface AttivitaPageProps {
   onNavigate: (page: string) => void;
   onBookingClick: (title: string, mode?: "info" | "prenota") => void;
 }
+interface AttivitaPageProps {
+  onNavigate: (page: string) => void;
+  onBookingClick: (title: string, mode?: "info" | "prenota") => void;
+  initialSlug?: string | null;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const IMG_FALLBACK = "/altour-logo.png";
@@ -186,7 +191,7 @@ const SkeletonCard = () => (
 );
 
 // ─── Component ────────────────────────────────────────────────────────────────
-export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
+export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
   const [campi, setCampi]           = useState<Campo[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -198,6 +203,14 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
   const [isMobile, setIsMobile]         = useState(false);
   const [mounted, setMounted]           = useState(false);
   const [searchQuery, setSearchQuery]   = useState("");
+
+  const allActivities: Activity[] = useMemo(() => {
+    return [...escursioni, ...campi].sort((a, b) => {
+      const da = (a as any).data ? new Date((a as any).data).getTime() : Infinity;
+      const db = (b as any).data ? new Date((b as any).data).getTime() : Infinity;
+      return da - db;
+    });
+  }, [escursioni, campi]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -231,36 +244,50 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     setDrawerOpen(false);
   };
 
-  useEffect(() => {
-    async function load() {
-      const [{ data: escData }, { data: campiData }] = await Promise.all([
-        supabase.from("escursioni").select("*").eq("is_active", true).order("data", { ascending: true }),
-        supabase.from("campi").select("*").order("created_at", { ascending: false }),
-      ]);
-      if (escData) setEscursioni((escData as any[]).map(e => ({ ...e, _tipo: "escursione" as const })));
-      if (campiData) setCampi((campiData as any[]).map(row => ({
-        id: row.id, created_at: row.created_at, titolo: row.titolo,
-        descrizione: row.descrizione ?? null, descrizione_estesa: row.descrizione_estesa ?? null,
-        immagine_url: row.immagine_url ?? null,
-        servizi: row.servizi ?? null,
-        slug: row.slug, prezzo: row.prezzo ?? null, duration: row.durata ?? null,
-        difficolta: row.difficolta ?? null, lunghezza: row.lunghezza ?? null,
-        filosofia: row.filosofia ?? null, lat: row.lat ?? null, lng: row.lng ?? null,
-        min_partecipanti: row.min_partecipanti ?? null,
-        _tipo: "campo" as const,
-      })));
-      setLoading(false);
-    }
-    load();
-  }, []);
+  // DOPO (corretto)
+useEffect(() => {
+  async function load() {
+    const [{ data: escData }, { data: campiData }] = await Promise.all([
+      supabase.from("escursioni").select("*").eq("is_active", true).order("data", { ascending: true }),
+      supabase.from("campi").select("*").order("created_at", { ascending: false }),
+    ]);
+    if (escData) setEscursioni((escData as any[]).map(e => ({ ...e, _tipo: "escursione" as const })));
+    if (campiData) setCampi((campiData as any[]).map(row => ({
+      id: row.id, created_at: row.created_at, titolo: row.titolo,
+      descrizione: row.descrizione ?? null, descrizione_estesa: row.descrizione_estesa ?? null,
+      immagine_url: row.immagine_url ?? null,
+      servizi: row.servizi ?? null,
+      slug: row.slug, prezzo: row.prezzo ?? null, duration: row.durata ?? null,
+      difficolta: row.difficolta ?? null, lunghezza: row.lunghezza ?? null,
+      filosofia: row.filosofia ?? null, lat: row.lat ?? null, lng: row.lng ?? null,
+      min_partecipanti: row.min_partecipanti ?? null,
+      _tipo: "campo" as const,
+    })));
+    setLoading(false);
+  }
+  load();
+}, []);
 
-  const allActivities: Activity[] = useMemo(() => {
-    return [...escursioni, ...campi].sort((a, b) => {
-      const da = (a as any).data ? new Date((a as any).data).getTime() : Infinity;
-      const db = (b as any).data ? new Date((b as any).data).getTime() : Infinity;
-      return da - db;
-    });
-  }, [escursioni, campi]);
+useEffect(() => {
+  if (loading || !initialSlug) return;
+  const found = allActivities.find(a => (a as any).slug === initialSlug);
+  if (found) openDetails(found, false);
+}, [loading, initialSlug, allActivities]);
+
+useEffect(() => {
+  const handleHashChange = () => {
+    const [, slug] = window.location.hash.replace('#', '').split('/');
+    if (!slug) {
+      setIsDetailOpen(false);
+      setTimeout(() => setSelectedActivity(null), 300);
+    } else {
+      const found = allActivities.find(a => (a as any).slug === slug);
+      if (found) openDetails(found, false);
+    }
+  };
+  window.addEventListener('hashchange', handleHashChange);
+  return () => window.removeEventListener('hashchange', handleHashChange);
+}, [allActivities]);
 
   const filtered: Activity[] = useMemo(() => {
     let base = allActivities;
@@ -294,10 +321,20 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
     { key: "campi" as const,          label: "Campi Estivi",   emoji: "⛺️", count: campi.length,                                                                       color: "#9f8270" },
   ];
 
-  const openDetails = (a: Activity) => {
-    setSelectedActivity(a._tipo === "campo" ? campoToDetail(a as Campo) : a);
-    setIsDetailOpen(true);
-  };
+  const openDetails = (a: Activity, updateHash = true) => {
+  const detail = a._tipo === "campo" ? campoToDetail(a as Campo) : a;
+  setSelectedActivity(detail);
+  setIsDetailOpen(true);
+  if (updateHash && (detail as any).slug) {
+    window.history.pushState(null, "", `#attivitapage/${(detail as any).slug}`);
+  }
+};
+
+const closeDetails = () => {
+  setIsDetailOpen(false);
+  setTimeout(() => setSelectedActivity(null), 300);
+  window.history.pushState(null, "", "#attivitapage");
+};
 
   const toggleFilter = (key: FilterKey) => {
     setActiveFilter(prev => prev === key ? null : key);
@@ -690,11 +727,11 @@ export default function AttivitaPage({ onBookingClick }: AttivitaPageProps) {
       {/* ☝️ FINO A QUI ☝️ */}
 
       <ActivityDetailModal
-        activity={selectedActivity}
-        isOpen={isDetailOpen}
-        onClose={() => { setIsDetailOpen(false); setTimeout(() => setSelectedActivity(null), 300); }}
-        onBookingClick={(title, mode) => onBookingClick(title, mode)}
-      />
+  activity={selectedActivity}
+  isOpen={isDetailOpen}
+  onClose={closeDetails}
+  onBookingClick={(title, mode) => onBookingClick(title, mode)}
+/>
     </div>
   );
 }
