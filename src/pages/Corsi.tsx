@@ -1,11 +1,10 @@
+// src/pages/CorsiPage.tsx
 import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import ReactMarkdown from "react-markdown";
 import { ArrowRight, Sparkles, BookOpen, ShieldCheck } from "lucide-react";
-// Import allineato con il nome del componente esportato
-// Cambia AltourTacticsModal con AltourTactics
 import { AltourTactics } from '../components/AltourTactics';
 
 type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
@@ -13,6 +12,7 @@ type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
   prezzo_bundle?: number | null;
   posizione?: number | null;
   difficolta?: string | null;
+  slug?: string | null;
 };
 
 interface CorsiPageProps {
@@ -118,8 +118,8 @@ function PricingBlock({
       <>
         <div className="flex gap-3">
           <button
-            onClick={() => onBook(corso.titolo, "info")}
-            className="flex-1 min-h-[48px] bg-white border-2 border-stone-900 text-stone-900 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest hover:bg-stone-50 transition-all active:scale-95"
+            onClick={() => onOpenDetails(corso)}
+            className="flex-1 min-h-[48px] bg-white border-2 border-stone-200 text-stone-600 hover:border-stone-400 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all active:scale-95"
           >
             Dettagli
           </button>
@@ -192,7 +192,7 @@ function PricingBlock({
 
       <button
         onClick={() => onBook(bookLabel, "info")}
-        className="w-full bg-brand-sky hover:bg-brand-stone text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95"
+        className="w-full bg-brand-sky hover:bg-brand-stone text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95 min-h-[44px]"
       >
         Richiedi Info
         <ArrowRight size={11} />
@@ -244,8 +244,6 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  
-  // STATO LOCALE PER GESTIRE L'APERTURA DEL TEST TACTICS
   const [isTacticsOpen, setIsTacticsOpen] = useState(false);
 
   const coursesGridRef = useRef<HTMLDivElement>(null);
@@ -271,15 +269,48 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
     fetchCorsi();
   }, []);
 
-  const openDetails = (corso: Corso) => {
-    setSelectedActivity({ ...corso });
+  const openDetails = (corso: Corso, updateHash = true) => {
+    setSelectedActivity({ ...corso, _tipo: "corso" });
     setIsDetailOpen(true);
+
+    if (updateHash && corso.slug) {
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search + `#attivitapage/${corso.slug}`
+      );
+    }
   };
 
   const handleCloseDetail = () => {
     setIsDetailOpen(false);
     setTimeout(() => setSelectedActivity(null), 300);
+
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search + "#attivitapage"
+    );
   };
+
+  useEffect(() => {
+    if (loading || corsi.length === 0) return;
+
+    const handleHashChange = () => {
+      const [, slug] = window.location.hash.replace('#', '').split('/');
+      if (!slug) {
+        setIsDetailOpen(false);
+        setTimeout(() => setSelectedActivity(null), 300);
+      } else {
+        const found = corsi.find(c => c.slug === slug);
+        if (found) openDetails(found, false);
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [corsi, loading]);
 
   if (loading)
     return (
@@ -304,24 +335,24 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
       </div>
 
       {/* SEZIONE COMPONENTE: PULSANTE / BANNER DI INIZIO TEST TACTICS */}
-<div className="mb-12 p-6 rounded-[1.5rem] md:rounded-[2rem] bg-white border border-stone-200 text-stone-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl shadow-stone-200/50">
-  <div className="space-y-1.5">
-    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-sky/10 border border-brand-sky/20 text-brand-sky text-[9px] font-black uppercase tracking-wider">
-      <ShieldCheck size={11} />
-      <span>Valutazione Competenze</span>
-    </div>
-    <h2 className="text-xl font-black uppercase tracking-tight text-stone-900">Test d'Ingresso Accademia</h2>
-    <p className="text-stone-500 text-xs font-medium max-w-xl leading-relaxed">
-      Rispondi al nostro test e scopri subito qual è il percorso didattico più adatto a te.
-    </p>
-  </div>
-  <button
-    onClick={() => setIsTacticsOpen(true)}
-    className="w-full md:w-auto bg-brand-sky hover:bg-stone-900 hover:text-white text-white px-6 py-3.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shrink-0 active:scale-95 shadow-md shadow-brand-sky/10"
-  >
-    Inizia il Test Rapido
-  </button>
-</div>
+      <div className="mb-12 p-6 rounded-[1.5rem] md:rounded-[2rem] bg-white border border-stone-200 text-stone-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl shadow-stone-200/50">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-sky/10 border border-brand-sky/20 text-brand-sky text-[9px] font-black uppercase tracking-wider">
+            <ShieldCheck size={11} />
+            <span>Valutazione Competenze</span>
+          </div>
+          <h2 className="text-xl font-black uppercase tracking-tight text-stone-900">Test d'Ingresso Accademia</h2>
+          <p className="text-stone-500 text-xs font-medium max-w-xl leading-relaxed">
+            Rispondi al nostro test e scopri subito qual è il percorso didattico più adatto a te.
+          </p>
+        </div>
+        <button
+          onClick={() => setIsTacticsOpen(true)}
+          className="w-full md:w-auto bg-brand-sky hover:bg-stone-900 hover:text-white text-white px-6 py-3.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shrink-0 active:scale-95 shadow-md shadow-brand-sky/10"
+        >
+          Inizia il Test Rapido
+        </button>
+      </div>
 
       {error && (
         <div className="mb-8 rounded-2xl border border-rose-100 bg-rose-50 px-6 py-4 text-rose-600 text-sm font-bold">
@@ -394,10 +425,9 @@ export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={handleCloseDetail}
-        onBookingClick={onBookingClick}
+        onBookingClick={(title: string) => onBookingClick(title, "prenota")}
       />
 
-      {/* RENDER DELLA MODALE TACTICS GESTITO CON IL PORTAL ESTERNO */}
       {isTacticsOpen && (
         <AltourTactics onClose={() => setIsTacticsOpen(false)} />
       )}
