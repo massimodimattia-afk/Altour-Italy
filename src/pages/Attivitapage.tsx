@@ -1,5 +1,5 @@
 // src/pages/AttivitaPage.tsx
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, ArrowRight, SlidersHorizontal, Search } from "lucide-react";
@@ -114,16 +114,14 @@ function campoToDetail(campo: Campo) {
 }
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
-function ActivityCard({
-  activity, idx, onDetails, onBook,
-}: {
+const ActivityCard = forwardRef<HTMLDivElement, {
   activity: Activity; idx: number;
   onDetails: () => void; onBook: (mode?: "info" | "prenota") => void;
-}) {
+}>(function ActivityCard({ activity, idx, onDetails, onBook }, ref) {
   const isEsc = activity._tipo === "escursione";
   const esc   = isEsc ? activity as Escursione : null;
   return (
-    <motion.div layout
+    <motion.div ref={ref} layout
       initial={{ opacity: 0, y: isIOS ? 0 : 12 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
@@ -173,7 +171,9 @@ function ActivityCard({
       </div>
     </motion.div>
   );
-}
+});
+
+
 
 const SkeletonCard = () => (
   <div className="bg-white rounded-2xl overflow-hidden border border-stone-100 flex flex-col">
