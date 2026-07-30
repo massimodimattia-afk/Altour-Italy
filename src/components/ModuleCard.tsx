@@ -1,11 +1,13 @@
 import { forwardRef } from "react";
 import { motion } from "framer-motion";
-import { Clock, BookOpen } from "lucide-react";
+import { Clock, Layers } from "lucide-react";
 import { CorsoItem } from "../pages/Corsi";
 import { isIOS } from "./Section";
 
-interface CourseCardProps {
-  corso: CorsoItem;
+interface ModuleCardProps {
+  modulo: CorsoItem;
+  parentTitle?: string;
+  parentCategory?: string;
   idx?: number;
   onBookingClick: (title: string, mode?: 'info' | 'prenota') => void;
   openDetails: (item: CorsoItem) => void;
@@ -40,9 +42,10 @@ function formatMarkdown(text: string | null | undefined): string {
     .replace(/_(.*?)_/g, "<em>$1</em>");
 }
 
-export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
-  function CourseCard({ corso, idx = 0, onBookingClick, openDetails }, ref) {
-    const categoria = corso.categoria || "Formazione";
+export const ModuleCard = forwardRef<HTMLDivElement, ModuleCardProps>(
+  function ModuleCard({ modulo, parentTitle, parentCategory, idx = 0, onBookingClick, openDetails }, ref) {
+    // Legge la categoria dal modulo o dal corso padre (default: Formazione)
+    const categoria = modulo.categoria || parentCategory || "Formazione";
     const categoryBg = CATEGORIA_COLORS[categoria] || "#002f59";
 
     return (
@@ -59,8 +62,8 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
         {/* Header Immagine con badge Categoria (es. FORMAZIONE) */}
         <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
           <img
-            src={corso.immagine_url || IMG_FALLBACK}
-            alt={corso.titolo}
+            src={modulo.immagine_url || IMG_FALLBACK}
+            alt={modulo.titolo}
             className="absolute inset-0 w-full h-full object-cover"
             loading={idx < 4 ? "eager" : "lazy"}
             decoding="async"
@@ -83,42 +86,47 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
         {/* Corpo Card */}
         <div className="p-4 md:p-5 flex flex-col flex-grow">
           <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-            {corso.durata && (
+            {parentTitle && (
+              <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md">
+                <Layers size={10} /> Corso: {parentTitle}
+              </span>
+            )}
+            {modulo.durata && (
               <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
-                <Clock size={10} /> {corso.durata}
+                <Clock size={10} /> {modulo.durata}
               </span>
             )}
           </div>
 
           <h3 className="text-sm md:text-base font-black text-brand-stone uppercase tracking-tight leading-snug line-clamp-2 mb-1.5">
-            {corso.titolo}
+            {modulo.titolo}
           </h3>
 
           <p
             className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-4 flex-grow font-medium"
-            dangerouslySetInnerHTML={{ __html: formatMarkdown(corso.descrizione) }}
+            dangerouslySetInnerHTML={{ __html: formatMarkdown(modulo.descrizione) }}
           />
 
           {/* Prezzo e Pulsanti */}
           <div className="pt-3 border-t border-stone-100 flex flex-col gap-3 mt-auto">
-            {corso.prezzo !== undefined && corso.prezzo !== null && corso.prezzo > 0 && (
+            {modulo.prezzo !== undefined && modulo.prezzo !== null && modulo.prezzo > 0 && (
               <div className="flex items-baseline justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Quota Corso</span>
-                <span className="text-base font-black text-brand-stone">€{corso.prezzo}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Quota Modulo</span>
+                <span className="text-base font-black text-brand-stone">€{modulo.prezzo}</span>
               </div>
             )}
 
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => openDetails({ ...corso, categoria })}
-                className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95 flex items-center justify-center gap-1"
+                onClick={() => openDetails({ ...modulo, categoria })}
+                className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95"
               >
-                <BookOpen size={11} /> Dettagli
+                Dettagli
               </button>
               <button
                 type="button"
-                onClick={() => onBookingClick(corso.titolo, "info")}
+                onClick={() => onBookingClick(parentTitle ? `${modulo.titolo} (${parentTitle})` : modulo.titolo, "info")}
                 className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors active:scale-95"
               >
                 Richiedi Info

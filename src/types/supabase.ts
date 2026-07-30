@@ -22,6 +22,14 @@ export interface Database {
           gallery_urls: string[] | null
           categoria: string | null
           attrezzatura_consigliata: string | null
+          difficolta: string | null
+          attrezzatura: string | null
+          posizione: number | null
+          prezzo_teorico: number | null
+          prezzo_pratico: number | null
+          prezzo_bundle: number | null
+          slug: string | null
+          moduli_json: Json | null
         }
         Insert: {
           id?: string
@@ -29,12 +37,20 @@ export interface Database {
           titolo: string
           descrizione?: string | null
           descrizione_estesa?: string | null
-          prezzo: number
+          prezzo?: number
           durata?: string | null
           immagine_url?: string | null
           gallery_urls?: string[] | null
           categoria?: string | null
           attrezzatura_consigliata?: string | null
+          difficolta?: string | null
+          attrezzatura?: string | null
+          posizione?: number | null
+          prezzo_teorico?: number | null
+          prezzo_pratico?: number | null
+          prezzo_bundle?: number | null
+          slug?: string | null
+          moduli_json?: Json | null
         }
         Update: {
           id?: string
@@ -48,6 +64,14 @@ export interface Database {
           gallery_urls?: string[] | null
           categoria?: string | null
           attrezzatura_consigliata?: string | null
+          difficolta?: string | null
+          attrezzatura?: string | null
+          posizione?: number | null
+          prezzo_teorico?: number | null
+          prezzo_pratico?: number | null
+          prezzo_bundle?: number | null
+          slug?: string | null
+          moduli_json?: Json | null
         }
       }
       escursioni: {

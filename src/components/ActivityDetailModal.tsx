@@ -1,8 +1,7 @@
-// src/components/ActivityDetailModal.tsx
 import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
 import {
   X, TrendingUp, Share2,
-  Briefcase as Backpack, Mountain, MapPin, ArrowUp, ExternalLink, Users, Clock
+  Briefcase as Backpack, Mountain, MapPin, ArrowUp, ExternalLink, Users, Clock, Layers
 } from "lucide-react";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -78,9 +77,12 @@ export interface Activity {
   descrizione: string | null;
   descrizione_estesa?: string | null;
   prezzo?: number | string | null;
-  prezzo_bundle?: number | string | null;
   prezzo_teorico?: number | string | null;
-  selectedOption?: "bundle" | "teorico";
+  prezzo_bundle?: number | string | null;
+  selectedPrice?: number | string | null;
+  bookingSummary?: string;
+  parentTitle?: string;
+  parent_corso_id?: string | null;
   immagine_url: string | null;
   gallery_urls?: string[] | null;
   difficolta?: string | null;
@@ -130,25 +132,19 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
   const isTour = activity?.categoria?.toLowerCase() === "tour";
   const isCampo = activity?._tipo === "campo";
 
-  // Calcolo dinamico del prezzo basato sull'opzione selezionata nella card
   const currentPrice = useMemo(() => {
     if (!activity) return null;
-    if (activity._tipo === 'corso' && activity.prezzo_teorico != null) {
-      return activity.selectedOption === "teorico"
-        ? Number(activity.prezzo_teorico)
-        : Number(activity.prezzo_bundle);
-    }
-    return activity.prezzo;
+    if (activity.selectedPrice != null) return Number(activity.selectedPrice);
+    if (activity.prezzo_teorico != null && Number(activity.prezzo_teorico) > 0) return Number(activity.prezzo_teorico);
+    if (activity.prezzo_bundle != null && Number(activity.prezzo_bundle) > 0) return Number(activity.prezzo_bundle);
+    if (activity.prezzo != null && activity.prezzo !== "") return Number(activity.prezzo);
+    return null;
   }, [activity]);
 
-  // Etichetta prenotazione dinamica
   const bookingLabel = useMemo(() => {
     if (!activity) return "";
-    if (activity._tipo === 'corso' && activity.prezzo_teorico != null) {
-      return activity.selectedOption === "teorico"
-        ? `${activity.titolo} — Modulo Teorico`
-        : `${activity.titolo} — Pacchetto Completo`;
-    }
+    if (activity.bookingSummary) return activity.bookingSummary;
+    if (activity.parentTitle) return `${activity.titolo} (${activity.parentTitle})`;
     return activity.titolo;
   }, [activity]);
 
@@ -253,6 +249,14 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 alt={activity.titolo} 
                 loading={images.length > 1 && currentImageIndex > 0 ? "lazy" : "eager"}
               />
+
+              {/* BADGE CATEGORIA SULL'IMMAGINE DEL MODALE (in alto a sinistra) */}
+              {activity.categoria && (
+                <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-black/50 text-white backdrop-blur-md border border-white/20">
+                  {activity.categoria}
+                </div>
+              )}
+
               {images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
                   {images.map((_, i) => (
@@ -272,6 +276,14 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
               
               {/* HEADER */}
               <div className="px-5 pt-5 pb-3 border-b border-stone-50 shrink-0">
+                {activity.parentTitle && (
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2.5 py-1 rounded-md">
+                      <Layers size={10} /> Corso: {activity.parentTitle}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-start gap-4 mb-2">
                   <h2 id="modal-title" className="text-xl md:text-2xl font-black text-brand-stone uppercase leading-tight">
                     {activity.titolo}
@@ -298,10 +310,10 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   </div>
                 </div>
 
-                {/* Badge/Info */}
+                {/* Info Secondarie */}
                 <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] font-black uppercase text-stone-400 mt-1">
                   {activity.difficolta && <span className="flex items-center gap-1"><Mountain size={12} className="text-brand-sky stroke-[2.5]" /> {activity.difficolta}</span>}
-                  {activity._tipo === 'corso' && activity.durata && (<span className="flex items-center gap-1"><Clock size={12} className="text-brand-sky stroke-[2.5]" /> {activity.durata}</span>)}
+                  {activity.durata && (<span className="flex items-center gap-1"><Clock size={12} className="text-brand-sky stroke-[2.5]" /> {activity.durata}</span>)}
                   {!isTour && activity.lunghezza != null && <span className="flex items-center gap-1"><MapPin size={12} className="text-brand-sky stroke-[2.5]" /> {activity.lunghezza}{!isCampo && " km"}</span>}
                   {!isTour && activity.dislivello != null && <span className="flex items-center gap-1"><ArrowUp size={12} className="text-brand-sky stroke-[2.5]" /> {activity.dislivello} m</span>}
                   {activity.min_partecipanti != null && (
@@ -326,7 +338,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 transform-gpu">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
                       <Backpack size={14} className="text-brand-sky" />
-                      {activity._tipo === 'corso' ? "Argomenti trattati" : "Equipaggiamento consigliato"}
+                      {activity._tipo === 'corso' ? "Argomenti trattati / Requisiti" : "Equipaggiamento consigliato"}
                     </h4>
                     <div className="text-xs text-stone-600 leading-relaxed font-medium">{formatEquipmentList(activity.attrezzatura)}</div>
                   </div>
@@ -347,7 +359,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} isAnimationDone={isAnimationDone} />}
               </div>
 
-              {/* FOOTER MOBILE-SAFE (Senza mini-selettore) */}
+              {/* FOOTER MOBILE-SAFE */}
               <div 
                 className="pl-5 pr-16 py-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-4 bg-stone-50/95 backdrop-blur-md shrink-0 transform-gpu overscroll-none z-10"
                 style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
@@ -357,7 +369,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     Quota
                   </span>
                   <span className="text-2xl font-black text-brand-stone leading-none">
-                    €{currentPrice || "—"}
+                    €{currentPrice ?? "—"}
                   </span>
                 </div>
                 
@@ -365,7 +377,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   onClick={() => onBookingClick(bookingLabel)}
                   className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-3.5 px-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-md hover:shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-[0.98] transform-gpu min-h-[48px]"
                 >
-                  <span className="truncate">Richiedi Info</span> 
+                  <span className="truncate">Prenota</span> 
                   <TrendingUp size={15} className="shrink-0" />
                 </button>
               </div>

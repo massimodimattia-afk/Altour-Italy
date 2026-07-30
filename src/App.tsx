@@ -11,7 +11,8 @@ import ChiSiamo from './pages/ChiSiamo';
 import BookingModal from './components/BookingModal';
 import PWAPrompt from "./components/PWAprompt";
 import FeedbackPage from './pages/FeedbackPage';
-import { Analytics } from "@vercel/analytics/react"; // FIX: Import corretto per React SPA
+import { Analytics } from "@vercel/analytics/react";
+import { supabase } from './lib/supabase'; // FIX: import del client supabase
 
 type PageType =
   | 'home'
@@ -43,14 +44,34 @@ function App() {
 
   const [initialSlug, setInitialSlug] = useState<string | null>(null);
 
-useEffect(() => {
-  const raw = window.location.hash.replace('#', '');
-  const [hash, slug] = raw.split('/');
-  if (hash && VALID_PAGES.includes(hash as PageType)) {
-    setCurrentPage(hash as PageType);
-    if (slug) setInitialSlug(slug);
-  }
-}, []);
+  // FIX: Stato e caricamento automatico dei corsi da Supabase
+  const [corsi, setCorsi] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadCorsi() {
+      const { data, error } = await supabase
+        .from('corsi')
+        .select('*')
+        .order('posizione', { ascending: true });
+
+      if (error) {
+        console.error("Errore recupero corsi:", error);
+      } else {
+        console.log("Corsi caricati in App.tsx:", data);
+        setCorsi(data || []);
+      }
+    }
+    loadCorsi();
+  }, []);
+
+  useEffect(() => {
+    const raw = window.location.hash.replace('#', '');
+    const [hash, slug] = raw.split('/');
+    if (hash && VALID_PAGES.includes(hash as PageType)) {
+      setCurrentPage(hash as PageType);
+      if (slug) setInitialSlug(slug);
+    }
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -82,16 +103,16 @@ useEffect(() => {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'home':          return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'corsi':         return <Corsi onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'attivitapage':  return <Attivitapage onNavigate={handleNavigate} onBookingClick={openBooking} initialSlug={initialSlug} />;
-      case 'tessera':       return <Tessera />;
-      case 'legal-privacy': return <Legal initialTab="privacy" />;
-      case 'legal-cookie':  return <Legal initialTab="cookie" />;
-      case 'legal-termini': return <Legal initialTab="termini" />;
-      case 'chi-siamo':     return <ChiSiamo onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'home':           return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      case 'corsi':          return <Corsi corsi={corsi} onNavigate={handleNavigate} onBookingClick={openBooking} />; // FIX: passata prop corsi
+      case 'attivitapage':   return <Attivitapage onNavigate={handleNavigate} onBookingClick={openBooking} initialSlug={initialSlug} />;
+      case 'tessera':        return <Tessera />;
+      case 'legal-privacy':  return <Legal initialTab="privacy" />;
+      case 'legal-cookie':   return <Legal initialTab="cookie" />;
+      case 'legal-termini':  return <Legal initialTab="termini" />;
+      case 'chi-siamo':      return <ChiSiamo onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'lascia-feedback': return <FeedbackPage onNavigate={handleNavigate} />;
-      default:              return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
+      default:               return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
     }
   };
 
@@ -119,7 +140,6 @@ useEffect(() => {
       <Footer onNavigate={handleNavigate} />
       <PWAPrompt />
       
-      {/* COMPONENTE ANALYTICS: Traccerà tutti i cambi di hash in tempo reale */}
       <Analytics />
     </div>
   );

@@ -1,436 +1,452 @@
-// src/pages/CorsiPage.tsx
-import React, { useEffect, useState, useRef } from "react";
-import { supabase } from "../lib/supabase";
-import { Database } from "../types/supabase";
+import { useState, useMemo, useEffect, forwardRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, SlidersHorizontal, Clock, Layers } from "lucide-react"; // Rimosso GraduationCap
 import ActivityDetailModal from "../components/ActivityDetailModal";
-import ReactMarkdown from "react-markdown";
-import { ArrowRight, Sparkles, BookOpen, ShieldCheck } from "lucide-react";
-import { AltourTactics } from '../components/AltourTactics';
+import { isIOS } from "../components/Section";
 
-type Corso = Database["public"]["Tables"]["corsi"]["Row"] & {
-  prezzo_teorico?: number | null;
-  prezzo_bundle?: number | null;
-  posizione?: number | null;
-  difficolta?: string | null;
-  slug?: string | null;
-};
+// ─── Types ────────────────────────────────────────────────────────────────────
+export interface CorsoItem {
+  id: string;
+  created_at?: string;
+  titolo: string;
+  descrizione: string | null;
+  descrizione_estesa: string | null;
+  prezzo: number | null;
+  durata: string | null;
+  immagine_url: string | null;
+  gallery_urls: string[] | null;
+  categoria: string | null;
+  attrezzatura_consigliata: string | null;
+  difficolta: string | null;
+  attrezzatura: string | null;
+  posizione: number | null;
+  slug: string | null;
+  parent_corso_id: string | null; // NULL se corso completo, UUID del padre se modulo
+  prezzo_teorico: number | null;
+  prezzo_pratico: number | null;
+  prezzo_bundle: number | null;
+}
 
 interface CorsiPageProps {
-  onNavigate: (page: string) => void;
-  onBookingClick: (title: string, mode?: "info" | "prenota") => void;
+  corsi?: CorsoItem[];
+  onNavigate?: (page: string) => void;
+  onBookingClick: (bookingSummary: string, mode?: 'info' | 'prenota') => void;
 }
 
-const FILOSOFIA_COLORS: Record<string, string> = {
-  "Avventura": "#e94544",
-  "Benessere": "#a5d9c9",
-  "Borghi più belli": "#946a52",
-  "Cammini": "#e3c45d",
-  "Educazione all'aperto": "#01aa9f",
-  "Eventi": "#ffc0cb",
-  "Formazione": "#002f59",
-  "Immersi nel verde": "#358756",
-  "Luoghi dello spirito": "#c8a3c9",
-  "Novità": "#75c43c",
-  "Speciali": "#b8163c",
-  "Acqua e cielo": "#7aaecd",
-  "Trek urbano": "#f39452",
-  "Tracce sulla neve": "#a8cce0",
-  "Cielo stellato": "#1e2855",
-};
+type FilterKey = "corsi" | "moduli";
 
-function getFilosofiaOpacity(color: string): string {
-  const dark = ["#002f59", "#946a52", "#b8163c", "#358756", "#1e2855"];
-  return dark.includes(color) ? `${color}aa` : `${color}cc`;
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const IMG_FALLBACK = "/altour-logo.png";
+const ITEMS_PER_LOAD = typeof window !== "undefined" && window.innerWidth >= 1024 ? 6 : 4;
+
+function formatMarkdown(text: string | null | undefined): string {
+  if (!text) return "";
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/__(.*?)__/g, "<strong>$1</strong>")
+    .replace(/_(.*?)_/g, "<em>$1</em>");
 }
 
-const FILOSOFIA_ALIAS: Record<string, string> = {
-  "Outdoor Education": "Educazione all'aperto",
-  "Luoghi dello Spirito": "Luoghi dello spirito",
-  "Acqua e Cielo": "Acqua e cielo",
-  "Trek Urbano": "Trek urbano",
-  "Giornata da Guida": "Novità",
-};
+// ─── Card Unificata per Corso o Modulo ─────────────────────────────────────────
+const FormazioneCard = forwardRef<HTMLDivElement, {
+  item: CorsoItem;
+  parentTitle?: string;
+  idx: number;
+  onDetails: () => void;
+  onBook: (mode?: "info" | "prenota") => void;
+}>(function FormazioneCard({ item, parentTitle, idx, onDetails, onBook }, ref) {
+  const isModulo = Boolean(item.parent_corso_id);
 
-function normalizeFilosofia(value?: string | null): string | null {
-  if (!value) return value ?? null;
-  const key = value.trim();
-  return FILOSOFIA_ALIAS[key] ?? key;
-}
-
-function normalizeMarkdown(text: string): string {
-  return text.replace(/\*\s+/g, "*").replace(/\s+\*/g, "*");
-}
-
-function FilosofiaBadge({ value }: { value: string | null | undefined }) {
-  if (!value) return null;
-  const color = FILOSOFIA_COLORS[value] ?? "#44403c";
-  const bg = getFilosofiaOpacity(color);
   return (
-    <div
-      className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-sm"
-      style={{
-        backgroundColor: bg,
-        color: "rgba(255,255,255,0.95)",
-        textShadow: "0 1px 3px rgba(0,0,0,0.35)",
-        boxShadow: `0 2px 12px ${color}55, inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 1px ${color}`,
-      }}
+    <motion.div
+      ref={ref}
+      layout
+      initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
+      className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform h-full"
+      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
     >
-      {value}
-    </div>
-  );
-}
+      {/* Immagine con badge tipo */}
+      <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
+        <img
+          src={item.immagine_url || IMG_FALLBACK}
+          alt={item.titolo}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading={idx < 4 ? "eager" : "lazy"}
+          decoding="async"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-type PricingOption = "bundle" | "teorico";
-
-function PricingBlock({
-  corso,
-  onBook,
-  onOpenDetails,
-}: {
-  corso: Corso;
-  onBook: (title: string, mode?: "info" | "prenota") => void;
-  onOpenDetails: (corso: Corso) => void;
-}) {
-  const hasModular = corso.prezzo_teorico != null;
-
-  const sumParts = Number(corso.prezzo_teorico);
-  const saveAmount =
-    corso.prezzo_bundle != null && sumParts > 0
-      ? sumParts - Number(corso.prezzo_bundle)
-      : 0;
-
-  const [selected, setSelected] = useState<PricingOption>("bundle");
-
-  const getCurrentPrice = () => {
-    if (selected === "bundle" && corso.prezzo_bundle != null) {
-      return Number(corso.prezzo_bundle);
-    }
-    if (selected === "teorico" && corso.prezzo_teorico != null) {
-      return Number(corso.prezzo_teorico);
-    }
-    return Number(corso.prezzo) || 0;
-  };
-
-  const currentPrice = getCurrentPrice();
-
-  if (!hasModular) {
-    return (
-      <>
-        <div className="flex gap-3">
-          <button
-            onClick={() => onOpenDetails(corso)}
-            className="flex-1 min-h-[48px] bg-white border-2 border-stone-200 text-stone-600 hover:border-stone-400 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all active:scale-95"
-          >
-            Dettagli
-          </button>
-          <button
-            onClick={() => onBook(corso.titolo, "info")}
-            className="flex-[1.5] min-h-[48px] py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 bg-brand-sky text-white"
-          >
-            Richiedi Info
-          </button>
-        </div>
-        <button
-          onClick={() => onOpenDetails(corso)}
-          className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
+        <div
+          className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md"
+          style={{
+            backgroundColor: isModulo ? "#01aa9f" : "#002f59",
+            textShadow: "0 1px 2px rgba(0,0,0,0.3)"
+          }}
         >
-          Vedi programma completo
-        </button>
-      </>
-    );
-  }
-
-  const opts: { key: PricingOption; label: string; price: number | null | undefined; icon: React.ReactNode }[] = [
-    ...(corso.prezzo_bundle != null
-      ? [{ key: "bundle" as PricingOption, label: "Tutto", price: Number(corso.prezzo_bundle), icon: <Sparkles size={10} /> }]
-      : []),
-    ...(corso.prezzo_teorico != null
-      ? [{ key: "teorico" as PricingOption, label: "Teoria", price: Number(corso.prezzo_teorico), icon: <BookOpen size={10} /> }]
-      : []),
-  ];
-
-  const bookLabel =
-    selected === "bundle"
-      ? `${corso.titolo} — Pacchetto Completo`
-      : `${corso.titolo} — Modulo Teorico`;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex rounded-2xl p-1 gap-1" style={{ background: "rgba(0,0,0,0.04)" }}>
-        {opts.map(opt => {
-          const isActive = selected === opt.key;
-          const isBundle = opt.key === "bundle";
-          return (
-            <button
-              key={opt.key}
-              onClick={() => setSelected(opt.key)}
-              className="relative flex-1 flex flex-col items-center justify-center py-2.5 px-1 rounded-xl transition-all duration-200 active:scale-95 focus:outline-none"
-              style={{
-                background: isActive ? "white" : "transparent",
-                boxShadow: isActive ? "0 2px 8px rgba(0,0,0,0.10)" : "none",
-              }}
-            >
-              {isBundle && saveAmount > 0 && (
-                <span
-                  className="absolute -top-2 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-full text-white whitespace-nowrap"
-                  style={{ background: "#81ccb0" }}
-                >
-                  −€{saveAmount}
-                </span>
-              )}
-              <span className="flex items-center gap-1 mb-0.5" style={{ color: isActive ? (isBundle ? "#5aaadd" : "#9f8270") : "#a8a29e" }}>
-                {opt.icon}
-                <span className="text-[8px] font-black uppercase tracking-widest">{opt.label}</span>
-              </span>
-              <span className="text-sm font-black" style={{ color: isActive ? "#44403c" : "#a8a29e" }}>
-                €{opt.price}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <button
-        onClick={() => onBook(bookLabel, "info")}
-        className="w-full bg-brand-sky hover:bg-brand-stone text-white py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-95 min-h-[44px]"
-      >
-        Richiedi Info
-        <ArrowRight size={11} />
-      </button>
-
-      <button
-        onClick={() =>
-          onOpenDetails({
-            ...corso,
-            _tipo: "corso",
-            selectedPrice: currentPrice,
-            selectedOption: selected,
-          } as any)
-        }
-        className="w-full mt-2.5 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-500 hover:border-stone-400 hover:text-stone-700 transition-all active:scale-95"
-      >
-        Vedi programma completo
-      </button>
-    </div>
-  );
-}
-
-const SkeletonCard = () => (
-  <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col">
-    <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-100 animate-pulse" />
-    <div className="p-5 md:p-8 flex flex-col gap-4">
-      <div className="h-6 w-3/4 bg-stone-200 rounded animate-pulse" />
-      <div className="space-y-2">
-        <div className="h-3 w-full bg-stone-100 rounded animate-pulse" />
-        <div className="h-3 w-5/6 bg-stone-100 rounded animate-pulse" />
-        <div className="h-3 w-4/6 bg-stone-100 rounded animate-pulse" />
-      </div>
-      <div className="mt-auto pt-6 border-t border-stone-100 space-y-2">
-        <div className="h-16 bg-stone-100 rounded-2xl animate-pulse" />
-        <div className="flex gap-2">
-          <div className="h-12 flex-1 bg-stone-100 rounded-xl animate-pulse" />
-          <div className="h-12 flex-1 bg-stone-100 rounded-xl animate-pulse" />
+          {isModulo ? "🧩 Modulo" : "🎓 Corso Completo"}
         </div>
+      </div>
+
+      {/* Contenuto Card */}
+      <div className="p-4 md:p-5 flex flex-col flex-grow">
+        <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+          {isModulo && parentTitle && (
+            <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md">
+              <Layers size={10} /> Corso: {parentTitle}
+            </span>
+          )}
+          {item.durata && (
+            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
+              <Clock size={10} /> {item.durata}
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-sm md:text-base font-black text-brand-stone uppercase tracking-tight leading-snug line-clamp-2 mb-1.5">
+          {item.titolo}
+        </h3>
+
+        <p
+          className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-4 flex-grow font-medium"
+          dangerouslySetInnerHTML={{ __html: formatMarkdown(item.descrizione) }}
+        />
+
+        {/* Prezzo e Azioni */}
+        <div className="pt-3 border-t border-stone-100 flex flex-col gap-3 mt-auto">
+          {item.prezzo !== undefined && item.prezzo !== null && item.prezzo > 0 && (
+            <div className="flex items-baseline justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Quota</span>
+              <span className="text-base font-black text-brand-stone">€{item.prezzo}</span>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={onDetails}
+              className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95"
+            >
+              Dettagli
+            </button>
+            <button
+              onClick={() => onBook("info")}
+              className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors active:scale-95"
+            >
+              Richiedi Info
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+// Skeleton Loader
+const SkeletonCard = () => (
+  <div className="bg-white rounded-2xl overflow-hidden border border-stone-100 flex flex-col h-full">
+    <div className="aspect-[3/2] md:h-52 bg-stone-100 animate-pulse" />
+    <div className="p-4 flex flex-col gap-2.5 flex-grow">
+      <div className="h-2 w-20 bg-stone-100 rounded animate-pulse" />
+      <div className="h-4 w-3/4 bg-stone-200 rounded animate-pulse" />
+      <div className="h-3 w-full bg-stone-50 rounded animate-pulse" />
+      <div className="mt-auto pt-3 flex gap-2">
+        <div className="h-10 flex-1 bg-stone-100 rounded-xl animate-pulse" />
+        <div className="h-10 flex-[1.5] bg-stone-100 rounded-xl animate-pulse" />
       </div>
     </div>
   </div>
 );
 
-const IMG_FALLBACK = "/altour-logo.png";
-
-export default function CorsiPage({ onBookingClick }: CorsiPageProps) {
-  const [corsi, setCorsi] = useState<Corso[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<any | null>(null);
+// ─── Componente Principale ───────────────────────────────────────────────────
+export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps) {
+  const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
+  
+  const [selectedItem, setSelectedItem] = useState<CorsoItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isTacticsOpen, setIsTacticsOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const coursesGridRef = useRef<HTMLDivElement>(null);
+  // Mappa id -> titolo per recuperare al volo il nome del corso padre
+  const parentCourseMap = useMemo(() => {
+    const map = new Map<string, string>();
+    corsi.forEach(c => {
+      if (!c.parent_corso_id) map.set(c.id, c.titolo);
+    });
+    return map;
+  }, [corsi]);
+
+  // Suddivisione Corsi Completi vs Moduli
+  const corsiCompleti = useMemo(() => corsi.filter(c => !c.parent_corso_id), [corsi]);
+  const moduliSingoli = useMemo(() => corsi.filter(c => Boolean(c.parent_corso_id)), [corsi]);
 
   useEffect(() => {
-    async function fetchCorsi() {
-      const { data, error } = await supabase
-        .from("corsi")
-        .select("*")
-        .order("posizione", { ascending: true })
-        .order("created_at", { ascending: false });
-      if (error) {
-        setError("Impossibile caricare i corsi. Riprova più tardi.");
-      } else {
-        const normalized = (data ?? []).map((c: any) => ({
-          ...c,
-          categoria: normalizeFilosofia(c?.categoria),
-        }));
-        setCorsi(normalized);
-      }
-      setLoading(false);
-    }
-    fetchCorsi();
-  }, []);
+    const timer = setTimeout(() => setLoading(false), 200);
+    return () => clearTimeout(timer);
+  }, [corsi]);
 
-  const openDetails = (corso: Corso, updateHash = true) => {
-    setSelectedActivity({ ...corso, _tipo: "corso" });
+  // Logica Filtro e Ricerca
+  const filtered: CorsoItem[] = useMemo(() => {
+    let base = corsi;
+
+    if (activeFilter === "corsi") base = corsiCompleti;
+    if (activeFilter === "moduli") base = moduliSingoli;
+
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
+      base = base.filter(item => {
+        const parentTitle = item.parent_corso_id ? parentCourseMap.get(item.parent_corso_id) || "" : "";
+        return (
+          item.titolo.toLowerCase().includes(q) ||
+          (item.descrizione && item.descrizione.toLowerCase().includes(q)) ||
+          parentTitle.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    return base;
+  }, [corsi, corsiCompleti, moduliSingoli, activeFilter, searchQuery, parentCourseMap]);
+
+  const visible = filtered.slice(0, visibleCount);
+
+  const FILTERS = [
+    { key: "corsi" as const,  label: "Corsi Completi", emoji: "🎓", count: corsiCompleti.length, color: "#002f59" },
+    { key: "moduli" as const, label: "Singoli Moduli", emoji: "🧩", count: moduliSingoli.length, color: "#01aa9f" },
+  ];
+
+  const openDetails = (item: CorsoItem) => {
+    setSelectedItem(item);
     setIsDetailOpen(true);
-
-    if (updateHash && corso.slug) {
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search + `#attivitapage/${corso.slug}`
-      );
-    }
   };
 
-  const handleCloseDetail = () => {
+  const closeDetails = () => {
     setIsDetailOpen(false);
-    setTimeout(() => setSelectedActivity(null), 300);
-
-    window.history.replaceState(
-      null,
-      "",
-      window.location.pathname + window.location.search + "#attivitapage"
-    );
+    setTimeout(() => setSelectedItem(null), 300);
   };
 
-  useEffect(() => {
-    if (loading || corsi.length === 0) return;
+  const toggleFilter = (key: FilterKey) => {
+    setActiveFilter(prev => prev === key ? null : key);
+    setVisibleCount(ITEMS_PER_LOAD);
+  };
 
-    const handleHashChange = () => {
-      const [, slug] = window.location.hash.replace('#', '').split('/');
-      if (!slug) {
-        setIsDetailOpen(false);
-        setTimeout(() => setSelectedActivity(null), 300);
-      } else {
-        const found = corsi.find(c => c.slug === slug);
-        if (found) openDetails(found, false);
-      }
-    };
-
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [corsi, loading]);
-
-  if (loading)
-    return (
-      <div className="max-w-6xl mx-auto px-4 py-10 md:py-20">
-        <div className="h-10 w-48 bg-stone-200 rounded animate-pulse mb-12" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1, 2, 3].map((n) => <SkeletonCard key={n} />)}
-        </div>
+  if (loading) return (
+    <div className="max-w-6xl mx-auto px-4 pt-8 pb-20">
+      <div className="h-10 w-52 bg-stone-200 rounded-2xl animate-pulse mb-2" />
+      <div className="h-4 w-32 bg-stone-100 rounded animate-pulse mb-8" />
+      <div className="h-20 w-full bg-stone-100 rounded-[2rem] animate-pulse mb-6" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map(n => <SkeletonCard key={n} />)}
       </div>
-    );
+    </div>
+  );
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10 md:py-20">
+    <div className="bg-[#f5f2ed] min-h-screen antialiased">
 
-      {/* Header */}
-      <div className="mb-16">
-        <h1 className="text-4xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-4">
-          Accademia <br />
-          <span className="text-brand-sky italic font-light">Altour.</span>
-        </h1>
-        <div className="h-1.5 w-12 bg-brand-sky rounded-full" />
-      </div>
-
-      {/* SEZIONE COMPONENTE: PULSANTE / BANNER DI INIZIO TEST TACTICS */}
-      <div className="mb-12 p-6 rounded-[1.5rem] md:rounded-[2rem] bg-white border border-stone-200 text-stone-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-xl shadow-stone-200/50">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-sky/10 border border-brand-sky/20 text-brand-sky text-[9px] font-black uppercase tracking-wider">
-            <ShieldCheck size={11} />
-            <span>Valutazione Competenze</span>
-          </div>
-          <h2 className="text-xl font-black uppercase tracking-tight text-stone-900">Test d'Ingresso Accademia</h2>
-          <p className="text-stone-500 text-xs font-medium max-w-xl leading-relaxed">
-            Rispondi al nostro test e scopri subito qual è il percorso didattico più adatto a te.
-          </p>
+      {/* ── Header e Titolo ─────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 pt-8 pb-0">
+        <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Formazione</p>
+        <div className="flex items-end justify-between gap-4">
+          <h1 className="text-3xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9]">
+            Corsi &<br className="md:hidden" />{" "}
+            <span className="text-brand-sky italic font-light">Moduli.</span>
+          </h1>
+          <span className="text-[11px] font-black uppercase tracking-widest text-stone-400 pb-1 shrink-0">
+            {filtered.length} percorsi
+          </span>
         </div>
-        <button
-          onClick={() => setIsTacticsOpen(true)}
-          className="w-full md:w-auto bg-brand-sky hover:bg-stone-900 hover:text-white text-white px-6 py-3.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shrink-0 active:scale-95 shadow-md shadow-brand-sky/10"
-        >
-          Inizia il Test Rapido
-        </button>
-      </div>
+        <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
-      {error && (
-        <div className="mb-8 rounded-2xl border border-rose-100 bg-rose-50 px-6 py-4 text-rose-600 text-sm font-bold">
-          {error}
-        </div>
-      )}
-
-      <div ref={coursesGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {!error && corsi.length === 0 ? (
-          <div className="col-span-3 py-24 text-center">
-            <p className="text-stone-300 font-black uppercase tracking-widest text-sm">
-              Nessun corso disponibile al momento.
-            </p>
-          </div>
-        ) : (
-          corsi.map((corso) => (
-            <div
-              key={corso.id}
-              className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl shadow-stone-200/50 overflow-hidden border border-stone-100 flex flex-col group hover:shadow-2xl transition-all duration-500 relative"
-            >
-              {/* Image */}
-              <div className="aspect-[16/9] md:h-56 md:aspect-auto bg-stone-200 relative overflow-hidden">
-                {corso.immagine_url && (
-                  <img
-                    src={corso.immagine_url}
-                    alt={corso.titolo}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    loading={corso.posizione === 1 ? "eager" : "lazy"}
-                    decoding="async"
-                    onError={(e) => { e.currentTarget.src = IMG_FALLBACK; }}
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                <FilosofiaBadge value={corso.categoria} />
-              </div>
-
-              {/* Body */}
-              <div className="p-5 md:p-7 flex flex-col flex-grow">
-                <div className="flex items-center gap-2.5 mb-2">
-                  <span className="text-[9px] font-bold uppercase tracking-wide text-brand-sky">
-                    Iscrizioni aperte
-                  </span>
-                </div>
-                
-                <h2 className="text-lg md:text-xl font-black mb-3 text-brand-stone uppercase line-clamp-2">
-                  {corso.titolo}
-                </h2>
-
-                <div className="text-stone-500 text-xs md:text-sm mb-5 line-clamp-3 font-medium flex-grow [&_em]:italic [&_em]:font-serif [&_strong]:font-black [&_strong]:text-[#44403c]">
-                  <ReactMarkdown components={{ p: ({ children }) => <span>{children}</span> }}>
-                    {normalizeMarkdown(corso.descrizione ?? "")}
-                  </ReactMarkdown>
-                </div>
-
-                {/* Pricing */}
-                <div className="mt-auto pt-5 border-t border-stone-100">
-                  <PricingBlock
-                    corso={corso}
-                    onBook={onBookingClick}
-                    onOpenDetails={openDetails}
-                  />
-                </div>
-              </div>
+        {/* ── Barra di Ricerca Premium ── */}
+        <div className="mb-8 mt-6 flex justify-center px-2">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              (document.activeElement as HTMLElement)?.blur();
+            }}
+            className="relative w-full max-w-2xl group"
+          >
+            <input
+              type="text"
+              enterKeyHint="search"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setVisibleCount(ITEMS_PER_LOAD);
+              }}
+              placeholder="Cerca corso, modulo o argomento..."
+              className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-base md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
+            />
+            
+            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-brand-sky">
+              <Search size={20} strokeWidth={3} />
             </div>
-          ))
+            
+            <AnimatePresence>
+              {searchQuery && (
+                <motion.button 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15 }}
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 text-xs active:scale-90 transition-colors font-black"
+                >
+                  ✕
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </form>
+        </div>
+
+        {/* ── Filtri Mobile ── */}
+        <div className="md:hidden mb-6 mt-2 px-1">
+          <div className="flex justify-between items-center mb-4 px-1">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
+              Tipo di Formazione
+            </span>
+            {activeFilter && (
+              <button 
+                onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+                className="text-[10px] font-black uppercase tracking-widest text-brand-sky border-b border-brand-sky/30 pb-0.5"
+              >
+                Tutti
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {FILTERS.map((f) => {
+              const isActive = activeFilter === f.key;
+              return (
+                <button
+                  key={f.key}
+                  onClick={() => toggleFilter(f.key)}
+                  className={`flex-1 min-w-[140px] flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 border ${
+                    isActive
+                      ? "bg-white border-stone-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)] translate-y-[-2px]"
+                      : "bg-stone-200/40 border-transparent text-stone-500"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: f.color }} />
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? "text-brand-stone" : "text-stone-500"}`}>
+                      {f.label}
+                    </span>
+                  </div>
+                  {f.count > 0 && <span className="text-[8px] font-bold opacity-40">{f.count}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Filtri Sticky Desktop ── */}
+      <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed] border-b border-stone-200/60 py-3 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 flex items-center gap-2">
+          <button
+            onClick={() => { setActiveFilter(null); setVisibleCount(ITEMS_PER_LOAD); }}
+            title="Mostra tutti"
+            className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={activeFilter
+              ? { background: "white", border: "1.5px solid #e7e5e4", color: "#a8a29e" }
+              : { background: "#44403c", color: "white", boxShadow: "0 2px 8px rgba(68,64,60,0.2)" }
+            }
+          >
+            <SlidersHorizontal size={12} />
+          </button>
+          
+          <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {FILTERS.map(f => {
+              const isActive = activeFilter === f.key;
+              return (
+                <button 
+                  key={f.key}
+                  onClick={() => toggleFilter(f.key)}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-black uppercase text-[9px] tracking-widest transition-all duration-200 active:scale-95"
+                  style={isActive
+                    ? { background: f.color, color: "white", boxShadow: `0 4px 12px ${f.color}40` }
+                    : { background: "white", color: "#a8a29e", border: "1.5px solid #e7e5e4" }
+                  }
+                >
+                  {f.emoji} {f.label}
+                  {f.count > 0 && <span className="text-[8px] font-black opacity-70">{f.count}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Griglia Contenuti ── */}
+      <div className="max-w-6xl mx-auto px-4 pt-4 pb-20">
+        {visible.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            className="py-20 text-center bg-white rounded-[2rem] border border-stone-100 p-8 shadow-sm"
+          >
+            <p className="text-4xl mb-3">🎓</p>
+            <h3 className="text-brand-stone font-black uppercase tracking-widest text-xs mb-1">Nessun corso o modulo trovato</h3>
+            <p className="text-stone-400 text-[11px] font-medium mb-6">Non ci sono elementi corrispondenti alla tua ricerca o al filtro attivo.</p>
+            <button
+              onClick={() => { setActiveFilter(null); setSearchQuery(""); setVisibleCount(ITEMS_PER_LOAD); }}
+              className="px-5 py-3 bg-brand-sky text-white rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all shadow-sm"
+            >
+              Azzera tutto
+            </button>
+          </motion.div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 items-stretch">
+              <AnimatePresence mode="popLayout">
+                {visible.map((item, idx) => (
+                  <FormazioneCard
+                    key={item.id}
+                    item={item}
+                    idx={idx}
+                    parentTitle={item.parent_corso_id ? parentCourseMap.get(item.parent_corso_id) : undefined}
+                    onDetails={() => openDetails(item)}
+                    onBook={(mode) => onBookingClick(item.titolo, mode)}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {/* Pulsante Load More */}
+            {visibleCount < filtered.length && (
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => setVisibleCount(v => v + ITEMS_PER_LOAD)}
+                  className="flex items-center gap-2 px-6 py-3.5 bg-white rounded-2xl font-black uppercase text-[9px] tracking-widest text-stone-500 border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95 shadow-sm"
+                >
+                  Altri {Math.min(ITEMS_PER_LOAD, filtered.length - visibleCount)} percorsi
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
+     {/* ── Modale Dettagli Unificato ── */}
       <ActivityDetailModal
-        activity={selectedActivity}
+        activity={selectedItem ? {
+          ...selectedItem,
+          titolo: selectedItem.parent_corso_id && parentCourseMap.get(selectedItem.parent_corso_id)
+            ? `${selectedItem.titolo} (${parentCourseMap.get(selectedItem.parent_corso_id)})`
+            : selectedItem.titolo
+        } as any : null}
         isOpen={isDetailOpen}
-        onClose={handleCloseDetail}
-        onBookingClick={(title: string) => onBookingClick(title, "prenota")}
+        onClose={closeDetails}
+        onBookingClick={(title: string) => {
+          closeDetails();
+          onBookingClick(title, "prenota");
+        }}
       />
-
-      {isTacticsOpen && (
-        <AltourTactics onClose={() => setIsTacticsOpen(false)} />
-      )}
     </div>
   );
 }
