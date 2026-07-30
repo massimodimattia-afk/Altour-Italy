@@ -455,20 +455,19 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
 
      {/* ── Modale Dettagli Unificato ── */}
       <ActivityDetailModal
-        activity={selectedItem ? {
-          ...selectedItem,
-          categoria: selectedItem.categoria || "Formazione",
-          titolo: selectedItem.parent_corso_id && parentCourseMap.get(selectedItem.parent_corso_id)
-            ? `${selectedItem.titolo} (${parentCourseMap.get(selectedItem.parent_corso_id)})`
-            : selectedItem.titolo
-        } as any : null}
-        isOpen={isDetailOpen}
-        onClose={closeDetails}
-        onBookingClick={(title: string) => {
-          closeDetails();
-          onBookingClick(title, "prenota");
-        }}
-      />
+  activity={selectedItem ? {
+    ...selectedItem,
+    categoria: selectedItem.categoria || "Formazione",
+    titolo: selectedItem.titolo,
+    parentTitle: selectedItem.parent_corso_id ? parentCourseMap.get(selectedItem.parent_corso_id) : undefined
+  } as any : null}
+  isOpen={isDetailOpen}
+  onClose={closeDetails}
+  onBookingClick={(title: string) => {
+    closeDetails();
+    onBookingClick(title, "prenota");
+  }}
+/>
     </div>
   );
 }
