@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, Clock, Layers } from "lucide-react"; // Rimosso GraduationCap
+import { Search, SlidersHorizontal, Clock, Layers } from "lucide-react";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { isIOS } from "../components/Section";
 
@@ -21,7 +21,7 @@ export interface CorsoItem {
   attrezzatura: string | null;
   posizione: number | null;
   slug: string | null;
-  parent_corso_id: string | null; // NULL se corso completo, UUID del padre se modulo
+  parent_corso_id: string | null;
   prezzo_teorico: number | null;
   prezzo_pratico: number | null;
   prezzo_bundle: number | null;
@@ -66,17 +66,54 @@ function formatMarkdown(text: string | null | undefined): string {
     .replace(/_(.*?)_/g, "<em>$1</em>");
 }
 
-// ─── Card Unificata per Corso o Modulo ─────────────────────────────────────────
+// ─── Card Unificata con Gestione Prezzo Dinamico e Opzioni Disabilitate ───────
 const FormazioneCard = forwardRef<HTMLDivElement, {
   item: CorsoItem;
   parentTitle?: string;
   idx: number;
-  onDetails: () => void;
-  onBook: (mode?: "info" | "prenota") => void;
+  onDetails: (itemWithOptions: CorsoItem & { selectedPrice?: number; selectedOption?: 'bundle' | 'teoria' | 'pratica' }) => void;
+  onBook: (bookingTitle: string, mode?: "info" | "prenota") => void;
 }>(function FormazioneCard({ item, parentTitle, idx, onDetails, onBook }, ref) {
   const isModulo = Boolean(item.parent_corso_id);
   const categoriaName = item.categoria || "Formazione";
   const categoryBg = CATEGORIA_COLORS[categoriaName] || "#002f59";
+
+  const hasBundle = Boolean(item.prezzo_bundle && Number(item.prezzo_bundle) > 0);
+  const hasTeoria = Boolean(item.prezzo_teorico && Number(item.prezzo_teorico) > 0);
+  const hasPratica = Boolean(item.prezzo_pratico && Number(item.prezzo_pratico) > 0);
+  const showPriceSelector = hasBundle || hasTeoria || hasPratica;
+
+  const [selectedOption, setSelectedOption] = useState<'bundle' | 'teoria' | 'pratica'>(() => {
+    if (hasBundle) return 'bundle';
+    if (hasTeoria) return 'teoria';
+    if (hasPratica) return 'pratica';
+    return 'bundle';
+  });
+
+  const activePrice = useMemo(() => {
+    if (showPriceSelector) {
+      if (selectedOption === 'bundle' && hasBundle) return Number(item.prezzo_bundle ?? item.prezzo);
+      if (selectedOption === 'teoria' && hasTeoria) return Number(item.prezzo_teorico);
+      if (selectedOption === 'pratica' && hasPratica) return Number(item.prezzo_pratico);
+    }
+    return item.prezzo;
+  }, [item, selectedOption, showPriceSelector, hasBundle, hasTeoria, hasPratica]);
+
+  const activeOptionLabel = useMemo(() => {
+    if (!showPriceSelector) return "";
+    if (selectedOption === 'bundle') return "Corso Completo";
+    if (selectedOption === 'teoria') return "Solo Teoria";
+    if (selectedOption === 'pratica') return "Solo Pratica";
+    return "";
+  }, [selectedOption, showPriceSelector]);
+
+  const bookingSummary = useMemo(() => {
+    if (showPriceSelector && activeOptionLabel) {
+      return `${item.titolo} - ${activeOptionLabel} (€${activePrice})`;
+    }
+    if (parentTitle) return `${item.titolo} (${parentTitle})`;
+    return item.titolo;
+  }, [item, showPriceSelector, activeOptionLabel, activePrice, parentTitle]);
 
   return (
     <motion.div
@@ -86,11 +123,10 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
-      className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform h-full"
+      className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform h-full transform-gpu"
       style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
     >
-      {/* Immagine con badge categoria */}
-      <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
+      <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0 bg-stone-100">
         <img
           src={item.immagine_url || IMG_FALLBACK}
           alt={item.titolo}
@@ -100,7 +136,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-        {/* BADGE CATEGORIA ESCLUSIVO */}
         <div
           className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md backdrop-blur-sm z-10"
           style={{
@@ -112,7 +147,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
         </div>
       </div>
 
-      {/* Contenuto Card */}
       <div className="p-4 md:p-5 flex flex-col flex-grow">
         <div className="flex items-center gap-2.5 mb-2 flex-wrap">
           {isModulo && parentTitle && (
@@ -136,24 +170,72 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
           dangerouslySetInnerHTML={{ __html: formatMarkdown(item.descrizione) }}
         />
 
-        {/* Prezzo e Azioni */}
+        {showPriceSelector && (
+          <div className="flex bg-stone-100 p-1 rounded-xl gap-1 mb-3">
+            <button
+              type="button"
+              disabled={!hasBundle}
+              onClick={() => hasBundle && setSelectedOption('bundle')}
+              className={`flex-1 py-1 text-[8px] font-black uppercase rounded-lg transition-all ${
+                !hasBundle
+                  ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
+                  : selectedOption === 'bundle'
+                  ? 'bg-white text-brand-stone shadow-sm'
+                  : 'text-stone-400 hover:text-stone-600'
+              }`}
+            >
+              Completo
+            </button>
+            <button
+              type="button"
+              disabled={!hasTeoria}
+              onClick={() => hasTeoria && setSelectedOption('teoria')}
+              className={`flex-1 py-1 text-[8px] font-black uppercase rounded-lg transition-all ${
+                !hasTeoria
+                  ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
+                  : selectedOption === 'teoria'
+                  ? 'bg-white text-brand-stone shadow-sm'
+                  : 'text-stone-400 hover:text-stone-600'
+              }`}
+            >
+              Teoria
+            </button>
+            <button
+              type="button"
+              disabled={!hasPratica}
+              onClick={() => hasPratica && setSelectedOption('pratica')}
+              className={`flex-1 py-1 text-[8px] font-black uppercase rounded-lg transition-all ${
+                !hasPratica
+                  ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
+                  : selectedOption === 'pratica'
+                  ? 'bg-white text-brand-stone shadow-sm'
+                  : 'text-stone-400 hover:text-stone-600'
+              }`}
+            >
+              Pratica
+            </button>
+          </div>
+        )}
+
         <div className="pt-3 border-t border-stone-100 flex flex-col gap-3 mt-auto">
-          {item.prezzo !== undefined && item.prezzo !== null && item.prezzo > 0 && (
+          {activePrice !== undefined && activePrice !== null && activePrice > 0 && (
             <div className="flex items-baseline justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Quota</span>
-              <span className="text-base font-black text-brand-stone">€{item.prezzo}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                {activeOptionLabel ? `Quota (${activeOptionLabel})` : "Quota"}
+              </span>
+              <span className="text-base font-black text-brand-stone">€{activePrice}</span>
             </div>
           )}
 
           <div className="flex gap-2">
             <button
-              onClick={onDetails}
+              onClick={() => onDetails({ ...item, selectedPrice: activePrice || undefined, selectedOption })}
               className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95"
             >
               Dettagli
             </button>
             <button
-              onClick={() => onBook("info")}
+              onClick={() => onBook(bookingSummary, "info")}
               className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors active:scale-95"
             >
               Richiedi Info
@@ -187,11 +269,10 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
   
-  const [selectedItem, setSelectedItem] = useState<CorsoItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<(CorsoItem & { selectedPrice?: number; selectedOption?: 'bundle' | 'teoria' | 'pratica' }) | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Mappa id -> titolo per recuperare al volo il nome del corso padre
   const parentCourseMap = useMemo(() => {
     const map = new Map<string, string>();
     corsi.forEach(c => {
@@ -200,22 +281,15 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
     return map;
   }, [corsi]);
 
-  // Suddivisione Corsi Completi vs Moduli
-  const corsiCompleti = useMemo(() => corsi.filter(c => !c.parent_corso_id), [corsi]);
-  const moduliSingoli = useMemo(() => corsi.filter(c => Boolean(c.parent_corso_id)), [corsi]);
+  // Conteggi per i filtri (sempre aggiornati rispetto al totale disponibile)
+  const totalCorsi = useMemo(() => corsi.filter(c => !c.parent_corso_id).length, [corsi]);
+  const totalModuli = useMemo(() => corsi.filter(c => Boolean(c.parent_corso_id)).length, [corsi]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 200);
-    return () => clearTimeout(timer);
-  }, [corsi]);
-
-  // Logica Filtro e Ricerca
-  const filtered: CorsoItem[] = useMemo(() => {
+  // Logica unica di Filtraggio e Ordinamento (Corsi completi sempre in alto)
+  const filteredData = useMemo(() => {
     let base = corsi;
 
-    if (activeFilter === "corsi") base = corsiCompleti;
-    if (activeFilter === "moduli") base = moduliSingoli;
-
+    // 1. Ricerca
     if (searchQuery.trim() !== "") {
       const q = searchQuery.toLowerCase();
       base = base.filter(item => {
@@ -228,17 +302,40 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
       });
     }
 
-    return base;
-  }, [corsi, corsiCompleti, moduliSingoli, activeFilter, searchQuery, parentCourseMap]);
+    // 2. Filtro Tabs
+    if (activeFilter === "corsi") {
+      base = base.filter(c => !c.parent_corso_id);
+    } else if (activeFilter === "moduli") {
+      base = base.filter(c => Boolean(c.parent_corso_id));
+    }
 
-  const visible = filtered.slice(0, visibleCount);
+    // 3. Ordinamento (priorità assoluta ai corsi padre rispetto ai moduli figli)
+    base = [...base].sort((a, b) => {
+      const aIsCorso = !a.parent_corso_id ? 1 : 0;
+      const bIsCorso = !b.parent_corso_id ? 1 : 0;
+      
+      if (aIsCorso !== bIsCorso) {
+        return bIsCorso - aIsCorso; // I corsi vengono prima
+      }
+      
+      // Fallback sull'ordinamento posizionale se impostato in DB
+      return (a.posizione || 0) - (b.posizione || 0);
+    });
+
+    return base;
+  }, [corsi, searchQuery, activeFilter, parentCourseMap]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 200);
+    return () => clearTimeout(timer);
+  }, [corsi]);
 
   const FILTERS = [
-    { key: "corsi" as const,  label: "Corsi Completi", emoji: "🎓", count: corsiCompleti.length, color: "#002f59" },
-    { key: "moduli" as const, label: "Singoli Moduli", emoji: "🧩", count: moduliSingoli.length, color: "#01aa9f" },
+    { key: "corsi" as const,  label: "Corsi Completi", emoji: "🎓", count: totalCorsi, color: "#002f59" },
+    { key: "moduli" as const, label: "Singoli Moduli", emoji: "🧩", count: totalModuli, color: "#01aa9f" },
   ];
 
-  const openDetails = (item: CorsoItem) => {
+  const openDetails = (item: CorsoItem & { selectedPrice?: number; selectedOption?: 'bundle' | 'teoria' | 'pratica' }) => {
     setSelectedItem(item);
     setIsDetailOpen(true);
   };
@@ -275,13 +372,13 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
             Accademia<br className="md:hidden" />{" "}
             <span className="text-brand-sky italic font-light">Altour.</span>
           </h1>
-          <span className="text-[11px] font-black uppercase tracking-widest text-stone-400 pb-1 shrink-0">
-            {filtered.length} percorsi
+          <span className="text-[11px] font-black uppercase tracking-widest text-stone-400 pb-1 shrink-0 text-right">
+            {filteredData.length} percorsi
           </span>
         </div>
         <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
-        {/* ── Barra di Ricerca Premium ── */}
+        {/* ── Barra di Ricerca ── */}
         <div className="mb-8 mt-6 flex justify-center px-2">
           <form 
             onSubmit={(e) => {
@@ -299,7 +396,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
                 setVisibleCount(ITEMS_PER_LOAD);
               }}
               placeholder="Cerca corso, modulo o argomento..."
-              className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-base md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
+              className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-base md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transform-gpu"
             />
             
             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-brand-sky">
@@ -314,7 +411,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.15 }}
                   type="button"
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => { setSearchQuery(""); setVisibleCount(ITEMS_PER_LOAD); }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 text-xs active:scale-90 transition-colors font-black"
                 >
                   ✕
@@ -347,7 +444,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
                 <button
                   key={f.key}
                   onClick={() => toggleFilter(f.key)}
-                  className={`flex-1 min-w-[140px] flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 border ${
+                  className={`flex-1 min-w-[140px] flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 border transform-gpu ${
                     isActive
                       ? "bg-white border-stone-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)] translate-y-[-2px]"
                       : "bg-stone-200/40 border-transparent text-stone-500"
@@ -404,9 +501,10 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         </div>
       </div>
 
-      {/* ── Griglia Contenuti ── */}
+      {/* ── Contenuto Unico Dinamico ── */}
       <div className="max-w-6xl mx-auto px-4 pt-4 pb-20">
-        {visible.length === 0 ? (
+        
+        {filteredData.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
             className="py-20 text-center bg-white rounded-[2rem] border border-stone-100 p-8 shadow-sm"
@@ -425,27 +523,26 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 items-stretch">
               <AnimatePresence mode="popLayout">
-                {visible.map((item, idx) => (
+                {filteredData.slice(0, visibleCount).map((item, idx) => (
                   <FormazioneCard
                     key={item.id}
                     item={item}
                     idx={idx}
                     parentTitle={item.parent_corso_id ? parentCourseMap.get(item.parent_corso_id) : undefined}
-                    onDetails={() => openDetails(item)}
-                    onBook={(mode) => onBookingClick(item.titolo, mode)}
+                    onDetails={(itemWithOptions) => openDetails(itemWithOptions)}
+                    onBook={(bookingTitle, mode) => onBookingClick(bookingTitle, mode)}
                   />
                 ))}
               </AnimatePresence>
             </div>
 
-            {/* Pulsante Load More */}
-            {visibleCount < filtered.length && (
+            {visibleCount < filteredData.length && (
               <div className="flex justify-center mt-8">
                 <button
                   onClick={() => setVisibleCount(v => v + ITEMS_PER_LOAD)}
-                  className="flex items-center gap-2 px-6 py-3.5 bg-white rounded-2xl font-black uppercase text-[9px] tracking-widest text-stone-500 border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95 shadow-sm"
+                  className="flex items-center gap-2 px-6 py-3.5 bg-white rounded-2xl font-black uppercase text-[9px] tracking-widest text-stone-500 border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95 shadow-sm transform-gpu"
                 >
-                  Altri {Math.min(ITEMS_PER_LOAD, filtered.length - visibleCount)} percorsi
+                  Altri {Math.min(ITEMS_PER_LOAD, filteredData.length - visibleCount)} percorsi
                 </button>
               </div>
             )}
@@ -453,21 +550,21 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         )}
       </div>
 
-     {/* ── Modale Dettagli Unificato ── */}
+      {/* ── Modale Dettagli Unificato ── */}
       <ActivityDetailModal
-  activity={selectedItem ? {
-    ...selectedItem,
-    categoria: selectedItem.categoria || "Formazione",
-    titolo: selectedItem.titolo,
-    parentTitle: selectedItem.parent_corso_id ? parentCourseMap.get(selectedItem.parent_corso_id) : undefined
-  } as any : null}
-  isOpen={isDetailOpen}
-  onClose={closeDetails}
-  onBookingClick={(title: string) => {
-    closeDetails();
-    onBookingClick(title, "prenota");
-  }}
-/>
+        activity={selectedItem ? {
+          ...selectedItem,
+          categoria: selectedItem.categoria || "Formazione",
+          titolo: selectedItem.titolo,
+          parentTitle: selectedItem.parent_corso_id ? parentCourseMap.get(selectedItem.parent_corso_id) : undefined
+        } as any : null}
+        isOpen={isDetailOpen}
+        onClose={closeDetails}
+        onBookingClick={(title: string) => {
+          closeDetails();
+          onBookingClick(title, "prenota");
+        }}
+      />
     </div>
   );
 }

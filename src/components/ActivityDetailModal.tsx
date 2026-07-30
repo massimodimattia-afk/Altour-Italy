@@ -78,8 +78,10 @@ export interface Activity {
   descrizione_estesa?: string | null;
   prezzo?: number | string | null;
   prezzo_teorico?: number | string | null;
+  prezzo_pratico?: number | string | null;
   prezzo_bundle?: number | string | null;
   selectedPrice?: number | string | null;
+  selectedOption?: 'bundle' | 'teoria' | 'pratica';
   bookingSummary?: string;
   parentTitle?: string;
   parent_corso_id?: string | null;
@@ -132,21 +134,24 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
   const isTour = activity?.categoria?.toLowerCase() === "tour";
   const isCampo = activity?._tipo === "campo";
 
+  // Legge il prezzo derivato dalla selezione esterna (sulla card)
   const currentPrice = useMemo(() => {
     if (!activity) return null;
     if (activity.selectedPrice != null) return Number(activity.selectedPrice);
-    if (activity.prezzo_teorico != null && Number(activity.prezzo_teorico) > 0) return Number(activity.prezzo_teorico);
-    if (activity.prezzo_bundle != null && Number(activity.prezzo_bundle) > 0) return Number(activity.prezzo_bundle);
     if (activity.prezzo != null && activity.prezzo !== "") return Number(activity.prezzo);
     return null;
   }, [activity]);
 
+  // Crea l'etichetta per la prenotazione in base alla scelta esterna
   const bookingLabel = useMemo(() => {
     if (!activity) return "";
-    if (activity.bookingSummary) return activity.bookingSummary;
+    if (activity.selectedOption) {
+      const optionName = activity.selectedOption === 'bundle' ? "Corso Completo" : activity.selectedOption === 'teoria' ? "Solo Teoria" : "Solo Pratica";
+      return `${activity.titolo} - ${optionName} (€${currentPrice})`;
+    }
     if (activity.parentTitle) return `${activity.titolo} (${activity.parentTitle})`;
     return activity.titolo;
-  }, [activity]);
+  }, [activity, currentPrice]);
 
   const normalizedDesc = useMemo(() => {
     return normalizeMarkdown(activity?.descrizione_estesa || activity?.descrizione);
@@ -250,7 +255,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 loading={images.length > 1 && currentImageIndex > 0 ? "lazy" : "eager"}
               />
 
-              {/* BADGE CATEGORIA SULL'IMMAGINE DEL MODALE (in alto a sinistra) */}
+              {/* BADGE CATEGORIA */}
               {activity.categoria && (
                 <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-black/50 text-white backdrop-blur-md border border-white/20">
                   {activity.categoria}
@@ -359,14 +364,14 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} isAnimationDone={isAnimationDone} />}
               </div>
 
-              {/* FOOTER MOBILE-SAFE */}
+              {/* FOOTER MOBILE-SAFE CON PREZZO EREDITATO DALLA CARD */}
               <div 
                 className="pl-5 pr-16 py-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-4 bg-stone-50/95 backdrop-blur-md shrink-0 transform-gpu overscroll-none z-10"
                 style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
               >
-                <div className="shrink-0 flex flex-col justify-center min-w-[3.5rem]">
+                <div className="shrink-0 flex flex-col justify-center min-w-[4rem]">
                   <span className="block text-[8px] font-black uppercase text-stone-400 leading-none mb-1">
-                    Quota
+                    {activity.selectedOption ? (activity.selectedOption === 'bundle' ? 'Quota Bundle' : activity.selectedOption === 'teoria' ? 'Quota Teoria' : 'Quota Pratica') : 'Quota'}
                   </span>
                   <span className="text-2xl font-black text-brand-stone leading-none">
                     €{currentPrice ?? "—"}
@@ -377,7 +382,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   onClick={() => onBookingClick(bookingLabel)}
                   className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-3.5 px-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-md hover:shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-[0.98] transform-gpu min-h-[48px]"
                 >
-                  <span className="truncate">Prenota</span> 
+                  <span className="truncate">Richiedi Info</span> 
                   <TrendingUp size={15} className="shrink-0" />
                 </button>
               </div>
