@@ -39,6 +39,24 @@ type FilterKey = "corsi" | "moduli";
 const IMG_FALLBACK = "/altour-logo.png";
 const ITEMS_PER_LOAD = typeof window !== "undefined" && window.innerWidth >= 1024 ? 6 : 4;
 
+const CATEGORIA_COLORS: Record<string, string> = {
+  "Avventura":             "#e94544",
+  "Benessere":             "#a5d9c9",
+  "Borghi più belli":      "#946a52",
+  "Cammini":               "#e3c45d",
+  "Educazione all'aperto": "#01aa9f",
+  "Eventi":                "#ffc0cb",
+  "Formazione":            "#002f59",
+  "Immersi nel verde":     "#358756",
+  "Luoghi dello spirito":  "#c8a3c9",
+  "Novità":                "#75c43c",
+  "Speciali":              "#b8163c",
+  "Acqua e cielo":         "#7aaecd",
+  "Trek urbano":           "#f39452",
+  "Tracce sulla neve":     "#a8cce0",
+  "Cielo stellato":        "#1e2855",
+};
+
 function formatMarkdown(text: string | null | undefined): string {
   if (!text) return "";
   return text
@@ -57,6 +75,8 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
   onBook: (mode?: "info" | "prenota") => void;
 }>(function FormazioneCard({ item, parentTitle, idx, onDetails, onBook }, ref) {
   const isModulo = Boolean(item.parent_corso_id);
+  const categoriaName = item.categoria || "Formazione";
+  const categoryBg = CATEGORIA_COLORS[categoriaName] || "#002f59";
 
   return (
     <motion.div
@@ -69,7 +89,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
       className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform h-full"
       style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
     >
-      {/* Immagine con badge tipo */}
+      {/* Immagine con badge categoria */}
       <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
         <img
           src={item.immagine_url || IMG_FALLBACK}
@@ -80,14 +100,15 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
+        {/* BADGE CATEGORIA ESCLUSIVO */}
         <div
-          className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md"
+          className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md backdrop-blur-sm z-10"
           style={{
-            backgroundColor: isModulo ? "#01aa9f" : "#002f59",
+            backgroundColor: categoryBg,
             textShadow: "0 1px 2px rgba(0,0,0,0.3)"
           }}
         >
-          {isModulo ? "🧩 Modulo" : "🎓 Corso Completo"}
+          {categoriaName}
         </div>
       </div>
 
@@ -251,8 +272,8 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Formazione</p>
         <div className="flex items-end justify-between gap-4">
           <h1 className="text-3xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9]">
-            Corsi &<br className="md:hidden" />{" "}
-            <span className="text-brand-sky italic font-light">Moduli.</span>
+            Accademia<br className="md:hidden" />{" "}
+            <span className="text-brand-sky italic font-light">Altour.</span>
           </h1>
           <span className="text-[11px] font-black uppercase tracking-widest text-stone-400 pb-1 shrink-0">
             {filtered.length} percorsi
@@ -436,6 +457,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
       <ActivityDetailModal
         activity={selectedItem ? {
           ...selectedItem,
+          categoria: selectedItem.categoria || "Formazione",
           titolo: selectedItem.parent_corso_id && parentCourseMap.get(selectedItem.parent_corso_id)
             ? `${selectedItem.titolo} (${parentCourseMap.get(selectedItem.parent_corso_id)})`
             : selectedItem.titolo
