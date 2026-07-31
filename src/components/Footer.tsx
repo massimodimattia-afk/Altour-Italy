@@ -10,10 +10,10 @@ interface FooterProps {
 export default function Footer({ onNavigate }: FooterProps) {
   return (
     <footer className="bg-[#2a2723] text-stone-200 mt-auto border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 md:py-16">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 md:py-12">
         
         {/* Griglia Principale */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
           
           {/* 1. BRAND STORY */}
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
@@ -22,7 +22,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               whileTap={{ scale: 0.95 }}
               src="/altour-logo.png"
               alt="Altour Italy"
-              className="h-16 md:h-20 w-auto object-contain rounded-2xl mb-6 bg-white/5 p-1 border border-white/10 cursor-pointer"
+              className="h-14 md:h-16 w-auto object-contain rounded-2xl mb-4 bg-white/5 p-1 border border-white/10 cursor-pointer"
               onClick={() => onNavigate("home")}
             />
             <p className="text-[13px] leading-relaxed text-stone-400 max-w-xs font-medium italic">
@@ -33,26 +33,26 @@ export default function Footer({ onNavigate }: FooterProps) {
 
           {/* 2. CONTATTI RAPIDI */}
           <div className="flex flex-col items-center md:items-start">
-            <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-8 opacity-50">
+            <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-5 opacity-50">
               Contatti
             </h3>
-            <div className="flex flex-col space-y-4 w-full font-bold">
+            <div className="flex flex-col space-y-3 w-full font-bold">
               <a href="mailto:info@altouritaly.it" className="flex items-center justify-center md:justify-start gap-4 text-stone-300 hover:text-brand-sky transition-colors group">
-                <div className="p-2.5 bg-white/5 rounded-lg group-hover:bg-brand-sky/20 transition-all">
+                <div className="p-2 bg-white/5 rounded-lg group-hover:bg-brand-sky/20 transition-all">
                   <Mail size={16} />
                 </div>
                 <span className="text-[12px] tracking-tight">info@altouritaly.it</span>
               </a>
 
               <a href="tel:+393281613762" className="flex items-center justify-center md:justify-start gap-4 text-stone-300 hover:text-brand-sky transition-colors group">
-                <div className="p-2.5 bg-white/5 rounded-lg group-hover:bg-brand-sky/20 transition-all">
+                <div className="p-2 bg-white/5 rounded-lg group-hover:bg-brand-sky/20 transition-all">
                   <Phone size={16} />
                 </div>
                 <span className="text-[12px] tracking-tight">+39 328 1613762</span>
               </a>
 
               <div className="flex items-center justify-center md:justify-start gap-4 text-stone-500">
-                <div className="p-2.5 bg-white/5 rounded-lg">
+                <div className="p-2 bg-white/5 rounded-lg">
                   <MapPin size={16} />
                 </div>
                 <span className="text-[12px] tracking-tight font-medium">Roma, IT</span>
@@ -62,7 +62,7 @@ export default function Footer({ onNavigate }: FooterProps) {
 
           {/* 3. SOCIAL COMMUNITY */}
           <div className="flex flex-col items-center md:items-start">
-            <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-8 opacity-50">
+            <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-5 opacity-50">
               Community
             </h3>
             <div className="flex flex-row md:flex-col gap-3 w-full max-w-[300px] md:max-w-none">
@@ -72,7 +72,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 whileTap={{ scale: 0.95 }}
-                className="flex-1 flex items-center justify-center gap-3 px-4 py-4 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-pink-600 transition-all"
+                className="flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-pink-600 transition-all"
               >
                 <Instagram size={18} />
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Instagram</span>
@@ -83,7 +83,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 whileTap={{ scale: 0.95 }}
-                className="flex-1 flex items-center justify-center gap-3 px-4 py-4 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-blue-700 transition-all"
+                className="flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-blue-700 transition-all"
               >
                 <Facebook size={18} />
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Facebook</span>
@@ -94,7 +94,7 @@ export default function Footer({ onNavigate }: FooterProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 whileTap={{ scale: 0.95 }}
-                className="flex-1 flex items-center justify-center gap-3 px-4 py-4 bg-white/5 border border-white/10 text-[#25D366] md:text-white rounded-xl hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all"
+                className="flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 text-[#25D366] md:text-white rounded-xl hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all"
               >
                 <MessageCircle size={18} />
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">WhatsApp</span>
@@ -105,8 +105,8 @@ export default function Footer({ onNavigate }: FooterProps) {
         </div>
 
         {/* FOOTER BOTTOM */}
-        <div className="border-t border-white/5 mt-16 pt-10">
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-12">
+        <div className="border-t border-white/5 mt-12 pt-8">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-8">
             {["Privacy Policy", "Cookie Policy", "Termini"].map((link) => (
               <button
                 key={link}
@@ -120,12 +120,12 @@ export default function Footer({ onNavigate }: FooterProps) {
 
           <div className="flex flex-col items-center text-center">
             
-            <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black mb-8">
+            <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black mb-6">
               &copy; {new Date().getFullYear()} Altour Italy
             </p>
 
-            {/* SEZIONE CREDITI GLORIONA - FIX LEGGIBILITÀ E DESIGN */}
-            <div className="flex flex-col items-center gap-3">
+            {/* SEZIONE CREDITI GLORIONA - Logo fortemente ridotto per un effetto firma/badge */}
+            <div className="flex flex-col items-center gap-2.5">
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-stone-500 font-bold">
                 <span>Made with</span>
                 <Heart size={12} className="text-brand-sky fill-brand-sky/20" />
@@ -133,15 +133,15 @@ export default function Footer({ onNavigate }: FooterProps) {
               </div>
 
               <motion.div
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="bg-[#f0f0f0] px-4 py-3 rounded-2xl shadow-xl cursor-pointer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-[#f0f0f0] px-2.5 py-1.5 rounded-xl shadow-lg cursor-pointer"
               >
                 <img
                   src={glorionaLogo}
                   alt="Gloriona Production"
-                  /* w-28 assicura che il testo sia grande a sufficienza. mix-blend fonde il suo sfondo grigio. */
-                  className="w-28 md:w-32 h-auto object-contain mix-blend-darken opacity-90 hover:opacity-100 transition-opacity"
+                  /* w-16 (64px) su mobile e w-20 (80px) su desktop per una grandezza discreta e perfetta */
+                  className="w-16 md:w-20 h-auto object-contain mix-blend-darken opacity-80 hover:opacity-100 transition-opacity"
                 />
               </motion.div>
             </div>

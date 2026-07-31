@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Clock, BookOpen } from "lucide-react";
 import { CorsoItem } from "../pages/Corsi";
@@ -45,21 +45,33 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
     const categoria = corso.categoria || "Formazione";
     const categoryBg = CATEGORIA_COLORS[categoria] || "#002f59";
 
-    // ─── LOGICA PREZZO PER LA CARD ───
+    // ─── LOGICA PREZZI E OPZIONI ───
+    const hasBundle = corso.prezzo_bundle && Number(corso.prezzo_bundle) > 0;
+    const hasTeoria = corso.prezzo_teorico && Number(corso.prezzo_teorico) > 0;
+    const hasPratica = corso.prezzo_pratico && Number(corso.prezzo_pratico) > 0;
+
+    // Determina il tab di default (priorità: Bundle > Teoria > Pratica)
+    const defaultTab = hasBundle ? 'bundle' : hasTeoria ? 'teoria' : hasPratica ? 'pratica' : null;
+    const [selectedOption, setSelectedOption] = useState<'bundle' | 'teoria' | 'pratica' | null>(defaultTab);
+
+    // Se il corso cambia dinamicamente, resettiamo il selettore
+    useEffect(() => {
+      setSelectedOption(hasBundle ? 'bundle' : hasTeoria ? 'teoria' : hasPratica ? 'pratica' : null);
+    }, [hasBundle, hasTeoria, hasPratica]);
+
+    // Calcolo del prezzo mostrato in base all'opzione selezionata
     let displayPrice = corso.prezzo;
     let priceLabel = "Quota Corso";
 
-    if (displayPrice == null || displayPrice === 0) {
-      if (corso.prezzo_bundle && Number(corso.prezzo_bundle) > 0) {
-        displayPrice = Number(corso.prezzo_bundle);
-        priceLabel = "Corso Completo";
-      } else if (corso.prezzo_teorico && Number(corso.prezzo_teorico) > 0) {
-        displayPrice = Number(corso.prezzo_teorico);
-        priceLabel = "Solo Teoria";
-      } else if (corso.prezzo_pratico && Number(corso.prezzo_pratico) > 0) {
-        displayPrice = Number(corso.prezzo_pratico);
-        priceLabel = "Solo Pratica";
-      }
+    if (selectedOption === 'bundle') {
+      displayPrice = Number(corso.prezzo_bundle);
+      priceLabel = "Corso Completo";
+    } else if (selectedOption === 'teoria') {
+      displayPrice = Number(corso.prezzo_teorico);
+      priceLabel = "Solo Teoria";
+    } else if (selectedOption === 'pratica') {
+      displayPrice = Number(corso.prezzo_pratico);
+      priceLabel = "Solo Pratica";
     }
 
     return (
@@ -85,7 +97,6 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-          {/* BADGE CATEGORIA ESCLUSIVO */}
           <div
             className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md backdrop-blur-sm z-10"
             style={{
@@ -116,19 +127,61 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
             dangerouslySetInnerHTML={{ __html: formatMarkdown(corso.descrizione) }}
           />
 
-          {/* Prezzo e Pulsanti */}
-          <div className="pt-3 border-t border-stone-100 flex flex-col gap-3 mt-auto">
+          {/* Wrapper per Selettore, Prezzo e Pulsanti agganciato in fondo */}
+          <div className="pt-4 border-t border-stone-100 flex flex-col gap-3 mt-auto">
+            
+            {/* PILL SELECTOR STANDARDIZZATO */}
+            <div className="flex bg-stone-100 rounded-lg p-1">
+              <button
+                type="button"
+                onClick={() => setSelectedOption('bundle')}
+                disabled={!hasBundle}
+                className={`flex-1 text-[9px] font-black uppercase tracking-wider py-1.5 rounded-md transition-all ${
+                  selectedOption === 'bundle' ? 'bg-white shadow-sm text-brand-stone' : 'text-stone-400 hover:text-stone-600'
+                } ${!hasBundle ? 'opacity-30 cursor-not-allowed' : ''}`}
+              >
+                Completo
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedOption('teoria')}
+                disabled={!hasTeoria}
+                className={`flex-1 text-[9px] font-black uppercase tracking-wider py-1.5 rounded-md transition-all ${
+                  selectedOption === 'teoria' ? 'bg-white shadow-sm text-brand-stone' : 'text-stone-400 hover:text-stone-600'
+                } ${!hasTeoria ? 'opacity-30 cursor-not-allowed' : ''}`}
+              >
+                Teoria
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedOption('pratica')}
+                disabled={!hasPratica}
+                className={`flex-1 text-[9px] font-black uppercase tracking-wider py-1.5 rounded-md transition-all ${
+                  selectedOption === 'pratica' ? 'bg-white shadow-sm text-brand-stone' : 'text-stone-400 hover:text-stone-600'
+                } ${!hasPratica ? 'opacity-30 cursor-not-allowed' : ''}`}
+              >
+                Pratica
+              </button>
+            </div>
+
+            {/* QUOTA */}
             {displayPrice !== undefined && displayPrice !== null && displayPrice > 0 && (
-              <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline justify-between mb-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">{priceLabel}</span>
                 <span className="text-base font-black text-brand-stone">€{displayPrice}</span>
               </div>
             )}
 
+            {/* PULSANTI AZIONE */}
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => openDetails({ ...corso, categoria })}
+                onClick={() => openDetails({ 
+                  ...corso, 
+                  categoria,
+                  selectedOption: selectedOption,
+                  selectedPrice: displayPrice
+                })}
                 className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95 flex items-center justify-center gap-1"
               >
                 <BookOpen size={11} /> Dettagli

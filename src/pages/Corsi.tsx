@@ -25,6 +25,8 @@ export interface CorsoItem {
   prezzo_teorico: number | null;
   prezzo_pratico: number | null;
   prezzo_bundle: number | null;
+  selectedOption?: 'corso' | 'bundle' | 'teoria' | 'pratica' | null;
+  selectedPrice?: number | null;
 }
 
 interface CorsiPageProps {
