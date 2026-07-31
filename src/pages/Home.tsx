@@ -11,9 +11,10 @@ import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { motion } from "framer-motion";
-import { CourseCard, Corso } from "../components/CourseCard";
+import { CourseCard } from "../components/CourseCard";
+import { CorsoItem } from "../pages/Corsi";
 import Section from "../components/Section";
-import FeedbackCarousel from "../components/FeedbackCarousel"; // <-- Aggiunto import
+import FeedbackCarousel from "../components/FeedbackCarousel"; 
 
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
@@ -126,7 +127,7 @@ function heroAnim(
 
 export default function Home({ onNavigate, onBookingClick }: HomeProps) {
   const [featuredActivities, setFeaturedActivities] = useState<FeaturedActivity[]>([]);
-  const [courses, setCourses]                       = useState<Corso[]>([]);
+  const [courses, setCourses]                       = useState<CorsoItem[]>([]);
   const [loading, setLoading]                       = useState(true);
   const [selectedActivity, setSelectedActivity]     = useState<any | null>(null);
   const [isDetailOpen, setIsDetailOpen]             = useState(false);
@@ -153,7 +154,7 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         
         if (crs) {
           const coursesWithTipo = (crs as any[]).map(c => ({ ...c, _tipo: "corso" as const }));
-          setCourses(coursesWithTipo as Corso[]);
+          setCourses(coursesWithTipo as CorsoItem[]);
         }
       } catch (e) {
         console.error(e);
@@ -163,8 +164,33 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
     loadData();
   }, [isMobile]);
 
+  // ─── NUOVA LOGICA OPENDETAILS CON FALLBACK PREZZI CORSI ───
   const openDetails = useCallback((activity: any) => {
-    setSelectedActivity(activity);
+    let priceToPass = activity.selectedPrice ?? activity.prezzo;
+    let optionToPass = activity.selectedOption;
+
+    if (activity._tipo === 'corso' && activity.selectedPrice == null) {
+      const hasBundle = activity.prezzo_bundle && Number(activity.prezzo_bundle) > 0;
+      const hasTeoria = activity.prezzo_teorico && Number(activity.prezzo_teorico) > 0;
+      const hasPratica = activity.prezzo_pratico && Number(activity.prezzo_pratico) > 0;
+
+      if (hasBundle) {
+        priceToPass = Number(activity.prezzo_bundle);
+        optionToPass = 'bundle';
+      } else if (hasTeoria) {
+        priceToPass = Number(activity.prezzo_teorico);
+        optionToPass = 'teoria';
+      } else if (hasPratica) {
+        priceToPass = Number(activity.prezzo_pratico);
+        optionToPass = 'pratica';
+      }
+    }
+
+    setSelectedActivity({
+      ...activity,
+      selectedPrice: priceToPass,
+      selectedOption: optionToPass
+    });
     setIsDetailOpen(true);
   }, []);
 

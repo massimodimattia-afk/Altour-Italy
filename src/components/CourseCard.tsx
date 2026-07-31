@@ -45,6 +45,23 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
     const categoria = corso.categoria || "Formazione";
     const categoryBg = CATEGORIA_COLORS[categoria] || "#002f59";
 
+    // ─── LOGICA PREZZO PER LA CARD ───
+    let displayPrice = corso.prezzo;
+    let priceLabel = "Quota Corso";
+
+    if (displayPrice == null || displayPrice === 0) {
+      if (corso.prezzo_bundle && Number(corso.prezzo_bundle) > 0) {
+        displayPrice = Number(corso.prezzo_bundle);
+        priceLabel = "Corso Completo";
+      } else if (corso.prezzo_teorico && Number(corso.prezzo_teorico) > 0) {
+        displayPrice = Number(corso.prezzo_teorico);
+        priceLabel = "Solo Teoria";
+      } else if (corso.prezzo_pratico && Number(corso.prezzo_pratico) > 0) {
+        displayPrice = Number(corso.prezzo_pratico);
+        priceLabel = "Solo Pratica";
+      }
+    }
+
     return (
       <motion.div
         ref={ref}
@@ -56,7 +73,7 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
         className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform h-full"
         style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
       >
-        {/* Header Immagine con badge Categoria (es. FORMAZIONE) */}
+        {/* Header Immagine con badge Categoria */}
         <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0">
           <img
             src={corso.immagine_url || IMG_FALLBACK}
@@ -68,7 +85,7 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-          {/* BADGE CATEGORIA ESCLUSIVO (in alto a destra) */}
+          {/* BADGE CATEGORIA ESCLUSIVO */}
           <div
             className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md backdrop-blur-sm z-10"
             style={{
@@ -101,10 +118,10 @@ export const CourseCard = forwardRef<HTMLDivElement, CourseCardProps>(
 
           {/* Prezzo e Pulsanti */}
           <div className="pt-3 border-t border-stone-100 flex flex-col gap-3 mt-auto">
-            {corso.prezzo !== undefined && corso.prezzo !== null && corso.prezzo > 0 && (
+            {displayPrice !== undefined && displayPrice !== null && displayPrice > 0 && (
               <div className="flex items-baseline justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Quota Corso</span>
-                <span className="text-base font-black text-brand-stone">€{corso.prezzo}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">{priceLabel}</span>
+                <span className="text-base font-black text-brand-stone">€{displayPrice}</span>
               </div>
             )}
 

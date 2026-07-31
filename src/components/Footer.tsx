@@ -1,6 +1,8 @@
 import { Instagram, Mail, Phone, Heart, Facebook, MapPin, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
+import glorionaLogo from "/gloriona-logo_2.png";
+
 interface FooterProps {
   onNavigate: (page: string) => void;
 }
@@ -104,7 +106,7 @@ export default function Footer({ onNavigate }: FooterProps) {
 
         {/* FOOTER BOTTOM */}
         <div className="border-t border-white/5 mt-16 pt-10">
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-10">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-12">
             {["Privacy Policy", "Cookie Policy", "Termini"].map((link) => (
               <button
                 key={link}
@@ -116,33 +118,32 @@ export default function Footer({ onNavigate }: FooterProps) {
             ))}
           </div>
 
-          <div className="flex flex-col items-center gap-8 text-center">
-            <div className="space-y-1">
-              <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black">
-                &copy; {new Date().getFullYear()} Altour Italy
-              </p>
-            </div>
+          <div className="flex flex-col items-center text-center">
+            
+            <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black mb-8">
+              &copy; {new Date().getFullYear()} Altour Italy
+            </p>
 
-            {/* SEZIONE CREDITI */}
-            <div className="flex flex-col items-center gap-3 group">
-              <div className="flex items-center gap-3 text-[8px] uppercase tracking-[0.3em] text-stone-600 font-bold">
+            {/* SEZIONE CREDITI GLORIONA - FIX LEGGIBILITÀ E DESIGN */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-stone-500 font-bold">
                 <span>Made with</span>
-                <Heart size={10} className="text-brand-sky fill-brand-sky/20" />
+                <Heart size={12} className="text-brand-sky fill-brand-sky/20" />
                 <span>by</span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <motion.img
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  src="/gloriona-logo.png"
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="bg-[#f0f0f0] px-4 py-3 rounded-2xl shadow-xl cursor-pointer"
+              >
+                <img
+                  src={glorionaLogo}
                   alt="Gloriona Production"
-                  className="h-8 w-auto object-contain opacity-70 group-hover:opacity-100 transition-all"
+                  /* w-28 assicura che il testo sia grande a sufficienza. mix-blend fonde il suo sfondo grigio. */
+                  className="w-28 md:w-32 h-auto object-contain mix-blend-darken opacity-90 hover:opacity-100 transition-opacity"
                 />
-                <span className="text-[10px] text-stone-500 font-black tracking-[0.4em] uppercase opacity-60 group-hover:opacity-100 group-hover:text-stone-300 transition-all">
-                  GLORIONA Prod. 2026
-                </span>
-              </div>
+              </motion.div>
             </div>
 
           </div>
