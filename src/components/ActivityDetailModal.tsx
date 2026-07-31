@@ -382,7 +382,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   onClick={() => onBookingClick(bookingLabel)}
                   className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-3.5 px-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-md hover:shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-[0.98] transform-gpu min-h-[48px]"
                 >
-                  <span className="truncate">Richiedi Info</span> 
+                  <span className="truncate">Prenota</span> 
                   <TrendingUp size={15} className="shrink-0" />
                 </button>
               </div>

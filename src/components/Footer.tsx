@@ -10,10 +10,10 @@ export default function Footer({ onNavigate }: FooterProps) {
     <footer className="bg-[#2a2723] text-stone-200 mt-auto border-t border-white/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 md:py-16">
         
-        {/* Griglia Principale: su mobile diventano 3 sezioni centrate */}
+        {/* Griglia Principale */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-16">
           
-          {/* 1. BRAND STORY - Ridotto il logo su mobile per simmetria */}
+          {/* 1. BRAND STORY */}
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <motion.img
               whileHover={{ scale: 1.05 }}
@@ -29,7 +29,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             </p>
           </div>
 
-          {/* 2. CONTATTI RAPIDI - Layout più compatto su mobile */}
+          {/* 2. CONTATTI RAPIDI */}
           <div className="flex flex-col items-center md:items-start">
             <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-8 opacity-50">
               Contatti
@@ -58,14 +58,13 @@ export default function Footer({ onNavigate }: FooterProps) {
             </div>
           </div>
 
-          {/* 3. SOCIAL COMMUNITY - Aggiunto WhatsApp con colori */}
+          {/* 3. SOCIAL COMMUNITY */}
           <div className="flex flex-col items-center md:items-start">
             <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-8 opacity-50">
               Community
             </h3>
             <div className="flex flex-row md:flex-col gap-3 w-full max-w-[300px] md:max-w-none">
               
-              {/* Instagram con sfumatura */}
               <motion.a
                 href="https://www.instagram.com/altouritaly/"
                 target="_blank"
@@ -77,7 +76,6 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Instagram</span>
               </motion.a>
 
-              {/* Facebook blu */}
               <motion.a
                 href="https://www.facebook.com/AltourItaly"
                 target="_blank"
@@ -89,7 +87,6 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Facebook</span>
               </motion.a>
 
-              {/* WhatsApp verde */}
               <motion.a
                 href="https://wa.me/393281613762"
                 target="_blank"
@@ -126,16 +123,28 @@ export default function Footer({ onNavigate }: FooterProps) {
               </p>
             </div>
 
-            <div className="flex flex-col items-center gap-4">
+            {/* SEZIONE CREDITI */}
+            <div className="flex flex-col items-center gap-3 group">
               <div className="flex items-center gap-3 text-[8px] uppercase tracking-[0.3em] text-stone-600 font-bold">
                 <span>Made with</span>
                 <Heart size={10} className="text-brand-sky fill-brand-sky/20" />
                 <span>by</span>
               </div>
-              <span className="text-[10px] text-stone-500 font-black tracking-[0.4em] uppercase opacity-60">
-                GLORIONA Prod. 2026
-              </span>
+
+              <div className="flex items-center gap-3">
+                <motion.img
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  src="/gloriona-logo.png"
+                  alt="Gloriona Production"
+                  className="h-8 w-auto object-contain opacity-70 group-hover:opacity-100 transition-all"
+                />
+                <span className="text-[10px] text-stone-500 font-black tracking-[0.4em] uppercase opacity-60 group-hover:opacity-100 group-hover:text-stone-300 transition-all">
+                  GLORIONA Prod. 2026
+                </span>
+              </div>
             </div>
+
           </div>
         </div>
       </div>
