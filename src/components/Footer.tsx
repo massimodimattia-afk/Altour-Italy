@@ -1,7 +1,7 @@
 import { Instagram, Mail, Phone, Heart, Facebook, MapPin, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-import glorionaLogo from "/gloriona-logo_2.png";
+import glorionaLogo from "/gloriona-logo_2.jpg";
 
 interface FooterProps {
   onNavigate: (page: string) => void;
@@ -67,6 +67,7 @@ export default function Footer({ onNavigate }: FooterProps) {
             </h3>
             <div className="flex flex-row md:flex-col gap-3 w-full max-w-[300px] md:max-w-none">
               
+              {/* INSTAGRAM */}
               <motion.a
                 href="https://www.instagram.com/altouritaly/"
                 target="_blank"
@@ -78,23 +79,25 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Instagram</span>
               </motion.a>
 
+              {/* FACEBOOK */}
               <motion.a
                 href="https://www.facebook.com/AltourItaly"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileTap={{ scale: 0.95 }}
-                className="flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-blue-700 transition-all"
+                className="flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-blue-600 transition-all"
               >
                 <Facebook size={18} />
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Facebook</span>
               </motion.a>
 
+              {/* WHATSAPP - Ora allineato agli altri */}
               <motion.a
                 href="https://wa.me/393281613762"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileTap={{ scale: 0.95 }}
-                className="flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 text-[#25D366] md:text-white rounded-xl hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all"
+                className="flex-1 flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-xl hover:bg-white/10 hover:text-[#25D366] transition-all"
               >
                 <MessageCircle size={18} />
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">WhatsApp</span>
