@@ -1,7 +1,7 @@
 import { Instagram, Mail, Phone, Heart, Facebook, MapPin, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
-import glorionaLogo from "/gloriona-logo_2.jpg";
+import glorionaLogo from "/Adobe Express - file.png";
 
 interface FooterProps {
   onNavigate: (page: string) => void;
@@ -10,10 +10,10 @@ interface FooterProps {
 export default function Footer({ onNavigate }: FooterProps) {
   return (
     <footer className="bg-[#2a2723] text-stone-200 mt-auto border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10 md:py-12">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6 md:py-8">
         
         {/* Griglia Principale */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
           
           {/* 1. BRAND STORY */}
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
@@ -33,7 +33,7 @@ export default function Footer({ onNavigate }: FooterProps) {
 
           {/* 2. CONTATTI RAPIDI */}
           <div className="flex flex-col items-center md:items-start">
-            <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-5 opacity-50">
+            <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-4 opacity-50">
               Contatti
             </h3>
             <div className="flex flex-col space-y-3 w-full font-bold">
@@ -62,12 +62,11 @@ export default function Footer({ onNavigate }: FooterProps) {
 
           {/* 3. SOCIAL COMMUNITY */}
           <div className="flex flex-col items-center md:items-start">
-            <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-5 opacity-50">
+            <h3 className="text-white font-black uppercase text-[9px] tracking-[0.4em] mb-4 opacity-50">
               Community
             </h3>
             <div className="flex flex-row md:flex-col gap-3 w-full max-w-[300px] md:max-w-none">
               
-              {/* INSTAGRAM */}
               <motion.a
                 href="https://www.instagram.com/altouritaly/"
                 target="_blank"
@@ -79,7 +78,6 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Instagram</span>
               </motion.a>
 
-              {/* FACEBOOK */}
               <motion.a
                 href="https://www.facebook.com/AltourItaly"
                 target="_blank"
@@ -91,7 +89,6 @@ export default function Footer({ onNavigate }: FooterProps) {
                 <span className="font-black text-[9px] uppercase tracking-widest hidden sm:inline md:inline">Facebook</span>
               </motion.a>
 
-              {/* WHATSAPP - Ora allineato agli altri */}
               <motion.a
                 href="https://wa.me/393281613762"
                 target="_blank"
@@ -108,8 +105,8 @@ export default function Footer({ onNavigate }: FooterProps) {
         </div>
 
         {/* FOOTER BOTTOM */}
-        <div className="border-t border-white/5 mt-12 pt-8">
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-8">
+        <div className="border-t border-white/5 mt-8 pt-6">
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-6">
             {["Privacy Policy", "Cookie Policy", "Termini"].map((link) => (
               <button
                 key={link}
@@ -123,38 +120,36 @@ export default function Footer({ onNavigate }: FooterProps) {
 
           <div className="flex flex-col items-center text-center">
             
-            <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black mb-6">
+            <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black mb-4">
               &copy; GLORIONA Prod. {new Date().getFullYear()} Altour Italy
             </p>
 
-            {/* SEZIONE CREDITI GLORIONA - Ricostruita con Testo React */}
-            <div className="flex flex-col items-center gap-2.5">
-              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-stone-500 font-bold">
-                <span>Made with</span>
-                <Heart size={12} className="text-brand-sky fill-brand-sky/20" />
-                <span>by</span>
-              </div>
+          {/* SEZIONE CREDITI GLORIONA */}
+<div className="flex flex-col items-center">
+  {/* Scritta Made with by */}
+  <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[#7da0b3] font-bold mb-0">
+    <span>Made with</span>
+    <Heart size={12} className="text-[#7da0b3]" />
+    <span>by</span>
+  </div>
 
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-[#f0f0f0] px-4 py-2.5 rounded-xl shadow-lg cursor-pointer flex flex-col items-center justify-center gap-1"
-              >
-                <img
-                  src={glorionaLogo}
-                  alt="Gloriona Production"
-                  className="w-20 md:w-24 h-auto object-contain mix-blend-darken opacity-80 hover:opacity-100 transition-opacity"
-                />
-                <div className="text-center mt-0.5">
-                  <span className="block text-[#161c28] font-black text-[10px] md:text-[11px] tracking-widest leading-none">
-                    GLORIONA
-                  </span>
-                  <span className="block text-[#161c28] font-bold text-[8px] md:text-[9px] tracking-widest leading-tight mt-0.5">
-                    PRODUCTION
-                  </span>
-                </div>
-              </motion.div>
-            </div>
+  {/* Wrapper Logo + Scritta sotto (avvicinato con margine negativo) */}
+  <div className="flex flex-col items-center justify-center -mt-1">
+    <img
+      src={glorionaLogo}
+      alt="Gloriona Production"
+      className="w-20 md:w-24 h-auto object-contain mix-blend-lighten"
+    />
+    <div className="text-center mt-[-20px]">
+      <span className="block text-stone-100 font-black text-[12px] md:text-[13px] tracking-widest leading-none">
+        GLORIONA
+      </span>
+      <span className="block text-[#7da0b3] font-bold text-[9px] md:text-[10px] tracking-widest leading-tight mt-0.5">
+        PRODUCTION
+      </span>
+    </div>
+  </div>
+</div>
 
           </div>
         </div>
