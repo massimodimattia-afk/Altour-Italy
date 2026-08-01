@@ -124,7 +124,7 @@ export default function Footer({ onNavigate }: FooterProps) {
               &copy; {new Date().getFullYear()} Altour Italy
             </p>
 
-            {/* SEZIONE CREDITI GLORIONA - Logo fortemente ridotto per un effetto firma/badge */}
+            {/* SEZIONE CREDITI GLORIONA - Dimensioni leggermente aumentate (w-20 / w-24) */}
             <div className="flex flex-col items-center gap-2.5">
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-stone-500 font-bold">
                 <span>Made with</span>
@@ -135,13 +135,12 @@ export default function Footer({ onNavigate }: FooterProps) {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-[#f0f0f0] px-2.5 py-1.5 rounded-xl shadow-lg cursor-pointer"
+                className="bg-[#f0f0f0] px-3 py-2 rounded-xl shadow-lg cursor-pointer"
               >
                 <img
                   src={glorionaLogo}
                   alt="Gloriona Production"
-                  /* w-16 (64px) su mobile e w-20 (80px) su desktop per una grandezza discreta e perfetta */
-                  className="w-16 md:w-20 h-auto object-contain mix-blend-darken opacity-80 hover:opacity-100 transition-opacity"
+                  className="w-20 md:w-24 h-auto object-contain mix-blend-darken opacity-80 hover:opacity-100 transition-opacity"
                 />
               </motion.div>
             </div>

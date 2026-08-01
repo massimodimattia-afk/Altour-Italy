@@ -1,7 +1,7 @@
 import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
 import {
   X, TrendingUp, Share2,
-  Briefcase as Backpack, Mountain, MapPin, ArrowUp, ExternalLink, Users, Clock, Layers
+  Briefcase, Compass, Mountain, MapPin, ArrowUp, ExternalLink, Users, Clock, Layers
 } from "lucide-react";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -130,9 +130,17 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
     return activity ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[] : [];
   }, [activity]);
 
+  // LOGICA RICONOSCIMENTO ATTIVITÀ PIÙ ROBUSTA
   const hasMap = Boolean(activity?.lat && activity?.lng);
   const isTour = activity?.categoria?.toLowerCase() === "tour";
   const isCampo = activity?._tipo === "campo";
+  
+  // Riconosce se è un corso o modulo non solo da _tipo, ma anche se ha opzioni di prezzo specifiche dei corsi o un parentTitle
+  const isCorso = 
+    activity?._tipo === 'corso' || 
+    activity?.prezzo_bundle !== undefined || 
+    activity?.prezzo_teorico !== undefined || 
+    activity?.parentTitle != null;
 
   // Legge il prezzo derivato dalla selezione esterna (sulla card)
   const currentPrice = useMemo(() => {
@@ -342,8 +350,8 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 {activity.attrezzatura && (
                   <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 transform-gpu">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
-                      <Backpack size={14} className="text-brand-sky" />
-                      {activity._tipo === 'corso' ? "Argomenti trattati / Requisiti" : "Equipaggiamento consigliato"}
+                      {isCorso ? <Briefcase size={14} className="text-brand-sky" /> : <Compass size={14} className="text-brand-sky" />}
+                      {isCorso ? "Argomenti trattati" : "Equipaggiamento consigliato"}
                     </h4>
                     <div className="text-xs text-stone-600 leading-relaxed font-medium">{formatEquipmentList(activity.attrezzatura)}</div>
                   </div>
@@ -352,7 +360,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 {isCampo && activity.servizi && (
                   <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 transform-gpu">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
-                      <Backpack size={14} className="text-brand-sky" />
+                      <Compass size={14} className="text-brand-sky" />
                       Attività in programma
                     </h4>
                     <div className="text-xs text-stone-600 leading-relaxed font-medium">

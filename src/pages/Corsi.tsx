@@ -333,8 +333,8 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
   }, [corsi]);
 
   const FILTERS = [
-    { key: "corsi" as const,  label: "Corsi Completi", emoji: "🎓", count: totalCorsi, color: "#002f59" },
-    { key: "moduli" as const, label: "Singoli Moduli", emoji: "🧩", count: totalModuli, color: "#01aa9f" },
+    { key: "corsi" as const,  label: "Corsi", emoji: "🎓", count: totalCorsi, color: "#002f59" },
+    { key: "moduli" as const, label: "Moduli", emoji: "🧩", count: totalModuli, color: "#01aa9f" },
   ];
 
   const openDetails = (item: CorsoItem & { selectedPrice?: number; selectedOption?: 'bundle' | 'teoria' | 'pratica' }) => {

@@ -194,7 +194,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none">Chi Siamo</h1>
           </div>
           <p style={heroAnim(0.7, "heroFadeUp", 0.7)} className="text-white/65 text-base md:text-xl font-medium max-w-sm md:max-w-md mx-auto leading-relaxed italic mt-2 ios-gpu-fix">
-            "Non organizziamo gite.<br />Viviamo esperienze uniche."
+            "Non organizziamo gite.<br />Viviamo esperienze."
           </p>
         </div>
       </Section>
