@@ -121,10 +121,10 @@ export default function Footer({ onNavigate }: FooterProps) {
           <div className="flex flex-col items-center text-center">
             
             <p className="text-[9px] text-stone-500 uppercase tracking-[0.3em] font-black mb-6">
-              &copy; {new Date().getFullYear()} Altour Italy
+              &copy; GLORIONA Prod. {new Date().getFullYear()} Altour Italy
             </p>
 
-            {/* SEZIONE CREDITI GLORIONA - Dimensioni leggermente aumentate (w-20 / w-24) */}
+            {/* SEZIONE CREDITI GLORIONA - Ricostruita con Testo React */}
             <div className="flex flex-col items-center gap-2.5">
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-stone-500 font-bold">
                 <span>Made with</span>
@@ -135,13 +135,21 @@ export default function Footer({ onNavigate }: FooterProps) {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-[#f0f0f0] px-3 py-2 rounded-xl shadow-lg cursor-pointer"
+                className="bg-[#f0f0f0] px-4 py-2.5 rounded-xl shadow-lg cursor-pointer flex flex-col items-center justify-center gap-1"
               >
                 <img
                   src={glorionaLogo}
                   alt="Gloriona Production"
                   className="w-20 md:w-24 h-auto object-contain mix-blend-darken opacity-80 hover:opacity-100 transition-opacity"
                 />
+                <div className="text-center mt-0.5">
+                  <span className="block text-[#161c28] font-black text-[10px] md:text-[11px] tracking-widest leading-none">
+                    GLORIONA
+                  </span>
+                  <span className="block text-[#161c28] font-bold text-[8px] md:text-[9px] tracking-widest leading-tight mt-0.5">
+                    PRODUCTION
+                  </span>
+                </div>
               </motion.div>
             </div>
 
