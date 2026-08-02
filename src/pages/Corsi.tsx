@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, forwardRef } from "react";
 import { AltourTactics } from "../components/AltourTactics";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, Clock, Layers } from "lucide-react";
+import { Search, SlidersHorizontal, Layers } from "lucide-react";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { isIOS } from "../components/Section";
 
@@ -155,11 +155,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
           {isModulo && parentTitle && (
             <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md">
               <Layers size={10} /> Corso: {parentTitle}
-            </span>
-          )}
-          {item.durata && (
-            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
-              <Clock size={10} /> {item.durata}
             </span>
           )}
         </div>
