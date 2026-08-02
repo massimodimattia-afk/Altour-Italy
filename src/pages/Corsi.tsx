@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, forwardRef } from "react";
+import { AltourTactics } from "../components/AltourTactics";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, SlidersHorizontal, Clock, Layers } from "lucide-react";
 import ActivityDetailModal from "../components/ActivityDetailModal";
@@ -267,6 +268,7 @@ const SkeletonCard = () => (
 
 // ─── Componente Principale ───────────────────────────────────────────────────
 export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps) {
+  const [isTestOpen, setIsTestOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_LOAD);
@@ -506,6 +508,25 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
       {/* ── Contenuto Unico Dinamico ── */}
       <div className="max-w-6xl mx-auto px-4 pt-4 pb-20">
         
+        {/* INCOLLA IL BANNER QUI 👇 */}
+        <div className="mb-10 bg-white p-5 md:p-6 rounded-[1.5rem] shadow-sm border border-stone-100 flex flex-col md:flex-row items-center justify-between gap-5 transition-transform active:scale-[0.99]">
+          <div className="text-center md:text-left">
+            <h3 className="text-sm md:text-base font-black uppercase text-brand-stone mb-1 tracking-tight">
+              Non sai da quale corso iniziare?
+            </h3>
+            <p className="text-xs md:text-sm font-medium text-stone-500 leading-relaxed">
+              Mettiti alla prova con il nostro test di valutazione e scopri il livello più adatto a te.
+            </p>
+          </div>
+          <button 
+            onClick={() => setIsTestOpen(true)} 
+            className="w-full md:w-auto px-6 py-3.5 bg-brand-sky text-white font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-brand-stone transition-colors whitespace-nowrap shadow-md shadow-brand-sky/20"
+          >
+            Inizia il Test
+          </button>
+        </div>
+        {/* FINE BANNER 👆 */}
+
         {filteredData.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -567,6 +588,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
           onBookingClick(title, "prenota");
         }}
       />
+      {isTestOpen && <AltourTactics onClose={() => setIsTestOpen(false)} />}
     </div>
   );
 }
