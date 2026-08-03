@@ -437,6 +437,13 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
   );
 };
 
+// VARIANTS per lo scorrimento fluido:
+const slideVariants = {
+  enter: (dir: number) => ({ opacity: 0, x: dir * 80, scale: 0.95 }),
+  center: { opacity: 1, x: 0, scale: 1 },
+  exit: (dir: number) => ({ opacity: 0, x: dir * -80, scale: 0.95 })
+};
+
 export default function Tessera() {
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
@@ -474,7 +481,10 @@ export default function Tessera() {
   const [supportError, setSupportError] = useState("");
   const inputSupportRef = useRef<HTMLInputElement>(null);
 
-  const [selectedBoot, setSelectedBoot] = useState<EscursioneCompletata | null>(null);
+  // Stati navigazione scarponi
+  const [selectedBootIndex, setSelectedBootIndex] = useState<number | null>(null);
+  const [slideDirection, setSlideDirection] = useState(1);
+  
   const [selectedBadge, setSelectedBadge] = useState<{ filo: string; count: number } | null>(null);
   const [selectedAchievement, setSelectedAchievement] = useState<any | null>(null);
 
@@ -510,6 +520,36 @@ export default function Tessera() {
     return counts;
   }, [escursioniCompletateParsed]);
 
+  // --- LOGICA NAVIGAZIONE SCARPONI ---
+  const handleNextBoot = useCallback((e?: React.MouseEvent | TouchEvent | PointerEvent | any) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (selectedBootIndex !== null && selectedBootIndex < escursioniCompletateParsed.length - 1) {
+      setSlideDirection(1);
+      setSelectedBootIndex(prev => prev! + 1);
+    }
+  }, [selectedBootIndex, escursioniCompletateParsed.length]);
+
+  const handlePrevBoot = useCallback((e?: React.MouseEvent | TouchEvent | PointerEvent | any) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    if (selectedBootIndex !== null && selectedBootIndex > 0) {
+      setSlideDirection(-1);
+      setSelectedBootIndex(prev => prev! - 1);
+    }
+  }, [selectedBootIndex]);
+
+  // Supporto Tastiera Desktop per scorrevolezza modale
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedBootIndex === null) return;
+      if (e.key === "ArrowRight") handleNextBoot();
+      if (e.key === "ArrowLeft") handlePrevBoot();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedBootIndex, handleNextBoot, handlePrevBoot]);
+
   useEffect(() => {
     const saved = localStorage.getItem(SESSION_KEY);
     if (saved) { const { code } = JSON.parse(saved); fetchUser(code, true); }
@@ -522,8 +562,7 @@ export default function Tessera() {
     }
   }, [showSupportModal, supportStep]);
 
-  // FIX: Rimosso !userTessera per evitare body scroll lock al logout
-  const isOverlayActive = showRedeem || showHistoryModal || showSupportModal || !!selectedBoot || !!selectedBadge || !!selectedAchievement;
+  const isOverlayActive = showRedeem || showHistoryModal || showSupportModal || selectedBootIndex !== null || !!selectedBadge || !!selectedAchievement;
   useEffect(() => {
     if (isOverlayActive) {
       document.body.style.overflow = 'hidden';
@@ -767,13 +806,15 @@ export default function Tessera() {
 
   if (loading) return <div className="min-h-[100dvh] flex items-center justify-center bg-[#f5f2ed]"><Loader2 className="animate-spin text-sky-500" /></div>;
 
+  // Derivazione dello scarpone selezionato per il modale
+  const selectedBoot = selectedBootIndex !== null ? escursioniCompletateParsed[selectedBootIndex] : null;
+
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ed] text-stone-800 pb-20">
       
       <ModalPortal>
         <AnimatePresence mode="wait">
           {!userTessera && (
-            // FIX IOS: touchAction e overscrollBehavior per gestire il bounce scrolling
             <div style={{...absoluteCenterStyle, touchAction: "none", overscrollBehavior: "none"}}>
               <motion.div key="loginBg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#f5f2ed]" />
               <motion.div key="loginBox" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center flex flex-col">
@@ -782,7 +823,6 @@ export default function Tessera() {
                 <h1 className="text-2xl font-black uppercase mb-6">TESSERA ALTOUR</h1>
               {loginStep === "code" ? (
                   <div className="space-y-4">
-                    {/* FIX IOS: text-[16px] forza il resize per uccidere lo zoom nativo */}
                     <input type="text" inputMode="numeric" value={"ALT" + loginCode}
                       onChange={(e) => { const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); if (val.startsWith("ALT")) setLoginCode(val.slice(3)); }}
                       onKeyDown={(e) => { if (e.key === "Backspace" && loginCode.length === 0) e.preventDefault(); if (e.key === "Enter" && loginCode.length > 0) fetchUser("ALT" + loginCode); }}
@@ -955,7 +995,7 @@ export default function Tessera() {
                       {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
                         const esc = escursioniCompletateParsed?.[currentPage * SLOTS_PER_PAGE + i];
                         return (
-                          <motion.div key={i} whileTap={esc ? { scale: 0.95 } : {}} onClick={() => esc && setSelectedBoot(esc)} className={`aspect-square rounded-xl md:rounded-2xl bg-stone-50 border-2 border-dashed border-stone-100 flex items-center justify-center transition-all duration-200 ${ esc ? "cursor-pointer bg-white shadow-sm border-solid border-stone-50" : "opacity-40" }`}>
+                          <motion.div key={i} whileTap={esc ? { scale: 0.95 } : {}} onClick={() => esc && setSelectedBootIndex(currentPage * SLOTS_PER_PAGE + i)} className={`aspect-square rounded-xl md:rounded-2xl bg-stone-50 border-2 border-dashed border-stone-100 flex items-center justify-center transition-all duration-200 ${ esc ? "cursor-pointer bg-white shadow-sm border-solid border-stone-50" : "opacity-40" }`}>
                             <IconaScarponeCustom size={window.innerWidth < 768 ? 44 : 64} color={esc?.colore} isActive={!!esc} />
                           </motion.div>
                         );
@@ -1151,26 +1191,79 @@ export default function Tessera() {
                 </div>
               )}
 
-              {/* Dettaglio Scarpone */}
-              {selectedBoot && (
+              {/* Dettaglio Scarpone (Swipeable) */}
+              {selectedBoot && selectedBootIndex !== null && (
                 <div style={absoluteCenterStyle}>
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBoot(null)} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
-                    <button onClick={() => setSelectedBoot(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-8 shadow-xl" style={{ backgroundColor: selectedBoot.colore + "15", border: `1px solid ${selectedBoot.colore}20` }}>
-                        <IconaScarponeCustom size={80} color={selectedBoot.colore} isActive={true} />
+                  {/* Sfondo Oscurato */}
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBootIndex(null)} className="absolute inset-0 bg-stone-900/80 backdrop-blur-sm" />
+                  
+                  {/* Container Modale Fisso */}
+                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative w-full max-w-sm bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 z-10">
+                    
+                    {/* Header Modale (Fisso - Pulito per risolvere hit-testing desktop) */}
+                    <div className="absolute top-0 left-0 right-0 z-[100] flex justify-between items-center p-6">
+                      <div className="flex gap-2">
+                         <button onClick={handlePrevBoot} disabled={selectedBootIndex === 0} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 disabled:opacity-30 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><ChevronLeft size={20} /></button>
+                         <button onClick={handleNextBoot} disabled={selectedBootIndex === escursioniCompletateParsed.length - 1} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 disabled:opacity-30 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><ChevronRight size={20} /></button>
                       </div>
-                      <div className="flex flex-wrap justify-center gap-2 mb-4">
-                        <div className="px-4 py-1.5 rounded-full bg-stone-100 text-[10px] font-black uppercase text-stone-500 tracking-widest border border-stone-200/50">{getFilosofiaName(selectedBoot.colore)}</div>
-                        {selectedBoot.difficolta && <div className="px-4 py-1.5 rounded-full bg-stone-100 text-[10px] font-black uppercase text-stone-500 tracking-widest border border-stone-200/50">{selectedBoot.difficolta}</div>}
-                      </div>
-                      <h3 className="text-2xl font-black uppercase leading-tight mb-4 tracking-tight">{selectedBoot.titolo}</h3>
-                      <div className="flex flex-col gap-2 w-full pt-6 border-t border-stone-50">
-                        <div className="flex items-center justify-center gap-2 text-stone-400"><Calendar size={14} /><p className="text-[11px] font-bold uppercase tracking-widest">{new Date(selectedBoot.data).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</p></div>
-                        {selectedBoot.categoria && <div className="flex items-center justify-center gap-2 text-stone-400"><MapPin size={14} /><p className="text-[11px] font-bold uppercase tracking-widest">{selectedBoot.categoria}</p></div>}
-                      </div>
+                      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedBootIndex(null); }} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 hover:text-stone-700 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><X size={20} /></button>
                     </div>
+
+                    {/* Contenuto Scorrevole */}
+                    <div className="pt-24 pb-8 px-8 md:px-10 overflow-hidden relative z-10">
+                      <AnimatePresence mode="popLayout" custom={slideDirection}>
+                        <motion.div
+                          key={selectedBootIndex}
+                          custom={slideDirection}
+                          variants={slideVariants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
+                          transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                          drag="x"
+                          dragConstraints={{ left: 0, right: 0 }}
+                          dragElastic={0.2}
+                          onDragEnd={(_e, info) => {
+                            const swipeThreshold = 40;
+                            if (info.offset.x < -swipeThreshold) handleNextBoot();
+                            else if (info.offset.x > swipeThreshold) handlePrevBoot();
+                          }}
+                          className="flex flex-col items-center text-center touch-pan-y cursor-grab active:cursor-grabbing"
+                        >
+                          <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-6 shadow-xl" style={{ backgroundColor: selectedBoot.colore + "15", border: `1px solid ${selectedBoot.colore}20` }}>
+                            <IconaScarponeCustom size={80} color={selectedBoot.colore} isActive={true} />
+                          </div>
+                          
+                          <div className="flex flex-wrap justify-center gap-2 mb-4 pointer-events-none">
+                            <div className="px-4 py-1.5 rounded-full bg-stone-100 text-[10px] font-black uppercase text-stone-500 tracking-widest border border-stone-200/50">{getFilosofiaName(selectedBoot.colore)}</div>
+                            {selectedBoot.difficolta && <div className="px-4 py-1.5 rounded-full bg-stone-100 text-[10px] font-black uppercase text-stone-500 tracking-widest border border-stone-200/50">{selectedBoot.difficolta}</div>}
+                          </div>
+                          
+                          <h3 className="text-2xl font-black uppercase leading-tight mb-4 tracking-tight pointer-events-none">{selectedBoot.titolo}</h3>
+                          
+                          <div className="flex flex-col gap-2 w-full pt-6 border-t border-stone-50 pointer-events-none">
+                            <div className="flex items-center justify-center gap-2 text-stone-400">
+                              <Calendar size={14} />
+                              <p className="text-[11px] font-bold uppercase tracking-widest">{new Date(selectedBoot.data).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</p>
+                            </div>
+                            {selectedBoot.categoria && (
+                              <div className="flex items-center justify-center gap-2 text-stone-400">
+                                <MapPin size={14} />
+                                <p className="text-[11px] font-bold uppercase tracking-widest">{selectedBoot.categoria}</p>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                    
+                    {/* Indicatore puntini di scorrimento */}
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pb-2">
+                      {escursioniCompletateParsed.map((_, idx) => (
+                        <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${idx === selectedBootIndex ? "w-4 bg-stone-800" : "w-1.5 bg-stone-200"}`} />
+                      ))}
+                    </div>
+
                   </motion.div>
                 </div>
               )}
