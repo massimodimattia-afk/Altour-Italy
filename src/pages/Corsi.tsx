@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, forwardRef } from "react";
 import { AltourTactics } from "../components/AltourTactics";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, Layers } from "lucide-react";
+import { Search, SlidersHorizontal, Layers, Clock } from "lucide-react";
 import ActivityDetailModal from "../components/ActivityDetailModal";
 import { isIOS } from "../components/Section";
 
@@ -150,14 +150,18 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
         </div>
       </div>
 
-      <div className="p-4 md:p-5 flex flex-col flex-grow">
-        <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-          {isModulo && parentTitle && (
-            <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md">
-              <Layers size={10} /> Corso: {parentTitle}
-            </span>
-          )}
-        </div>
+      <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+  {isModulo && parentTitle && (
+    <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md">
+      <Layers size={10} /> Corso: {parentTitle}
+    </span>
+  )}
+  {item.durata && (
+    <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
+      <Clock size={10} /> {item.durata}
+    </span>
+  )}
+</div>
 
         <h3 className="text-sm md:text-base font-black text-brand-stone uppercase tracking-tight leading-snug line-clamp-2 mb-1.5">
           {item.titolo}
@@ -240,7 +244,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
             </button>
           </div>
         </div>
-      </div>
     </motion.div>
   );
 });
