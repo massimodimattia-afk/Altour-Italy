@@ -150,30 +150,35 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
         </div>
       </div>
 
-      <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-  {isModulo && parentTitle && (
-    <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md">
-      <Layers size={10} /> Corso: {parentTitle}
-    </span>
-  )}
-  {item.durata && (
-    <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400">
-      <Clock size={10} /> {item.durata}
-    </span>
-  )}
-</div>
+      <div className="p-4 md:p-5 flex flex-col flex-grow">
+        
+        {/* Intestazione (Corso Padre + Durata) con altezza contenuta e troncamento automatico */}
+        <div className="flex items-center gap-2 mb-1 flex-wrap min-h-[20px]">
+          {isModulo && parentTitle && (
+            <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md shrink-0">
+              <Layers size={10} /> Corso: {parentTitle}
+            </span>
+          )}
+          {item.durata && (
+            <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-stone-400 min-w-0">
+              <Clock size={10} className="shrink-0" />
+              <span className="truncate">{item.durata}</span>
+            </span>
+          )}
+        </div>
 
         <h3 className="text-sm md:text-base font-black text-brand-stone uppercase tracking-tight leading-snug line-clamp-2 mb-1.5">
           {item.titolo}
         </h3>
 
+        {/* Descrizione con margine ottimizzato */}
         <p
-          className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-4 flex-grow font-medium"
+          className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 font-medium flex-grow"
           dangerouslySetInnerHTML={{ __html: formatMarkdown(item.descrizione) }}
         />
 
         {showPriceSelector && (
-          <div className="flex bg-stone-100 p-1 rounded-xl gap-1 mb-3">
+          <div className="flex bg-stone-100 p-1 rounded-xl gap-1 mb-3 shrink-0">
             <button
               type="button"
               disabled={!hasBundle}
@@ -219,7 +224,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
           </div>
         )}
 
-        <div className="pt-3 border-t border-stone-100 flex flex-col gap-3 mt-auto">
+        <div className="pt-3 border-t border-stone-100 flex flex-col gap-3 mt-auto shrink-0">
           {activePrice !== undefined && activePrice !== null && activePrice > 0 && (
             <div className="flex items-baseline justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
@@ -244,6 +249,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
             </button>
           </div>
         </div>
+      </div>
     </motion.div>
   );
 });
@@ -506,7 +512,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
       {/* ── Contenuto Unico Dinamico ── */}
       <div className="max-w-6xl mx-auto px-4 pt-4 pb-20">
         
-        {/* INCOLLA IL BANNER QUI 👇 */}
         <div className="mb-10 bg-white p-5 md:p-6 rounded-[1.5rem] shadow-sm border border-stone-100 flex flex-col md:flex-row items-center justify-between gap-5 transition-transform active:scale-[0.99]">
           <div className="text-center md:text-left">
             <h3 className="text-sm md:text-base font-black uppercase text-brand-stone mb-1 tracking-tight">
@@ -523,7 +528,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
             Inizia il Test
           </button>
         </div>
-        {/* FINE BANNER 👆 */}
 
         {filteredData.length === 0 ? (
           <motion.div
