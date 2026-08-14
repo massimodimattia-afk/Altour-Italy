@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, ArrowRight, SlidersHorizontal, Search } from "lucide-react";
+import { Calendar, Clock, ArrowRight, SlidersHorizontal, Search, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { Database } from "../types/supabase";
 import ActivityDetailModal from "../components/ActivityDetailModal";
@@ -409,22 +409,23 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
               <Search size={20} strokeWidth={3} />
             </div>
             
-            {/* Bottone reset */}
-            <AnimatePresence>
-              {searchQuery && (
-                <motion.button 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.15 }}
-                  type="button" // Previene l'invio accidentale del form
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 text-xs active:scale-90 transition-colors font-black"
-                >
-                  ✕
-                </motion.button>
-              )}
-            </AnimatePresence>
+           {/* Bottone reset */}
+<AnimatePresence>
+  {searchQuery && (
+    <motion.button 
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{ duration: 0.15 }}
+      type="button"
+      onClick={() => setSearchQuery("")}
+      className="absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 active:scale-90 transition-colors"
+      aria-label="Cancella ricerca"
+    >
+      <X size={14} strokeWidth={2.5} />
+    </motion.button>
+  )}
+</AnimatePresence>
           </form>
         </div>
 
