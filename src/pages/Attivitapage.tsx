@@ -413,13 +413,13 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
 <AnimatePresence>
   {searchQuery && (
     <motion.button 
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0, scale: 0.8, y: "-50%" }}
+      animate={{ opacity: 1, scale: 1, y: "-50%" }}
+      exit={{ opacity: 0, scale: 0.8, y: "-50%" }}
       transition={{ duration: 0.15 }}
       type="button"
       onClick={() => setSearchQuery("")}
-      className="absolute right-4 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 active:scale-90 transition-colors"
+      className="absolute right-4 top-1/2 w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 active:scale-90 transition-colors"
       aria-label="Cancella ricerca"
     >
       <X size={14} strokeWidth={2.5} />

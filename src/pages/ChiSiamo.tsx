@@ -207,29 +207,24 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-sky">La nostra storia</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9] mb-8">
-            Nati dall'amore <br />
-            <span className="text-brand-sky italic font-light tracking-normal">per la nostra terra.</span>
+            Un'Avventura <br />
+            <span className="text-brand-sky italic font-light tracking-normal">da vivere insieme.</span>
           </h2>
           <div className="space-y-5 text-stone-500 text-base md:text-lg font-medium leading-relaxed">
             <p>
               Siamo partiti da un'idea semplice: far conoscere l'Italia a chi si senta viaggiatore e non turista!
-              Ecco, quindi, il nome: <strong className="text-brand-stone font-black">Altour Italy</strong> cioè <em>Tour alternativi in Italia</em>.
-              Esperienze da condividere in piccoli gruppi accompagnati da esperte Guide Ambientali Escursionistiche che si prenderanno
-              cura di te e ti faranno conoscere un'altra Italia, più genuina e meno turistica.
+              Nasce così <strong className="text-brand-stone font-black">Altour Italy</strong> cioè <em>Tour alternativi in Italia</em>.
+              Esperienze da condividere in piccoli gruppi accompagnati da esperte Guide Ambientali Escursionistiche che non solo si prenderanno cura di te ma ti faranno apprezzare un’Italia che non ti aspetti, più genuina e meno conosciuta.
             </p>
             <p>
               Voci originali fuori dal coro, le nostre proposte, passo dopo passo ti faranno visitare luoghi unici con occhi diversi.
-              Ci consideriamo "artigiani" che confezionano un abito su misura, una parentesi spensierata, una coccola da regalarsi in
-              un clima di amicizia, serenità e rispetto.
+               Ci consideriamo "artigiani dell’accompagnamento guidato" che partendo dai tuoi desideri confezionano un viaggio su misura, una parentesi spensierata, un sogno nel cassetto. Con noi potrai regalarti una coccola in un clima di amicizia, semplicità e rispetto.
             </p>
             <p>
-              Negli ultimi 10 anni abbiamo accompagnato centinaia di persone, abbiamo costruito un'Accademia per formare nuove guide,
-              abbiamo creato una community di persone appassionate che raccolgono scarponi come medaglie.
+              Negli ultimi 10 anni abbiamo accompagnato centinaia di persone, realizzato un'Accademia per condividere la nostra passione e formare escursionisti più consapevoli, ispirato una community di affezionati che raccolgono scarponi come medaglie.
             </p>
             <p>
-              Non ci interessano le performance e le sfide contro il tempo. Ci interessa che ogni esperienza ci arricchisca, ci faccia
-              tornare a casa più sereni, ci regali una storia da raccontare e un'immagine da condividere così che il tempo passato
-              insieme sia ricco di significati.
+              Non ci interessano le performance sportive e le sfide contro il tempo, andiamo al passo del più lento perché desideriamo che ogni esperienza ci arricchisca e ci faccia tornare a casa con una storia da raccontare e un'immagine da condividere.
             </p>
           </div>
         </ScrollReveal>

@@ -1,5 +1,5 @@
 // src/components/BookingModal.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Send, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
@@ -26,16 +26,18 @@ export default function BookingModal({
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
+    telefono: "",
     messaggio: "",
   });
   
   const [mounted, setMounted] = useState(false);
+  const scrollPositionRef = useRef<number>(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Reset form quando si apre
+  // Inizializzazione messaggio
   useEffect(() => {
     if (isOpen) {
       setFormData((prev) => ({
@@ -45,32 +47,40 @@ export default function BookingModal({
     }
   }, [isOpen, initialMessage]);
 
-  // Reset stato quando si chiude
+  // Reset stato alla chiusura
   useEffect(() => {
     if (isOpen) {
       setSent(false);
       setFormError(null);
     } else {
       const t = setTimeout(() => {
-        setFormData({ nome: "", email: "", messaggio: "" });
+        setFormData({ nome: "", email: "", telefono: "", messaggio: "" });
         setFormError(null);
       }, 300);
       return () => clearTimeout(t);
     }
   }, [isOpen]);
 
-  // Blocco scroll armonizzato
+  // OTTIMIZZAZIONE iOS SAFARI: Blocco scroll reale (evita rubber-banding e scroll dello sfondo)
   useEffect(() => {
     if (isOpen) {
-      const originalOverflow = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
+      scrollPositionRef.current = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollPositionRef.current}px`;
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
+      
       return () => {
-        document.body.style.overflow = originalOverflow;
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollPositionRef.current);
       };
     }
   }, [isOpen]);
 
-  // Gestione tasto ESC
+  // Gestione tasto ESC (Desktop)
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isSubmitting) {
@@ -95,6 +105,12 @@ export default function BookingModal({
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email))
       return "Inserisci un indirizzo email valido";
+    
+    if (!formData.telefono.trim()) return "Il numero di telefono è obbligatorio";
+    const cleanPhone = formData.telefono.replace(/[\s\-\.\(\)]/g, "");
+    if (!/^\+?[0-9]{7,15}$/.test(cleanPhone))
+      return "Inserisci un numero di telefono valido";
+
     return null;
   };
 
@@ -111,6 +127,7 @@ export default function BookingModal({
     const payload = {
       nome: (formData.nome || "").trim(),
       email: (formData.email || "").trim(),
+      telefono: (formData.telefono || "").trim(),
       messaggio: (formData.messaggio || "").trim() || null,
       attivita: `[${mode === 'prenota' ? 'PRENOTA' : 'INFO'}] ${(title || "Prenotazione").trim()}`,
     };
@@ -119,7 +136,7 @@ export default function BookingModal({
       const { error } = await supabase.from("contatti").insert([payload]);
       if (error) throw error;
       setSent(true);
-      setFormData({ nome: "", email: "", messaggio: "" });
+      setFormData({ nome: "", email: "", telefono: "", messaggio: "" });
       setTimeout(() => {
         setSent(false);
         onClose();
@@ -137,69 +154,72 @@ export default function BookingModal({
     <AnimatePresence>
       {isOpen && (
         <div
-          // OTTMIZZAZIONE IOS: h-[100dvh] calcola l'altezza dinamica per la tastiera
-          className="fixed top-0 left-0 w-full h-[100dvh] flex items-center justify-center p-4 md:p-8"
+          // OTTMIZZAZIONE iOS: h-[100dvh] + safe area support
+          className="fixed inset-0 w-full h-[100dvh] flex items-center justify-center p-3 sm:p-4 md:p-8"
           style={{
             zIndex: 99999, 
             isolation: 'isolate',
-            pointerEvents: 'auto',
+            WebkitTapHighlightColor: 'transparent',
           }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="booking-modal-title"
         >
-          {/* Sfondo scuro: tolto il blur per prestazioni della GPU */}
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={!isSubmitting ? onClose : undefined}
-            className="absolute inset-0 bg-stone-900/65"
-            style={{ zIndex: 1 }}
+            className="absolute inset-0 bg-stone-900/70"
+            style={{ zIndex: 1, touchAction: 'none' }}
           />
 
+          {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+            initial={{ opacity: 0, scale: 0.96, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 30 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            // OTTMIZZAZIONE GPU: max-h-[90dvh] per permettere lo scorrimento se si apre la tastiera
-            className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-[0_40px_120px_rgba(28,25,23,0.25)] flex flex-col overflow-hidden transform-gpu max-h-[90dvh]"
+            exit={{ opacity: 0, scale: 0.96, y: 20 }}
+            transition={{ type: "spring", damping: 28, stiffness: 350 }}
+            // OTTMIZZAZIONE iOS: max-h-[92dvh] per lasciare sempre margine con la tastiera virtuale aperta
+            className="relative w-full max-w-lg bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_30px_100px_rgba(28,25,23,0.3)] flex flex-col overflow-hidden transform-gpu max-h-[92dvh]"
             style={{ zIndex: 2, willChange: "transform, opacity" }}
           >
-            
             {/* Header Modale */}
-            <div className="bg-[#f5f2ed] p-6 md:p-8 relative border-b border-stone-100 flex-shrink-0">
+            <div className="bg-[#f5f2ed] p-5 sm:p-7 relative border-b border-stone-100 flex-shrink-0">
               <button
                 onClick={onClose}
-                aria-label="Chiudi"
-                className="absolute top-4 right-4 p-2 text-stone-400 hover:text-brand-stone hover:bg-stone-200/50 rounded-full transition-all z-10"
+                aria-label="Chiudi modale"
+                className="absolute top-4 right-4 p-2 text-stone-400 hover:text-brand-stone hover:bg-stone-200/50 rounded-full transition-all z-10 touch-manipulation active:scale-90"
                 disabled={isSubmitting}
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <motion.div initial={{ x: -10, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-[1px] w-6 bg-brand-sky" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.3em] text-brand-sky">
+              <motion.div initial={{ x: -6, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <div className="h-[1.5px] w-5 bg-brand-sky" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.25em] text-brand-sky">
                     {mode === "prenota" ? "Prenotazione" : "Richiesta Info"}
                   </span>
                 </div>
                 <h2
                   id="booking-modal-title"
-                  className="text-xl md:text-2xl font-black uppercase tracking-tighter leading-tight text-brand-stone pr-8"
+                  className="text-lg sm:text-xl md:text-2xl font-black uppercase tracking-tight leading-tight text-brand-stone pr-8"
                 >
                   {title}
                 </h2>
               </motion.div>
             </div>
 
-            {/* Corpo Modale con Scroll Indipendente */}
+            {/* Corpo Modale Scrollabile */}
             <div 
-              className="p-6 md:p-8 bg-white overflow-y-auto flex-1 overscroll-contain"
-              style={{ WebkitOverflowScrolling: "touch" }}
+              className="p-5 sm:p-7 bg-white overflow-y-auto flex-1 overscroll-y-contain pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]"
+              style={{ 
+                WebkitOverflowScrolling: "touch",
+                overscrollBehaviorY: "contain" 
+              }}
             >
               <AnimatePresence mode="wait">
                 {!sent ? (
@@ -209,7 +229,8 @@ export default function BookingModal({
                     className="space-y-4"
                     noValidate
                   >
-                    <div className="space-y-3">
+                    <div className="space-y-3.5">
+                      {/* Nome Completo */}
                       <div className="space-y-1">
                         <label
                           htmlFor="booking-nome"
@@ -221,13 +242,18 @@ export default function BookingModal({
                           id="booking-nome"
                           required
                           name="nome"
+                          type="text"
+                          autoComplete="name"
+                          autoCapitalize="words"
                           value={formData.nome}
                           onChange={handleChange}
                           placeholder="es. Mario Rossi"
-                          // OTTMIZZAZIONE IOS: text-base su mobile evita lo zoom forzato di Safari 
-                          className="w-full p-4 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-base md:text-sm text-brand-stone transition-all outline-none"
+                          // text-[16px] evita lo zoom indesiderato di Safari su iPhone
+                          className="w-full p-3.5 sm:p-4 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/30 focus:bg-white focus:ring-0 font-bold text-[16px] md:text-sm text-brand-stone transition-all outline-none"
                         />
                       </div>
+
+                      {/* Email di Contatto */}
                       <div className="space-y-1">
                         <label
                           htmlFor="booking-email"
@@ -239,66 +265,95 @@ export default function BookingModal({
                           id="booking-email"
                           required
                           name="email"
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          autoCapitalize="off"
+                          autoCorrect="off"
+                          spellCheck={false}
                           value={formData.email}
                           onChange={handleChange}
-                          type="email"
                           placeholder="mario@esempio.it"
-                          // OTTMIZZAZIONE IOS: text-base su mobile
-                          className="w-full p-4 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-base md:text-sm text-brand-stone transition-all outline-none"
+                          className="w-full p-3.5 sm:p-4 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/30 focus:bg-white focus:ring-0 font-bold text-[16px] md:text-sm text-brand-stone transition-all outline-none"
                         />
                       </div>
+
+                      {/* Telefono / WhatsApp */}
+                      <div className="space-y-1">
+                        <label
+                          htmlFor="booking-telefono"
+                          className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1"
+                        >
+                          Telefono / WhatsApp
+                        </label>
+                        <input
+                          id="booking-telefono"
+                          required
+                          name="telefono"
+                          type="tel"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          value={formData.telefono}
+                          onChange={handleChange}
+                          placeholder="es. +39 333 1234567"
+                          className="w-full p-3.5 sm:p-4 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/30 focus:bg-white focus:ring-0 font-bold text-[16px] md:text-sm text-brand-stone transition-all outline-none"
+                        />
+                      </div>
+
+                      {/* Note / Messaggio */}
                       <div className="space-y-1">
                         <label
                           htmlFor="booking-messaggio"
                           className="text-[9px] font-black text-stone-400 uppercase tracking-widest ml-1"
                         >
-                          Note / Importo Voucher
+                          Note / Importo Voucher (Opzionale)
                         </label>
                         <textarea
                           id="booking-messaggio"
                           name="messaggio"
                           value={formData.messaggio}
                           onChange={handleChange}
-                          placeholder="Scrivi qui..."
+                          placeholder="Scrivi eventuali richieste particolari..."
                           rows={3}
                           maxLength={500}
-                          // OTTMIZZAZIONE IOS: text-base su mobile
-                          className="w-full p-4 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/20 focus:bg-white focus:ring-0 font-bold text-base md:text-sm text-brand-stone resize-none transition-all outline-none"
+                          className="w-full p-3.5 sm:p-4 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/30 focus:bg-white focus:ring-0 font-bold text-[16px] md:text-sm text-brand-stone resize-none transition-all outline-none"
                         />
-                        <p className="text-right text-[9px] font-bold text-stone-300 mr-1 mt-1">
+                        <p className="text-right text-[9px] font-bold text-stone-300 mr-1 mt-0.5">
                           {formData.messaggio.length} / 500
                         </p>
                       </div>
                     </div>
 
+                    {/* Alert Errore */}
                     <AnimatePresence>
                       {formError && (
                         <motion.p
-                          initial={{ opacity: 0, y: -6 }}
+                          initial={{ opacity: 0, y: -4 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -6 }}
+                          exit={{ opacity: 0, y: -4 }}
                           role="alert"
-                          className="text-red-500 text-[10px] font-black uppercase text-center bg-red-50 py-3 rounded-xl"
+                          className="text-red-500 text-[10px] font-black uppercase text-center bg-red-50 py-2.5 px-3 rounded-xl"
                         >
                           {formError}
                         </motion.p>
                       )}
                     </AnimatePresence>
 
+                    {/* Bottone di Invio */}
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] flex items-center justify-center gap-4 transition-all shadow-[0_15px_30px_rgba(14,165,233,0.25)] active:scale-95 transform-gpu mt-2"
+                      className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-4 sm:py-4.5 rounded-2xl font-black uppercase tracking-[0.25em] text-[10px] sm:text-[11px] flex items-center justify-center gap-3 transition-all shadow-[0_12px_24px_rgba(14,165,233,0.25)] active:scale-[0.98] touch-manipulation transform-gpu mt-1 select-none"
                     >
                       {isSubmitting ? (
                         <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <Loader2 className="w-4 h-4 animate-spin" />
                           <span>Invio in corso...</span>
                         </>
                       ) : (
                         <>
                           <span>Invia Richiesta</span>
-                          <Send className="w-4 h-4" />
+                          <Send className="w-3.5 h-3.5" />
                         </>
                       )}
                     </button>
@@ -306,19 +361,19 @@ export default function BookingModal({
                 ) : (
                   <motion.div
                     key="success"
-                    initial={{ opacity: 0, scale: 0.8 }}
+                    initial={{ opacity: 0, scale: 0.85 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="py-10 text-center"
+                    className="py-8 text-center"
                     role="status"
                     aria-live="polite"
                   >
-                    <div className="bg-emerald-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                    <div className="bg-emerald-50 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-500" />
                     </div>
-                    <h2 className="text-2xl font-black text-brand-stone mb-2 uppercase tracking-tighter">
+                    <h2 className="text-xl sm:text-2xl font-black text-brand-stone mb-1 uppercase tracking-tight">
                       Richiesta Inviata
                     </h2>
-                    <p className="text-stone-500 font-medium text-sm">
+                    <p className="text-stone-500 font-medium text-xs sm:text-sm">
                       Grazie. Ti risponderemo entro 24 ore.
                     </p>
                   </motion.div>
