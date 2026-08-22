@@ -1,6 +1,7 @@
 // src/pages/Home.tsx
 import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import {
+  Calendar,
   Clock,
   TrendingUp,
   Shield,
@@ -148,7 +149,11 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
         const hikes = ((allHikes ?? []) as any[]).map((e) => ({ ...e, _tipo: "escursione" as const }));
         const campi = ((allCampi ?? []) as any[]).map((c) => ({ ...c, _tipo: "campo" as const }));
-        const mixed = [...hikes, ...campi].sort(() => Math.random() - 0.5);
+        const mixed = [...hikes, ...campi].sort((a, b) => {
+  const da = (a as any).data ? new Date((a as any).data).getTime() : Infinity;
+  const db = (b as any).data ? new Date((b as any).data).getTime() : Infinity;
+  return da - db;
+});
         
         setFeaturedActivities(mixed.slice(0, isMobile ? 2 : 3));
         
@@ -351,12 +356,29 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   {!isEscursione && (activity as Campo).slug && <FilosofiaBadge value={(activity as Campo).slug} />}
                 </div>
                 <div className="p-4 md:p-5 flex flex-col flex-grow">
-                  <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-                    {activity.durata && (
-                      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky"><Clock size={9} />{activity.durata}</span>
-                    )}
-                  </div>
-                  <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">{activity.titolo}</h3>
+  {/* ── Data e Durata ── */}
+  <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+    {/* Mostra la data formattata solo se presente (escursioni) */}
+    {isEscursione && (activity as Escursione).data && (
+      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+        <Calendar size={9} />
+        {new Date((activity as Escursione).data!).toLocaleDateString("it-IT", {
+          day: "2-digit",
+          month: "short",
+        })}
+      </span>
+    )}
+    {activity.durata && (
+      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+        <Clock size={9} />
+        {activity.durata}
+      </span>
+    )}
+  </div>
+
+  <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
+    {activity.titolo}
+  </h3>
                   <p className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium" dangerouslySetInnerHTML={{ __html: activity.descrizioneFormattata }} />
                   <div className="flex gap-2 pt-3 border-t border-stone-50">
                     <button onClick={() => openDetails(activity)} className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95">Dettagli</button>
