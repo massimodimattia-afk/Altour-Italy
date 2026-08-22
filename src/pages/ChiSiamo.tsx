@@ -210,23 +210,31 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
             Un'Avventura <br />
             <span className="text-brand-sky italic font-light tracking-normal">da vivere insieme.</span>
           </h2>
-          <div className="space-y-5 text-stone-500 text-base md:text-lg font-medium leading-relaxed">
-            <p>
-              Siamo partiti da un'idea semplice: far conoscere l'Italia a chi si senta viaggiatore e non turista!
-              Nasce così <strong className="text-brand-stone font-black">Altour Italy</strong> cioè <em>Tour alternativi in Italia</em>.
-              Esperienze da condividere in piccoli gruppi accompagnati da esperte Guide Ambientali Escursionistiche che non solo si prenderanno cura di te ma ti faranno apprezzare un’Italia che non ti aspetti, più genuina e meno conosciuta.
-            </p>
-            <p>
-              Voci originali fuori dal coro, le nostre proposte, passo dopo passo ti faranno visitare luoghi unici con occhi diversi.
-               Ci consideriamo "artigiani dell’accompagnamento guidato" che partendo dai tuoi desideri confezionano un viaggio su misura, una parentesi spensierata, un sogno nel cassetto. Con noi potrai regalarti una coccola in un clima di amicizia, semplicità e rispetto.
-            </p>
-            <p>
-              Negli ultimi 10 anni abbiamo accompagnato centinaia di persone, realizzato un'Accademia per condividere la nostra passione e formare escursionisti più consapevoli, ispirato una community di affezionati che raccolgono scarponi come medaglie.
-            </p>
-            <p>
-              Non ci interessano le performance sportive e le sfide contro il tempo, andiamo al passo del più lento perché desideriamo che ogni esperienza ci arricchisca e ci faccia tornare a casa con una storia da raccontare e un'immagine da condividere.
-            </p>
-          </div>
+          <div className="space-y-4 text-stone-700 leading-relaxed">
+  <p>
+    Siamo partiti da un'idea semplice: far conoscere la penisola a chi nel suo animo si sente più viaggiatore che turista! Nasce così <strong className="font-bold">Altour</strong> Italy cioè <strong><em>Tour Al</em></strong><em>ternativi in Italia</em>.
+  </p>
+
+  <p>
+    Esperienze da condividere in piccoli gruppi con esperte Guide Ambientali Escursionistiche che si prenderanno cura di te e ti faranno apprezzare un’Italia che non ti aspetti, più genuina e meno conosciuta.
+  </p>
+
+  <p>
+    Andiamo al passo del più lento perché non ci interessano le performance sportive e le sfide contro il tempo, desideriamo solamente che ogni esperienza ci arricchisca e ci faccia tornare a casa con una storia da raccontare e immagini da condividere.
+  </p>
+
+  <p>
+    Voci originali fuori dal coro, le nostre proposte ti faranno visitare luoghi unici con occhi diversi perché qualunque sia la nostra meta cercheremo di coglierne l’anima, percorrendo sentieri poco battuti, parlando con personaggi del posto e gustando i piatti tipici locali.
+  </p>
+
+  <p>
+    Ci consideriamo dei semplici "artigiani" dell’accompagnamento guidato, che partendo dai tuoi desideri confezionano un viaggio su misura, realizzano il tuo sogno nel cassetto, ti regalano una parentesi spensierata.
+  </p>
+
+  <p>
+    La nostra storia è legata a tutte le persone che ci hanno scelto, perché grazie a loro siamo riusciti a condividere la nostra passione e passo dopo passo abbiamo visto crescere una community legata da valori come l’amicizia, la semplicità e il rispetto.
+  </p>
+</div>
         </ScrollReveal>
       </Section>
 
