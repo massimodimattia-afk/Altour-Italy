@@ -43,7 +43,7 @@ function MiniMap({ lat, lng, isAnimationDone }: { lat: number; lng: number; isAn
   const delta = 0.005;
   const bbox = `${nLng - delta},${nLat - delta},${nLng + delta},${nLat + delta}`;
   const osmSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${nLat},${nLng}`;
-  const googleMapsUrl = `http://googleusercontent.com/maps.google.com/maps?q=${nLat},${nLng}`;
+  const googleMapsUrl = `https://maps.google.com/maps?q=${nLat},${nLng}`;
 
   return (
     <div className="rounded-2xl overflow-hidden border border-stone-100 relative mt-4 shadow-sm transform-gpu isolation-auto">
