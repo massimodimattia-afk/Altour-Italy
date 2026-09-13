@@ -325,7 +325,7 @@ export default function ChiSiamo({ onNavigate, onBookingClick }: ChiSiamoProps) 
           <div className="bg-white rounded-[2.5rem] overflow-hidden border border-stone-50 transform-gpu" style={{ boxShadow: "0 0 80px -10px rgba(14,165,233,0.18), 0 0 40px -20px rgba(68,64,60,0.1), 0 25px 50px -12px rgba(0,0,0,0.1)" }}>
             <div className="flex flex-col md:flex-row min-h-[360px]">
               <div className="w-full md:w-2/5 relative h-48 md:h-auto overflow-hidden">
-                <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20241231_144800.webp" alt="Paesaggio innevato" className="absolute inset-0 w-full h-full object-cover object-center" loading="lazy" decoding="async" />
+                <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Chi_siamo_community.webp" alt="Paesaggio innevato" className="absolute inset-0 w-full h-full object-cover object-center" loading="lazy" decoding="async" />
                 <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-brand-stone/70 to-transparent" />
                 <div className="absolute bottom-6 left-8 text-white z-10">
                   <div className="flex items-center gap-2 mb-2">
