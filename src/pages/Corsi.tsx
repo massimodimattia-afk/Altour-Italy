@@ -1,9 +1,10 @@
+// src/pages/CorsiPage.tsx
 import { useState, useMemo, useEffect, forwardRef } from "react";
 import { AltourTactics } from "../components/AltourTactics";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, Layers, Clock } from "lucide-react";
+import { Search, SlidersHorizontal, Layers, Clock, Bell, X } from "lucide-react";
 import ActivityDetailModal from "../components/ActivityDetailModal";
-import { isIOS } from "../components/Section";
+import Section, { isIOS } from "../components/Section";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface CorsoItem {
@@ -26,6 +27,12 @@ export interface CorsoItem {
   prezzo_teorico: number | null;
   prezzo_pratico: number | null;
   prezzo_bundle: number | null;
+  
+  // Allineamento con il DB Escursioni
+  is_active?: boolean | null;
+  is_coming_soon?: boolean | null;
+  status?: 'active' | 'coming_soon' | 'archived' | null;
+
   selectedOption?: 'corso' | 'bundle' | 'teoria' | 'pratica' | null;
   selectedPrice?: number | null;
 }
@@ -69,7 +76,7 @@ function formatMarkdown(text: string | null | undefined): string {
     .replace(/_(.*?)_/g, "<em>$1</em>");
 }
 
-// ─── Card Unificata con Gestione Prezzo Dinamico e Opzioni Disabilitate ───────
+// ─── Card Unificata con Gestione Prezzo Dinamico e Stati "Coming Soon" ───────
 const FormazioneCard = forwardRef<HTMLDivElement, {
   item: CorsoItem;
   parentTitle?: string;
@@ -80,11 +87,17 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
   const isModulo = Boolean(item.parent_corso_id);
   const categoriaName = item.categoria || "Formazione";
   const categoryBg = CATEGORIA_COLORS[categoriaName] || "#002f59";
+  
+  // Valuta se il modulo è in arrivo (tramite boolean o enum testuale per flessibilità)
+  const isComingSoon = item.status === 'coming_soon' || item.is_coming_soon === true;
 
   const hasBundle = Boolean(item.prezzo_bundle && Number(item.prezzo_bundle) > 0);
   const hasTeoria = Boolean(item.prezzo_teorico && Number(item.prezzo_teorico) > 0);
   const hasPratica = Boolean(item.prezzo_pratico && Number(item.prezzo_pratico) > 0);
   const showPriceSelector = hasBundle || hasTeoria || hasPratica;
+
+  // Fix Immagine Rotta "React-Way"
+  const [imgError, setImgError] = useState(false);
 
   const [selectedOption, setSelectedOption] = useState<'bundle' | 'teoria' | 'pratica'>(() => {
     if (hasBundle) return 'bundle';
@@ -121,24 +134,26 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
   return (
     <motion.div
       ref={ref}
-      layout
+      layout={!isIOS} // Disabilita animazione layout se iOS per evitare lag
       initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
-      className="bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform h-full transform-gpu"
-      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
+      className={`bg-white rounded-2xl md:rounded-[2rem] overflow-hidden flex flex-col active:scale-[0.99] transition-transform h-full transform-gpu ${isComingSoon ? "border border-stone-200" : ""}`}
+      style={{ boxShadow: isComingSoon ? "0 4px 12px rgba(0,0,0,0.03)" : "0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
     >
       <div className="aspect-[3/2] md:h-52 md:aspect-auto relative overflow-hidden flex-shrink-0 bg-stone-100">
         <img
-          src={item.immagine_url || IMG_FALLBACK}
+          src={imgError || !item.immagine_url ? IMG_FALLBACK : item.immagine_url}
           alt={item.titolo}
-          className="absolute inset-0 w-full h-full object-cover"
+          onError={() => setImgError(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-all ${isComingSoon ? "opacity-90 grayscale-[0.3]" : ""}`}
           loading={idx < 4 ? "eager" : "lazy"}
           decoding="async"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
+        {/* Badge Categoria */}
         <div
           className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md backdrop-blur-sm z-10"
           style={{
@@ -148,11 +163,19 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
         >
           {categoriaName}
         </div>
+
+{/* Badge "In arrivo" - Stile Brand Altour */}
+{isComingSoon && (
+  <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-stone-900/85 text-white shadow-lg backdrop-blur-md z-10 border border-white/20 flex items-center gap-2">
+    <span className="w-1.5 h-1.5 rounded-full bg-brand-sky animate-pulse shrink-0" />
+    <Bell size={10} className="text-brand-sky shrink-0" />
+    <span>In arrivo</span>
+  </div>
+)}
       </div>
 
-      <div className="p-4 md:p-5 flex flex-col flex-grow">
+      <div className={`p-4 md:p-5 flex flex-col flex-grow ${isComingSoon ? "bg-stone-50/50" : ""}`}>
         
-        {/* Intestazione (Corso Padre + Durata) con altezza contenuta e troncamento automatico */}
         <div className="flex items-center gap-2 mb-1 flex-wrap min-h-[20px]">
           {isModulo && parentTitle && (
             <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md shrink-0">
@@ -167,23 +190,23 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
           )}
         </div>
 
-        <h3 className="text-sm md:text-base font-black text-brand-stone uppercase tracking-tight leading-snug line-clamp-2 mb-1.5">
+        <h3 className={`text-sm md:text-base font-black uppercase tracking-tight leading-snug line-clamp-2 mb-1.5 ${isComingSoon ? "text-stone-500" : "text-brand-stone"}`}>
           {item.titolo}
         </h3>
 
-        {/* Descrizione con margine ottimizzato */}
         <p
           className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 font-medium flex-grow"
           dangerouslySetInnerHTML={{ __html: formatMarkdown(item.descrizione) }}
         />
 
+        {/* Pulsanti opzione prezzo (Ingranditi per Mobile) */}
         {showPriceSelector && (
           <div className="flex bg-stone-100 p-1 rounded-xl gap-1 mb-3 shrink-0">
             <button
               type="button"
               disabled={!hasBundle}
               onClick={() => hasBundle && setSelectedOption('bundle')}
-              className={`flex-1 py-1 text-[8px] font-black uppercase rounded-lg transition-all ${
+              className={`flex-1 py-1.5 min-h-[36px] text-[8px] font-black uppercase rounded-lg transition-all ${
                 !hasBundle
                   ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
                   : selectedOption === 'bundle'
@@ -197,7 +220,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
               type="button"
               disabled={!hasTeoria}
               onClick={() => hasTeoria && setSelectedOption('teoria')}
-              className={`flex-1 py-1 text-[8px] font-black uppercase rounded-lg transition-all ${
+              className={`flex-1 py-1.5 min-h-[36px] text-[8px] font-black uppercase rounded-lg transition-all ${
                 !hasTeoria
                   ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
                   : selectedOption === 'teoria'
@@ -211,7 +234,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
               type="button"
               disabled={!hasPratica}
               onClick={() => hasPratica && setSelectedOption('pratica')}
-              className={`flex-1 py-1 text-[8px] font-black uppercase rounded-lg transition-all ${
+              className={`flex-1 py-1.5 min-h-[36px] text-[8px] font-black uppercase rounded-lg transition-all ${
                 !hasPratica
                   ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
                   : selectedOption === 'pratica'
@@ -224,29 +247,42 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
           </div>
         )}
 
-        <div className="pt-3 border-t border-stone-100 flex flex-col gap-3 mt-auto shrink-0">
+        <div className="pt-3 border-t border-stone-100/80 flex flex-col gap-3 mt-auto shrink-0">
           {activePrice !== undefined && activePrice !== null && activePrice > 0 && (
             <div className="flex items-baseline justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">
                 {activeOptionLabel ? `Quota (${activeOptionLabel})` : "Quota"}
               </span>
-              <span className="text-base font-black text-brand-stone">€{activePrice}</span>
+              <span className={`text-base font-black ${isComingSoon ? "text-stone-400" : "text-brand-stone"}`}>€{activePrice}</span>
             </div>
           )}
 
           <div className="flex gap-2">
-            <button
-              onClick={() => onDetails({ ...item, selectedPrice: activePrice || undefined, selectedOption })}
-              className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95"
-            >
-              Dettagli
-            </button>
-            <button
-              onClick={() => onBook(bookingSummary, "info")}
-              className="flex-[1.5] py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors active:scale-95"
-            >
-              Richiedi Info
-            </button>
+            {isComingSoon ? (
+              // Call To Action Modificata per Moduli in arrivo
+              <button
+                onClick={() => onBook(`Avvisami per: ${bookingSummary}`, "info")}
+                className="w-full py-2.5 md:py-3 min-h-[44px] rounded-xl font-black uppercase text-[9px] tracking-widest bg-stone-200/80 text-stone-500 hover:bg-stone-300 hover:text-stone-700 transition-colors active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <Bell size={12} /> Avvisami quando pronto
+              </button>
+            ) : (
+              // Call To Action Normali
+              <>
+                <button
+                  onClick={() => onDetails({ ...item, selectedPrice: activePrice || undefined, selectedOption })}
+                  className="flex-1 py-2.5 md:py-3 min-h-[44px] rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95"
+                >
+                  Dettagli
+                </button>
+                <button
+                  onClick={() => onBook(bookingSummary, "info")}
+                  className="flex-[1.5] py-2.5 md:py-3 min-h-[44px] rounded-xl font-black uppercase text-[9px] tracking-widest bg-brand-sky text-white shadow-sm hover:bg-[#0284c7] transition-colors active:scale-95"
+                >
+                  Richiedi Info
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -263,8 +299,8 @@ const SkeletonCard = () => (
       <div className="h-4 w-3/4 bg-stone-200 rounded animate-pulse" />
       <div className="h-3 w-full bg-stone-50 rounded animate-pulse" />
       <div className="mt-auto pt-3 flex gap-2">
-        <div className="h-10 flex-1 bg-stone-100 rounded-xl animate-pulse" />
-        <div className="h-10 flex-[1.5] bg-stone-100 rounded-xl animate-pulse" />
+        <div className="h-11 flex-1 bg-stone-100 rounded-xl animate-pulse" />
+        <div className="h-11 flex-[1.5] bg-stone-100 rounded-xl animate-pulse" />
       </div>
     </div>
   </div>
@@ -289,13 +325,19 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
     return map;
   }, [corsi]);
 
-  // Conteggi per i filtri (sempre aggiornati rispetto al totale disponibile)
-  const totalCorsi = useMemo(() => corsi.filter(c => !c.parent_corso_id).length, [corsi]);
-  const totalModuli = useMemo(() => corsi.filter(c => Boolean(c.parent_corso_id)).length, [corsi]);
+  // I conteggi escludono a priori i corsi con is_active a false o status archiviato
+  const totalCorsi = useMemo(() => 
+    corsi.filter(c => !c.parent_corso_id && c.is_active !== false && c.status !== 'archived').length, 
+  [corsi]);
+  
+  const totalModuli = useMemo(() => 
+    corsi.filter(c => Boolean(c.parent_corso_id) && c.is_active !== false && c.status !== 'archived').length, 
+  [corsi]);
 
-  // Logica unica di Filtraggio e Ordinamento (Corsi completi sempre in alto)
+  // Logica unica di Filtraggio e Ordinamento
   const filteredData = useMemo(() => {
-    let base = corsi;
+    // Escludiamo tutto ciò che non è attivo (es. in bozza/nascosto)
+    let base = corsi.filter(c => c.is_active !== false && c.status !== 'archived');
 
     // 1. Ricerca
     if (searchQuery.trim() !== "") {
@@ -323,10 +365,9 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
       const bIsCorso = !b.parent_corso_id ? 1 : 0;
       
       if (aIsCorso !== bIsCorso) {
-        return bIsCorso - aIsCorso; // I corsi vengono prima
+        return bIsCorso - aIsCorso;
       }
       
-      // Fallback sull'ordinamento posizionale se impostato in DB
       return (a.posizione || 0) - (b.posizione || 0);
     });
 
@@ -370,10 +411,9 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
   );
 
   return (
-    <div className="bg-[#f5f2ed] min-h-screen antialiased">
-
+    <div className="bg-[#f5f2ed] min-h-screen antialiased pb-safe">
       {/* ── Header e Titolo ─────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 pt-8 pb-0">
+      <div className="max-w-6xl mx-auto px-4 pt-8 pb-0 mt-safe">
         <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Formazione</p>
         <div className="flex items-end justify-between gap-4">
           <h1 className="text-3xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9]">
@@ -386,7 +426,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         </div>
         <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
-        {/* ── Barra di Ricerca ── */}
+        {/* ── Barra di Ricerca + FIX ZOOM IOS ── */}
         <div className="mb-8 mt-6 flex justify-center px-2">
           <form 
             onSubmit={(e) => {
@@ -404,7 +444,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
                 setVisibleCount(ITEMS_PER_LOAD);
               }}
               placeholder="Cerca corso, modulo o argomento..."
-              className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-base md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transform-gpu"
+              className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-[16px] md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] transform-gpu"
             />
             
             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-brand-sky">
@@ -414,15 +454,16 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
             <AnimatePresence>
               {searchQuery && (
                 <motion.button 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.8, y: "-50%" }}
+                  animate={{ opacity: 1, scale: 1, y: "-50%" }}
+                  exit={{ opacity: 0, scale: 0.8, y: "-50%" }}
                   transition={{ duration: 0.15 }}
                   type="button"
                   onClick={() => { setSearchQuery(""); setVisibleCount(ITEMS_PER_LOAD); }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 text-xs active:scale-90 transition-colors font-black"
+                  className="absolute right-4 top-1/2 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-600 active:scale-90 transition-colors"
+                  aria-label="Cancella ricerca"
                 >
-                  ✕
+                  <X size={14} strokeWidth={2.5} />
                 </motion.button>
               )}
             </AnimatePresence>
@@ -452,7 +493,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
                 <button
                   key={f.key}
                   onClick={() => toggleFilter(f.key)}
-                  className={`flex-1 min-w-[140px] flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 border transform-gpu ${
+                  className={`flex-1 min-w-[140px] flex items-center justify-between px-4 py-3.5 min-h-[44px] rounded-2xl transition-all duration-300 border transform-gpu ${
                     isActive
                       ? "bg-white border-stone-200 shadow-[0_4px_12px_rgba(0,0,0,0.05)] translate-y-[-2px]"
                       : "bg-stone-200/40 border-transparent text-stone-500"
@@ -494,7 +535,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
                 <button 
                   key={f.key}
                   onClick={() => toggleFilter(f.key)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-black uppercase text-[9px] tracking-widest transition-all duration-200 active:scale-95"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full font-black uppercase text-[9px] tracking-widest transition-all duration-200 active:scale-95 transform-gpu"
                   style={isActive
                     ? { background: f.color, color: "white", boxShadow: `0 4px 12px ${f.color}40` }
                     : { background: "white", color: "#a8a29e", border: "1.5px solid #e7e5e4" }
@@ -523,7 +564,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
           </div>
           <button 
             onClick={() => setIsTestOpen(true)} 
-            className="w-full md:w-auto px-6 py-3.5 bg-brand-sky text-white font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-brand-stone transition-colors whitespace-nowrap shadow-md shadow-brand-sky/20"
+            className="w-full md:w-auto px-6 py-3.5 min-h-[44px] bg-brand-sky text-white font-black uppercase tracking-widest text-[10px] rounded-xl hover:bg-brand-stone transition-colors whitespace-nowrap shadow-md shadow-brand-sky/20"
           >
             Inizia il Test
           </button>
@@ -532,14 +573,14 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         {filteredData.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="py-20 text-center bg-white rounded-[2rem] border border-stone-100 p-8 shadow-sm"
+            className="py-20 text-center bg-white rounded-[2rem] border border-stone-100 p-8 shadow-sm transform-gpu"
           >
             <p className="text-4xl mb-3">🎓</p>
             <h3 className="text-brand-stone font-black uppercase tracking-widest text-xs mb-1">Nessun corso o modulo trovato</h3>
             <p className="text-stone-400 text-[11px] font-medium mb-6">Non ci sono elementi corrispondenti alla tua ricerca o al filtro attivo.</p>
             <button
               onClick={() => { setActiveFilter(null); setSearchQuery(""); setVisibleCount(ITEMS_PER_LOAD); }}
-              className="px-5 py-3 bg-brand-sky text-white rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all shadow-sm"
+              className="px-5 py-3 min-h-[44px] bg-brand-sky text-white rounded-xl font-black uppercase text-[9px] tracking-widest active:scale-95 transition-all shadow-sm"
             >
               Azzera tutto
             </button>
@@ -565,7 +606,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
               <div className="flex justify-center mt-8">
                 <button
                   onClick={() => setVisibleCount(v => v + ITEMS_PER_LOAD)}
-                  className="flex items-center gap-2 px-6 py-3.5 bg-white rounded-2xl font-black uppercase text-[9px] tracking-widest text-stone-500 border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95 shadow-sm transform-gpu"
+                  className="flex items-center gap-2 px-6 py-3.5 min-h-[44px] bg-white rounded-2xl font-black uppercase text-[9px] tracking-widest text-stone-500 border border-stone-200 hover:border-brand-sky hover:text-brand-sky transition-all active:scale-95 shadow-sm transform-gpu"
                 >
                   Altri {Math.min(ITEMS_PER_LOAD, filteredData.length - visibleCount)} percorsi
                 </button>
@@ -575,7 +616,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         )}
       </div>
 
-      {/* ── Modale Dettagli Unificato ── */}
+      {/* ── Modali ── */}
       <ActivityDetailModal
         activity={selectedItem ? {
           ...selectedItem,
