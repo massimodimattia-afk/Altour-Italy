@@ -65,13 +65,18 @@ function App() {
     loadCorsi();
   }, []);
 
+  // 4. SUPPORTO A LINK DIRETTO E HASH (#guida-trekking1)
   useEffect(() => {
+    // A. Controllo se l'utente accede tramite URL diretto (es. altouritaly.it/guida-trekking1)
+    //    Reindirizziamo a hash routing per evitare 404 sulle risorse buildate
     const directPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
     if (directPath === 'guida-trekking1') {
+      window.history.replaceState(null, '', '/#guida-trekking1');
       setCurrentPage('guida-trekking1');
       return;
     }
 
+    // B. Controllo standard via Hash (#pagina/slug)
     const raw = window.location.hash.replace('#', '');
     const [hash, slug] = raw.split('/');
     if (hash && VALID_PAGES.includes(hash as PageType)) {
@@ -92,7 +97,7 @@ function App() {
       window.history.replaceState(
         null, 
         '', 
-        target === 'home' ? '/' : (target === 'guida-trekking1' ? '/guida-trekking1' : `#${target}`)
+        target === 'home' ? '/' : `#${target}`
       );
     }
   };
