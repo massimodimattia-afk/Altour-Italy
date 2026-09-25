@@ -1,5 +1,5 @@
 // src/pages/GuidaTrekkingLanding.tsx
-import React, { useState, FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { 
   Compass, 
