@@ -11,8 +11,9 @@ import ChiSiamo from './pages/ChiSiamo';
 import BookingModal from './components/BookingModal';
 import PWAPrompt from "./components/PWAprompt";
 import FeedbackPage from './pages/FeedbackPage';
+import GuidaTrekkingLanding from './pages/GuidaTrekkingLanding';
 import { Analytics } from "@vercel/analytics/react";
-import { supabase } from './lib/supabase'; // FIX: import del client supabase
+import { supabase } from './lib/supabase';
 
 type PageType =
   | 'home'
@@ -23,12 +24,14 @@ type PageType =
   | 'legal-cookie'
   | 'legal-termini'
   | 'chi-siamo'
-  | 'lascia-feedback';
+  | 'lascia-feedback'
+  | 'guida-trekking1';
 
 const VALID_PAGES: PageType[] = [
   'home', 'corsi', 'attivitapage', 'tessera',
   'legal-privacy', 'legal-cookie', 'legal-termini',
   'chi-siamo', 'lascia-feedback',
+  'guida-trekking1',
 ];
 
 const REDIRECT_MAP: Record<string, PageType> = {
@@ -43,8 +46,6 @@ function App() {
   const [bookingMode, setBookingMode] = useState<'info' | 'prenota'>('info');
 
   const [initialSlug, setInitialSlug] = useState<string | null>(null);
-
-  // FIX: Stato e caricamento automatico dei corsi da Supabase
   const [corsi, setCorsi] = useState<any[]>([]);
 
   useEffect(() => {
@@ -65,6 +66,12 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const directPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+    if (directPath === 'guida-trekking1') {
+      setCurrentPage('guida-trekking1');
+      return;
+    }
+
     const raw = window.location.hash.replace('#', '');
     const [hash, slug] = raw.split('/');
     if (hash && VALID_PAGES.includes(hash as PageType)) {
@@ -85,7 +92,7 @@ function App() {
       window.history.replaceState(
         null, 
         '', 
-        target === 'home' ? '/' : `#${target}`
+        target === 'home' ? '/' : (target === 'guida-trekking1' ? '/guida-trekking1' : `#${target}`)
       );
     }
   };
@@ -104,7 +111,7 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'home':           return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
-      case 'corsi':          return <Corsi corsi={corsi} onNavigate={handleNavigate} onBookingClick={openBooking} />; // FIX: passata prop corsi
+      case 'corsi':          return <Corsi corsi={corsi} onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'attivitapage':   return <Attivitapage onNavigate={handleNavigate} onBookingClick={openBooking} initialSlug={initialSlug} />;
       case 'tessera':        return <Tessera />;
       case 'legal-privacy':  return <Legal initialTab="privacy" />;
@@ -112,13 +119,20 @@ function App() {
       case 'legal-termini':  return <Legal initialTab="termini" />;
       case 'chi-siamo':      return <ChiSiamo onNavigate={handleNavigate} onBookingClick={openBooking} />;
       case 'lascia-feedback': return <FeedbackPage onNavigate={handleNavigate} />;
+      
+      case 'guida-trekking1': 
+        return <GuidaTrekkingLanding onNavigateHome={() => handleNavigate('home')} />;
+        
       default:               return <Home onNavigate={handleNavigate} onBookingClick={openBooking} />;
     }
   };
 
+  const isLanding = currentPage === 'guida-trekking1';
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-stone-50 font-sans antialiased pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
-      <Header currentPage={currentPage} onNavigate={handleNavigate} />
+      
+      {!isLanding && <Header currentPage={currentPage} onNavigate={handleNavigate} />}
 
       <main className="flex-grow relative">
         <div key={currentPage} className="animate-[fadeIn_0.5s_ease-out] ios-gpu-fix">
@@ -137,9 +151,9 @@ function App() {
         )}
       </AnimatePresence>
 
-      <Footer onNavigate={handleNavigate} />
-      <PWAPrompt />
+      {!isLanding && <Footer onNavigate={handleNavigate} />}
       
+      <PWAPrompt />
       <Analytics />
     </div>
   );
