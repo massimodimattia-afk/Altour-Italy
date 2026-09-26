@@ -308,7 +308,6 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
     const isMasterUnlocked = count === BADGE_COMPLETO;
     return (
       <div style={absoluteCenterStyle} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-        {/* rimosso backdrop-blur per performance iOS */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-stone-900/85" />
         <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} style={{ willChange: 'transform, opacity' }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-2xl border border-stone-100 relative z-10 transform-gpu">
           <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full text-stone-400 touch-manipulation"><X size={16} /></button>
@@ -341,7 +340,6 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
 
   return (
     <div style={absoluteCenterStyle} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      {/* Rimosso blur overlay per fluidità mobile */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-stone-900/85" />
       <motion.div initial={{ y: 60, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 60, opacity: 0, scale: 0.96 }} transition={{ type: "spring", stiffness: 380, damping: 28 }} className="bg-white w-full max-w-xs rounded-[2.5rem] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.18)] border border-stone-100 relative z-10 transform-gpu" style={{ willChange: 'transform, opacity' }}>
         <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full text-stone-400 hover:text-stone-700 transition-colors touch-manipulation"><X size={16} /></button>
@@ -658,7 +656,6 @@ export default function Tessera() {
     if (!REDEEM_CODE_REGEX.test(normalized)) { setRedeemError("Formato non valido."); return; }
     setIsVerifying(true); setRedeemError(""); setRedeemAttempts(n => n + 1);
     
-    // Inclusione di lunghezza_tour e data nella query
     const { data, error } = await supabase.from("escursioni")
       .select("id, titolo, filosofia, categoria, difficolta, codici_usati, durata, data")
       .contains("codici_riscatto", [normalized]).single();
@@ -667,39 +664,35 @@ export default function Tessera() {
     if ((data.codici_usati as string[] | null)?.includes(normalized)) { setRedeemError("Codice già usato."); setIsVerifying(false); return; }
     
     let bootsToAdd: EscursioneCompletata[] = [];
-const baseColor = getFilosofiaColor(data.filosofia);
+    const baseColor = getFilosofiaColor(data.filosofia);
 
-// Estrae in modo sicuro qualsiasi numero presente nel campo durata (es. "3 giorni" -> 3)
-const matchGiorni = (data.durata || "").match(/\d+/);
-const parsedDurata = matchGiorni ? parseInt(matchGiorni[0], 10) : 1;
-const isTour = data.categoria?.toLowerCase() === "tour";
-const numGiorni = isTour && parsedDurata > 1 ? parsedDurata : 1;
+    const matchGiorni = (data.durata || "").match(/\d+/);
+    const parsedDurata = matchGiorni ? parseInt(matchGiorni[0], 10) : 1;
+    const isTour = data.categoria?.toLowerCase() === "tour";
+    const numGiorni = isTour && parsedDurata > 1 ? parsedDurata : 1;
 
-// Gestione fallback per la data se null/vuota
-const validBaseTime = data.data && !isNaN(new Date(data.data).getTime())
-  ? new Date(data.data).getTime()
-  : Date.now();
+    const validBaseTime = data.data && !isNaN(new Date(data.data).getTime())
+      ? new Date(data.data).getTime()
+      : Date.now();
 
-// Genera N scarponi se tour multi-giorno
-if (isTour && numGiorni > 1) {
-  bootsToAdd = Array.from({ length: numGiorni }).map((_, idx) => ({
-    titolo: `${data.titolo} (Tappa ${idx + 1})`,
-    colore: baseColor,
-    data: new Date(validBaseTime + idx * 86400000).toISOString(),
-    categoria: data.categoria,
-    difficolta: data.difficolta
-  }));
-} else {
-  bootsToAdd = [{
-    titolo: data.titolo,
-    colore: baseColor,
-    data: new Date(validBaseTime).toISOString(),
-    categoria: data.categoria,
-    difficolta: data.difficolta
-  }];
-}
+    if (isTour && numGiorni > 1) {
+      bootsToAdd = Array.from({ length: numGiorni }).map((_, idx) => ({
+        titolo: `${data.titolo} (Tappa ${idx + 1})`,
+        colore: baseColor,
+        data: new Date(validBaseTime + idx * 86400000).toISOString(),
+        categoria: data.categoria,
+        difficolta: data.difficolta
+      }));
+    } else {
+      bootsToAdd = [{
+        titolo: data.titolo,
+        colore: baseColor,
+        data: new Date(validBaseTime).toISOString(),
+        categoria: data.categoria,
+        difficolta: data.difficolta
+      }];
+    }
 
-    // Controllo se una qualsiasi delle tappe è già stata riscattata
     const alreadyRedeemed = bootsToAdd.some(b => 
       escursioniCompletateParsed.some(e => e.titolo === b.titolo)
     );
@@ -707,7 +700,6 @@ if (isTour && numGiorni > 1) {
     
     const updatedList = [...escursioniCompletateParsed, ...bootsToAdd];
     
-    // Calcolo Cumulativo Badge e Traguardi
     const oldBadges = computeEarnedBadges(escursioniCompletateParsed);
     const newBadges = computeEarnedBadges(updatedList);
     const justUnlockedBadges = newBadges.filter(b => !oldBadges.includes(b));
@@ -731,7 +723,6 @@ if (isTour && numGiorni > 1) {
     setNewlyUnlockedAchievements(justUnlockedAchvObjects);
     setRedeemStep("SUCCESS"); setIsVerifying(false);
 
-    // Haptic feedback nativo
     if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate([40, 60, 40]);
     }
@@ -870,7 +861,7 @@ if (isTour && numGiorni > 1) {
     <div className="min-h-[100dvh] bg-[#f5f2ed] text-stone-800 pb-20">
       
       <ModalPortal>
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {!userTessera && (
             <div style={{...absoluteCenterStyle, touchAction: "none", overscrollBehavior: "none"}}>
               <motion.div key="loginBg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#f5f2ed]" />
@@ -918,7 +909,7 @@ if (isTour && numGiorni > 1) {
                 
                 <AnimatePresence mode="wait">
                   {supportStep === "INPUT" ? (
-                    <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="transform-gpu">
+                    <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="transform-gpu min-h-[400px]">
                       <div className="text-center mb-5">
                         <h3 className="text-xl font-black uppercase tracking-tight">Supporto</h3>
                         <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Non trovi il PIN o la tessera?</p>
@@ -926,27 +917,21 @@ if (isTour && numGiorni > 1) {
                       
                       <div className="space-y-3">
                         <input type="text" placeholder="Nome e Cognome" className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all touch-manipulation" value={supportData.nome} onChange={(e) => setSupportData({...supportData, nome: e.target.value})} />
-                        
                         <input ref={inputSupportRef} type="text" inputMode="numeric" placeholder="Codice Tessera (opzionale)" className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all touch-manipulation" value={supportData.codice} onChange={(e) => setSupportData({...supportData, codice: e.target.value.replace(/\D/g, "")})} />
-                        
                         <input type="text" placeholder="La tua Email o Cellulare" className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all touch-manipulation" value={supportData.contatto} onChange={(e) => setSupportData({...supportData, contatto: e.target.value})} />
-                        
                         <label className="flex items-center gap-3 p-2 bg-stone-50 rounded-2xl cursor-pointer select-none active:scale-[0.99] transition-all touch-manipulation">
                           <input type="checkbox" checked={supportData.richiediStorico} onChange={(e) => setSupportData({...supportData, richiediStorico: e.target.checked})} className="w-5 h-5 rounded-md border-stone-300 text-sky-500 focus:ring-sky-500 cursor-pointer" />
                           <span className="text-[10px] font-black uppercase text-stone-600 tracking-wider leading-tight">Richiedi anche caricamento storico attività passate</span>
                         </label>
-
                         <textarea placeholder="Descrivi il problema (opzionale)..." className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold h-20 resize-none border-2 border-transparent focus:border-sky-500 outline-none transition-all touch-manipulation" value={supportData.problema} onChange={(e) => setSupportData({...supportData, problema: e.target.value})} />
-                        
                         {supportError && <p className="text-red-500 text-[10px] font-black mt-2 uppercase text-center py-2 bg-red-50 rounded-lg">{supportError}</p>}
-                        
                         <button onClick={submitSupportRequest} disabled={isSubmittingSupport} className="w-full mt-2 bg-sky-500 text-white p-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-sky-200 active:scale-95 transition-all flex justify-center items-center gap-2 touch-manipulation">
                           {isSubmittingSupport ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> Invia Richiesta</>}
                         </button>
                       </div>
                     </motion.div>
                   ) : (
-                    <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center transform-gpu">
+                    <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center text-center transform-gpu min-h-[400px]">
                       <div className="mb-4"><CheckCircle2 size={48} className="text-emerald-400 mx-auto" /></div>
                       <div className="mb-6 p-6 rounded-3xl bg-emerald-50"><FileText size={40} className="text-emerald-500" /></div>
                       <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1">Richiesta Inviata</h3>
@@ -957,6 +942,239 @@ if (isTour && numGiorni > 1) {
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Modal Riscatto Scarpone */}
+          {showRedeem && (
+            <div style={absoluteCenterStyle}>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeRedeem} className="absolute inset-0 bg-stone-900/85" />
+              <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu">
+                <button onClick={closeRedeem} disabled={isVerifying} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
+                <AnimatePresence mode="wait">
+                  {redeemStep === "INPUT" ? (
+                    <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="transform-gpu min-h-[300px] flex flex-col justify-center">
+                      <div className="text-center mb-8"><div className="inline-flex p-4 bg-sky-50 rounded-2xl mb-4"><Plus className="text-sky-500" size={28} /></div><h3 className="text-2xl font-black uppercase tracking-tight">Codice Scarpone</h3><p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Inserisci il codice ricevuto</p></div>
+                      <input 
+                        className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-2xl font-black uppercase outline-none focus:border-sky-500 transition-all shadow-inner touch-manipulation text-[16px]" 
+                        placeholder="ES. TREK24" 
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        value={redeemCode} 
+                        onChange={(e) => setRedeemCode(e.target.value.toUpperCase().trim())} 
+                        onKeyDown={(e) => e.key === "Enter" && verifyCode()} 
+                      />
+                      {redeemError && <p className="text-red-500 text-[10px] font-black mt-3 uppercase text-center py-2 bg-red-50 rounded-lg">{redeemError}</p>}
+                      <button onClick={verifyCode} disabled={isVerifying || !redeemCode.trim()} className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50 shadow-lg touch-manipulation">{isVerifying ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Verifica Codice"}</button>
+                    </motion.div>
+                  ) : (
+                    <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center text-center w-full transform-gpu min-h-[300px]">
+                      <div className="mb-2"><CheckCircle2 size={48} className="text-emerald-400 mx-auto" /></div>
+                      
+                      {unlockedBootsPreview.length > 1 ? (
+                        <>
+                          <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1">Tour Completato 🏔️</h3>
+                          <p className="text-[11px] font-black uppercase tracking-widest text-emerald-500 mb-4">+{unlockedBootsPreview.length} Scarponi Aggiunti!</p>
+                          
+                          <div className="flex flex-wrap justify-center gap-3 my-4 w-full">
+                            {unlockedBootsPreview.map((boot, idx) => (
+                              <motion.div
+                                key={idx}
+                                initial={{ scale: 0, y: 20, opacity: 0 }}
+                                animate={{ scale: 1, y: 0, opacity: 1 }}
+                                transition={{ delay: idx * 0.15, type: "spring", stiffness: 300 }}
+                                className="flex flex-col items-center transform-gpu"
+                              >
+                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-md" style={{ backgroundColor: `${boot.colore}15`, border: `1px solid ${boot.colore}30` }}>
+                                  <MemoIconaScarponeCustom size={40} color={boot.colore} isActive={true} />
+                                </div>
+                                <span className="text-[9px] font-black uppercase mt-2 text-stone-500 max-w-[70px] leading-tight line-clamp-2">
+                                  {boot.titolo.split('(')[1]?.replace(')','') || `Tappa ${idx+1}`}
+                                </span>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="mb-4 p-6 rounded-3xl mt-2" style={{ backgroundColor: `${unlockedBootsPreview[0]?.colore}15` }}>
+                            <MemoIconaScarponeCustom size={80} color={unlockedBootsPreview[0]?.colore || "#5aaadd"} isActive={true} />
+                          </div>
+                          <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1 leading-tight px-4">{unlockedBootsPreview[0]?.titolo}</h3>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-4 mt-2">Scarpone Riscattato! 🎉</p>
+                        </>
+                      )}
+
+                      {newlyUnlockedBadges.length > 0 && (
+                        <div className="w-full p-3 rounded-xl bg-sky-50 text-center mt-2">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-sky-700">
+                            {newlyUnlockedBadges.length > 1 ? `Nuovi badge: ${newlyUnlockedBadges.join(', ')}` : `Nuovo badge: ${newlyUnlockedBadges[0]}`}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {newlyUnlockedAchievements.length > 0 && (
+                        <div className="w-full p-3 rounded-xl bg-purple-50 text-center mt-2">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-purple-700">
+                            {newlyUnlockedAchievements.length > 1 ? `${newlyUnlockedAchievements.length} Traguardi Sbloccati!` : `Traguardo Sbloccato: ${newlyUnlockedAchievements[0].name}!`}
+                          </span>
+                        </div>
+                      )}
+
+                      <button onClick={closeRedeem} className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg touch-manipulation">Perfetto!</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Modal Richiesta Storico */}
+          {showHistoryModal && (
+            <div style={{...absoluteCenterStyle, touchAction: "none", overscrollBehavior: "none"}}>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeHistoryModal} className="absolute inset-0 bg-stone-900/85" />
+              <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu">
+                <button onClick={closeHistoryModal} disabled={isSubmittingHistory} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
+                <AnimatePresence mode="wait">
+                  {historyStep === "INPUT" ? (
+                    <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="transform-gpu min-h-[300px] flex flex-col justify-center">
+                      <div className="text-center mb-6">
+                        <div className="inline-flex p-4 bg-stone-100 rounded-2xl mb-4"><History className="text-stone-600" size={28} /></div>
+                        <h3 className="text-2xl font-black uppercase tracking-tight">Aggiorna Storico</h3>
+                        <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-2 mb-4 leading-relaxed">
+                          Conferma l'email per consentire al team di associare correttamente i tuoi vecchi scarponi a questa tessera digitale.
+                        </p>
+                      </div>
+                      <input 
+                        type="text"
+                        placeholder="Inserisci la tua email..."
+                        className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all mb-2 touch-manipulation"
+                        value={historyEmail}
+                        onChange={(e) => setHistoryEmail(e.target.value)}
+                      />
+                      {historyError && <p className="text-red-500 text-[10px] font-black mb-2 mt-2 uppercase text-center py-2 bg-red-50 rounded-lg">{historyError}</p>}
+                      <button onClick={submitHistoryRequest} disabled={isSubmittingHistory} className="w-full mt-4 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg flex justify-center items-center gap-2 touch-manipulation">
+                        {isSubmittingHistory ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> Invia Richiesta</>}
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center text-center transform-gpu min-h-[300px]">
+                      <div className="mb-4"><CheckCircle2 size={48} className="text-emerald-400 mx-auto" /></div>
+                      <div className="mb-6 p-6 rounded-3xl bg-emerald-50"><FileText size={40} className="text-emerald-500" /></div>
+                      <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1">Richiesta Inviata</h3>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-6 leading-relaxed">
+                        L'organizzazione ha ricevuto la richiesta. La tua Tessera verrà aggiornata al termine delle verifiche!
+                      </p>
+                      <button onClick={closeHistoryModal} className="w-full mt-2 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg touch-manipulation">Perfetto!</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Dettaglio Scarpone (Swipeable) */}
+          {selectedBoot && selectedBootIndex !== null && (
+            <div style={absoluteCenterStyle}>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBootIndex(null)} className="absolute inset-0 bg-stone-900/85" />
+              
+              <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative w-full max-w-sm bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 z-10 transform-gpu">
+                
+                <div className="absolute top-0 left-0 right-0 z-[100] flex justify-between items-center p-6">
+                  <div className="flex gap-2">
+                     <button onClick={handlePrevBoot} disabled={selectedBootIndex === 0} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 disabled:opacity-30 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><ChevronLeft size={20} /></button>
+                     <button onClick={handleNextBoot} disabled={selectedBootIndex === escursioniCompletateParsed.length - 1} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 disabled:opacity-30 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><ChevronRight size={20} /></button>
+                  </div>
+                  <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedBootIndex(null); }} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 hover:text-stone-700 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><X size={20} /></button>
+                </div>
+
+                <div className="pt-24 pb-8 px-8 md:px-10 overflow-hidden relative z-10 flex items-center justify-center w-full min-h-[380px]">
+                  <AnimatePresence mode="popLayout" custom={slideDirection}>
+                    <motion.div
+                      key={selectedBootIndex}
+                      custom={slideDirection}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.2}
+                      onDragEnd={(_e, info) => {
+                        const swipeThreshold = 40;
+                        if (info.offset.x < -swipeThreshold) handleNextBoot();
+                        else if (info.offset.x > swipeThreshold) handlePrevBoot();
+                      }}
+                      className="flex flex-col items-center text-center touch-pan-y cursor-grab active:cursor-grabbing w-full transform-gpu"
+                    >
+                      <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-6 shadow-xl" style={{ backgroundColor: selectedBoot.colore + "15", border: `1px solid ${selectedBoot.colore}20` }}>
+                        <MemoIconaScarponeCustom size={80} color={selectedBoot.colore} isActive={true} />
+                      </div>
+                      
+                      <div className="flex flex-wrap justify-center gap-2 mb-4 pointer-events-none">
+                        <div className="px-4 py-1.5 rounded-full bg-stone-100 text-[10px] font-black uppercase text-stone-500 tracking-widest border border-stone-200/50">{getFilosofiaName(selectedBoot.colore)}</div>
+                        {selectedBoot.difficolta && <div className="px-4 py-1.5 rounded-full bg-stone-100 text-[10px] font-black uppercase text-stone-500 tracking-widest border border-stone-200/50">{selectedBoot.difficolta}</div>}
+                      </div>
+                      
+                      <h3 className="text-2xl font-black uppercase leading-tight mb-4 tracking-tight pointer-events-none">{selectedBoot.titolo}</h3>
+                      
+                      <div className="flex flex-col gap-2 w-full pt-6 border-t border-stone-50 pointer-events-none">
+                        <div className="flex items-center justify-center gap-2 text-stone-400">
+                          <Calendar size={14} />
+                          <p className="text-[11px] font-bold uppercase tracking-widest">{new Date(selectedBoot.data).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</p>
+                        </div>
+                        {selectedBoot.categoria && (
+                          <div className="flex items-center justify-center gap-2 text-stone-400">
+                            <MapPin size={14} />
+                            <p className="text-[11px] font-bold uppercase tracking-widest">{selectedBoot.categoria}</p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+                
+                <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pb-2">
+                  {escursioniCompletateParsed.map((_, idx) => (
+                    <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${idx === selectedBootIndex ? "w-4 bg-stone-800" : "w-1.5 bg-stone-200"}`} />
+                  ))}
+                </div>
+
+              </motion.div>
+            </div>
+          )}
+
+          {/* Dettaglio Badge */}
+          {selectedBadge && (
+            <BadgeDetailPopup filo={selectedBadge.filo} count={selectedBadge.count} onClose={() => setSelectedBadge(null)} />
+          )}
+
+          {/* Dettaglio Traguardo (Achievement) */}
+          {selectedAchievement && (
+            <div style={absoluteCenterStyle}>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedAchievement(null)} className="absolute inset-0 bg-stone-900/85" />
+              <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu">
+                <button onClick={() => setSelectedAchievement(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-8 bg-stone-50 border-2 border-stone-100 shadow-xl"><span className="text-6xl drop-shadow-sm">{selectedAchievement.emoji}</span></div>
+                  <h3 className="text-2xl font-black uppercase leading-tight mb-3 tracking-tight">{selectedAchievement.name}</h3>
+                  <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-8 leading-relaxed">{selectedAchievement.description}</p>
+                  <div className="w-full p-6 bg-stone-50 rounded-[2rem] border border-stone-100">
+                    <p className="text-[10px] font-black uppercase text-stone-400 mb-3 tracking-widest">Progresso Attuale</p>
+                    {(() => {
+                      const prog = selectedAchievement.progress(escursioniCompletateParsed);
+                      return (
+                        <>
+                          <div className="flex items-center justify-between mb-2"><span className="text-sm font-black uppercase tabular-nums">{prog.current} / {prog.total}</span><span className="text-sm font-black text-sky-500 tabular-nums">{Math.round((prog.current / prog.total) * 100)}%</span></div>
+                          <div className="h-2.5 w-full bg-stone-200 rounded-full mt-1.5 overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${(prog.current / prog.total) * 100}%` }} transition={{ duration: 1.2, ease: "easeOut" }} className="h-full bg-sky-500 transform-gpu" /></div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
               </motion.div>
             </div>
           )}
@@ -1167,248 +1385,6 @@ if (isTour && numGiorni > 1) {
               )}
             </AnimatePresence>
           </div>
-
-          <ModalPortal>
-            <AnimatePresence>
-              
-              {/* Modal Riscatto Scarpone */}
-              {showRedeem && (
-                <div style={absoluteCenterStyle}>
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeRedeem} className="absolute inset-0 bg-stone-900/85" />
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu">
-                    <button onClick={closeRedeem} disabled={isVerifying} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
-                    <AnimatePresence mode="wait">
-                      {redeemStep === "INPUT" ? (
-                        <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="transform-gpu">
-                          <div className="text-center mb-8"><div className="inline-flex p-4 bg-sky-50 rounded-2xl mb-4"><Plus className="text-sky-500" size={28} /></div><h3 className="text-2xl font-black uppercase tracking-tight">Codice Scarpone</h3><p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Inserisci il codice ricevuto</p></div>
-                          <input 
-                            className="w-full bg-stone-50 border-2 border-stone-100 p-5 rounded-2xl text-center text-2xl font-black uppercase outline-none focus:border-sky-500 transition-all shadow-inner touch-manipulation text-[16px]" 
-                            placeholder="ES. TREK24" 
-                            autoCapitalize="characters"
-                            autoCorrect="off"
-                            spellCheck={false}
-                            value={redeemCode} 
-                            onChange={(e) => setRedeemCode(e.target.value.toUpperCase().trim())} 
-                            onKeyDown={(e) => e.key === "Enter" && verifyCode()} 
-                          />
-                          {redeemError && <p className="text-red-500 text-[10px] font-black mt-3 uppercase text-center py-2 bg-red-50 rounded-lg">{redeemError}</p>}
-                          <button onClick={verifyCode} disabled={isVerifying || !redeemCode.trim()} className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all disabled:opacity-50 shadow-lg touch-manipulation">{isVerifying ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Verifica Codice"}</button>
-                        </motion.div>
-                      ) : (
-                        <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center w-full transform-gpu">
-                          <div className="mb-2"><CheckCircle2 size={48} className="text-emerald-400 mx-auto" /></div>
-                          
-                          {/* SMART UI: Branching tra Multi-Boot (Tour) e Singolo Scarpone */}
-                          {unlockedBootsPreview.length > 1 ? (
-                            <>
-                              <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1">Tour Completato 🏔️</h3>
-                              <p className="text-[11px] font-black uppercase tracking-widest text-emerald-500 mb-4">+{unlockedBootsPreview.length} Scarponi Aggiunti!</p>
-                              
-                              <div className="flex flex-wrap justify-center gap-3 my-4 w-full">
-                                {unlockedBootsPreview.map((boot, idx) => (
-                                  <motion.div
-                                    key={idx}
-                                    initial={{ scale: 0, y: 20, opacity: 0 }}
-                                    animate={{ scale: 1, y: 0, opacity: 1 }}
-                                    transition={{ delay: idx * 0.15, type: "spring", stiffness: 300 }}
-                                    className="flex flex-col items-center transform-gpu"
-                                  >
-                                    <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-md" style={{ backgroundColor: `${boot.colore}15`, border: `1px solid ${boot.colore}30` }}>
-                                      <MemoIconaScarponeCustom size={40} color={boot.colore} isActive={true} />
-                                    </div>
-                                    <span className="text-[9px] font-black uppercase mt-2 text-stone-500 max-w-[70px] leading-tight line-clamp-2">
-                                      {boot.titolo.split('(')[1]?.replace(')','') || `Tappa ${idx+1}`}
-                                    </span>
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="mb-4 p-6 rounded-3xl mt-2" style={{ backgroundColor: `${unlockedBootsPreview[0]?.colore}15` }}>
-                                <MemoIconaScarponeCustom size={80} color={unlockedBootsPreview[0]?.colore || "#5aaadd"} isActive={true} />
-                              </div>
-                              <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1 leading-tight px-4">{unlockedBootsPreview[0]?.titolo}</h3>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-4 mt-2">Scarpone Riscattato! 🎉</p>
-                            </>
-                          )}
-
-                          {newlyUnlockedBadges.length > 0 && (
-                            <div className="w-full p-3 rounded-xl bg-sky-50 text-center mt-2">
-                              <span className="text-[9px] font-black uppercase tracking-widest text-sky-700">
-                                {newlyUnlockedBadges.length > 1 ? `Nuovi badge: ${newlyUnlockedBadges.join(', ')}` : `Nuovo badge: ${newlyUnlockedBadges[0]}`}
-                              </span>
-                            </div>
-                          )}
-                          
-                          {newlyUnlockedAchievements.length > 0 && (
-                            <div className="w-full p-3 rounded-xl bg-purple-50 text-center mt-2">
-                              <span className="text-[9px] font-black uppercase tracking-widest text-purple-700">
-                                {newlyUnlockedAchievements.length > 1 ? `${newlyUnlockedAchievements.length} Traguardi Sbloccati!` : `Traguardo Sbloccato: ${newlyUnlockedAchievements[0].name}!`}
-                              </span>
-                            </div>
-                          )}
-
-                          <button onClick={closeRedeem} className="w-full mt-6 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg touch-manipulation">Perfetto!</button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                </div>
-              )}
-
-              {/* Modal Richiesta Storico */}
-              {showHistoryModal && (
-                <div style={{...absoluteCenterStyle, touchAction: "none", overscrollBehavior: "none"}}>
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeHistoryModal} className="absolute inset-0 bg-stone-900/85" />
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu">
-                    <button onClick={closeHistoryModal} disabled={isSubmittingHistory} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
-                    <AnimatePresence mode="wait">
-                      {historyStep === "INPUT" ? (
-                        <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="transform-gpu">
-                          <div className="text-center mb-6">
-                            <div className="inline-flex p-4 bg-stone-100 rounded-2xl mb-4"><History className="text-stone-600" size={28} /></div>
-                            <h3 className="text-2xl font-black uppercase tracking-tight">Aggiorna Storico</h3>
-                            <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-2 mb-4 leading-relaxed">
-                              Conferma l'email per consentire al team di associare correttamente i tuoi vecchi scarponi a questa tessera digitale.
-                            </p>
-                          </div>
-                          
-                          <input 
-                            type="text"
-                            placeholder="Inserisci la tua email..."
-                            className="w-full bg-stone-50 p-4 rounded-2xl text-[16px] md:text-sm font-bold border-2 border-transparent focus:border-sky-500 outline-none transition-all mb-2 touch-manipulation"
-                            value={historyEmail}
-                            onChange={(e) => setHistoryEmail(e.target.value)}
-                          />
-                          
-                          {historyError && <p className="text-red-500 text-[10px] font-black mb-2 mt-2 uppercase text-center py-2 bg-red-50 rounded-lg">{historyError}</p>}
-                          
-                          <button onClick={submitHistoryRequest} disabled={isSubmittingHistory} className="w-full mt-4 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg flex justify-center items-center gap-2 touch-manipulation">
-                            {isSubmittingHistory ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> Invia Richiesta</>}
-                          </button>
-                        </motion.div>
-                      ) : (
-                        <motion.div key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center text-center transform-gpu">
-                          <div className="mb-4"><CheckCircle2 size={48} className="text-emerald-400 mx-auto" /></div>
-                          <div className="mb-6 p-6 rounded-3xl bg-emerald-50"><FileText size={40} className="text-emerald-500" /></div>
-                          <h3 className="text-xl font-black uppercase tracking-tight text-stone-800 mb-1">Richiesta Inviata</h3>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-6 leading-relaxed">
-                            L'organizzazione ha ricevuto la richiesta. La tua Tessera verrà aggiornata al termine delle verifiche!
-                          </p>
-                          <button onClick={closeHistoryModal} className="w-full mt-2 bg-stone-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg touch-manipulation">Perfetto!</button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                </div>
-              )}
-
-              {/* Dettaglio Scarpone (Swipeable) */}
-              {selectedBoot && selectedBootIndex !== null && (
-                <div style={absoluteCenterStyle}>
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBootIndex(null)} className="absolute inset-0 bg-stone-900/85" />
-                  
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative w-full max-w-sm bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 z-10 transform-gpu">
-                    
-                    <div className="absolute top-0 left-0 right-0 z-[100] flex justify-between items-center p-6">
-                      <div className="flex gap-2">
-                         <button onClick={handlePrevBoot} disabled={selectedBootIndex === 0} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 disabled:opacity-30 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><ChevronLeft size={20} /></button>
-                         <button onClick={handleNextBoot} disabled={selectedBootIndex === escursioniCompletateParsed.length - 1} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 disabled:opacity-30 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><ChevronRight size={20} /></button>
-                      </div>
-                      <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedBootIndex(null); }} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 hover:text-stone-700 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><X size={20} /></button>
-                    </div>
-
-                    <div className="pt-24 pb-8 px-8 md:px-10 overflow-hidden relative z-10 flex items-center justify-center w-full min-h-[380px]">
-                      <AnimatePresence mode="popLayout" custom={slideDirection}>
-                        <motion.div
-                          key={selectedBootIndex}
-                          custom={slideDirection}
-                          variants={slideVariants}
-                          initial="enter"
-                          animate="center"
-                          exit="exit"
-                          transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                          drag="x"
-                          dragConstraints={{ left: 0, right: 0 }}
-                          dragElastic={0.2}
-                          onDragEnd={(_e, info) => {
-                            const swipeThreshold = 40;
-                            if (info.offset.x < -swipeThreshold) handleNextBoot();
-                            else if (info.offset.x > swipeThreshold) handlePrevBoot();
-                          }}
-                          className="flex flex-col items-center text-center touch-pan-y cursor-grab active:cursor-grabbing w-full transform-gpu"
-                        >
-                          <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-6 shadow-xl" style={{ backgroundColor: selectedBoot.colore + "15", border: `1px solid ${selectedBoot.colore}20` }}>
-                            <MemoIconaScarponeCustom size={80} color={selectedBoot.colore} isActive={true} />
-                          </div>
-                          
-                          <div className="flex flex-wrap justify-center gap-2 mb-4 pointer-events-none">
-                            <div className="px-4 py-1.5 rounded-full bg-stone-100 text-[10px] font-black uppercase text-stone-500 tracking-widest border border-stone-200/50">{getFilosofiaName(selectedBoot.colore)}</div>
-                            {selectedBoot.difficolta && <div className="px-4 py-1.5 rounded-full bg-stone-100 text-[10px] font-black uppercase text-stone-500 tracking-widest border border-stone-200/50">{selectedBoot.difficolta}</div>}
-                          </div>
-                          
-                          <h3 className="text-2xl font-black uppercase leading-tight mb-4 tracking-tight pointer-events-none">{selectedBoot.titolo}</h3>
-                          
-                          <div className="flex flex-col gap-2 w-full pt-6 border-t border-stone-50 pointer-events-none">
-                            <div className="flex items-center justify-center gap-2 text-stone-400">
-                              <Calendar size={14} />
-                              <p className="text-[11px] font-bold uppercase tracking-widest">{new Date(selectedBoot.data).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</p>
-                            </div>
-                            {selectedBoot.categoria && (
-                              <div className="flex items-center justify-center gap-2 text-stone-400">
-                                <MapPin size={14} />
-                                <p className="text-[11px] font-bold uppercase tracking-widest">{selectedBoot.categoria}</p>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      </AnimatePresence>
-                    </div>
-                    
-                    <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 pb-2">
-                      {escursioniCompletateParsed.map((_, idx) => (
-                        <div key={idx} className={`h-1.5 rounded-full transition-all duration-300 ${idx === selectedBootIndex ? "w-4 bg-stone-800" : "w-1.5 bg-stone-200"}`} />
-                      ))}
-                    </div>
-
-                  </motion.div>
-                </div>
-              )}
-
-              {/* Dettaglio Badge */}
-              {selectedBadge && (
-                <BadgeDetailPopup filo={selectedBadge.filo} count={selectedBadge.count} onClose={() => setSelectedBadge(null)} />
-              )}
-
-              {/* Dettaglio Traguardo (Achievement) */}
-              {selectedAchievement && (
-                <div style={absoluteCenterStyle}>
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedAchievement(null)} className="absolute inset-0 bg-stone-900/85" />
-                  <motion.div initial={{ scale: 0.8, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.8, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 20, stiffness: 250 }} style={{ willChange: 'transform, opacity' }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu">
-                    <button onClick={() => setSelectedAchievement(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-all active:scale-90 touch-manipulation"><X size={20} /></button>
-                    <div className="flex flex-col items-center text-center">
-                      <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-8 bg-stone-50 border-2 border-stone-100 shadow-xl"><span className="text-6xl drop-shadow-sm">{selectedAchievement.emoji}</span></div>
-                      <h3 className="text-2xl font-black uppercase leading-tight mb-3 tracking-tight">{selectedAchievement.name}</h3>
-                      <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-8 leading-relaxed">{selectedAchievement.description}</p>
-                      <div className="w-full p-6 bg-stone-50 rounded-[2rem] border border-stone-100">
-                        <p className="text-[10px] font-black uppercase text-stone-400 mb-3 tracking-widest">Progresso Attuale</p>
-                        {(() => {
-                          const prog = selectedAchievement.progress(escursioniCompletateParsed);
-                          return (
-                            <>
-                              <div className="flex items-center justify-between mb-2"><span className="text-sm font-black uppercase tabular-nums">{prog.current} / {prog.total}</span><span className="text-sm font-black text-sky-500 tabular-nums">{Math.round((prog.current / prog.total) * 100)}%</span></div>
-                              <div className="h-2.5 w-full bg-stone-200 rounded-full mt-1.5 overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${(prog.current / prog.total) * 100}%` }} transition={{ duration: 1.2, ease: "easeOut" }} className="h-full bg-sky-500 transform-gpu" /></div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
-          </ModalPortal>
 
           <style>{`
             @keyframes shimmer {
