@@ -151,22 +151,8 @@ export default function GuidaTrekkingLanding({ onNavigateHome }: LandingProps) {
     <div className="min-h-[100dvh] w-full max-w-[100vw] bg-[#f5f2ed] text-brand-stone overflow-x-hidden antialiased pb-safe selection:bg-brand-sky/20">
       {/* ── HEADER ── */}
       <nav
-        className={`${sectionPad} py-5 md:py-6 flex items-center justify-between gap-3`}
+        className={`${sectionPad} py-5 md:py-6 flex items-center justify-end gap-3`}
       >
-        <div
-          onClick={onNavigateHome}
-          className="cursor-pointer flex items-center gap-2.5 group min-w-0"
-        >
-          <img
-            src="/altour-logo.png"
-            alt="Altour Italy"
-            className="h-8 md:h-9 w-auto object-contain group-hover:scale-105 transition-transform shrink-0"
-          />
-          <span className="text-[11px] md:text-xs font-black uppercase tracking-[0.25em] text-brand-stone truncate">
-            Altour Italy
-          </span>
-        </div>
-
         <button
           onClick={scrollToForm}
           className="shrink-0 px-4 md:px-5 py-2.5 md:py-3 min-h-[42px] rounded-full text-[10px] font-black uppercase tracking-widest text-brand-sky bg-brand-sky/10 border border-brand-sky/20 hover:bg-brand-sky hover:text-white transition-all active:scale-95"
