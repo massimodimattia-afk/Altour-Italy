@@ -418,6 +418,8 @@ const slideVariants = {
 
 export default function Tessera() {
   const [loading, setLoading] = useState(true);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const sessionCallId = useRef(0);
   const [isDemo, setIsDemo] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [userTessera, setUserTessera] = useState<UserTessera | null>(null);
@@ -521,8 +523,29 @@ export default function Tessera() {
 
   useEffect(() => {
     const saved = localStorage.getItem(SESSION_KEY);
-    if (saved) { const { code } = JSON.parse(saved); fetchUser(code, true); }
-    else setLoading(false);
+    if (!saved) { setCheckingSession(false); setLoading(false); return; }
+
+    const myId = ++sessionCallId.current; // scarta risposte di mount duplicati (StrictMode/HMR)
+    const { code } = JSON.parse(saved);
+
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("tessere").select("*")
+        .eq("codice_tessera", code.toUpperCase().trim()).single();
+
+      if (sessionCallId.current !== myId) return; // risposta obsoleta, ignorala
+
+      if (!error && data) {
+        setActiveTab("TESSERA");
+        setCurrentPage(0);
+        setUserTessera(data as UserTessera);
+      }
+      // sessione non valida o errore transitorio: nessun loginError spurio,
+      // l'utente vede semplicemente la schermata di login pulita
+      setLoading(false);
+      setCheckingSession(false);
+    })();
   }, []);
 
   useEffect(() => {
@@ -806,7 +829,7 @@ export default function Tessera() {
       
       <ModalPortal>
         <AnimatePresence>
-          {!userTessera && (
+          {!checkingSession && !userTessera && (
             <motion.div key="login-modal" className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#f5f2ed]" />
               <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center flex flex-col">
