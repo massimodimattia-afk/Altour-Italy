@@ -3,7 +3,7 @@ import { Download, RefreshCw, X } from "lucide-react";
 import { usePWA } from "../hooks/usePWA";
 
 export default function PWAPrompt() {
-  const { isInstallable, hasUpdate, promptInstall, dismissInstall, dismissUpdate } = usePWA();
+  const { isInstallable, hasUpdate, promptInstall, dismissInstall, applyUpdate } = usePWA();
 
   return (
     <>
@@ -73,7 +73,7 @@ export default function PWAPrompt() {
                 </p>
               </div>
               <button
-                onClick={dismissUpdate}
+                onClick={applyUpdate}
                 className="bg-brand-stone text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-sky transition-all active:scale-95 flex-shrink-0"
               >
                 Aggiorna
