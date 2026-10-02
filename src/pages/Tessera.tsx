@@ -31,7 +31,7 @@ const BADGE_UNLOCK = 4;
 const BADGE_INTERMEDIO = 8;
 const BADGE_COMPLETO = 16;
 const MAX_REDEEM_ATTEMPTS = 5;
-const REDEEM_CODE_REGEX = /^[A-Z0-9]{4,24}$/; // Aumentato a 24 per supportare codici tour lunghi
+const REDEEM_CODE_REGEX = /^[A-Z0-9]{4,24}$/;
 
 const FILOSOFIA_COLORS: Record<string, string> = {
   "Avventura":              "#e94544",
@@ -241,11 +241,11 @@ const ACHIEVEMENT_BADGES = [
   },
 ];
 
-// Memoized Icon Component
+// Memoized Icon Component - Ottimizzato con transform-gpu per Safari
 const MemoIconaScarponeCustom = React.memo(({ size = 24, color = "#d6d3d1", isActive = false }: { size?: number; color?: string; isActive?: boolean }) => {
   const style: React.CSSProperties = { width: size, height: size, transition: "background-color 0.4s ease" };
-  if (isActive) return <div style={{ ...style, backgroundColor: color, maskImage: "url(\"/scarpone.png\")", WebkitMaskImage: "url(\"/scarpone.png\")", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center" }} />;
-  return <img src="/scarpone.png" alt="scarpone" style={{ ...style, filter: "grayscale(100%) opacity(0.15)" }} />;
+  if (isActive) return <div className="transform-gpu will-change-transform" style={{ ...style, backgroundColor: color, maskImage: "url(\"/scarpone.png\")", WebkitMaskImage: "url(\"/scarpone.png\")", maskSize: "contain", maskRepeat: "no-repeat", maskPosition: "center" }} />;
+  return <img src="/scarpone.png" alt="scarpone" className="transform-gpu will-change-transform" style={{ ...style, filter: "grayscale(100%) opacity(0.15)" }} />;
 });
 
 // Memoized Badge Component
@@ -267,7 +267,7 @@ const MemoBadgeChip = React.memo(({ filo, count, onClick }: { filo: string; coun
             ))}
           </div>
         )}
-        <motion.div className="w-[52px] h-[52px] md:w-[60px] md:h-[60px] rounded-2xl flex items-center justify-center transition-colors relative overflow-hidden" style={{ ...(isUnlocked ? { backgroundColor: color, boxShadow: `0 6px 18px ${color}45, inset 0 1px 0 rgba(255,255,255,0.3)` } : { backgroundColor: "#f5f5f4" }) }} whileHover={isUnlocked ? { y: -2 } : {}}>
+        <motion.div className="w-[52px] h-[52px] md:w-[60px] md:h-[60px] rounded-2xl flex items-center justify-center transition-colors relative overflow-hidden transform-gpu" style={{ ...(isUnlocked ? { backgroundColor: color, boxShadow: `0 6px 18px ${color}45, inset 0 1px 0 rgba(255,255,255,0.3)` } : { backgroundColor: "#f5f5f4" }) }} whileHover={isUnlocked ? { y: -2 } : {}}>
           {isUnlocked ? (
             <>
               <div className="absolute inset-0 opacity-20" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 60%)" }} />
@@ -309,9 +309,23 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
   else statusText = "Completato! 🎉";
 
   return (
-    <motion.div key="badge-detail-modal" className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-stone-900/85" />
-      <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-xs bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-stone-100">
+    <motion.div 
+      key="badge-detail-modal" 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-6" 
+      style={{ WebkitOverflowScrolling: 'touch' }}
+    >
+      <div onClick={onClose} className="absolute inset-0 bg-stone-900/85" />
+      <motion.div 
+        initial={{ scale: 0.95, y: 20 }} 
+        animate={{ scale: 1, y: 0 }} 
+        exit={{ scale: 0.95, y: 20 }} 
+        transition={{ type: "spring", damping: 25, stiffness: 300 }} 
+        className="relative z-10 w-full max-w-xs bg-white rounded-[2.5rem] overflow-hidden shadow-2xl border border-stone-100 transform-gpu will-change-transform"
+      >
         <button onClick={onClose} className="absolute top-5 right-5 z-10 p-2 bg-white/80 rounded-full text-stone-400 touch-manipulation"><X size={16} /></button>
         <div className="relative h-36 flex items-center justify-center overflow-hidden" style={isMaster ? { background: isMasterUnlocked ? "linear-gradient(145deg, #fbbf24cc, #f59e0b, #d97706aa)" : "linear-gradient(145deg, #f0eeec, #e8e5e2)" } : (isUnlocked ? { background: `linear-gradient(145deg, ${color}cc 0%, ${color} 60%, ${color}aa 100%)` } : { background: "linear-gradient(145deg, #f0eeec 0%, #e8e5e2 100%)" })}>
           <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 50%, rgba(0,0,0,0.06) 100%)" }} />
@@ -409,7 +423,7 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
   );
 };
 
-// VARIANTS per lo scorrimento del carosello dettagli senza popLayout
+// VARIANTS per lo scorrimento del carosello dettagli
 const slideVariants = {
   enter: (dir: number) => ({ opacity: 0, x: dir * 80, scale: 0.95 }),
   center: { opacity: 1, x: 0, scale: 1 },
@@ -525,7 +539,7 @@ export default function Tessera() {
     const saved = localStorage.getItem(SESSION_KEY);
     if (!saved) { setCheckingSession(false); setLoading(false); return; }
 
-    const myId = ++sessionCallId.current; // scarta risposte di mount duplicati (StrictMode/HMR)
+    const myId = ++sessionCallId.current;
     const { code } = JSON.parse(saved);
 
     (async () => {
@@ -534,15 +548,13 @@ export default function Tessera() {
         .from("tessere").select("*")
         .eq("codice_tessera", code.toUpperCase().trim()).single();
 
-      if (sessionCallId.current !== myId) return; // risposta obsoleta, ignorala
+      if (sessionCallId.current !== myId) return;
 
       if (!error && data) {
         setActiveTab("TESSERA");
         setCurrentPage(0);
         setUserTessera(data as UserTessera);
       }
-      // sessione non valida o errore transitorio: nessun loginError spurio,
-      // l'utente vede semplicemente la schermata di login pulita
       setLoading(false);
       setCheckingSession(false);
     })();
@@ -554,15 +566,25 @@ export default function Tessera() {
     }
   }, [showSupportModal, supportStep]);
 
-  const isOverlayActive = showRedeem || showHistoryModal || showSupportModal || selectedBootIndex !== null || !!selectedBadge || !!selectedAchievement;
+  // FIX: Scroll Lock Esteso (Copre anche la fase di login pre-tessera per non far rimbalzare iOS)
+  const isOverlayActive = (!checkingSession && !userTessera) || showRedeem || showHistoryModal || showSupportModal || selectedBootIndex !== null || !!selectedBadge || !!selectedAchievement;
   useEffect(() => {
     if (isOverlayActive) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = 'hidden';
+      // Compensiamo la scrollbar per evitare salti orizzontali del layout
+      document.body.style.paddingRight = `${scrollbarWidth}px`; 
+      // Blocchiamo il "rubber-banding" su iOS Safari dietro l'overlay
+      document.documentElement.style.overscrollBehavior = 'none'; 
     } else {
       document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      document.documentElement.style.overscrollBehavior = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      document.documentElement.style.overscrollBehavior = '';
     }
   }, [isOverlayActive]);
 
@@ -829,10 +851,11 @@ export default function Tessera() {
       
       <ModalPortal>
         <AnimatePresence>
+          {/* FIX MODALI: Aggiunti initial, animate ed exit ai wrapper root per evitare l'hard unmount */}
           {!checkingSession && !userTessera && (
-            <motion.div key="login-modal" className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-[#f5f2ed]" />
-              <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center flex flex-col">
+            <motion.div key="login-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="absolute inset-0 bg-[#f5f2ed]" />
+              <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl border border-white/60 text-center flex flex-col transform-gpu will-change-transform">
                 <button onClick={() => window.location.href = '/'} className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/80 border border-stone-200 shadow-sm hover:bg-stone-100 transition-colors touch-manipulation"><ChevronLeft size={14} /><span className="text-[10px] font-black uppercase tracking-wide text-stone-600">Home</span></button>
                 <img src="/Accesso_tessera.png" alt="Altour Italy" className="h-32 w-auto mx-auto mb-4 rounded-xl" onError={(e) => { e.currentTarget.src = "/Accesso_tessera.png"; }} />
                 <h1 className="text-2xl font-black uppercase mb-6">TESSERA ALTOUR</h1>
@@ -864,9 +887,9 @@ export default function Tessera() {
 
           {/* Modal Supporto Form */}
           {showSupportModal && (
-            <motion.div key="support-modal" className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeSupportModal} className="absolute inset-0 bg-stone-900/85" />
-              <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+            <motion.div key="support-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div onClick={closeSupportModal} className="absolute inset-0 bg-stone-900/85" />
+              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu will-change-transform">
                 <button onClick={closeSupportModal} disabled={isSubmittingSupport} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-colors active:scale-90 touch-manipulation"><X size={20} /></button>
                 <AnimatePresence mode="wait">
                   {supportStep === "INPUT" ? (
@@ -904,9 +927,9 @@ export default function Tessera() {
 
           {/* Modal Riscatto Scarpone */}
           {showRedeem && (
-            <motion.div key="redeem-modal" className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeRedeem} className="absolute inset-0 bg-stone-900/85" />
-              <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+            <motion.div key="redeem-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div onClick={closeRedeem} className="absolute inset-0 bg-stone-900/85" />
+              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu will-change-transform">
                 <button onClick={closeRedeem} disabled={isVerifying} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-colors active:scale-90 touch-manipulation"><X size={20} /></button>
                 <AnimatePresence mode="wait">
                   {redeemStep === "INPUT" ? (
@@ -960,9 +983,9 @@ export default function Tessera() {
 
           {/* Modal Richiesta Storico */}
           {showHistoryModal && (
-            <motion.div key="history-modal" className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={closeHistoryModal} className="absolute inset-0 bg-stone-900/85" />
-              <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+            <motion.div key="history-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div onClick={closeHistoryModal} className="absolute inset-0 bg-stone-900/85" />
+              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu will-change-transform">
                 <button onClick={closeHistoryModal} disabled={isSubmittingHistory} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-colors active:scale-90 touch-manipulation"><X size={20} /></button>
                 <AnimatePresence mode="wait">
                   {historyStep === "INPUT" ? (
@@ -992,9 +1015,9 @@ export default function Tessera() {
 
           {/* Dettaglio Scarpone (Swipeable) */}
           {selectedBoot && selectedBootIndex !== null && (
-            <motion.div key="boot-detail-modal" className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedBootIndex(null)} className="absolute inset-0 bg-stone-900/85" />
-              <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative w-full max-w-sm bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 z-10">
+            <motion.div key="boot-detail-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div onClick={() => setSelectedBootIndex(null)} className="absolute inset-0 bg-stone-900/85" />
+              <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative w-full max-w-sm bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white/20 z-10 transform-gpu will-change-transform">
                 <div className="absolute top-0 left-0 right-0 z-[100] flex justify-between items-center p-6">
                   <div className="flex gap-2">
                      <button onClick={handlePrevBoot} disabled={selectedBootIndex === 0} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-600 disabled:opacity-30 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><ChevronLeft size={20} /></button>
@@ -1002,7 +1025,6 @@ export default function Tessera() {
                   </div>
                   <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedBootIndex(null); }} className="p-3 bg-stone-100 hover:bg-stone-200 rounded-full text-stone-500 hover:text-stone-700 active:scale-90 transition-all shadow-sm touch-manipulation cursor-pointer"><X size={20} /></button>
                 </div>
-                {/* Fixed height container for flawless popLayout alternative */}
                 <div className="relative w-full h-[400px] overflow-hidden mt-16 mb-4">
                   <AnimatePresence custom={slideDirection}>
                     <motion.div
@@ -1021,7 +1043,7 @@ export default function Tessera() {
                         if (info.offset.x < -swipeThreshold) handleNextBoot();
                         else if (info.offset.x > swipeThreshold) handlePrevBoot();
                       }}
-                      className="absolute inset-0 flex flex-col items-center justify-center text-center touch-pan-y cursor-grab active:cursor-grabbing w-full px-8"
+                      className="absolute inset-0 flex flex-col items-center justify-center text-center touch-pan-y cursor-grab active:cursor-grabbing w-full px-8 transform-gpu"
                       style={{ WebkitBackfaceVisibility: 'hidden' }}
                     >
                       <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-6 shadow-xl" style={{ backgroundColor: selectedBoot.colore + "15", border: `1px solid ${selectedBoot.colore}20` }}>
@@ -1063,9 +1085,9 @@ export default function Tessera() {
 
           {/* Dettaglio Traguardo (Achievement) */}
           {selectedAchievement && (
-            <motion.div key="achievement-modal" className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedAchievement(null)} className="absolute inset-0 bg-stone-900/85" />
-              <motion.div initial={{ scale: 0.95, opacity: 0, y: 40 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 40 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20">
+            <motion.div key="achievement-modal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="fixed inset-0 z-[99999] flex items-center justify-center p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div onClick={() => setSelectedAchievement(null)} className="absolute inset-0 bg-stone-900/85" />
+              <motion.div initial={{ scale: 0.95, y: 40 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 40 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="relative z-10 w-full max-w-sm bg-white rounded-[3rem] p-8 md:p-10 shadow-2xl overflow-hidden border border-white/20 transform-gpu will-change-transform">
                 <button onClick={() => setSelectedAchievement(null)} className="absolute top-6 right-6 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-colors active:scale-90 touch-manipulation"><X size={20} /></button>
                 <div className="flex flex-col items-center text-center">
                   <div className="w-32 h-32 rounded-[2.5rem] flex items-center justify-center mb-8 bg-stone-50 border-2 border-stone-100 shadow-xl"><span className="text-6xl drop-shadow-sm">{selectedAchievement.emoji}</span></div>
@@ -1090,215 +1112,231 @@ export default function Tessera() {
         </AnimatePresence>
       </ModalPortal>
 
-      {userTessera && (
-        <>
-          {/* HERO */}
-          <div className="relative h-[45vh] md:h-[55vh] w-full flex items-center justify-center text-center overflow-hidden">
-            <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Hero_tessera.webp" className="absolute inset-0 w-full h-full object-cover object-[center_60%]" alt="header bg" />
-            <div className="absolute inset-0 bg-black/25" />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[50%] to-black/40" />
-            <button onClick={handleLogout} className="absolute top-4 right-4 p-3 bg-black/20 backdrop-blur-md rounded-full text-white border border-white/10 z-50 hover:bg-black/40 transition-colors touch-manipulation"><LogOut size={18} /></button>
-            <div className="relative z-20 px-4 flex flex-col items-center">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <h1 className="text-3xl md:text-5xl font-black text-white uppercase drop-shadow-lg tracking-tight">Passaporto Altour</h1>
-                <p className="text-white font-black text-lg md:text-2xl uppercase tracking-tight mt-1 leading-none drop-shadow-md">{userTessera.nome_escursionista} {userTessera.cognome_escursionista}</p>
-                <p className="text-white/70 font-black tracking-[0.4em] text-[10px] md:text-[12px] uppercase mt-2 mb-6">Cod. {userTessera.codice_tessera}</p>
-                <div className="inline-flex items-center gap-4 px-6 py-4 rounded-[2rem] backdrop-blur-xl border border-white/20 bg-white/15 shadow-2xl">
-                  <MemoIconaScarponeCustom size={50} color="#5aaadd" isActive={true} />
-                  <div className="flex flex-col items-start">
-                    <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white/60 leading-none mb-1">Profilo Escursionista</span>
-                    <span className="text-[13px] md:text-[16px] font-black uppercase tracking-wide text-white leading-none drop-shadow-sm">{userTessera.livello || stats?.currentLevelLabel}</span>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-
-          {/* TAB NAVIGATION */}
-          <div className="sticky top-0 z-40 bg-[#f5f2ed]/90 backdrop-blur-sm border-b border-stone-200/40 px-4 py-4 mb-8">
-            <div className="max-w-xl mx-auto flex gap-3">
-              {(["TESSERA", "BADGE", "TRAGUARDI"] as TabType[]).map((tab) => (
-                <button key={tab} onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 touch-manipulation ${activeTab === tab ? "bg-[#5aaadd] text-white shadow-xl scale-[1.02]" : "bg-white text-stone-400 border border-stone-100 hover:bg-stone-50"}`}>
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* MAIN CONTENT */}
-          <div className="max-w-xl mx-auto px-4 relative z-30 -mt-10">
-            <AnimatePresence mode="wait">
-             {activeTab === "TESSERA" && (
-                <motion.div key="tessera" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }}>
-                  <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
-                    <div className="flex items-center gap-5 mb-8">
-                      <div className="relative flex-shrink-0">
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-20 h-20 rounded-[2rem] bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center shadow-inner cursor-pointer touch-manipulation" onClick={() => fileInputRef.current?.click()}>
-                          {userTessera.avatar_url ? <img src={userTessera.avatar_url} className="w-full h-full object-cover object-center" alt="avatar" /> : <User size={32} className="text-stone-300" />}
-                          {avatarUploading && <div className="absolute inset-0 bg-black/30 rounded-[2rem] flex items-center justify-center"><Loader2 className="w-6 h-6 text-white animate-spin" /></div>}
-                        </motion.div>
-                        <button onClick={() => fileInputRef.current?.click()} disabled={avatarUploading} className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center hover:bg-stone-50 active:scale-90 transition-all disabled:opacity-50 touch-manipulation"><Camera size={13} className="text-stone-600" /></button>
-                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5 text-sky-500 mb-1">
-                          <ShieldCheck size={14} />
-                          <span className="text-[10px] font-black uppercase tracking-wider">Escursionista Verificato</span>
-                        </div>
-                        <h2 className="text-2xl font-black uppercase leading-tight">{userTessera.nome_escursionista} {userTessera.cognome_escursionista}</h2>
-                        <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest mt-0.5">{userTessera.livello || stats?.currentLevelLabel} · {escursioniCompletateParsed.length || 0} Scarponi</p>
-                      </div>
+      {/* FIX LOGOUT FADE: Il wrapper AnimatePresence qui garantisce che al logout il DOM non scompaia brutalmente */}
+      <AnimatePresence>
+        {userTessera && (
+          <motion.div
+            key="dashboard-content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, filter: "blur(10px)" }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="relative w-full"
+          >
+            {/* HERO */}
+            <div className="relative h-[45vh] md:h-[55vh] w-full flex items-center justify-center text-center overflow-hidden">
+              <img src="https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Hero_tessera.webp" className="absolute inset-0 w-full h-full object-cover object-[center_60%]" alt="header bg" />
+              <div className="absolute inset-0 bg-black/25" />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent via-[50%] to-black/40" />
+              <button onClick={handleLogout} className="absolute top-4 right-4 p-3 bg-black/20 backdrop-blur-md rounded-full text-white border border-white/10 z-50 hover:bg-black/40 transition-colors touch-manipulation"><LogOut size={18} /></button>
+              <div className="relative z-20 px-4 flex flex-col items-center">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+                  <h1 className="text-3xl md:text-5xl font-black text-white uppercase drop-shadow-lg tracking-tight">Passaporto Altour</h1>
+                  <p className="text-white font-black text-lg md:text-2xl uppercase tracking-tight mt-1 leading-none drop-shadow-md">{userTessera.nome_escursionista} {userTessera.cognome_escursionista}</p>
+                  <p className="text-white/70 font-black tracking-[0.4em] text-[10px] md:text-[12px] uppercase mt-2 mb-6">Cod. {userTessera.codice_tessera}</p>
+                  <div className="inline-flex items-center gap-4 px-6 py-4 rounded-[2rem] backdrop-blur-xl border border-white/20 bg-white/15 shadow-2xl">
+                    <MemoIconaScarponeCustom size={50} color="#5aaadd" isActive={true} />
+                    <div className="flex flex-col items-start">
+                      <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white/60 leading-none mb-1">Profilo Escursionista</span>
+                      <span className="text-[13px] md:text-[16px] font-black uppercase tracking-wide text-white leading-none drop-shadow-sm">{userTessera.livello || stats?.currentLevelLabel}</span>
                     </div>
-
-                    <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8">
-                      <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-sky-50 to-sky-100/70 border border-sky-100 shadow-sm flex flex-col items-center justify-center text-center transition-transform active:scale-[0.98]">
-                        <Footprints className="w-5 h-5 md:w-7 md:h-7 text-sky-600 mb-2" />
-                        <p className="text-[8px] md:text-[9px] font-black uppercase text-sky-500 tracking-wider">Distanza</p>
-                        <p className="text-base md:text-xl font-black text-sky-950 leading-tight">{stats?.kmTotali} <span className="text-[9px] md:text-sm font-bold text-sky-400">km</span></p>
-                      </div>
-                      <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/70 border border-emerald-100 shadow-sm flex flex-col items-center justify-center text-center transition-transform active:scale-[0.98]">
-                        <Mountain className="w-5 h-5 md:w-7 md:h-7 text-emerald-600 mb-2" />
-                        <p className="text-[8px] md:text-[9px] font-black uppercase text-emerald-500 tracking-wider">Dislivello</p>
-                        <p className="text-base md:text-xl font-black text-emerald-950 leading-tight">{stats?.dislivelloTotali} <span className="text-[9px] md:text-sm font-bold text-emerald-400">m</span></p>
-                      </div>
-                      <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/70 border border-amber-100 shadow-sm flex flex-col items-center justify-center text-center transition-transform active:scale-[0.98]">
-                        <span className="text-xl md:text-2xl mb-2">⛰️</span>
-                        <p className="text-[8px] md:text-[9px] font-black uppercase text-amber-600 tracking-wider">Quota</p>
-                        <p className="text-base md:text-xl font-black text-amber-950 leading-tight">{stats?.quotaRaggiunta} <span className="text-[9px] md:text-sm font-bold text-amber-500">m</span></p>
-                      </div>
-                    </div>
-
-                    <motion.div 
-                      drag="x" 
-                      dragConstraints={{ left: 0, right: 0 }} 
-                      dragElastic={0.2} 
-                      onDragEnd={handleDragEnd} 
-                      className="grid grid-cols-4 gap-2 md:gap-4 mb-8 touch-pan-y"
-                    >
-                      {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
-                        const esc = escursioniCompletateParsed?.[currentPage * SLOTS_PER_PAGE + i];
-                        return (
-                          <motion.div key={i} whileTap={esc ? { scale: 0.95 } : {}} onClick={() => esc && setSelectedBootIndex(currentPage * SLOTS_PER_PAGE + i)} className={`aspect-square rounded-xl md:rounded-2xl bg-stone-50 border-2 border-dashed border-stone-100 flex items-center justify-center transition-colors duration-200 ${ esc ? "cursor-pointer bg-white shadow-sm border-solid border-stone-50" : "opacity-40" }`} style={{ WebkitTapHighlightColor: "transparent" }}>
-                            <MemoIconaScarponeCustom size={window.innerWidth < 768 ? 44 : 64} color={esc?.colore} isActive={!!esc} />
-                          </motion.div>
-                        );
-                      })}
-                    </motion.div>
-
-                    <div className="flex justify-between items-center pt-6 border-t border-stone-50">
-                      <button disabled={currentPage === 0} onClick={() => setCurrentPage((p) => p - 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90 touch-manipulation"><ChevronLeft size={20} /></button>
-                      <span className="text-[11px] font-black uppercase text-stone-300 tracking-[0.2em]">Pagina {currentPage + 1} di {stats?.totalPages}</span>
-                      <button disabled={currentPage >= (stats?.totalPages || 1) - 1} onClick={() => setCurrentPage((p) => p + 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90 touch-manipulation"><ChevronRight size={20} /></button>
-                    </div>
-                  </div>
-
-                  <motion.button 
-                    onClick={() => setShowRedeem(true)} 
-                    disabled={isDemo} 
-                    whileHover={isDemo ? {} : { scale: 1.02 }} 
-                    whileTap={isDemo ? {} : { scale: 0.98 }} 
-                    className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-transform disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
-                  >
-                    {!isDemo && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
-                    )}
-                    <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
-                  </motion.button>
-
-                  <motion.button 
-                    onClick={() => {
-                      setHistoryEmail(userTessera.email_utente || ""); 
-                      setShowHistoryModal(true);
-                    }} 
-                    disabled={isDemo} 
-                    whileHover={isDemo ? {} : { scale: 1.02 }} 
-                    whileTap={isDemo ? {} : { scale: 0.98 }} 
-                    className="w-full mt-4 p-5 bg-white border-2 border-stone-200 text-stone-700 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
-                  >
-                    <History size={20} strokeWidth={2.5} /> Richiedi Storico
-                  </motion.button>
-                  
-                  <motion.button 
-                    onClick={() => {
-                      const target = document.getElementById("lascia-feedback");
-                      if (target) { target.scrollIntoView({ behavior: "smooth" }); } 
-                      else { window.open("https://www.altouritaly.it/#lascia-feedback", "_blank", "noopener,noreferrer"); }
-                    }}
-                    disabled={isDemo} 
-                    whileHover={isDemo ? {} : { scale: 1.02 }} 
-                    whileTap={isDemo ? {} : { scale: 0.98 }} 
-                    className="w-full mt-4 p-5 bg-stone-50 border border-stone-200 text-stone-600 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:bg-white hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
-                  >
-                    <span className="text-xl">⭐</span> Lascia un Feedback
-                  </motion.button>
-                </motion.div>
-              )}
-
-              {activeTab === "BADGE" && (
-                <motion.div key="badge" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center shadow-lg"><Award size={24} className="text-white" /></div>
-                    <div>
-                      <h3 className="text-xl font-black uppercase leading-none">Collezione Filosofie</h3>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">4 per sbloccare · 8 per dimezzare · 16 per completare</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-4 gap-x-4 gap-y-8">
-                    {Object.keys(BADGE_NAMES).map(filo => (
-                      <MemoBadgeChip key={filo} filo={filo} count={badgeCounts[filo] || 0} onClick={() => setSelectedBadge({ filo, count: badgeCounts[filo] || 0 })} />
-                    ))}
                   </div>
                 </motion.div>
-              )}
+              </div>
+            </div>
 
-              {activeTab === "TRAGUARDI" && (
-                <motion.div key="traguardi" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.2 }} className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center shadow-lg"><Trophy size={24} className="text-white" /></div>
-                    <div>
-                      <h3 className="text-xl font-black uppercase leading-none">Traguardi Speciali</h3>
-                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Sfide comportamentali e di costanza</p>
-                    </div>
-                  </div>
-                  <div className="space-y-5">
-                    {ACHIEVEMENT_BADGES.map(badge => {
-                      const isUnlocked = badge.check(escursioniCompletateParsed);
-                      const prog = badge.progress(escursioniCompletateParsed);
-                      return (
-                        <motion.div key={badge.id} whileHover={{ scale: 1.02, x: 5 }} whileTap={{ scale: 0.98 }} onClick={() => setSelectedAchievement(badge)} className={`p-5 rounded-[2rem] border transition-colors cursor-pointer ${isUnlocked ? "bg-stone-50 border-stone-200 shadow-sm" : "bg-white border-stone-100 opacity-50"}`}>
-                          <div className="flex items-center gap-4">
-                            <span className="text-3xl drop-shadow-sm">{badge.emoji}</span>
-                            <div className="flex-1">
-                              <h4 className="text-xs font-black uppercase tracking-wide">{badge.name}</h4>
-                              <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{badge.description}</p>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-[11px] font-black uppercase text-stone-400 tabular-nums">{prog.current}/{prog.total}</span>
-                              <div className="w-16 h-1.5 bg-stone-100 rounded-full mt-1.5 overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${(prog.current / prog.total) * 100}%` }} transition={{ duration: 1, delay: 0.2 }} className="h-full bg-sky-500" /></div>
-                            </div>
+            {/* TAB NAVIGATION */}
+            <div className="sticky top-0 z-40 bg-[#f5f2ed]/90 backdrop-blur-sm border-b border-stone-200/40 px-4 py-4 mb-8">
+              <div className="max-w-xl mx-auto flex gap-3">
+                {(["TESSERA", "BADGE", "TRAGUARDI"] as TabType[]).map((tab) => (
+                  <button key={tab} onClick={() => setActiveTab(tab)}
+                    className={`flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 touch-manipulation ${activeTab === tab ? "bg-[#5aaadd] text-white shadow-xl scale-[1.02]" : "bg-white text-stone-400 border border-stone-100 hover:bg-stone-50"}`}>
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* FIX MAIN CONTENT: Rimozione di multiple AnimatePresence. Usiamo key={activeTab} con un'altezza minima per eliminare i ghost renders e il salto del footer */}
+            <div className="max-w-xl mx-auto px-4 relative z-30 -mt-10 min-h-[620px]">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {activeTab === "TESSERA" && (
+                    <>
+                      <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
+                        <div className="flex items-center gap-5 mb-8">
+                          <div className="relative flex-shrink-0">
+                            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="w-20 h-20 rounded-[2rem] bg-stone-50 border border-stone-100 overflow-hidden flex items-center justify-center shadow-inner cursor-pointer touch-manipulation transform-gpu" onClick={() => fileInputRef.current?.click()}>
+                              {userTessera.avatar_url ? <img src={userTessera.avatar_url} className="w-full h-full object-cover object-center" alt="avatar" /> : <User size={32} className="text-stone-300" />}
+                              {avatarUploading && <div className="absolute inset-0 bg-black/30 rounded-[2rem] flex items-center justify-center"><Loader2 className="w-6 h-6 text-white animate-spin" /></div>}
+                            </motion.div>
+                            <button onClick={() => fileInputRef.current?.click()} disabled={avatarUploading} className="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-white border border-stone-200 shadow-md flex items-center justify-center hover:bg-stone-50 active:scale-90 transition-all disabled:opacity-50 touch-manipulation"><Camera size={13} className="text-stone-600" /></button>
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarFileChange} />
                           </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-8 pt-6 border-t border-stone-100 text-center">
-                    <p className="text-[12px] italic text-stone-500 leading-relaxed max-w-[90%] mx-auto">“Solo coloro che tentano l'assurdo raggiungeranno l'impossibile”</p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mt-2">— M.C. Escher</p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5 text-sky-500 mb-1">
+                              <ShieldCheck size={14} />
+                              <span className="text-[10px] font-black uppercase tracking-wider">Escursionista Verificato</span>
+                            </div>
+                            <h2 className="text-2xl font-black uppercase leading-tight">{userTessera.nome_escursionista} {userTessera.cognome_escursionista}</h2>
+                            <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest mt-0.5">{userTessera.livello || stats?.currentLevelLabel} · {escursioniCompletateParsed.length || 0} Scarponi</p>
+                          </div>
+                        </div>
 
-          <style>{`
-            @keyframes shimmer {
-              0% { transform: translateX(-100%); }
-              100% { transform: translateX(100%); }
-            }
-          `}</style>
-        </>
-      )}
+                        <div className="grid grid-cols-3 gap-2 md:gap-4 mb-6 md:mb-8">
+                          <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-sky-50 to-sky-100/70 border border-sky-100 shadow-sm flex flex-col items-center justify-center text-center transition-transform active:scale-[0.98]">
+                            <Footprints className="w-5 h-5 md:w-7 md:h-7 text-sky-600 mb-2" />
+                            <p className="text-[8px] md:text-[9px] font-black uppercase text-sky-500 tracking-wider">Distanza</p>
+                            <p className="text-base md:text-xl font-black text-sky-950 leading-tight">{stats?.kmTotali} <span className="text-[9px] md:text-sm font-bold text-sky-400">km</span></p>
+                          </div>
+                          <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/70 border border-emerald-100 shadow-sm flex flex-col items-center justify-center text-center transition-transform active:scale-[0.98]">
+                            <Mountain className="w-5 h-5 md:w-7 md:h-7 text-emerald-600 mb-2" />
+                            <p className="text-[8px] md:text-[9px] font-black uppercase text-emerald-500 tracking-wider">Dislivello</p>
+                            <p className="text-base md:text-xl font-black text-emerald-950 leading-tight">{stats?.dislivelloTotali} <span className="text-[9px] md:text-sm font-bold text-emerald-400">m</span></p>
+                          </div>
+                          <div className="p-2 md:p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/70 border border-amber-100 shadow-sm flex flex-col items-center justify-center text-center transition-transform active:scale-[0.98]">
+                            <span className="text-xl md:text-2xl mb-2">⛰️</span>
+                            <p className="text-[8px] md:text-[9px] font-black uppercase text-amber-600 tracking-wider">Quota</p>
+                            <p className="text-base md:text-xl font-black text-amber-950 leading-tight">{stats?.quotaRaggiunta} <span className="text-[9px] md:text-sm font-bold text-amber-500">m</span></p>
+                          </div>
+                        </div>
+
+                        {/* FIX: Sostituito drag="x" con onPanEnd per evitare trigger spuri della griglia su iOS */}
+                        <motion.div 
+                          onPanEnd={handleDragEnd} 
+                          className="grid grid-cols-4 gap-2 md:gap-4 mb-8 touch-pan-y"
+                        >
+                          {Array.from({ length: SLOTS_PER_PAGE }).map((_, i) => {
+                            const esc = escursioniCompletateParsed?.[currentPage * SLOTS_PER_PAGE + i];
+                            return (
+                              <motion.div key={i} whileTap={esc ? { scale: 0.95 } : {}} onClick={() => esc && setSelectedBootIndex(currentPage * SLOTS_PER_PAGE + i)} className={`aspect-square rounded-xl md:rounded-2xl bg-stone-50 border-2 border-dashed border-stone-100 flex items-center justify-center transition-colors duration-200 transform-gpu ${ esc ? "cursor-pointer bg-white shadow-sm border-solid border-stone-50" : "opacity-40" }`} style={{ WebkitTapHighlightColor: "transparent" }}>
+                                <MemoIconaScarponeCustom size={window.innerWidth < 768 ? 44 : 64} color={esc?.colore} isActive={!!esc} />
+                              </motion.div>
+                            );
+                          })}
+                        </motion.div>
+
+                        <div className="flex justify-between items-center pt-6 border-t border-stone-50">
+                          <button disabled={currentPage === 0} onClick={() => setCurrentPage((p) => p - 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90 touch-manipulation"><ChevronLeft size={20} /></button>
+                          <span className="text-[11px] font-black uppercase text-stone-300 tracking-[0.2em]">Pagina {currentPage + 1} di {stats?.totalPages}</span>
+                          <button disabled={currentPage >= (stats?.totalPages || 1) - 1} onClick={() => setCurrentPage((p) => p + 1)} className="p-3 bg-stone-50 rounded-full disabled:opacity-20 hover:bg-stone-100 transition-all active:scale-90 touch-manipulation"><ChevronRight size={20} /></button>
+                        </div>
+                      </div>
+
+                      <motion.button 
+                        onClick={() => setShowRedeem(true)} 
+                        disabled={isDemo} 
+                        whileHover={isDemo ? {} : { scale: 1.02 }} 
+                        whileTap={isDemo ? {} : { scale: 0.98 }} 
+                        className="w-full mt-6 p-6 bg-sky-500 text-white rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-xl shadow-sky-200 relative overflow-hidden transition-transform disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
+                      >
+                        {!isDemo && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
+                        )}
+                        <Plus size={24} strokeWidth={3} /> Riscatta Scarpone
+                      </motion.button>
+
+                      <motion.button 
+                        onClick={() => {
+                          setHistoryEmail(userTessera.email_utente || ""); 
+                          setShowHistoryModal(true);
+                        }} 
+                        disabled={isDemo} 
+                        whileHover={isDemo ? {} : { scale: 1.02 }} 
+                        whileTap={isDemo ? {} : { scale: 0.98 }} 
+                        className="w-full mt-4 p-5 bg-white border-2 border-stone-200 text-stone-700 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
+                      >
+                        <History size={20} strokeWidth={2.5} /> Richiedi Storico
+                      </motion.button>
+                      
+                      <motion.button 
+                        onClick={() => {
+                          const target = document.getElementById("lascia-feedback");
+                          if (target) { target.scrollIntoView({ behavior: "smooth" }); } 
+                          else { window.open("https://www.altouritaly.it/#lascia-feedback", "_blank", "noopener,noreferrer"); }
+                        }}
+                        disabled={isDemo} 
+                        whileHover={isDemo ? {} : { scale: 1.02 }} 
+                        whileTap={isDemo ? {} : { scale: 0.98 }} 
+                        className="w-full mt-4 p-5 bg-stone-50 border border-stone-200 text-stone-600 rounded-[2.5rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-sm hover:bg-white hover:border-stone-300 hover:shadow-md transition-all disabled:opacity-40 disabled:pointer-events-none touch-manipulation"
+                      >
+                        <span className="text-xl">⭐</span> Lascia un Feedback
+                      </motion.button>
+                    </>
+                  )}
+
+                  {activeTab === "BADGE" && (
+                    <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
+                      <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center shadow-lg"><Award size={24} className="text-white" /></div>
+                        <div>
+                          <h3 className="text-xl font-black uppercase leading-none">Collezione Filosofie</h3>
+                          <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">4 per sbloccare · 8 per dimezzare · 16 per completare</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-x-4 gap-y-8">
+                        {Object.keys(BADGE_NAMES).map(filo => (
+                          <MemoBadgeChip key={filo} filo={filo} count={badgeCounts[filo] || 0} onClick={() => setSelectedBadge({ filo, count: badgeCounts[filo] || 0 })} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "TRAGUARDI" && (
+                    <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-white/60">
+                      <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center shadow-lg"><Trophy size={24} className="text-white" /></div>
+                        <div>
+                          <h3 className="text-xl font-black uppercase leading-none">Traguardi Speciali</h3>
+                          <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mt-1">Sfide comportamentali e di costanza</p>
+                        </div>
+                      </div>
+                      <div className="space-y-5">
+                        {ACHIEVEMENT_BADGES.map(badge => {
+                          const isUnlocked = badge.check(escursioniCompletateParsed);
+                          const prog = badge.progress(escursioniCompletateParsed);
+                          return (
+                            <motion.div key={badge.id} whileHover={{ scale: 1.02, x: 5 }} whileTap={{ scale: 0.98 }} onClick={() => setSelectedAchievement(badge)} className={`p-5 rounded-[2rem] border transition-colors cursor-pointer ${isUnlocked ? "bg-stone-50 border-stone-200 shadow-sm" : "bg-white border-stone-100 opacity-50"}`}>
+                              <div className="flex items-center gap-4">
+                                <span className="text-3xl drop-shadow-sm">{badge.emoji}</span>
+                                <div className="flex-1">
+                                  <h4 className="text-xs font-black uppercase tracking-wide">{badge.name}</h4>
+                                  <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{badge.description}</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-[11px] font-black uppercase text-stone-400 tabular-nums">{prog.current}/{prog.total}</span>
+                                  <div className="w-16 h-1.5 bg-stone-100 rounded-full mt-1.5 overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${(prog.current / prog.total) * 100}%` }} transition={{ duration: 1, delay: 0.2 }} className="h-full bg-sky-500" /></div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-8 pt-6 border-t border-stone-100 text-center">
+                        <p className="text-[12px] italic text-stone-500 leading-relaxed max-w-[90%] mx-auto">“Solo coloro che tentano l'assurdo raggiungeranno l'impossibile”</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-stone-400 mt-2">— M.C. Escher</p>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   );
 }
