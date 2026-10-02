@@ -347,7 +347,7 @@ const BadgeDetailPopup = ({ filo, count, onClose }: { filo: string; count: numbe
   );
 };
 
-const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value: string; onChange: (v: string) => void; onComplete?: () => void; length?: number; disabled?: boolean }) => {
+const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value: string; onChange: (v: string) => void; onComplete?: (pin: string) => void; length?: number; disabled?: boolean }) => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   useEffect(() => { inputRefs.current = Array(length).fill(null); }, [length]);
   useEffect(() => {
@@ -365,7 +365,7 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
       const newPinStr = newPin.join('');
       onChange(newPinStr);
       if (index + 1 < length) inputRefs.current[index + 1]?.focus();
-      if (index === length - 1 && newPinStr.length === length) setTimeout(() => onComplete?.(), 100);
+      if (index === length - 1 && newPinStr.length === length) setTimeout(() => onComplete?.(newPinStr), 100);
     }
     e.target.value = digit || "";
   };
@@ -388,7 +388,7 @@ const PinInput = ({ value, onChange, onComplete, length = 6, disabled }: { value
       onChange(pasted);
       const lastIndex = Math.min(pasted.length, length) - 1;
       if (lastIndex >= 0) inputRefs.current[lastIndex]?.focus();
-      if (pasted.length === length) setTimeout(() => onComplete?.(), 100);
+      if (pasted.length === length) setTimeout(() => onComplete?.(pasted), 100);
     }
   };
 
@@ -609,10 +609,10 @@ export default function Tessera() {
     }));
   }
 
-  async function handleVerifyPin() {
+  async function handleVerifyPin(pinOverride?: string) {
     if (!pendingTessera) return;
     const dbPin = pendingTessera.pin != null ? String(pendingTessera.pin).trim().replace(/\D/g, "") : "";
-    const enteredPin = loginPin.trim().replace(/\D/g, "");
+    const enteredPin = (pinOverride ?? loginPin).trim().replace(/\D/g, "");
     if (enteredPin.length !== PIN_LENGTH) { setLoginError(`Inserisci ${PIN_LENGTH} cifre.`); return; }
     if (enteredPin === dbPin) { await completeLogin(pendingTessera); }
     else { setLoginError("PIN errato. Riprova."); setLoginPin(""); }
@@ -850,7 +850,7 @@ export default function Tessera() {
                   <div className="space-y-6">
                     <p className="text-xs font-bold text-stone-400 uppercase">Inserisci il tuo PIN a {PIN_LENGTH} cifre</p>
                     <PinInput value={loginPin} onChange={setLoginPin} onComplete={handleVerifyPin} length={PIN_LENGTH} disabled={isVerifying} />
-                    <button onClick={handleVerifyPin} disabled={isVerifying || loginPin.length !== PIN_LENGTH} className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest touch-manipulation">{isVerifying ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Accedi"}</button>
+                    <button onClick={() => handleVerifyPin()} disabled={isVerifying || loginPin.length !== PIN_LENGTH} className="w-full p-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest touch-manipulation">{isVerifying ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Accedi"}</button>
                     <button onClick={() => { setLoginStep("code"); setLoginPin(""); setLoginError(""); }} className="text-[10px] font-black uppercase text-stone-300 mt-4 touch-manipulation">Indietro</button>
                   </div>
                 )}
