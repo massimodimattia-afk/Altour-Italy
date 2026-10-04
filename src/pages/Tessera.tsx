@@ -667,12 +667,29 @@ export default function Tessera() {
     
     setIsVerifying(true); setRedeemError(""); setRedeemAttempts(n => n + 1);
     
-    const { data, error } = await supabase.from("escursioni")
-      .select("id, titolo, filosofia, categoria, difficolta, codici_usati, durata, tappe, data")
-      .contains("codici_riscatto", [normalized])
-      .single();
-      
-    if (error || !data) { setRedeemError("Codice non valido."); setIsVerifying(false); return; }
+    // 1. Usa .maybeSingle() al posto di .single() (evita il 400 se ci sono 0 righe)
+// 2. Usa .overlaps() per una corrispondenza perfetta su array Postgres text[]
+// 3. Usa .select("*") per non andare in errore se una colonna opzionale non esiste
+const { data, error } = await supabase
+  .from("escursioni")
+  .select("*")
+  .overlaps("codici_riscatto", [normalized])
+  .maybeSingle();
+
+console.log("Risultato query riscatto:", { data, error });
+
+if (error) {
+  console.error("Errore Supabase dettagliato:", error.message, error.details, error.hint);
+  setRedeemError("Errore durante la verifica. Riprova.");
+  setIsVerifying(false);
+  return;
+}
+
+if (!data) {
+  setRedeemError("Codice non trovato.");
+  setIsVerifying(false);
+  return;
+}
     if ((data.codici_usati as string[] | null)?.includes(normalized)) { setRedeemError("Codice già usato."); setIsVerifying(false); return; }
     
     let bootsToAdd: EscursioneCompletata[] = [];
