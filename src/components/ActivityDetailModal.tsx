@@ -25,12 +25,26 @@ const IMG_FALLBACK = "/altour-logo.png";
 function useBodyScrollLock(lock: boolean) {
   useEffect(() => {
     if (!lock) return;
+
+    // Calcolo lo spessore della barra di scorrimento del browser
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
+    // Salvo gli stili originali per poterli ripristinare
     const originalStyle = window.getComputedStyle(document.body).overflow;
+    const originalPaddingRight = window.getComputedStyle(document.body).paddingRight;
+    
     document.body.style.overflow = "hidden";
     document.body.style.height = "100%";
+    // Applica il padding per simulare lo spazio della scrollbar sparita
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    document.documentElement.style.overscrollBehavior = 'none';
+
     return () => {
       document.body.style.overflow = originalStyle;
       document.body.style.height = "";
+      // Ripristina il padding
+      document.body.style.paddingRight = originalPaddingRight;
+      document.documentElement.style.overscrollBehavior = '';
     };
   }, [lock]);
 }

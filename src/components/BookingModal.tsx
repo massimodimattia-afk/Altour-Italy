@@ -62,23 +62,37 @@ export default function BookingModal({
   }, [isOpen]);
 
   // OTTIMIZZAZIONE iOS SAFARI: Blocco scroll reale (evita rubber-banding e scroll dello sfondo)
-  useEffect(() => {
-    if (isOpen) {
-      scrollPositionRef.current = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollPositionRef.current}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
+  // OTTIMIZZAZIONE iOS SAFARI + FIX SCROLLBAR (Layout Shift)
+useEffect(() => {
+  if (isOpen) {
+    scrollPositionRef.current = window.scrollY;
+    
+    // 1. Calcolo la larghezza della scrollbar prima di nasconderla
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    // Salvo il padding originale per ripristinarlo dopo
+    const originalPaddingRight = window.getComputedStyle(document.body).paddingRight;
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollPositionRef.current}px`;
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+    
+    // 2. Applico la larghezza come padding per simulare lo spazio della barra sparita
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
       
-      return () => {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        document.body.style.overflow = "";
-        window.scrollTo(0, scrollPositionRef.current);
-      };
-    }
-  }, [isOpen]);
+      // 3. Ripristino il padding originale
+      document.body.style.paddingRight = originalPaddingRight;
+      
+      window.scrollTo(0, scrollPositionRef.current);
+    };
+  }
+}, [isOpen]);
 
   // Gestione tasto ESC (Desktop)
   useEffect(() => {
