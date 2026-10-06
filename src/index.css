@@ -12,6 +12,9 @@
     scroll-behavior: smooth;
     font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
     overscroll-behavior-y: none; /* Previene l'effetto molla globale su iOS */
+    
+    /* 🔥 LA SILVER BULLET PER I LAYOUT SHIFT DELLE MODALI 🔥 */
+    scrollbar-gutter: stable; 
   }
 
   body {
