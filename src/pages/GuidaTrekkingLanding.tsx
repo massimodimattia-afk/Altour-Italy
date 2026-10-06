@@ -12,7 +12,6 @@ import {
   Phone,
   Mail,
   User,
-  Clock,
   CloudSun,
   Shirt,
   Backpack,
@@ -28,9 +27,9 @@ interface LandingProps {
 }
 
 const HERO_IMG =
-  "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/GPS%20e%20cartografia%20digitale.webp";
+  "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/IMG_20230731_120747.webp";
 const AUTORE_IMG =
-  "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Monte%20Autore.webp";
+  "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Lettura_int_carta.webp";
 
 const HIGHLIGHTS = [
   {
@@ -38,53 +37,53 @@ const HIGHLIGHTS = [
     titolo: "Conosci te stesso",
     desc: "Gestisci nictofobia e paura del vuoto con un metodo graduale, per camminare sicuro anche fuori dalla tua comfort zone.",
     icon: Compass,
-    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Corso%20Avanzato.webp",
+    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%201.jpeg",
   },
   {
     num: "02",
     titolo: "Scegli l'itinerario",
     desc: "Valuta dislivelli, difficoltà e tempi in base alle tue reali capacità, non a quelle che pensi di avere.",
     icon: Map,
-    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Ex_ferrovia.webp",
+    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%202.jpeg",
   },
   {
     num: "03",
     titolo: "Le calzature adatte",
     desc: "Evita vesciche e suole che si staccano a metà sentiero: come scegliere lo scarpone per ogni terreno.",
     icon: Footprints,
-    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Calzature%20e%20cura%20del%20piede.webp",
+    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%203.jpeg",
   },
   {
     num: "04",
     titolo: "Vestiti a strati",
     desc: "La tecnica per non avere mai troppo caldo né troppo freddo, proteggendo le zone a maggiore dispersione termica.",
     icon: Shirt,
-    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Attrezzatura%20III.webp",
+    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%204.jpeg",
   },
   {
     num: "05",
     titolo: "Lo zaino bilanciato",
     desc: "Cosa portare (e cosa lasciare a casa): acqua, kit di primo soccorso e bastoncini, senza appesantirti.",
     icon: Backpack,
-    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Attrezzatura%20II.webp",
+    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%205.jpeg",
   },
   {
     num: "06",
     titolo: "Occhio al meteo",
     desc: "Come leggere le previsioni e riconoscere i segnali del cielo: in montagna le condizioni cambiano in fretta.",
     icon: CloudSun,
-    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Elementi%20di%20Meteorologia.webp",
+    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%206.jfif",
   },
   {
     num: "07",
     titolo: "Lascia detto dove vai",
     desc: "Le informazioni da lasciare prima di partire e i contatti utili, così qualcuno sa sempre dove cercarti.",
     icon: LifeBuoy,
-    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Orientamento%20strumentale%201.webp",
+    img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%207.jpeg",
   },
 ];
 
-export default function GuidaTrekkingLanding({ onNavigateHome }: LandingProps) {
+export default function GuidaTrekkingLanding(_props: LandingProps) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");

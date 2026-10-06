@@ -22,31 +22,52 @@ const formatEquipmentList = (equipment: string) => {
 
 const IMG_FALLBACK = "/altour-logo.png";
 
-function useBodyScrollLock(lock: boolean) {
+function useBodyScrollLock(isOpen: boolean) {
   useEffect(() => {
-    if (!lock) return;
+    if (!isOpen) return;
 
-    // Calcolo lo spessore della barra di scorrimento del browser
+    // 1. Calcola la larghezza della scrollbar
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    
-    // Salvo gli stili originali per poterli ripristinare
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    const originalPaddingRight = window.getComputedStyle(document.body).paddingRight;
-    
-    document.body.style.overflow = "hidden";
-    document.body.style.height = "100%";
-    // Applica il padding per simulare lo spazio della scrollbar sparita
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-    document.documentElement.style.overscrollBehavior = 'none';
+    const body = document.body;
+    const html = document.documentElement;
 
+    // 2. Intercetta eventuali Navbar fisse in alto per non farle saltare
+const fixedElements = document.querySelectorAll(
+  'header, nav, [class*="fixed"], [class*="sticky"]'
+) as NodeListOf<HTMLElement>;
+
+    // 3. Salva gli stili originali
+    const origOverflow = body.style.overflow;
+    const origPaddingRight = body.style.paddingRight;
+    const origOverscroll = html.style.overscrollBehavior;
+
+    const fixedOriginals = Array.from(fixedElements).map(el => ({
+      el,
+      paddingRight: el.style.paddingRight
+    }));
+
+    // 4. Blocca lo scroll e compensa (NO position: fixed!)
+    body.style.overflow = "hidden";
+    body.style.paddingRight = `${scrollbarWidth}px`;
+    html.style.overscrollBehavior = "none";
+
+    // 5. Applica il padding anche agli elementi fissi
+    fixedElements.forEach(el => {
+      const currentPadding = parseFloat(window.getComputedStyle(el).paddingRight || "0");
+      el.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+    });
+
+    // 6. Cleanup alla chiusura
     return () => {
-      document.body.style.overflow = originalStyle;
-      document.body.style.height = "";
-      // Ripristina il padding
-      document.body.style.paddingRight = originalPaddingRight;
-      document.documentElement.style.overscrollBehavior = '';
+      body.style.overflow = origOverflow;
+      body.style.paddingRight = origPaddingRight;
+      html.style.overscrollBehavior = origOverscroll;
+      
+      fixedOriginals.forEach(({ el, paddingRight }) => {
+        el.style.paddingRight = paddingRight;
+      });
     };
-  }, [lock]);
+  }, [isOpen]);
 }
 
 function MiniMap({ lat, lng, isAnimationDone }: { lat: number; lng: number; isAnimationDone: boolean }) {

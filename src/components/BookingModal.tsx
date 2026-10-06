@@ -1,5 +1,5 @@
 // src/components/BookingModal.tsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Send, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
@@ -17,7 +17,6 @@ export default function BookingModal({
   isOpen,
   onClose,
   title,
-  initialMessage = "",
   mode = "info",
 }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,68 +30,52 @@ export default function BookingModal({
   });
   
   const [mounted, setMounted] = useState(false);
-  const scrollPositionRef = useRef<number>(0);
+  
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Inizializzazione messaggio
+  // BLOCCO SCROLL UNIVERSALE (No layout shift, No rubber-banding)
   useEffect(() => {
-    if (isOpen) {
-      setFormData((prev) => ({
-        ...prev,
-        messaggio: initialMessage || "",
-      }));
-    }
-  }, [isOpen, initialMessage]);
+    if (!isOpen) return;
 
-  // Reset stato alla chiusura
-  useEffect(() => {
-    if (isOpen) {
-      setSent(false);
-      setFormError(null);
-    } else {
-      const t = setTimeout(() => {
-        setFormData({ nome: "", email: "", telefono: "", messaggio: "" });
-        setFormError(null);
-      }, 300);
-      return () => clearTimeout(t);
-    }
-  }, [isOpen]);
-
-  // OTTIMIZZAZIONE iOS SAFARI: Blocco scroll reale (evita rubber-banding e scroll dello sfondo)
-  // OTTIMIZZAZIONE iOS SAFARI + FIX SCROLLBAR (Layout Shift)
-useEffect(() => {
-  if (isOpen) {
-    scrollPositionRef.current = window.scrollY;
-    
-    // 1. Calcolo la larghezza della scrollbar prima di nasconderla
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    // Salvo il padding originale per ripristinarlo dopo
-    const originalPaddingRight = window.getComputedStyle(document.body).paddingRight;
+    const body = document.body;
+    const html = document.documentElement;
 
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollPositionRef.current}px`;
-    document.body.style.width = "100%";
-    document.body.style.overflow = "hidden";
-    
-    // 2. Applico la larghezza come padding per simulare lo spazio della barra sparita
-    document.body.style.paddingRight = `${scrollbarWidth}px`;
-    
+    const fixedElements = document.querySelectorAll(
+      'header, nav, [class*="fixed"], [class*="sticky"]'
+    ) as NodeListOf<HTMLElement>;
+
+    const origOverflow = body.style.overflow;
+    const origPaddingRight = body.style.paddingRight;
+    const origOverscroll = html.style.overscrollBehavior;
+
+    const fixedOriginals = Array.from(fixedElements).map(el => ({
+      el,
+      paddingRight: el.style.paddingRight
+    }));
+
+    body.style.overflow = "hidden";
+    body.style.paddingRight = `${scrollbarWidth}px`;
+    html.style.overscrollBehavior = "none";
+
+    fixedElements.forEach(el => {
+      const currentPadding = parseFloat(window.getComputedStyle(el).paddingRight || "0");
+      el.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+    });
+
     return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
+      body.style.overflow = origOverflow;
+      body.style.paddingRight = origPaddingRight;
+      html.style.overscrollBehavior = origOverscroll;
       
-      // 3. Ripristino il padding originale
-      document.body.style.paddingRight = originalPaddingRight;
-      
-      window.scrollTo(0, scrollPositionRef.current);
+      fixedOriginals.forEach(({ el, paddingRight }) => {
+        el.style.paddingRight = paddingRight;
+      });
     };
-  }
-}, [isOpen]);
+  }, [isOpen]);
 
   // Gestione tasto ESC (Desktop)
   useEffect(() => {
