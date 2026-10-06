@@ -8,13 +8,12 @@
 
 @layer base {
   html {
+    /* Ottimizzazioni Touch */
     -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%; /* Evita che iOS zumi il testo ruotando lo schermo */
     scroll-behavior: smooth;
     font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
-    overscroll-behavior-y: none; /* Previene l'effetto molla globale su iOS */
-    
-    /* 🔥 LA SILVER BULLET PER I LAYOUT SHIFT DELLE MODALI 🔥 */
-    scrollbar-gutter: stable; 
+    overscroll-behavior-y: none; /* Uccide definitivamente il "rubber-banding" (effetto molla) */
   }
 
   body {
@@ -23,7 +22,7 @@
     color: #292524;
     background-color: #fafaf9;
     
-    /* Supporto Viewport dinamico scalare per iOS */
+    /* Supporto Viewport Dinamico (fondamentale per Safari Mobile) */
     min-height: 100vh;
     min-height: -webkit-fill-available;
     min-height: 100dvh;
@@ -32,15 +31,19 @@
 }
 
 @layer utilities {
-  /* ─── ESISTENTE: Unificata con la classe usata nel Home.tsx ─── */
+  /* ─── GPU ACCELERATION (Anti-Flicker Universale) ─── */
   .ios-gpu-fix,
   .force-gpu {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    transform: translate3d(0,0,0);
-    -webkit-transform: translate3d(0,0,0);
+    /* translate3d forza il rendering sul chip grafico (GPU) invece che sulla CPU */
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    perspective: 1000px; 
+    -webkit-perspective: 1000;
   }
 
+  /* ─── SCROLLBAR NASCOSTE MA FUNZIONANTI ─── */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -49,38 +52,38 @@
     scrollbar-width: none;
   }
 
-  /* ─── NUOVO: ALTOUR TACTICS UTILITIES (ZERO BLUR, MAX FLUIDITY) ─── */
-  .at-safe-pt { padding-top: env(safe-area-inset-top, 0px); }
-  .at-safe-pb { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  /* ─── ALTOUR TACTICS UTILITIES ─── */
+  .at-safe-pt { padding-top: max(env(safe-area-inset-top), 20px); }
+  .at-safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 20px); }
 
-  /* Sfondo principale del gioco: solido e accelerato via hardware */
   .at-panel-fixed {
-    background-color: #020617; /* Slate 950 */
+    background-color: #020617; 
   }
 
-  /* Pannelli interni: Colore pieno, niente filtri costosi */
   .at-panel-inner {
-    background-color: rgba(15, 23, 42, 0.98); /* Slate 900 quasi opaco */
+    background-color: rgba(15, 23, 42, 0.98); 
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  /* Card risposte: Solid slate per azzerare il sovraccarico WebKit */
   .at-card-solid {
-    background-color: #1e293b; /* Slate 800 solido */
+    background-color: #1e293b; 
     border: 1px solid rgba(255, 255, 255, 0.04);
   }
 
-  /* Ottimizzazione touch targets per evitare delay di pressione su Safari */
+  /* ─── INTERAZIONI TOUCH FLUIDE (Zero delay) ─── */
   .at-choice-btn {
     transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease;
     touch-action: manipulation;
     -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
+  
   .at-choice-btn:active { 
-    transform: scale3d(0.97, 0.97, 1); 
+    transform: scale3d(0.96, 0.96, 1); /* scale3d invece di scale per non far cadere il frame */
   }
 
-  /* Animazioni 3D-Accelerated */
+  /* ─── ANIMAZIONI ALTOUR TACTICS ─── */
   .at-active-ring { 
     animation: atPulseRing 2s cubic-bezier(0.215, 0.610, 0.355, 1) infinite; 
   }
@@ -89,51 +92,70 @@
   }
 }
 
-/* ─── KEYFRAMES ALTOUR TACTICS (Solo 3D Transforms) ─── */
+/* ─── KEYFRAMES (Esclusivamente Transform e Opacity per 60fps garantiti) ─── */
 @keyframes atPulseRing {
   0% { transform: scale3d(0.7, 0.7, 1); opacity: 0.8; }
   100% { transform: scale3d(2.3, 2.3, 1); opacity: 0; }
 }
+
 @keyframes atSlideUp {
   from { transform: translate3d(0, 16px, 0); opacity: 0; }
   to   { transform: translate3d(0, 0, 0); opacity: 1; }
 }
 
-/* ─── ANIMAZIONI HERO (Migrate da Home.tsx) ─── */
 @keyframes heroFadeUp {
   from { opacity: 0; transform: translate3d(0, 18px, 0); }
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
+
 @keyframes heroFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* ─── iOS FIX - PATCH ANTI-FLICKERING (INTATTA) ─── */
+
+/* ==========================================================================
+   IL BLOCCO DI SICUREZZA PER SAFARI iOS (NATIVE APP FEEL)
+   ========================================================================== */
 @supports (-webkit-touch-callout: none) {
   
-  /* 1. IL VERO FIX: Uccidi la sfocatura (blur) solo su iOS */
+  /* 1. KILL BACKDROP BLUR: La causa principale dei glitch grafici su iPhone.
+        Lo sostituiamo con un colore solido scuro semi-trasparente */
   .backdrop-blur-sm, 
   .backdrop-blur-md, 
   .backdrop-blur-lg,
+  .backdrop-blur-xl,
   [class*="backdrop-blur"] {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-    background-color: rgba(28, 25, 23, 0.95) !important; /* stone-900/95 */
+    background-color: rgba(28, 25, 23, 0.96) !important; /* Stone-900 con 96% opacità */
   }
 
-  /* 2. Fix per scroll fluido (Supporto legacy per versioni iOS precedenti alla 13) */
+  /* 2. SCORRIMENTO INERZIALE: Assicura che le liste/modali scrollino con fluidità Apple */
   .overflow-y-auto,
-  .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
+  .overflow-x-auto,
+  .overflow-y-scroll,
+  .overflow-x-scroll {
+    -webkit-overflow-scrolling: touch !important;
   }
 
-  /* 3. Fix specifico per la modale (L'isolation isola i calcoli della GPU) */
-  /* Aggunto in modo sicuro .at-panel-fixed senza alterare .fixed.inset-0 */
+  /* 3. ISOLAMENTO MODALI E LAYER FISSI: 
+        Obbliga Safari a non ricalcolare cosa c'è dietro le finestre aperte */
   .fixed.inset-0,
-  .at-panel-fixed {
+  .at-panel-fixed,
+  [role="dialog"] {
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     isolation: isolate;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* 4. PREVIENI MENU POPUP ACCIDENTALI (Es: l'utente tiene premuto su un bottone o un'immagine) */
+  button, 
+  a, 
+  img,
+  [role="button"] {
+    -webkit-touch-callout: none !important;
   }
 }

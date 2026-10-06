@@ -13,10 +13,77 @@ interface BookingModalProps {
   mode?: "info" | "prenota";
 }
 
+// FIX DEFINITIVO: Hook con Contatore Globale per Modali Sovrapposte
+function useBodyScrollLock(isOpen: boolean) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Legge quante modali sono attualmente aperte
+    const currentCount = parseInt(document.body.dataset.modalCount || "0", 10);
+    document.body.dataset.modalCount = (currentCount + 1).toString();
+
+    // SE È LA PRIMA MODALE AD APRIRSI, blocca lo scroll
+    if (currentCount === 0) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      const body = document.body;
+      const html = document.documentElement;
+
+      const fixedElements = document.querySelectorAll(
+        'header, nav, [class*="fixed"], [class*="sticky"]'
+      ) as NodeListOf<HTMLElement>;
+
+      // Salva gli stili originali nel dataset per non perderli
+      body.dataset.origOverflow = body.style.overflow || "";
+      body.dataset.origPadding = body.style.paddingRight || "";
+      body.dataset.origOverscroll = html.style.overscrollBehavior || "";
+
+      // Applica il blocco e il padding
+      body.style.overflow = "hidden";
+      body.style.paddingRight = `${scrollbarWidth}px`;
+      html.style.overscrollBehavior = "none";
+
+      fixedElements.forEach((el, i) => {
+        const currentPadding = window.getComputedStyle(el).paddingRight;
+        el.setAttribute(`data-orig-padding-${i}`, currentPadding);
+        el.setAttribute('data-fixed-index', i.toString());
+        el.style.paddingRight = `${parseFloat(currentPadding || "0") + scrollbarWidth}px`;
+      });
+    }
+
+    // CLEANUP QUANDO UNA MODALE SI CHIUDE
+    return () => {
+      const newCount = parseInt(document.body.dataset.modalCount || "1", 10) - 1;
+      document.body.dataset.modalCount = newCount.toString();
+
+      // SE È L'ULTIMA MODALE A CHIUDERSI, ripristina lo scroll
+      if (newCount === 0) {
+        const body = document.body;
+        const html = document.documentElement;
+
+        body.style.overflow = body.dataset.origOverflow || "";
+        body.style.paddingRight = body.dataset.origPadding || "";
+        html.style.overscrollBehavior = body.dataset.origOverscroll || "";
+
+        const fixedElements = document.querySelectorAll('[data-fixed-index]');
+        fixedElements.forEach(el => {
+          const i = el.getAttribute('data-fixed-index');
+          const origPadding = el.getAttribute(`data-orig-padding-${i}`);
+          if (origPadding !== null) {
+            (el as HTMLElement).style.paddingRight = origPadding;
+          }
+          el.removeAttribute('data-fixed-index');
+          el.removeAttribute(`data-orig-padding-${i}`);
+        });
+      }
+    };
+  }, [isOpen]);
+}
+
 export default function BookingModal({
   isOpen,
   onClose,
   title,
+  initialMessage = "",
   mode = "info",
 }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,52 +97,37 @@ export default function BookingModal({
   });
   
   const [mounted, setMounted] = useState(false);
-  
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // BLOCCO SCROLL UNIVERSALE (No layout shift, No rubber-banding)
+  // Inizializzazione messaggio
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen) {
+      setFormData((prev) => ({
+        ...prev,
+        messaggio: initialMessage || "",
+      }));
+    }
+  }, [isOpen, initialMessage]);
 
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    const body = document.body;
-    const html = document.documentElement;
-
-    const fixedElements = document.querySelectorAll(
-      'header, nav, [class*="fixed"], [class*="sticky"]'
-    ) as NodeListOf<HTMLElement>;
-
-    const origOverflow = body.style.overflow;
-    const origPaddingRight = body.style.paddingRight;
-    const origOverscroll = html.style.overscrollBehavior;
-
-    const fixedOriginals = Array.from(fixedElements).map(el => ({
-      el,
-      paddingRight: el.style.paddingRight
-    }));
-
-    body.style.overflow = "hidden";
-    body.style.paddingRight = `${scrollbarWidth}px`;
-    html.style.overscrollBehavior = "none";
-
-    fixedElements.forEach(el => {
-      const currentPadding = parseFloat(window.getComputedStyle(el).paddingRight || "0");
-      el.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
-    });
-
-    return () => {
-      body.style.overflow = origOverflow;
-      body.style.paddingRight = origPaddingRight;
-      html.style.overscrollBehavior = origOverscroll;
-      
-      fixedOriginals.forEach(({ el, paddingRight }) => {
-        el.style.paddingRight = paddingRight;
-      });
-    };
+  // Reset stato alla chiusura
+  useEffect(() => {
+    if (isOpen) {
+      setSent(false);
+      setFormError(null);
+    } else {
+      const t = setTimeout(() => {
+        setFormData({ nome: "", email: "", telefono: "", messaggio: "" });
+        setFormError(null);
+      }, 300);
+      return () => clearTimeout(t);
+    }
   }, [isOpen]);
+
+  // Richiama il blocco scroll sincronizzato
+  useBodyScrollLock(isOpen);
 
   // Gestione tasto ESC (Desktop)
   useEffect(() => {

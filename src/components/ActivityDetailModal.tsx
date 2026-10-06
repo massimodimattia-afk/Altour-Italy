@@ -1,3 +1,4 @@
+// src/components/ActivityDetailModal.tsx
 import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion";
 import {
   X, TrendingUp, Share2,
@@ -22,50 +23,68 @@ const formatEquipmentList = (equipment: string) => {
 
 const IMG_FALLBACK = "/altour-logo.png";
 
+// FIX DEFINITIVO: Hook con Contatore Globale per Modali Sovrapposte
 function useBodyScrollLock(isOpen: boolean) {
   useEffect(() => {
     if (!isOpen) return;
 
-    // 1. Calcola la larghezza della scrollbar
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    const body = document.body;
-    const html = document.documentElement;
+    // Legge quante modali sono attualmente aperte
+    const currentCount = parseInt(document.body.dataset.modalCount || "0", 10);
+    document.body.dataset.modalCount = (currentCount + 1).toString();
 
-    // 2. Intercetta eventuali Navbar fisse in alto per non farle saltare
-const fixedElements = document.querySelectorAll(
-  'header, nav, [class*="fixed"], [class*="sticky"]'
-) as NodeListOf<HTMLElement>;
+    // SE È LA PRIMA MODALE AD APRIRSI, blocca lo scroll
+    if (currentCount === 0) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      const body = document.body;
+      const html = document.documentElement;
 
-    // 3. Salva gli stili originali
-    const origOverflow = body.style.overflow;
-    const origPaddingRight = body.style.paddingRight;
-    const origOverscroll = html.style.overscrollBehavior;
+      const fixedElements = document.querySelectorAll(
+        'header, nav, [class*="fixed"], [class*="sticky"]'
+      ) as NodeListOf<HTMLElement>;
 
-    const fixedOriginals = Array.from(fixedElements).map(el => ({
-      el,
-      paddingRight: el.style.paddingRight
-    }));
+      // Salva gli stili originali nel dataset per non perderli
+      body.dataset.origOverflow = body.style.overflow || "";
+      body.dataset.origPadding = body.style.paddingRight || "";
+      body.dataset.origOverscroll = html.style.overscrollBehavior || "";
 
-    // 4. Blocca lo scroll e compensa (NO position: fixed!)
-    body.style.overflow = "hidden";
-    body.style.paddingRight = `${scrollbarWidth}px`;
-    html.style.overscrollBehavior = "none";
+      // Applica il blocco e il padding
+      body.style.overflow = "hidden";
+      body.style.paddingRight = `${scrollbarWidth}px`;
+      html.style.overscrollBehavior = "none";
 
-    // 5. Applica il padding anche agli elementi fissi
-    fixedElements.forEach(el => {
-      const currentPadding = parseFloat(window.getComputedStyle(el).paddingRight || "0");
-      el.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
-    });
-
-    // 6. Cleanup alla chiusura
-    return () => {
-      body.style.overflow = origOverflow;
-      body.style.paddingRight = origPaddingRight;
-      html.style.overscrollBehavior = origOverscroll;
-      
-      fixedOriginals.forEach(({ el, paddingRight }) => {
-        el.style.paddingRight = paddingRight;
+      fixedElements.forEach((el, i) => {
+        const currentPadding = window.getComputedStyle(el).paddingRight;
+        el.setAttribute(`data-orig-padding-${i}`, currentPadding);
+        el.setAttribute('data-fixed-index', i.toString());
+        el.style.paddingRight = `${parseFloat(currentPadding || "0") + scrollbarWidth}px`;
       });
+    }
+
+    // CLEANUP QUANDO UNA MODALE SI CHIUDE
+    return () => {
+      const newCount = parseInt(document.body.dataset.modalCount || "1", 10) - 1;
+      document.body.dataset.modalCount = newCount.toString();
+
+      // SE È L'ULTIMA MODALE A CHIUDERSI, ripristina lo scroll
+      if (newCount === 0) {
+        const body = document.body;
+        const html = document.documentElement;
+
+        body.style.overflow = body.dataset.origOverflow || "";
+        body.style.paddingRight = body.dataset.origPadding || "";
+        html.style.overscrollBehavior = body.dataset.origOverscroll || "";
+
+        const fixedElements = document.querySelectorAll('[data-fixed-index]');
+        fixedElements.forEach(el => {
+          const i = el.getAttribute('data-fixed-index');
+          const origPadding = el.getAttribute(`data-orig-padding-${i}`);
+          if (origPadding !== null) {
+            (el as HTMLElement).style.paddingRight = origPadding;
+          }
+          el.removeAttribute('data-fixed-index');
+          el.removeAttribute(`data-orig-padding-${i}`);
+        });
+      }
     };
   }, [isOpen]);
 }
@@ -165,19 +184,16 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
     return activity ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[] : [];
   }, [activity]);
 
-  // LOGICA RICONOSCIMENTO ATTIVITÀ PIÙ ROBUSTA
   const hasMap = Boolean(activity?.lat && activity?.lng);
   const isTour = activity?.categoria?.toLowerCase() === "tour";
   const isCampo = activity?._tipo === "campo";
   
-  // Riconosce se è un corso o modulo non solo da _tipo, ma anche se ha opzioni di prezzo specifiche dei corsi o un parentTitle
   const isCorso = 
     activity?._tipo === 'corso' || 
     activity?.prezzo_bundle !== undefined || 
     activity?.prezzo_teorico !== undefined || 
     activity?.parentTitle != null;
 
-  // Legge il prezzo derivato dalla selezione esterna (sulla card)
   const currentPrice = useMemo(() => {
     if (!activity) return null;
     if (activity.selectedPrice != null) return Number(activity.selectedPrice);
@@ -185,7 +201,6 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
     return null;
   }, [activity]);
 
-  // Crea l'etichetta per la prenotazione in base alla scelta esterna
   const bookingLabel = useMemo(() => {
     if (!activity) return "";
     if (activity.selectedOption) {
