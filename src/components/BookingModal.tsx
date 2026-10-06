@@ -232,8 +232,8 @@ export default function BookingModal({
             exit={{ opacity: 0, scale: 0.96, y: 20 }}
             transition={{ type: "spring", damping: 28, stiffness: 350 }}
             // OTTMIZZAZIONE iOS: max-h-[92dvh] per lasciare sempre margine con la tastiera virtuale aperta
-            className="relative w-full max-w-lg bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_30px_100px_rgba(28,25,23,0.3)] flex flex-col overflow-hidden transform-gpu max-h-[92dvh]"
-            style={{ zIndex: 2, willChange: "transform, opacity" }}
+            className="relative w-full max-w-lg bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_30px_100px_rgba(28,25,23,0.3)] flex flex-col overflow-hidden max-h-[92dvh]"
+            style={{ zIndex: 2 }}
           >
             {/* Header Modale */}
             <div className="bg-[#f5f2ed] p-5 sm:p-7 relative border-b border-stone-100 flex-shrink-0">

@@ -396,7 +396,15 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
       {/* ─── MODALE DETTAGLI ───────────────────── */}
       {selectedActivity && (
-        <ActivityDetailModal activity={selectedActivity} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} onBookingClick={onBookingClick} />
+        <ActivityDetailModal
+          activity={selectedActivity}
+          isOpen={isDetailOpen}
+          onClose={() => setIsDetailOpen(false)}
+          onBookingClick={(title: string) => {
+            setIsDetailOpen(false);
+            onBookingClick(title, "prenota");
+          }}
+        />
       )}
     </div>
   );

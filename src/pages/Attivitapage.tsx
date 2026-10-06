@@ -730,7 +730,10 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={closeDetails}
-        onBookingClick={(title: string) => onBookingClick(title, "prenota")}
+        onBookingClick={(title: string) => {
+          closeDetails();
+          onBookingClick(title, "prenota");
+        }}
       />
     </div>
   );
