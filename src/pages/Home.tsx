@@ -150,10 +150,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         const hikes = ((allHikes ?? []) as any[]).map((e) => ({ ...e, _tipo: "escursione" as const }));
         const campi = ((allCampi ?? []) as any[]).map((c) => ({ ...c, _tipo: "campo" as const }));
         const mixed = [...hikes, ...campi].sort((a, b) => {
-  const da = (a as any).data ? new Date((a as any).data).getTime() : Infinity;
-  const db = (b as any).data ? new Date((b as any).data).getTime() : Infinity;
-  return da - db;
-});
+          const da = (a as any).data ? new Date((a as any).data).getTime() : Infinity;
+          const db = (b as any).data ? new Date((b as any).data).getTime() : Infinity;
+          return da - db;
+        });
         
         setFeaturedActivities(mixed.slice(0, isMobile ? 2 : 3));
         
@@ -169,7 +169,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
     loadData();
   }, [isMobile]);
 
-  // ─── NUOVA LOGICA OPENDETAILS CON FALLBACK PREZZI CORSI ───
   const openDetails = useCallback((activity: any) => {
     let priceToPass = activity.selectedPrice ?? activity.prezzo;
     let optionToPass = activity.selectedOption;
@@ -220,8 +219,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
 
   return (
     <div className="min-h-[100dvh] bg-[#f5f2ed] overflow-x-hidden">
-
-      {/* ─── 1. HERO ───────────────────── */}
       <Section animate={false} fullHeight as="section" className="flex items-center justify-center overflow-hidden">
         <motion.div
           className="absolute inset-0"
@@ -298,7 +295,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </Section>
 
-      {/* ─── 2. ACCADEMIA ───────────────────── */}
       <Section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
           <div>
@@ -327,7 +323,6 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </Section>
 
-      {/* ─── 3. ATTIVITÀ OUTDOOR ───────────────────── */}
       <Section className="max-w-6xl mx-auto px-4 py-16 md:py-24">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
           <div>
@@ -356,29 +351,27 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
                   {!isEscursione && (activity as Campo).slug && <FilosofiaBadge value={(activity as Campo).slug} />}
                 </div>
                 <div className="p-4 md:p-5 flex flex-col flex-grow">
-  {/* ── Data e Durata ── */}
-  <div className="flex items-center gap-2.5 mb-2 flex-wrap">
-    {/* Mostra la data formattata solo se presente (escursioni) */}
-    {isEscursione && (activity as Escursione).data && (
-      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
-        <Calendar size={9} />
-        {new Date((activity as Escursione).data!).toLocaleDateString("it-IT", {
-          day: "2-digit",
-          month: "short",
-        })}
-      </span>
-    )}
-    {activity.durata && (
-      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
-        <Clock size={9} />
-        {activity.durata}
-      </span>
-    )}
-  </div>
+                  <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+                    {isEscursione && (activity as Escursione).data && (
+                      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+                        <Calendar size={9} />
+                        {new Date((activity as Escursione).data!).toLocaleDateString("it-IT", {
+                          day: "2-digit",
+                          month: "short",
+                        })}
+                      </span>
+                    )}
+                    {activity.durata && (
+                      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-brand-sky">
+                        <Clock size={9} />
+                        {activity.durata}
+                      </span>
+                    )}
+                  </div>
 
-  <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
-    {activity.titolo}
-  </h3>
+                  <h3 className="text-sm md:text-base font-black text-brand-stone uppercase leading-tight line-clamp-2 mb-1.5">
+                    {activity.titolo}
+                  </h3>
                   <p className="text-[11px] md:text-xs text-stone-400 line-clamp-2 leading-relaxed mb-3 flex-grow font-medium" dangerouslySetInnerHTML={{ __html: activity.descrizioneFormattata }} />
                   <div className="flex gap-2 pt-3 border-t border-stone-50">
                     <button onClick={() => openDetails(activity)} className="flex-1 py-2.5 md:py-3 rounded-xl font-black uppercase text-[9px] tracking-widest border-2 border-stone-200 text-stone-600 hover:border-stone-400 transition-colors active:scale-95">Dettagli</button>
@@ -391,20 +384,10 @@ export default function Home({ onNavigate, onBookingClick }: HomeProps) {
         </div>
       </Section>
 
-      {/* ─── 4. FEEDBACK CAROUSEL (Spostato qui) ───────────────────── */}
       <FeedbackCarousel />
 
-      {/* ─── MODALE DETTAGLI ───────────────────── */}
       {selectedActivity && (
-        <ActivityDetailModal
-          activity={selectedActivity}
-          isOpen={isDetailOpen}
-          onClose={() => setIsDetailOpen(false)}
-          onBookingClick={(title: string) => {
-            setIsDetailOpen(false);
-            onBookingClick(title, "prenota");
-          }}
-        />
+        <ActivityDetailModal activity={selectedActivity} isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} onBookingClick={onBookingClick} />
       )}
     </div>
   );

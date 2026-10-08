@@ -3,7 +3,6 @@ import { useState, FormEvent } from "react";
 import { motion } from "framer-motion";
 import {
   Compass,
-  ShieldCheck,
   Footprints,
   Map,
   CheckCircle2,

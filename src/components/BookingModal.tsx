@@ -13,67 +13,37 @@ interface BookingModalProps {
   mode?: "info" | "prenota";
 }
 
-// FIX DEFINITIVO: Hook con Contatore Globale per Modali Sovrapposte
+// ─── L'HOOK PULITO PER MODALI SOVRAPPOSTE (Con CSS Nativo) ───
 function useBodyScrollLock(isOpen: boolean) {
   useEffect(() => {
     if (!isOpen) return;
 
-    // Legge quante modali sono attualmente aperte
-    const currentCount = parseInt(document.body.dataset.modalCount || "0", 10);
-    document.body.dataset.modalCount = (currentCount + 1).toString();
+    // Gestione contatore globale per modali sovrapposte
+    const currentCount = parseInt(document.documentElement.dataset.modalCount || "0", 10);
+    document.documentElement.dataset.modalCount = (currentCount + 1).toString();
 
-    // SE È LA PRIMA MODALE AD APRIRSI, blocca lo scroll
+    // Blocca lo scroll solo alla prima modale aperta
     if (currentCount === 0) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      const body = document.body;
-      const html = document.documentElement;
+      document.documentElement.dataset.origHtmlOverflow = document.documentElement.style.overflow || "";
+      document.documentElement.dataset.origBodyOverflow = document.body.style.overflow || "";
 
-      const fixedElements = document.querySelectorAll(
-        'header, nav, [class*="fixed"], [class*="sticky"]'
-      ) as NodeListOf<HTMLElement>;
-
-      // Salva gli stili originali nel dataset per non perderli
-      body.dataset.origOverflow = body.style.overflow || "";
-      body.dataset.origPadding = body.style.paddingRight || "";
-      body.dataset.origOverscroll = html.style.overscrollBehavior || "";
-
-      // Applica il blocco e il padding
-      body.style.overflow = "hidden";
-      body.style.paddingRight = `${scrollbarWidth}px`;
-      html.style.overscrollBehavior = "none";
-
-      fixedElements.forEach((el, i) => {
-        const currentPadding = window.getComputedStyle(el).paddingRight;
-        el.setAttribute(`data-orig-padding-${i}`, currentPadding);
-        el.setAttribute('data-fixed-index', i.toString());
-        el.style.paddingRight = `${parseFloat(currentPadding || "0") + scrollbarWidth}px`;
-      });
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overscrollBehavior = "none";
     }
 
-    // CLEANUP QUANDO UNA MODALE SI CHIUDE
     return () => {
-      const newCount = parseInt(document.body.dataset.modalCount || "1", 10) - 1;
-      document.body.dataset.modalCount = newCount.toString();
+      const newCount = parseInt(document.documentElement.dataset.modalCount || "1", 10) - 1;
+      document.documentElement.dataset.modalCount = Math.max(0, newCount).toString();
 
-      // SE È L'ULTIMA MODALE A CHIUDERSI, ripristina lo scroll
-      if (newCount === 0) {
-        const body = document.body;
-        const html = document.documentElement;
-
-        body.style.overflow = body.dataset.origOverflow || "";
-        body.style.paddingRight = body.dataset.origPadding || "";
-        html.style.overscrollBehavior = body.dataset.origOverscroll || "";
-
-        const fixedElements = document.querySelectorAll('[data-fixed-index]');
-        fixedElements.forEach(el => {
-          const i = el.getAttribute('data-fixed-index');
-          const origPadding = el.getAttribute(`data-orig-padding-${i}`);
-          if (origPadding !== null) {
-            (el as HTMLElement).style.paddingRight = origPadding;
-          }
-          el.removeAttribute('data-fixed-index');
-          el.removeAttribute(`data-orig-padding-${i}`);
-        });
+      // Ripristina lo scroll solo quando tutte le modali sono chiuse
+      if (newCount <= 0) {
+        document.documentElement.style.overflow = document.documentElement.dataset.origHtmlOverflow || "";
+        document.body.style.overflow = document.documentElement.dataset.origBodyOverflow || "";
+        document.documentElement.style.overscrollBehavior = "";
+        
+        delete document.documentElement.dataset.origHtmlOverflow;
+        delete document.documentElement.dataset.origBodyOverflow;
       }
     };
   }, [isOpen]);
@@ -126,7 +96,7 @@ export default function BookingModal({
     }
   }, [isOpen]);
 
-  // Richiama il blocco scroll sincronizzato
+  // Applica il blocco sincronizzato
   useBodyScrollLock(isOpen);
 
   // Gestione tasto ESC (Desktop)
@@ -203,7 +173,6 @@ export default function BookingModal({
     <AnimatePresence>
       {isOpen && (
         <div
-          // OTTMIZZAZIONE iOS: h-[100dvh] + safe area support
           className="fixed inset-0 w-full h-[100dvh] flex items-center justify-center p-3 sm:p-4 md:p-8"
           style={{
             zIndex: 99999, 
@@ -231,9 +200,8 @@ export default function BookingModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 20 }}
             transition={{ type: "spring", damping: 28, stiffness: 350 }}
-            // OTTMIZZAZIONE iOS: max-h-[92dvh] per lasciare sempre margine con la tastiera virtuale aperta
-            className="relative w-full max-w-lg bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_30px_100px_rgba(28,25,23,0.3)] flex flex-col overflow-hidden max-h-[92dvh]"
-            style={{ zIndex: 2 }}
+            className="relative w-full max-w-lg bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_30px_100px_rgba(28,25,23,0.3)] flex flex-col overflow-hidden transform-gpu max-h-[92dvh]"
+            style={{ zIndex: 2, willChange: "transform, opacity" }}
           >
             {/* Header Modale */}
             <div className="bg-[#f5f2ed] p-5 sm:p-7 relative border-b border-stone-100 flex-shrink-0">
@@ -297,7 +265,6 @@ export default function BookingModal({
                           value={formData.nome}
                           onChange={handleChange}
                           placeholder="es. Mario Rossi"
-                          // text-[16px] evita lo zoom indesiderato di Safari su iPhone
                           className="w-full p-3.5 sm:p-4 bg-stone-50 rounded-2xl border-2 border-transparent focus:border-brand-sky/30 focus:bg-white focus:ring-0 font-bold text-[16px] md:text-sm text-brand-stone transition-all outline-none"
                         />
                       </div>

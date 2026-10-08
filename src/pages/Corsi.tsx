@@ -28,7 +28,6 @@ export interface CorsoItem {
   prezzo_pratico: number | null;
   prezzo_bundle: number | null;
   
-  // Allineamento con il DB Escursioni
   is_active?: boolean | null;
   is_coming_soon?: boolean | null;
   status?: 'active' | 'coming_soon' | 'archived' | null;
@@ -76,7 +75,7 @@ function formatMarkdown(text: string | null | undefined): string {
     .replace(/_(.*?)_/g, "<em>$1</em>");
 }
 
-// ─── Card Unificata con Gestione Prezzo Dinamico e Stati "Coming Soon" ───────
+// ─── Card Unificata ───────────────────────────────────────────────────────────
 const FormazioneCard = forwardRef<HTMLDivElement, {
   item: CorsoItem;
   parentTitle?: string;
@@ -88,7 +87,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
   const categoriaName = item.categoria || "Formazione";
   const categoryBg = CATEGORIA_COLORS[categoriaName] || "#002f59";
   
-  // Valuta se il modulo è in arrivo (tramite boolean o enum testuale per flessibilità)
   const isComingSoon = item.status === 'coming_soon' || item.is_coming_soon === true;
 
   const hasBundle = Boolean(item.prezzo_bundle && Number(item.prezzo_bundle) > 0);
@@ -96,7 +94,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
   const hasPratica = Boolean(item.prezzo_pratico && Number(item.prezzo_pratico) > 0);
   const showPriceSelector = hasBundle || hasTeoria || hasPratica;
 
-  // Fix Immagine Rotta "React-Way"
   const [imgError, setImgError] = useState(false);
 
   const [selectedOption, setSelectedOption] = useState<'bundle' | 'teoria' | 'pratica'>(() => {
@@ -134,7 +131,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
   return (
     <motion.div
       ref={ref}
-      layout={!isIOS} // Disabilita animazione layout se iOS per evitare lag
+      // FIX GLITCH: Rimossa prop 'layout' per evitare scivolamenti animati su desktop
       initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
@@ -153,29 +150,23 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
-        {/* Badge Categoria */}
         <div
           className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md backdrop-blur-sm z-10"
-          style={{
-            backgroundColor: categoryBg,
-            textShadow: "0 1px 2px rgba(0,0,0,0.3)"
-          }}
+          style={{ backgroundColor: categoryBg, textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
         >
           {categoriaName}
         </div>
 
-{/* Badge "In arrivo" - Stile Brand Altour */}
-{isComingSoon && (
-  <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-stone-900/85 text-white shadow-lg backdrop-blur-md z-10 border border-white/20 flex items-center gap-2">
-    <span className="w-1.5 h-1.5 rounded-full bg-brand-sky animate-pulse shrink-0" />
-    <Bell size={10} className="text-brand-sky shrink-0" />
-    <span>In arrivo</span>
-  </div>
-)}
+        {isComingSoon && (
+          <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-stone-900/85 text-white shadow-lg backdrop-blur-md z-10 border border-white/20 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-sky animate-pulse shrink-0" />
+            <Bell size={10} className="text-brand-sky shrink-0" />
+            <span>In arrivo</span>
+          </div>
+        )}
       </div>
 
       <div className={`p-4 md:p-5 flex flex-col flex-grow ${isComingSoon ? "bg-stone-50/50" : ""}`}>
-        
         <div className="flex items-center gap-2 mb-1 flex-wrap min-h-[20px]">
           {isModulo && parentTitle && (
             <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wide text-brand-sky bg-sky-50 px-2 py-0.5 rounded-md shrink-0">
@@ -199,7 +190,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
           dangerouslySetInnerHTML={{ __html: formatMarkdown(item.descrizione) }}
         />
 
-        {/* Pulsanti opzione prezzo (Ingranditi per Mobile) */}
         {showPriceSelector && (
           <div className="flex bg-stone-100 p-1 rounded-xl gap-1 mb-3 shrink-0">
             <button
@@ -207,11 +197,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
               disabled={!hasBundle}
               onClick={() => hasBundle && setSelectedOption('bundle')}
               className={`flex-1 py-1.5 min-h-[36px] text-[8px] font-black uppercase rounded-lg transition-all ${
-                !hasBundle
-                  ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
-                  : selectedOption === 'bundle'
-                  ? 'bg-white text-brand-stone shadow-sm'
-                  : 'text-stone-400 hover:text-stone-600'
+                !hasBundle ? 'text-stone-300 opacity-40 cursor-not-allowed select-none' : selectedOption === 'bundle' ? 'bg-white text-brand-stone shadow-sm' : 'text-stone-400 hover:text-stone-600'
               }`}
             >
               Completo
@@ -221,11 +207,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
               disabled={!hasTeoria}
               onClick={() => hasTeoria && setSelectedOption('teoria')}
               className={`flex-1 py-1.5 min-h-[36px] text-[8px] font-black uppercase rounded-lg transition-all ${
-                !hasTeoria
-                  ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
-                  : selectedOption === 'teoria'
-                  ? 'bg-white text-brand-stone shadow-sm'
-                  : 'text-stone-400 hover:text-stone-600'
+                !hasTeoria ? 'text-stone-300 opacity-40 cursor-not-allowed select-none' : selectedOption === 'teoria' ? 'bg-white text-brand-stone shadow-sm' : 'text-stone-400 hover:text-stone-600'
               }`}
             >
               Teoria
@@ -235,11 +217,7 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
               disabled={!hasPratica}
               onClick={() => hasPratica && setSelectedOption('pratica')}
               className={`flex-1 py-1.5 min-h-[36px] text-[8px] font-black uppercase rounded-lg transition-all ${
-                !hasPratica
-                  ? 'text-stone-300 opacity-40 cursor-not-allowed select-none'
-                  : selectedOption === 'pratica'
-                  ? 'bg-white text-brand-stone shadow-sm'
-                  : 'text-stone-400 hover:text-stone-600'
+                !hasPratica ? 'text-stone-300 opacity-40 cursor-not-allowed select-none' : selectedOption === 'pratica' ? 'bg-white text-brand-stone shadow-sm' : 'text-stone-400 hover:text-stone-600'
               }`}
             >
               Pratica
@@ -259,7 +237,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
 
           <div className="flex gap-2">
             {isComingSoon ? (
-              // Call To Action Modificata per Moduli in arrivo
               <button
                 onClick={() => onBook(`Avvisami per: ${bookingSummary}`, "info")}
                 className="w-full py-2.5 md:py-3 min-h-[44px] rounded-xl font-black uppercase text-[9px] tracking-widest bg-stone-200/80 text-stone-500 hover:bg-stone-300 hover:text-stone-700 transition-colors active:scale-95 flex items-center justify-center gap-1.5"
@@ -267,7 +244,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
                 <Bell size={12} /> Avvisami quando pronto
               </button>
             ) : (
-              // Call To Action Normali
               <>
                 <button
                   onClick={() => onDetails({ ...item, selectedPrice: activePrice || undefined, selectedOption })}
@@ -325,7 +301,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
     return map;
   }, [corsi]);
 
-  // I conteggi escludono a priori i corsi con is_active a false o status archiviato
   const totalCorsi = useMemo(() => 
     corsi.filter(c => !c.parent_corso_id && c.is_active !== false && c.status !== 'archived').length, 
   [corsi]);
@@ -334,12 +309,9 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
     corsi.filter(c => Boolean(c.parent_corso_id) && c.is_active !== false && c.status !== 'archived').length, 
   [corsi]);
 
-  // Logica unica di Filtraggio e Ordinamento
   const filteredData = useMemo(() => {
-    // Escludiamo tutto ciò che non è attivo (es. in bozza/nascosto)
     let base = corsi.filter(c => c.is_active !== false && c.status !== 'archived');
 
-    // 1. Ricerca
     if (searchQuery.trim() !== "") {
       const q = searchQuery.toLowerCase();
       base = base.filter(item => {
@@ -352,22 +324,16 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
       });
     }
 
-    // 2. Filtro Tabs
     if (activeFilter === "corsi") {
       base = base.filter(c => !c.parent_corso_id);
     } else if (activeFilter === "moduli") {
       base = base.filter(c => Boolean(c.parent_corso_id));
     }
 
-    // 3. Ordinamento (priorità assoluta ai corsi padre rispetto ai moduli figli)
     base = [...base].sort((a, b) => {
       const aIsCorso = !a.parent_corso_id ? 1 : 0;
       const bIsCorso = !b.parent_corso_id ? 1 : 0;
-      
-      if (aIsCorso !== bIsCorso) {
-        return bIsCorso - aIsCorso;
-      }
-      
+      if (aIsCorso !== bIsCorso) return bIsCorso - aIsCorso;
       return (a.posizione || 0) - (b.posizione || 0);
     });
 
@@ -412,8 +378,9 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
 
   return (
     <div className="bg-[#f5f2ed] min-h-screen antialiased pb-safe">
-      {/* ── Header e Titolo ─────────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-4 pt-8 pb-0 mt-safe">
+      
+      {/* ── Header e Titolo (Utilizzando Section) ── */}
+      <Section animate={false} className="max-w-6xl mx-auto px-4 pt-8 pb-0 mt-safe">
         <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Formazione</p>
         <div className="flex items-end justify-between gap-4">
           <h1 className="text-3xl md:text-5xl font-black text-brand-stone uppercase tracking-tighter leading-[0.9]">
@@ -426,7 +393,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         </div>
         <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
-        {/* ── Barra di Ricerca + FIX ZOOM IOS ── */}
         <div className="mb-8 mt-6 flex justify-center px-2">
           <form 
             onSubmit={(e) => {
@@ -470,7 +436,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
           </form>
         </div>
 
-        {/* ── Filtri Mobile ── */}
         <div className="md:hidden mb-6 mt-2 px-1">
           <div className="flex justify-between items-center mb-4 px-1">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
@@ -511,7 +476,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
             })}
           </div>
         </div>
-      </div>
+      </Section>
 
       {/* ── Filtri Sticky Desktop ── */}
       <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed] border-b border-stone-200/60 py-3 overflow-hidden">
@@ -550,8 +515,8 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         </div>
       </div>
 
-      {/* ── Contenuto Unico Dinamico ── */}
-      <div className="max-w-6xl mx-auto px-4 pt-4 pb-20">
+      {/* ── Contenuto Unico Dinamico (Utilizzando Section) ── */}
+      <Section className="max-w-6xl mx-auto px-4 pt-4 pb-20">
         
         <div className="mb-10 bg-white p-5 md:p-6 rounded-[1.5rem] shadow-sm border border-stone-100 flex flex-col md:flex-row items-center justify-between gap-5 transition-transform active:scale-[0.99]">
           <div className="text-center md:text-left">
@@ -614,7 +579,7 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
             )}
           </>
         )}
-      </div>
+      </Section>
 
       {/* ── Modali ── */}
       <ActivityDetailModal

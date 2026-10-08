@@ -23,67 +23,36 @@ const formatEquipmentList = (equipment: string) => {
 
 const IMG_FALLBACK = "/altour-logo.png";
 
-// FIX DEFINITIVO: Hook con Contatore Globale per Modali Sovrapposte
+// ─── L'HOOK PULITO PER MODALI SOVRAPPOSTE (Con CSS Nativo) ───
 function useBodyScrollLock(isOpen: boolean) {
   useEffect(() => {
     if (!isOpen) return;
 
-    // Legge quante modali sono attualmente aperte
-    const currentCount = parseInt(document.body.dataset.modalCount || "0", 10);
-    document.body.dataset.modalCount = (currentCount + 1).toString();
+    const currentCount = parseInt(document.documentElement.dataset.modalCount || "0", 10);
+    document.documentElement.dataset.modalCount = (currentCount + 1).toString();
 
-    // SE È LA PRIMA MODALE AD APRIRSI, blocca lo scroll
+    // Blocca lo scroll solo alla prima modale aperta
     if (currentCount === 0) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      const body = document.body;
-      const html = document.documentElement;
+      document.documentElement.dataset.origHtmlOverflow = document.documentElement.style.overflow || "";
+      document.documentElement.dataset.origBodyOverflow = document.body.style.overflow || "";
 
-      const fixedElements = document.querySelectorAll(
-        'header, nav, [class*="fixed"], [class*="sticky"]'
-      ) as NodeListOf<HTMLElement>;
-
-      // Salva gli stili originali nel dataset per non perderli
-      body.dataset.origOverflow = body.style.overflow || "";
-      body.dataset.origPadding = body.style.paddingRight || "";
-      body.dataset.origOverscroll = html.style.overscrollBehavior || "";
-
-      // Applica il blocco e il padding
-      body.style.overflow = "hidden";
-      body.style.paddingRight = `${scrollbarWidth}px`;
-      html.style.overscrollBehavior = "none";
-
-      fixedElements.forEach((el, i) => {
-        const currentPadding = window.getComputedStyle(el).paddingRight;
-        el.setAttribute(`data-orig-padding-${i}`, currentPadding);
-        el.setAttribute('data-fixed-index', i.toString());
-        el.style.paddingRight = `${parseFloat(currentPadding || "0") + scrollbarWidth}px`;
-      });
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overscrollBehavior = "none";
     }
 
-    // CLEANUP QUANDO UNA MODALE SI CHIUDE
     return () => {
-      const newCount = parseInt(document.body.dataset.modalCount || "1", 10) - 1;
-      document.body.dataset.modalCount = newCount.toString();
+      const newCount = parseInt(document.documentElement.dataset.modalCount || "1", 10) - 1;
+      document.documentElement.dataset.modalCount = Math.max(0, newCount).toString();
 
-      // SE È L'ULTIMA MODALE A CHIUDERSI, ripristina lo scroll
-      if (newCount === 0) {
-        const body = document.body;
-        const html = document.documentElement;
-
-        body.style.overflow = body.dataset.origOverflow || "";
-        body.style.paddingRight = body.dataset.origPadding || "";
-        html.style.overscrollBehavior = body.dataset.origOverscroll || "";
-
-        const fixedElements = document.querySelectorAll('[data-fixed-index]');
-        fixedElements.forEach(el => {
-          const i = el.getAttribute('data-fixed-index');
-          const origPadding = el.getAttribute(`data-orig-padding-${i}`);
-          if (origPadding !== null) {
-            (el as HTMLElement).style.paddingRight = origPadding;
-          }
-          el.removeAttribute('data-fixed-index');
-          el.removeAttribute(`data-orig-padding-${i}`);
-        });
+      // Ripristina lo scroll solo quando tutte le modali sono chiuse
+      if (newCount <= 0) {
+        document.documentElement.style.overflow = document.documentElement.dataset.origHtmlOverflow || "";
+        document.body.style.overflow = document.documentElement.dataset.origBodyOverflow || "";
+        document.documentElement.style.overscrollBehavior = "";
+        
+        delete document.documentElement.dataset.origHtmlOverflow;
+        delete document.documentElement.dataset.origBodyOverflow;
       }
     };
   }, [isOpen]);
@@ -282,8 +251,8 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             animate="visible"
             exit="hidden"
             onAnimationComplete={() => setIsAnimationDone(true)}
-            className="relative bg-white w-full h-full md:h-[80vh] md:min-h-[520px] md:max-h-[750px] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden overscroll-none"
-            style={{ zIndex: 10001 }}
+            className="relative bg-white w-full h-full md:h-[80vh] md:min-h-[520px] md:max-h-[750px] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden transform-gpu overscroll-none"
+            style={{ willChange: "transform, opacity", zIndex: 10001 }}
           >
             
             {/* Azioni Alte MOBILE */}
@@ -422,7 +391,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} isAnimationDone={isAnimationDone} />}
               </div>
 
-              {/* FOOTER MOBILE-SAFE CON PREZZO EREDITATO DALLA CARD */}
+              {/* FOOTER MOBILE-SAFE */}
               <div 
                 className="pl-5 pr-16 py-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-4 bg-stone-50/95 backdrop-blur-md shrink-0 transform-gpu overscroll-none z-10"
                 style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}

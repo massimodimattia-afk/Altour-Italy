@@ -9,6 +9,7 @@ import ActivityDetailModal from "../components/ActivityDetailModal";
 import AttivitaQuiz from "../components/AttivitaQuiz";
 import { isIOS } from "../components/Section";
 
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
@@ -117,7 +118,7 @@ const ActivityCard = forwardRef<HTMLDivElement, {
   const isEsc = activity._tipo === "escursione";
   const esc   = isEsc ? activity as Escursione : null;
   return (
-    <motion.div ref={ref} layout
+    <motion.div ref={ref}
       initial={{ opacity: 0, y: isIOS ? 0 : 12 }} animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
       transition={{ duration: 0.22, delay: Math.min(idx % 4, 3) * 0.05 }}
@@ -215,24 +216,17 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
 
   useEffect(() => { setMounted(true); }, []);
 
-  useEffect(() => {
-    if (drawerOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.left = "";
-        document.body.style.right = "";
-        document.body.style.overflow = "";
-        window.scrollTo(0, scrollY);
-      };
-    }
-  }, [drawerOpen]);
+  // ── FIX DRAWER SCROLL LOCK ──
+  // SOSTITUISCI IL VECCHIO useEffect(..., [drawerOpen]) CON QUESTO:
+useEffect(() => {
+  if (!drawerOpen) return;
+  document.documentElement.style.overflow = "hidden";
+  document.body.style.overflow = "hidden";
+  return () => {
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+  };
+}, [drawerOpen]);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -387,14 +381,14 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
         <div className="mb-10 mt-6 flex justify-center px-2">
           <form 
             onSubmit={(e) => {
-              e.preventDefault(); // Evita il ricaricamento della pagina
-              (document.activeElement as HTMLElement)?.blur(); // Chiude la tastiera su iOS/Android
+              e.preventDefault(); 
+              (document.activeElement as HTMLElement)?.blur(); 
             }}
             className="relative w-full max-w-2xl group"
           >
             <input
               type="text"
-              enterKeyHint="search" // Mostra il tasto "Cerca" sulla tastiera del telefono
+              enterKeyHint="search" 
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -404,12 +398,10 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
               className="w-full pl-14 pr-12 py-4 bg-white rounded-full border-2 border-stone-100/80 focus:border-brand-sky/40 focus:ring-4 focus:ring-brand-sky/10 text-base md:text-sm font-black text-brand-stone placeholder-stone-300 outline-none transition-all duration-300 shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)]"
             />
             
-            {/* Icona di ricerca */}
             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none transition-all duration-300 group-focus-within:scale-110 group-focus-within:text-brand-sky">
               <Search size={20} strokeWidth={3} />
             </div>
             
-           {/* Bottone reset */}
 <AnimatePresence>
   {searchQuery && (
     <motion.button 
@@ -730,10 +722,7 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
         activity={selectedActivity}
         isOpen={isDetailOpen}
         onClose={closeDetails}
-        onBookingClick={(title: string) => {
-          closeDetails();
-          onBookingClick(title, "prenota");
-        }}
+        onBookingClick={(title: string) => onBookingClick(title, "prenota")}
       />
     </div>
   );

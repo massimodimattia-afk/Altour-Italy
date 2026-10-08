@@ -14,6 +14,11 @@
     scroll-behavior: smooth;
     font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
     overscroll-behavior-y: none; /* Uccide definitivamente il "rubber-banding" (effetto molla) */
+    
+    /* 🔥 IL FIX NATIVO PER IL LAYOUT SHIFT 🔥 
+       Mantiene la colonna per la scrollbar sempre visibile strutturalmente */
+    scrollbar-gutter: stable;
+    overflow-x: hidden;
   }
 
   body {
@@ -26,7 +31,6 @@
     min-height: 100vh;
     min-height: -webkit-fill-available;
     min-height: 100dvh;
-    overflow-x: hidden;
   }
 }
 
@@ -36,7 +40,6 @@
   .force-gpu {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    /* translate3d forza il rendering sul chip grafico (GPU) invece che sulla CPU */
     transform: translate3d(0, 0, 0);
     -webkit-transform: translate3d(0, 0, 0);
     perspective: 1000px; 
@@ -56,9 +59,7 @@
   .at-safe-pt { padding-top: max(env(safe-area-inset-top), 20px); }
   .at-safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 20px); }
 
-  .at-panel-fixed {
-    background-color: #020617; 
-  }
+  .at-panel-fixed { background-color: #020617; }
 
   .at-panel-inner {
     background-color: rgba(15, 23, 42, 0.98); 
@@ -80,16 +81,12 @@
   }
   
   .at-choice-btn:active { 
-    transform: scale3d(0.96, 0.96, 1); /* scale3d invece di scale per non far cadere il frame */
+    transform: scale3d(0.96, 0.96, 1); 
   }
 
   /* ─── ANIMAZIONI ALTOUR TACTICS ─── */
-  .at-active-ring { 
-    animation: atPulseRing 2s cubic-bezier(0.215, 0.610, 0.355, 1) infinite; 
-  }
-  .at-animate-slide-up { 
-    animation: atSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
-  }
+  .at-active-ring { animation: atPulseRing 2s cubic-bezier(0.215, 0.610, 0.355, 1) infinite; }
+  .at-animate-slide-up { animation: atSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 }
 
 /* ─── KEYFRAMES (Esclusivamente Transform e Opacity per 60fps garantiti) ─── */
@@ -113,14 +110,12 @@
   to   { opacity: 1; }
 }
 
-
 /* ==========================================================================
    IL BLOCCO DI SICUREZZA PER SAFARI iOS (NATIVE APP FEEL)
    ========================================================================== */
 @supports (-webkit-touch-callout: none) {
   
-  /* 1. KILL BACKDROP BLUR: La causa principale dei glitch grafici su iPhone.
-        Lo sostituiamo con un colore solido scuro semi-trasparente */
+  /* 1. KILL BACKDROP BLUR: Lo sostituiamo con un colore solido scuro semi-trasparente */
   .backdrop-blur-sm, 
   .backdrop-blur-md, 
   .backdrop-blur-lg,
@@ -139,8 +134,7 @@
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* 3. ISOLAMENTO MODALI E LAYER FISSI: 
-        Obbliga Safari a non ricalcolare cosa c'è dietro le finestre aperte */
+  /* 3. ISOLAMENTO MODALI E LAYER FISSI: Obbliga Safari a non ricalcolare background */
   .fixed.inset-0,
   .at-panel-fixed,
   [role="dialog"] {
@@ -151,7 +145,7 @@
     backface-visibility: hidden;
   }
 
-  /* 4. PREVIENI MENU POPUP ACCIDENTALI (Es: l'utente tiene premuto su un bottone o un'immagine) */
+  /* 4. PREVIENI MENU POPUP ACCIDENTALI */
   button, 
   a, 
   img,
