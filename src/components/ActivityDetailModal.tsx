@@ -251,8 +251,9 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             animate="visible"
             exit="hidden"
             onAnimationComplete={() => setIsAnimationDone(true)}
-            className="relative bg-white w-full h-full md:h-[80vh] md:min-h-[520px] md:max-h-[750px] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden transform-gpu overscroll-none"
-            style={{ willChange: "transform, opacity", zIndex: 10001 }}
+            transformTemplate={(_, t) => (t ? `${t} translateZ(0)` : "translateZ(0)")}
+            className="relative bg-white w-full h-full md:h-[80vh] md:min-h-[520px] md:max-h-[750px] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden overscroll-none"
+            style={{ zIndex: 10001 }}
           >
             
             {/* Azioni Alte MOBILE */}
