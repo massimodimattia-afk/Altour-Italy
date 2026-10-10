@@ -3,6 +3,7 @@ import { useState, FormEvent } from "react";
 import { motion } from "framer-motion";
 import {
   Compass,
+  ShieldCheck,
   Footprints,
   Map,
   CheckCircle2,
@@ -35,7 +36,7 @@ const HIGHLIGHTS = [
   {
     num: "01",
     titolo: "Conosci te stesso",
-    desc: "Gestisci nictofobia e paura del vuoto con un metodo graduale, per camminare sicuro anche fuori dalla tua comfort zone.",
+    desc: "Gestisci la paura del buio e del vuoto con un metodo graduale, per camminare sicuro anche fuori dalla tua comfort zone.",
     icon: Compass,
     img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%201.jpeg",
   },
@@ -48,7 +49,7 @@ const HIGHLIGHTS = [
   },
   {
     num: "03",
-    titolo: "Le calzature adatte",
+    titolo: "Calzature adatte",
     desc: "Evita vesciche e suole che si staccano a metà sentiero: come scegliere lo scarpone per ogni terreno.",
     icon: Footprints,
     img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%203.jpeg",
@@ -62,7 +63,7 @@ const HIGHLIGHTS = [
   },
   {
     num: "05",
-    titolo: "Lo zaino bilanciato",
+    titolo: "Zaino bilanciato",
     desc: "Cosa portare (e cosa lasciare a casa): acqua, kit di primo soccorso e bastoncini, senza appesantirti.",
     icon: Backpack,
     img: "https://rpzbiqzjyculxquespos.supabase.co/storage/v1/object/public/Images/Capitolo%205.jpeg",
@@ -147,7 +148,7 @@ export default function GuidaTrekkingLanding(_props: LandingProps) {
     "absolute left-4 top-1/2 -translate-y-1/2 text-[#8ea483] peer-focus:text-[#48593d] transition-colors pointer-events-none z-10";
 
   return (
-    <div className="min-h-[100dvh] w-full max-w-[100vw] bg-[#d6eecf] text-[#2c3b24] overflow-x-hidden antialiased pb-safe selection:bg-[#64735b]/20">
+    <div className="min-h-[100dvh] w-full max-w-[100vw] bg-[#e5ece3] text-[#2c3b24] overflow-x-hidden antialiased pb-safe selection:bg-[#64735b]/20">
       {/* ── HEADER ── */}
       <nav
         className={`${sectionPad} py-5 md:py-6 flex items-center justify-end gap-3`}
@@ -203,15 +204,15 @@ export default function GuidaTrekkingLanding(_props: LandingProps) {
             <ul className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-2 text-[10px] font-bold uppercase tracking-wider text-[#64735b]">
               <li className="flex items-center gap-1.5">
                 <Check size={12} className="text-[#48593d]" />
-                Codice riservato
+                Codice sconto riservato
               </li>
               <li className="flex items-center gap-1.5">
                 <Check size={12} className="text-[#48593d]" />
-                Valido 48 ore al lancio
+                Valido 48 ore dal lancio
               </li>
               <li className="flex items-center gap-1.5">
                 <Check size={12} className="text-[#48593d]" />
-                Cancellazione 1 click
+                Cancellazione in 1 click
               </li>
             </ul>
           </div>
@@ -303,19 +304,19 @@ export default function GuidaTrekkingLanding(_props: LandingProps) {
               className="absolute inset-0 opacity-20"
               style={{
                 backgroundImage:
-                  "radial-gradient(circle at 30% 20%, rgba(214,238,207,0.35), transparent 55%), radial-gradient(circle at 80% 80%, rgba(214,238,207,0.2), transparent 50%)",
+                  "radial-gradient(circle at 30% 20%, rgba(229,236,227,0.35), transparent 55%), radial-gradient(circle at 80% 80%, rgba(229,236,227,0.2), transparent 50%)",
               }}
             />
             <div className="relative z-10 flex flex-col items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center border border-white/20">
-                <TicketPercent size={24} className="text-[#d6eecf]" />
+                <TicketPercent size={24} className="text-[#e5ece3]" />
               </div>
               <span className="text-sm font-black uppercase tracking-wide text-white leading-tight">
                 Assicurati il codice
                 <br />
                 sconto di lancio
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#2c3b24] bg-[#d6eecf] border border-[#d6eecf] rounded-full px-3 py-1.5 group-hover:bg-white group-hover:border-white transition-colors">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#2c3b24] bg-[#e5ece3] border border-[#e5ece3] rounded-full px-3 py-1.5 group-hover:bg-white group-hover:border-white transition-colors">
                 Entra in lista
                 <ArrowRight
                   size={11}
@@ -372,7 +373,7 @@ export default function GuidaTrekkingLanding(_props: LandingProps) {
               animate={{ opacity: 1, scale: 1 }}
               className="py-12 text-center"
             >
-              <div className="w-16 h-16 rounded-full bg-[#d6eecf] text-[#2c3b24] flex items-center justify-center mx-auto mb-5 shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-[#e5ece3] text-[#2c3b24] flex items-center justify-center mx-auto mb-5 shadow-sm">
                 <CheckCircle2 size={32} />
               </div>
               <h3 className="text-2xl font-black uppercase tracking-tight text-[#2c3b24] mb-2">
