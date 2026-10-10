@@ -8,17 +8,12 @@
 
 @layer base {
   html {
-    /* Ottimizzazioni Touch */
+    /* Ottimizzazioni Touch per iOS */
     -webkit-tap-highlight-color: transparent;
-    -webkit-text-size-adjust: 100%; /* Evita che iOS zumi il testo ruotando lo schermo */
+    -webkit-text-size-adjust: 100%; /* Evita zoom testuale su rotazione iPhone */
     scroll-behavior: smooth;
     font-family: 'Montserrat', 'Inter', system-ui, sans-serif;
-    overscroll-behavior-y: none; /* Uccide definitivamente il "rubber-banding" (effetto molla) */
-    
-    /* 🔥 IL FIX NATIVO PER IL LAYOUT SHIFT 🔥 
-       Mantiene la colonna per la scrollbar sempre visibile strutturalmente */
-    scrollbar-gutter: stable;
-    overflow-x: hidden;
+    overscroll-behavior-y: none; /* Uccide l'effetto molla/rimbalzo al top/bottom */
   }
 
   body {
@@ -27,15 +22,16 @@
     color: #292524;
     background-color: #fafaf9;
     
-    /* Supporto Viewport Dinamico (fondamentale per Safari Mobile) */
+    /* Supporto Viewport Dinamico iOS (100dvh e -webkit-fill-available) */
     min-height: 100vh;
     min-height: -webkit-fill-available;
     min-height: 100dvh;
+    overflow-x: hidden; /* Mantiene la pagina salda sull'asse orizzontale */
   }
 }
 
 @layer utilities {
-  /* ─── GPU ACCELERATION (Anti-Flicker Universale) ─── */
+  /* ─── GPU ACCELERATION (Fluidità assoluta su iOS) ─── */
   .ios-gpu-fix,
   .force-gpu {
     -webkit-backface-visibility: hidden;
@@ -47,29 +43,16 @@
   }
 
   /* ─── SCROLLBAR NASCOSTE MA FUNZIONANTI ─── */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
   /* ─── ALTOUR TACTICS UTILITIES ─── */
   .at-safe-pt { padding-top: max(env(safe-area-inset-top), 20px); }
   .at-safe-pb { padding-bottom: max(env(safe-area-inset-bottom), 20px); }
 
   .at-panel-fixed { background-color: #020617; }
-
-  .at-panel-inner {
-    background-color: rgba(15, 23, 42, 0.98); 
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .at-card-solid {
-    background-color: #1e293b; 
-    border: 1px solid rgba(255, 255, 255, 0.04);
-  }
+  .at-panel-inner { background-color: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255, 255, 255, 0.05); }
+  .at-card-solid { background-color: #1e293b; border: 1px solid rgba(255, 255, 255, 0.04); }
 
   /* ─── INTERAZIONI TOUCH FLUIDE (Zero delay) ─── */
   .at-choice-btn {
@@ -79,32 +62,25 @@
     user-select: none;
     -webkit-user-select: none;
   }
-  
-  .at-choice-btn:active { 
-    transform: scale3d(0.96, 0.96, 1); 
-  }
+  .at-choice-btn:active { transform: scale3d(0.96, 0.96, 1); }
 
-  /* ─── ANIMAZIONI ALTOUR TACTICS ─── */
+  /* ─── ANIMAZIONI ─── */
   .at-active-ring { animation: atPulseRing 2s cubic-bezier(0.215, 0.610, 0.355, 1) infinite; }
   .at-animate-slide-up { animation: atSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 }
 
-/* ─── KEYFRAMES (Esclusivamente Transform e Opacity per 60fps garantiti) ─── */
 @keyframes atPulseRing {
   0% { transform: scale3d(0.7, 0.7, 1); opacity: 0.8; }
   100% { transform: scale3d(2.3, 2.3, 1); opacity: 0; }
 }
-
 @keyframes atSlideUp {
   from { transform: translate3d(0, 16px, 0); opacity: 0; }
   to   { transform: translate3d(0, 0, 0); opacity: 1; }
 }
-
 @keyframes heroFadeUp {
   from { opacity: 0; transform: translate3d(0, 18px, 0); }
   to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-
 @keyframes heroFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -115,7 +91,8 @@
    ========================================================================== */
 @supports (-webkit-touch-callout: none) {
   
-  /* 1. KILL BACKDROP BLUR: Lo sostituiamo con un colore solido scuro semi-trasparente */
+  /* 1. KILL BACKDROP BLUR: La causa principale dei glitch grafici su iPhone.
+        Lo sostituiamo con un colore solido scuro semi-trasparente */
   .backdrop-blur-sm, 
   .backdrop-blur-md, 
   .backdrop-blur-lg,
@@ -134,7 +111,8 @@
     -webkit-overflow-scrolling: touch !important;
   }
 
-  /* 3. ISOLAMENTO MODALI E LAYER FISSI: Obbliga Safari a non ricalcolare background */
+  /* 3. ISOLAMENTO MODALI E LAYER FISSI: 
+        Obbliga Safari a non ricalcolare cosa c'è dietro le finestre aperte */
   .fixed.inset-0,
   .at-panel-fixed,
   [role="dialog"] {
@@ -145,7 +123,7 @@
     backface-visibility: hidden;
   }
 
-  /* 4. PREVIENI MENU POPUP ACCIDENTALI */
+  /* 4. PREVIENI MENU POPUP ACCIDENTALI (Es: l'utente tiene premuto su un bottone o un'immagine) */
   button, 
   a, 
   img,

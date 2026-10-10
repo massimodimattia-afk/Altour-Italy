@@ -4,9 +4,11 @@ import {
   X, TrendingUp, Share2,
   Briefcase, Compass, Mountain, MapPin, ArrowUp, ExternalLink, Users, Clock, Layers
 } from "lucide-react";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 const normalizeMarkdown = (text: string | null | undefined): string => {
   if (!text) return "";
@@ -23,36 +25,47 @@ const formatEquipmentList = (equipment: string) => {
 
 const IMG_FALLBACK = "/altour-logo.png";
 
-// ─── L'HOOK PULITO PER MODALI SOVRAPPOSTE (Con CSS Nativo) ───
+// ─── SCROLL LOCK CONDIVISO ───
+// Il contatore vive su window: ActivityDetailModal e BookingModal sono file separati
+// e prima avevano due contatori indipendenti. Aprendo la booking sopra la activity,
+// veniva iniettato un secondo <style> con padding-right: 0 (scrollbar già nascosta),
+// facendo scattare di ~15px il layout dietro le modali.
+const LOCK_STYLE_ID = 'altour-scroll-lock';
+
 function useBodyScrollLock(isOpen: boolean) {
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!isOpen) return;
 
-    const currentCount = parseInt(document.documentElement.dataset.modalCount || "0", 10);
-    document.documentElement.dataset.modalCount = (currentCount + 1).toString();
+    const w = window as any;
+    w.__altourLockCount = w.__altourLockCount || 0;
 
-    // Blocca lo scroll solo alla prima modale aperta
-    if (currentCount === 0) {
-      document.documentElement.dataset.origHtmlOverflow = document.documentElement.style.overflow || "";
-      document.documentElement.dataset.origBodyOverflow = document.body.style.overflow || "";
+    if (w.__altourLockCount === 0 && !document.getElementById(LOCK_STYLE_ID)) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overscrollBehavior = "none";
+      // Calcola il padding attuale della navbar per sommarlo correttamente
+      const nav = document.querySelector('header');
+      const navPr = nav ? window.getComputedStyle(nav).paddingRight : '0px';
+
+      const style = document.createElement('style');
+      style.id = LOCK_STYLE_ID;
+      style.textContent = `
+        body {
+          overflow: hidden !important;
+          padding-right: ${scrollbarWidth}px !important;
+        }
+        header, nav {
+          padding-right: calc(${navPr} + ${scrollbarWidth}px) !important;
+        }
+      `;
+      document.head.appendChild(style);
     }
+    w.__altourLockCount++;
 
     return () => {
-      const newCount = parseInt(document.documentElement.dataset.modalCount || "1", 10) - 1;
-      document.documentElement.dataset.modalCount = Math.max(0, newCount).toString();
-
-      // Ripristina lo scroll solo quando tutte le modali sono chiuse
-      if (newCount <= 0) {
-        document.documentElement.style.overflow = document.documentElement.dataset.origHtmlOverflow || "";
-        document.body.style.overflow = document.documentElement.dataset.origBodyOverflow || "";
-        document.documentElement.style.overscrollBehavior = "";
-        
-        delete document.documentElement.dataset.origHtmlOverflow;
-        delete document.documentElement.dataset.origBodyOverflow;
+      w.__altourLockCount--;
+      if (w.__altourLockCount === 0) {
+        const style = document.getElementById(LOCK_STYLE_ID);
+        if (style) style.remove();
       }
     };
   }, [isOpen]);
@@ -62,14 +75,14 @@ function MiniMap({ lat, lng, isAnimationDone }: { lat: number; lng: number; isAn
   const nLat = Number(lat);
   const nLng = Number(lng);
   if (isNaN(nLat) || isNaN(nLng) || (nLat === 0 && nLng === 0)) return null;
-  
+
   const delta = 0.005;
   const bbox = `${nLng - delta},${nLat - delta},${nLng + delta},${nLat + delta}`;
   const osmSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${nLat},${nLng}`;
   const googleMapsUrl = `https://maps.google.com/maps?q=${nLat},${nLng}`;
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-stone-100 relative mt-4 shadow-sm transform-gpu isolation-auto">
+    <div className="rounded-2xl overflow-hidden border border-stone-100 relative mt-4 shadow-sm">
       <div className="flex items-center justify-between px-4 py-3 bg-stone-50 border-b border-stone-100">
         <div className="flex items-center gap-2">
           <MapPin size={13} className="text-brand-sky shrink-0" />
@@ -80,7 +93,7 @@ function MiniMap({ lat, lng, isAnimationDone }: { lat: number; lng: number; isAn
           Apri App <ExternalLink size={10} />
         </a>
       </div>
-      
+
       <div className="relative h-48 bg-stone-100 w-full">
         {isAnimationDone ? (
           <iframe title="Mappa" src={osmSrc} width="100%" height="100%" style={{ border: "none" }} loading="lazy" />
@@ -133,21 +146,52 @@ interface ActivityDetailModalProps {
   onBookingClick: (title: string) => void;
 }
 
+// Varianti a livello di modulo: oggetti stabili, non ricreati a ogni render.
+// FIX LAMPEGGIO: niente scale (cambiava la scala di raster a fine spring, e Chrome
+// lasciava la card non dipinta per qualche frame). Solo opacity + y.
+const overlayVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 }
+};
+
+const modalVariants: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      opacity: { duration: 0.2 },
+      y: { type: "spring", stiffness: 400, damping: 35 }
+    }
+  },
+  exit: { opacity: 0, y: 16, transition: { duration: 0.18 } }
+};
+
+const reducedModalVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.2 } },
+  exit: { opacity: 0, transition: { duration: 0.15 } }
+};
+
 export default function ActivityDetailModal({ activity, isOpen, onClose, onBookingClick }: ActivityDetailModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAnimationDone, setIsAnimationDone] = useState(false);
   const scrollableContentRef = useRef<HTMLDivElement>(null);
-  
+
   const shouldReduceMotion = useReducedMotion();
+
+  // Applica il blocco istantaneo
   useBodyScrollLock(isOpen);
 
+  // Dipende dall'id, non dall'oggetto: se il parent ricrea l'oggetto activity
+  // (spread, selectedPrice, ecc.) l'effect non deve resettare lo stato a modale aperta.
   useEffect(() => {
     if (activity?.id) {
       setCurrentImageIndex(0);
       setIsAnimationDone(false);
       scrollableContentRef.current?.scrollTo(0, 0);
     }
-  }, [activity]);
+  }, [activity?.id]);
 
   const images = useMemo(() => {
     return activity ? [activity.immagine_url, ...(activity.gallery_urls || [])].filter(Boolean) as string[] : [];
@@ -156,11 +200,11 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
   const hasMap = Boolean(activity?.lat && activity?.lng);
   const isTour = activity?.categoria?.toLowerCase() === "tour";
   const isCampo = activity?._tipo === "campo";
-  
-  const isCorso = 
-    activity?._tipo === 'corso' || 
-    activity?.prezzo_bundle !== undefined || 
-    activity?.prezzo_teorico !== undefined || 
+
+  const isCorso =
+    activity?._tipo === 'corso' ||
+    activity?.prezzo_bundle !== undefined ||
+    activity?.prezzo_teorico !== undefined ||
     activity?.parentTitle != null;
 
   const currentPrice = useMemo(() => {
@@ -187,7 +231,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
   const handleShare = useCallback(async () => {
     if (!activity?.slug) return;
     const shareUrl = `${window.location.origin}${window.location.pathname}#attivitapage/${activity.slug}`;
-    
+
     if (navigator.share && typeof navigator.share === 'function') {
       try {
         await navigator.share({ title: activity.titolo, url: shareUrl });
@@ -204,31 +248,18 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
     }
   }, [activity]);
 
-  const overlayVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 }
-  };
-
-  const modalVariants: Variants = shouldReduceMotion ? {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.2 } },
-    exit: { opacity: 0 }
-  } : {
-    hidden: { opacity: 0, y: 30, scale: 0.98 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      scale: 1,
-      transition: { type: "spring", stiffness: 400, damping: 35 } 
-    },
-    exit: { opacity: 0, y: 20, scale: 0.98, transition: { duration: 0.2 } }
-  };
+  // Il setState a fine animazione serve solo alla mappa: senza mappa evitiamo
+  // il re-render proprio nel frame in cui la spring termina.
+  const handleAnimationComplete = useCallback(() => {
+    if (hasMap) setIsAnimationDone(true);
+  }, [hasMap]);
 
   const modalContent = (
     <AnimatePresence>
       {isOpen && activity && (
-        <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-0 md:p-6 lg:p-8 overscroll-none" 
+        <motion.div
+          key="activity-modal-wrapper"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-0 md:p-6 lg:p-8 overscroll-none"
           style={{ isolation: 'isolate' }}
           role="dialog"
           aria-modal="true"
@@ -245,30 +276,38 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
             aria-hidden="true"
           />
 
+          {/*
+            FIX LAMPEGGIO:
+            - rimosso transformTemplate (translateZ(0) riscritto a ogni frame)
+            - rimosso scale dalle varianti
+            - rimossi i transform-gpu sui figli (layer annidati dentro un antenato
+              con overflow-hidden + rounded + animazione di transform)
+            - will-change fisso: il layer resta promosso e stabile prima, durante e dopo
+            - exit="exit" (prima puntava a "hidden" e la variante exit non veniva mai usata)
+          */}
           <motion.div
-            variants={modalVariants}
+            variants={shouldReduceMotion ? reducedModalVariants : modalVariants}
             initial="hidden"
             animate="visible"
-            exit="hidden"
-            onAnimationComplete={() => setIsAnimationDone(true)}
-            transformTemplate={(_, t) => (t ? `${t} translateZ(0)` : "translateZ(0)")}
-            className="relative bg-white w-full h-full md:h-[80vh] md:min-h-[520px] md:max-h-[750px] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden overscroll-none"
-            style={{ zIndex: 10001 }}
+            exit="exit"
+            onAnimationComplete={handleAnimationComplete}
+            className="relative bg-white w-full h-full md:h-[80vh] md:min-h-[500px] md:max-h-[750px] max-w-5xl flex flex-col md:flex-row shadow-2xl rounded-none md:rounded-3xl overflow-hidden overscroll-none"
+            style={{ zIndex: 10001, willChange: "transform, opacity" }}
           >
-            
+
             {/* Azioni Alte MOBILE */}
             <div className="absolute top-4 right-4 z-50 flex md:hidden items-center gap-2">
               {activity.slug && (
                 <button
                   onClick={handleShare}
-                  className="p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-sm transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="p-3 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <Share2 size={18} />
                 </button>
               )}
-              <button 
-                onClick={onClose} 
-                className="p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-sm transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              <button
+                onClick={onClose}
+                className="p-3 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <X size={20} />
               </button>
@@ -276,22 +315,21 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
 
             {/* --- COLONNA SINISTRA: IMMAGINE --- */}
             <div className="relative w-full md:w-1/2 h-[35vh] md:h-full shrink-0 bg-stone-100 overflow-hidden">
-              <img 
-                src={images[currentImageIndex] || IMG_FALLBACK} 
-                className="w-full h-full object-cover" 
-                alt={activity.titolo} 
+              <img
+                src={images[currentImageIndex] || IMG_FALLBACK}
+                className="w-full h-full object-cover"
+                alt={activity.titolo}
                 loading={images.length > 1 && currentImageIndex > 0 ? "lazy" : "eager"}
               />
 
-              {/* BADGE CATEGORIA */}
               {activity.categoria && (
-                <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-black/50 text-white backdrop-blur-md border border-white/20">
+                <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-black/50 text-white border border-white/20">
                   {activity.categoria}
                 </div>
               )}
 
               {images.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/20 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/20 px-3 py-1.5 rounded-full">
                   {images.map((_, i) => (
                     <button
                       key={i}
@@ -306,8 +344,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
 
             {/* --- COLONNA DESTRA: CONTENUTO E TESTO --- */}
             <div className="w-full md:w-1/2 flex flex-col h-full overflow-hidden bg-white min-h-0">
-              
-              {/* HEADER */}
+
               <div className="px-5 pt-5 pb-3 border-b border-stone-50 shrink-0">
                 {activity.parentTitle && (
                   <div className="flex items-center gap-1.5 mb-2">
@@ -321,8 +358,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   <h2 id="modal-title" className="text-xl md:text-2xl font-black text-brand-stone uppercase leading-tight">
                     {activity.titolo}
                   </h2>
-                  
-                  {/* Azioni Alte DESKTOP */}
+
                   <div className="hidden md:flex items-center gap-2 shrink-0">
                     {activity.slug && (
                       <button
@@ -333,8 +369,8 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                         <Share2 size={18} />
                       </button>
                     )}
-                    <button 
-                      onClick={onClose} 
+                    <button
+                      onClick={onClose}
                       className="p-2 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-full transition-colors"
                       title="Chiudi"
                     >
@@ -343,7 +379,6 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                   </div>
                 </div>
 
-                {/* Info Secondarie */}
                 <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] font-black uppercase text-stone-400 mt-1">
                   {activity.difficolta && <span className="flex items-center gap-1"><Mountain size={12} className="text-brand-sky stroke-[2.5]" /> {activity.difficolta}</span>}
                   {activity.durata && (<span className="flex items-center gap-1"><Clock size={12} className="text-brand-sky stroke-[2.5]" /> {activity.durata}</span>)}
@@ -357,18 +392,17 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 </div>
               </div>
 
-              {/* CORPO SCROLLABILE */}
-              <div 
+              <div
                 ref={scrollableContentRef}
-                className="flex-1 overflow-y-auto px-5 py-5 space-y-6 overscroll-contain bg-white min-h-0" 
+                className="flex-1 overflow-y-auto px-5 py-5 space-y-6 overscroll-contain bg-white min-h-0"
                 style={{ WebkitOverflowScrolling: "touch" }}
               >
                 <div className="prose prose-sm max-w-none prose-stone text-stone-600 font-medium prose-headings:font-black prose-headings:uppercase prose-headings:text-brand-stone prose-a:text-brand-sky prose-strong:text-brand-stone">
                   <ReactMarkdown>{normalizedDesc}</ReactMarkdown>
                 </div>
-                
+
                 {activity.attrezzatura && (
-                  <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 transform-gpu">
+                  <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
                       {isCorso ? <Briefcase size={14} className="text-brand-sky" /> : <Compass size={14} className="text-brand-sky" />}
                       {isCorso ? "Argomenti trattati" : "Equipaggiamento consigliato"}
@@ -378,7 +412,7 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                 )}
 
                 {isCampo && activity.servizi && (
-                  <div className="p-4 bg-stone-50 rounded-xl border border-stone-100 transform-gpu">
+                  <div className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                     <h4 className="text-[10px] font-black uppercase text-brand-stone mb-2 flex items-center gap-2">
                       <Compass size={14} className="text-brand-sky" />
                       Attività in programma
@@ -388,13 +422,12 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     </div>
                   </div>
                 )}
-                
+
                 {hasMap && <MiniMap lat={activity.lat!} lng={activity.lng!} isAnimationDone={isAnimationDone} />}
               </div>
 
-              {/* FOOTER MOBILE-SAFE */}
-              <div 
-                className="pl-5 pr-16 py-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-4 bg-stone-50/95 backdrop-blur-md shrink-0 transform-gpu overscroll-none z-10"
+              <div
+                className="pl-5 pr-16 py-4 md:px-6 md:py-5 border-t border-stone-100 flex items-center gap-4 bg-stone-50/95 shrink-0 overscroll-none z-10"
                 style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
               >
                 <div className="shrink-0 flex flex-col justify-center min-w-[4rem]">
@@ -405,19 +438,19 @@ export default function ActivityDetailModal({ activity, isOpen, onClose, onBooki
                     €{currentPrice ?? "—"}
                   </span>
                 </div>
-                
+
                 <button
                   onClick={() => onBookingClick(bookingLabel)}
-                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-3.5 px-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-md hover:shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-[0.98] transform-gpu min-h-[48px]"
+                  className="flex-1 bg-brand-sky hover:bg-brand-stone text-white py-3.5 px-3 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-md hover:shadow-lg shadow-brand-sky/20 flex items-center justify-center gap-2 active:scale-[0.98] min-h-[48px]"
                 >
-                  <span className="truncate">Prenota</span> 
+                  <span className="truncate">Prenota</span>
                   <TrendingUp size={15} className="shrink-0" />
                 </button>
               </div>
 
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

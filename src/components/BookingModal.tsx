@@ -1,9 +1,11 @@
 // src/components/BookingModal.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import { X, Send, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -13,37 +15,46 @@ interface BookingModalProps {
   mode?: "info" | "prenota";
 }
 
-// ─── L'HOOK PULITO PER MODALI SOVRAPPOSTE (Con CSS Nativo) ───
+// ─── SCROLL LOCK CONDIVISO ───
+// Il contatore vive su window: ActivityDetailModal e BookingModal sono file separati
+// e prima avevano due contatori indipendenti. Aprendo la booking sopra la activity,
+// veniva iniettato un secondo <style> con padding-right: 0 (scrollbar già nascosta),
+// facendo scattare di ~15px il layout dietro le modali.
+const LOCK_STYLE_ID = 'altour-scroll-lock';
+
 function useBodyScrollLock(isOpen: boolean) {
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!isOpen) return;
 
-    // Gestione contatore globale per modali sovrapposte
-    const currentCount = parseInt(document.documentElement.dataset.modalCount || "0", 10);
-    document.documentElement.dataset.modalCount = (currentCount + 1).toString();
+    const w = window as any;
+    w.__altourLockCount = w.__altourLockCount || 0;
 
-    // Blocca lo scroll solo alla prima modale aperta
-    if (currentCount === 0) {
-      document.documentElement.dataset.origHtmlOverflow = document.documentElement.style.overflow || "";
-      document.documentElement.dataset.origBodyOverflow = document.body.style.overflow || "";
+    if (w.__altourLockCount === 0 && !document.getElementById(LOCK_STYLE_ID)) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
 
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overscrollBehavior = "none";
+      const nav = document.querySelector('header');
+      const navPr = nav ? window.getComputedStyle(nav).paddingRight : '0px';
+
+      const style = document.createElement('style');
+      style.id = LOCK_STYLE_ID;
+      style.textContent = `
+        body {
+          overflow: hidden !important;
+          padding-right: ${scrollbarWidth}px !important;
+        }
+        header, nav {
+          padding-right: calc(${navPr} + ${scrollbarWidth}px) !important;
+        }
+      `;
+      document.head.appendChild(style);
     }
+    w.__altourLockCount++;
 
     return () => {
-      const newCount = parseInt(document.documentElement.dataset.modalCount || "1", 10) - 1;
-      document.documentElement.dataset.modalCount = Math.max(0, newCount).toString();
-
-      // Ripristina lo scroll solo quando tutte le modali sono chiuse
-      if (newCount <= 0) {
-        document.documentElement.style.overflow = document.documentElement.dataset.origHtmlOverflow || "";
-        document.body.style.overflow = document.documentElement.dataset.origBodyOverflow || "";
-        document.documentElement.style.overscrollBehavior = "";
-        
-        delete document.documentElement.dataset.origHtmlOverflow;
-        delete document.documentElement.dataset.origBodyOverflow;
+      w.__altourLockCount--;
+      if (w.__altourLockCount === 0) {
+        const style = document.getElementById(LOCK_STYLE_ID);
+        if (style) style.remove();
       }
     };
   }, [isOpen]);
@@ -65,24 +76,19 @@ export default function BookingModal({
     telefono: "",
     messaggio: "",
   });
-  
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Inizializzazione messaggio
   useEffect(() => {
     if (isOpen) {
-      setFormData((prev) => ({
-        ...prev,
-        messaggio: initialMessage || "",
-      }));
+      // Se il valore è già quello giusto restituisco prev: React salta il render.
+      // Prima ogni apertura causava un render extra nei primi frame dell'animazione.
+      setFormData((prev) =>
+        prev.messaggio === (initialMessage || "")
+          ? prev
+          : { ...prev, messaggio: initialMessage || "" },
+      );
     }
   }, [isOpen, initialMessage]);
 
-  // Reset stato alla chiusura
   useEffect(() => {
     if (isOpen) {
       setSent(false);
@@ -96,10 +102,8 @@ export default function BookingModal({
     }
   }, [isOpen]);
 
-  // Applica il blocco sincronizzato
   useBodyScrollLock(isOpen);
 
-  // Gestione tasto ESC (Desktop)
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isSubmitting) {
@@ -124,7 +128,7 @@ export default function BookingModal({
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email))
       return "Inserisci un indirizzo email valido";
-    
+
     if (!formData.telefono.trim()) return "Il numero di telefono è obbligatorio";
     const cleanPhone = formData.telefono.replace(/[\s\-\.\(\)]/g, "");
     if (!/^\+?[0-9]{7,15}$/.test(cleanPhone))
@@ -140,7 +144,7 @@ export default function BookingModal({
       setFormError(validationError);
       return;
     }
-        
+
     setIsSubmitting(true);
     setFormError(null);
     const payload = {
@@ -167,45 +171,55 @@ export default function BookingModal({
     }
   };
 
-  if (!mounted) return null;
+  // Niente più stato "mounted": causava un render extra a vuoto prima del portale.
+  if (typeof document === 'undefined') return null;
 
   const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div
-          className="fixed inset-0 w-full h-[100dvh] flex items-center justify-center p-3 sm:p-4 md:p-8"
-          style={{
-            zIndex: 99999, 
-            isolation: 'isolate',
-            WebkitTapHighlightColor: 'transparent',
-          }}
+        <motion.div
+          key="booking-modal-wrapper"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
+          style={{ isolation: 'isolate', WebkitTapHighlightColor: 'transparent' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="booking-modal-title"
         >
-          {/* Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={false}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={!isSubmitting ? onClose : undefined}
             className="absolute inset-0 bg-stone-900/70"
-            style={{ zIndex: 1, touchAction: 'none' }}
+            style={{
+              zIndex: 1,
+              touchAction: 'none',
+              animation: 'heroFadeIn 0.2s ease-out both', // keyframes già in index.css
+            }}
           />
 
-          {/* Modal Container */}
+          {/*
+            FIX LAMPEGGIO:
+            - rimosso transformTemplate (translateZ(0) riscritto a ogni frame)
+            - rimosso scale dall'animazione (cambiava la scala di raster a fine spring
+              e Chrome lasciava il layer non dipinto per qualche frame)
+            - will-change fisso: il layer resta promosso e stabile prima, durante e dopo
+          */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 20 }}
-            transition={{ type: "spring", damping: 28, stiffness: 350 }}
-            transformTemplate={(_, t) => (t ? `${t} translateZ(0)` : "translateZ(0)")}
-            className="relative w-full max-w-lg bg-white rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(28,25,23,0.3)] flex flex-col overflow-hidden max-h-[92dvh]"
-            style={{ zIndex: 2 }}
-           
+            initial={false}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="relative w-full max-w-[450px] bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden max-h-[90dvh]"
+            style={{
+              zIndex: 2,
+              willChange: "transform, opacity",
+              // Entrata su compositor thread (keyframes atSlideUp già in index.css):
+              // non dipende dal main thread, quindi regge reflow dello scroll-lock e render React.
+              animation: 'atSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) both',
+            }}
           >
-            {/* Header Modale */}
             <div className="bg-[#f5f2ed] p-5 sm:p-7 relative border-b border-stone-100 flex-shrink-0">
               <button
                 onClick={onClose}
@@ -216,7 +230,8 @@ export default function BookingModal({
                 <X className="w-5 h-5" />
               </button>
 
-              <motion.div initial={{ x: -6, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+              {/* div statico: l'entrata è già gestita dall'animazione CSS della card */}
+              <div>
                 <div className="flex items-center gap-2 mb-1.5">
                   <div className="h-[1.5px] w-5 bg-brand-sky" />
                   <span className="text-[9px] font-black uppercase tracking-[0.25em] text-brand-sky">
@@ -229,15 +244,14 @@ export default function BookingModal({
                 >
                   {title}
                 </h2>
-              </motion.div>
+              </div>
             </div>
 
-            {/* Corpo Modale Scrollabile */}
-            <div 
+            <div
               className="p-5 sm:p-7 bg-white overflow-y-auto flex-1 overscroll-y-contain pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]"
-              style={{ 
+              style={{
                 WebkitOverflowScrolling: "touch",
-                overscrollBehaviorY: "contain" 
+                overscrollBehaviorY: "contain"
               }}
             >
               <AnimatePresence mode="wait">
@@ -249,7 +263,6 @@ export default function BookingModal({
                     noValidate
                   >
                     <div className="space-y-3.5">
-                      {/* Nome Completo */}
                       <div className="space-y-1">
                         <label
                           htmlFor="booking-nome"
@@ -271,7 +284,6 @@ export default function BookingModal({
                         />
                       </div>
 
-                      {/* Email di Contatto */}
                       <div className="space-y-1">
                         <label
                           htmlFor="booking-email"
@@ -296,7 +308,6 @@ export default function BookingModal({
                         />
                       </div>
 
-                      {/* Telefono / WhatsApp */}
                       <div className="space-y-1">
                         <label
                           htmlFor="booking-telefono"
@@ -318,7 +329,6 @@ export default function BookingModal({
                         />
                       </div>
 
-                      {/* Note / Messaggio */}
                       <div className="space-y-1">
                         <label
                           htmlFor="booking-messaggio"
@@ -342,7 +352,6 @@ export default function BookingModal({
                       </div>
                     </div>
 
-                    {/* Alert Errore */}
                     <AnimatePresence>
                       {formError && (
                         <motion.p
@@ -357,11 +366,10 @@ export default function BookingModal({
                       )}
                     </AnimatePresence>
 
-                    {/* Bottone di Invio */}
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-4 sm:py-4.5 rounded-2xl font-black uppercase tracking-[0.25em] text-[10px] sm:text-[11px] flex items-center justify-center gap-3 transition-all shadow-[0_12px_24px_rgba(14,165,233,0.25)] active:scale-[0.98] touch-manipulation transform-gpu mt-1 select-none"
+                      className="w-full bg-brand-sky hover:bg-[#0284c7] disabled:bg-stone-200 text-white py-4 sm:py-4.5 rounded-2xl font-black uppercase tracking-[0.25em] text-[10px] sm:text-[11px] flex items-center justify-center gap-3 transition-all shadow-[0_12px_24px_rgba(14,165,233,0.25)] active:scale-[0.98] touch-manipulation mt-1 select-none"
                     >
                       {isSubmitting ? (
                         <>
@@ -399,7 +407,7 @@ export default function BookingModal({
               </AnimatePresence>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

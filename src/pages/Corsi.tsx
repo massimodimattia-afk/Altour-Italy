@@ -131,7 +131,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
   return (
     <motion.div
       ref={ref}
-      // FIX GLITCH: Rimossa prop 'layout' per evitare scivolamenti animati su desktop
       initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.96 }}
@@ -151,14 +150,14 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
         <div
-          className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md backdrop-blur-sm z-10"
+          className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-white shadow-md z-10"
           style={{ backgroundColor: categoryBg, textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
         >
           {categoriaName}
         </div>
 
         {isComingSoon && (
-          <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-stone-900/85 text-white shadow-lg backdrop-blur-md z-10 border border-white/20 flex items-center gap-2">
+          <div className="absolute top-3 left-3 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-stone-900/85 text-white shadow-lg z-10 border border-white/20 flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-sky animate-pulse shrink-0" />
             <Bell size={10} className="text-brand-sky shrink-0" />
             <span>In arrivo</span>
@@ -266,7 +265,6 @@ const FormazioneCard = forwardRef<HTMLDivElement, {
   );
 });
 
-// Skeleton Loader
 const SkeletonCard = () => (
   <div className="bg-white rounded-2xl overflow-hidden border border-stone-100 flex flex-col h-full">
     <div className="aspect-[3/2] md:h-52 bg-stone-100 animate-pulse" />
@@ -282,7 +280,6 @@ const SkeletonCard = () => (
   </div>
 );
 
-// ─── Componente Principale ───────────────────────────────────────────────────
 export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps) {
   const [isTestOpen, setIsTestOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
@@ -379,7 +376,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
   return (
     <div className="bg-[#f5f2ed] min-h-screen antialiased pb-safe">
       
-      {/* ── Header e Titolo (Utilizzando Section) ── */}
       <Section animate={false} className="max-w-6xl mx-auto px-4 pt-8 pb-0 mt-safe">
         <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Formazione</p>
         <div className="flex items-end justify-between gap-4">
@@ -478,7 +474,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         </div>
       </Section>
 
-      {/* ── Filtri Sticky Desktop ── */}
       <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed] border-b border-stone-200/60 py-3 overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 flex items-center gap-2">
           <button
@@ -515,7 +510,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         </div>
       </div>
 
-      {/* ── Contenuto Unico Dinamico (Utilizzando Section) ── */}
       <Section className="max-w-6xl mx-auto px-4 pt-4 pb-20">
         
         <div className="mb-10 bg-white p-5 md:p-6 rounded-[1.5rem] shadow-sm border border-stone-100 flex flex-col md:flex-row items-center justify-between gap-5 transition-transform active:scale-[0.99]">
@@ -553,7 +547,8 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 items-stretch">
-              <AnimatePresence mode="popLayout">
+              {/* FIX FRAMER MOTION: Rimosso mode="popLayout" per evitare ricalcoli inutili della griglia */}
+              <AnimatePresence>
                 {filteredData.slice(0, visibleCount).map((item, idx) => (
                   <FormazioneCard
                     key={item.id}
@@ -581,7 +576,6 @@ export default function CorsiPage({ corsi = [], onBookingClick }: CorsiPageProps
         )}
       </Section>
 
-      {/* ── Modali ── */}
       <ActivityDetailModal
         activity={selectedItem ? {
           ...selectedItem,

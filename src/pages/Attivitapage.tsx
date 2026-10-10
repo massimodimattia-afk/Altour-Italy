@@ -1,5 +1,5 @@
 // src/pages/AttivitaPage.tsx
-import { useEffect, useState, useMemo, forwardRef } from "react";
+import { useEffect, useState, useLayoutEffect, useMemo, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, Clock, ArrowRight, SlidersHorizontal, Search, X } from "lucide-react";
@@ -9,8 +9,8 @@ import ActivityDetailModal from "../components/ActivityDetailModal";
 import AttivitaQuiz from "../components/AttivitaQuiz";
 import { isIOS } from "../components/Section";
 
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 type Escursione = Database["public"]["Tables"]["escursioni"]["Row"] & {
   filosofia?: string | null;
   lunghezza?: number | null;
@@ -48,7 +48,6 @@ interface AttivitaPageProps {
   initialSlug?: string | null;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 const IMG_FALLBACK = "/altour-logo.png";
 const ITEMS_PER_LOAD = typeof window !== "undefined" && window.innerWidth >= 1024 ? 6 : 4;
 
@@ -110,7 +109,6 @@ function campoToDetail(campo: Campo) {
   };
 }
 
-// ─── Card ─────────────────────────────────────────────────────────────────────
 const ActivityCard = forwardRef<HTMLDivElement, {
   activity: Activity; idx: number;
   onDetails: () => void; onBook: (mode?: "info" | "prenota") => void;
@@ -185,7 +183,6 @@ const SkeletonCard = () => (
   </div>
 );
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPageProps) {
   const [escursioni, setEscursioni] = useState<Escursione[]>([]);
   const [campi, setCampi]           = useState<Campo[]>([]);
@@ -217,16 +214,15 @@ export default function AttivitaPage({ onBookingClick, initialSlug }: AttivitaPa
   useEffect(() => { setMounted(true); }, []);
 
   // ── FIX DRAWER SCROLL LOCK ──
-  // SOSTITUISCI IL VECCHIO useEffect(..., [drawerOpen]) CON QUESTO:
-useEffect(() => {
-  if (!drawerOpen) return;
-  document.documentElement.style.overflow = "hidden";
-  document.body.style.overflow = "hidden";
-  return () => {
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-  };
-}, [drawerOpen]);
+  useIsomorphicLayoutEffect(() => {
+    if (!drawerOpen) return;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, [drawerOpen]);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -363,7 +359,6 @@ useEffect(() => {
   return (
     <div className="bg-[#f5f2ed] min-h-screen antialiased">
 
-      {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 pt-8 pb-0">
         <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-brand-sky">Esplora</p>
         <div className="flex items-end justify-between gap-4">
@@ -377,7 +372,6 @@ useEffect(() => {
         </div>
         <div className="h-1 w-10 bg-brand-sky rounded-full mt-3 mb-6" />
 
-       {/* ── BARRA DI RICERCA PREMIUM + FIX TASTIERA MOBILE ── */}
         <div className="mb-10 mt-6 flex justify-center px-2">
           <form 
             onSubmit={(e) => {
@@ -421,7 +415,6 @@ useEffect(() => {
           </form>
         </div>
 
-        {/* ── Banner quiz zaino ── */}
         <motion.div
           initial={{ opacity: 0, y: isIOS ? 0 : 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -463,7 +456,6 @@ useEffect(() => {
           <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #81ccb0, #5aaadd, #f4d98c)" }} />
         </motion.div>
 
-        {/* ── Filtri mobile ─────────────────────────────────── */}
         <div className="md:hidden mb-6 mt-2 px-1">
           <div className="flex justify-between items-center mb-4 px-1">
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400">
@@ -513,7 +505,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* ── Filtri sticky desktop ── */}
       <div className="hidden md:block sticky top-16 z-20 bg-[#f5f2ed] border-b border-stone-200/60 py-3 overflow-hidden">
         <div className="max-w-6xl mx-auto px-4 flex items-center gap-2">
           <button
@@ -548,7 +539,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* ── Contenuto principale ──────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 pt-4 pb-20">
 
         {visible.length === 0 && !loading ? (
@@ -568,7 +558,6 @@ useEffect(() => {
           </motion.div>
         ) : (
           <>
-            {/* ── PULSANTE MOBILE IN-FLOW ── */}
             <div className="md:hidden mb-6 mt-1">
               <button
                 onClick={handleInizia}
@@ -597,9 +586,9 @@ useEffect(() => {
               </button>
             </div>
 
-            {/* ── Griglia delle Card ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              <AnimatePresence mode="popLayout">
+              {/* FIX FRAMER MOTION: Rimosso mode="popLayout" */}
+              <AnimatePresence>
                 {visible.map((activity, idx) => (
                   <ActivityCard key={activity.id} activity={activity} idx={idx}
                     onDetails={() => openDetails(activity)}
@@ -609,7 +598,6 @@ useEffect(() => {
               </AnimatePresence>
             </div>
 
-            {/* Pulsante Load More */}
             {visibleCount < filtered.length && (
               <div className="flex justify-center mt-8">
                 <button
@@ -623,7 +611,6 @@ useEffect(() => {
           </>
         )}
 
-       {/* ── Quiz zaino desktop inline ─────────────────────────────────── */}
         <div id="zaino-quiz-section" className="hidden md:block mt-24">
           <div className="flex flex-col items-center mb-12">
             <div className="h-16 w-px bg-gradient-to-b from-transparent to-stone-200" />
@@ -647,7 +634,6 @@ useEffect(() => {
 
       </div>
 
-      {/* ── Drawer mobile in PORTAL ── */}
       {mounted && createPortal(
         <div className="md:hidden">
           <AnimatePresence>
